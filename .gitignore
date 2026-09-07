@@ -1,0 +1,50 @@
+# ===== Frontend: Vite =====
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+*.tsbuildinfo
+
+# ===== Backend: .NET =====
+[Bb]in/
+[Oo]bj/
+artifacts/
+TestResults/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ===== IDE =====
+.vs/
+.idea/
+
+# ===== Biến môi trường và cấu hình riêng =====
+.env
+.env.*
+!.env.example
+!.env.sample
+
+appsettings.Local.json
+appsettings.*.Local.json
+
+# ===== Logs =====
+logs/
+*.log
+
+# ===== Hệ điều hành =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== File tạm =====
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ===== Coverage =====
+coverage/
+.nyc_output/
