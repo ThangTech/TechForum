@@ -26,3 +26,6 @@ không seed.
 
 - `GET /api/categories`: danh sách chuyên mục, sắp theo `displayOrder`, `name`, `id`.
 - `GET /api/categories/{id}`: chi tiết hoặc Problem Details HTTP 404.
+
+Luồng xử lý cho chức năng chuyên mục là
+`CategoriesController` → `CategoryService` → `CategoryRepository` → EF Core.

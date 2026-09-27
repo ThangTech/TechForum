@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Data;
+using TechForum.Api.Data.Repositories;
 using TechForum.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<TechForumDbContext>(options =>
     options.UseSqlServer(connectionString));
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
