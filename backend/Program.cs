@@ -5,10 +5,13 @@ using TechForum.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException(
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
         "Connection string 'DefaultConnection' is not configured. " +
         "Set ConnectionStrings__DefaultConnection or add it to a local settings file.");
+}
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
