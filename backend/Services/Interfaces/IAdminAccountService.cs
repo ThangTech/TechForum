@@ -12,5 +12,6 @@ public interface IAdminAccountService
     Task<AdminAccountWriteResult> SetLockedAsync(
         string targetUserId,
         string administratorId,
-        bool isLocked);
+        bool isLocked,
+        CancellationToken cancellationToken);
 }

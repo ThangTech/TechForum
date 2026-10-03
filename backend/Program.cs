@@ -92,6 +92,8 @@ builder.Services.AddScoped<IAdminTopicRepository, AdminTopicRepository>();
 builder.Services.AddScoped<IAdminTopicService, AdminTopicService>();
 builder.Services.AddScoped<IAdminOverviewRepository, AdminOverviewRepository>();
 builder.Services.AddScoped<IAdminOverviewService, AdminOverviewService>();
+builder.Services.AddScoped<IAdminAuditRepository, AdminAuditRepository>();
+builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();

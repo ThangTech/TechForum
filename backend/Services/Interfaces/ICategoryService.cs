@@ -8,7 +8,7 @@ public interface ICategoryService
 
     Task<CategoryDto?> GetByIdAsync(int id, CancellationToken cancellationToken);
     Task<IReadOnlyList<AdminCategoryDto>> GetAdminAsync(CancellationToken cancellationToken);
-    Task<CategoryWriteResult> CreateAsync(SaveCategoryRequest request, CancellationToken cancellationToken);
-    Task<CategoryWriteResult> UpdateAsync(int id, SaveCategoryRequest request, CancellationToken cancellationToken);
-    Task<CategoryWriteResult> SetActiveAsync(int id, bool isActive, CancellationToken cancellationToken);
+    Task<CategoryWriteResult> CreateAsync(string administratorId, SaveCategoryRequest request, CancellationToken cancellationToken);
+    Task<CategoryWriteResult> UpdateAsync(string administratorId, int id, SaveCategoryRequest request, CancellationToken cancellationToken);
+    Task<CategoryWriteResult> SetActiveAsync(string administratorId, int id, bool isActive, CancellationToken cancellationToken);
 }

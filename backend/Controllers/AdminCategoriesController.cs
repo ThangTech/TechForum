@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Constants;
@@ -19,21 +20,24 @@ public sealed class AdminCategoriesController(ICategoryService categoryService) 
     public async Task<ActionResult<AdminCategoryDto>> Create(
         [FromBody] SaveCategoryRequest request,
         CancellationToken cancellationToken) =>
-        ToActionResult(await categoryService.CreateAsync(request, cancellationToken), true);
+        ToActionResult(await categoryService.CreateAsync(GetAdministratorId(), request, cancellationToken), true);
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult<AdminCategoryDto>> Update(
         int id,
         [FromBody] SaveCategoryRequest request,
         CancellationToken cancellationToken) =>
-        ToActionResult(await categoryService.UpdateAsync(id, request, cancellationToken));
+        ToActionResult(await categoryService.UpdateAsync(GetAdministratorId(), id, request, cancellationToken));
 
     [HttpPut("{id:int}/active")]
     public async Task<ActionResult<AdminCategoryDto>> SetActive(
         int id,
         [FromBody] SetActiveRequest request,
         CancellationToken cancellationToken) =>
-        ToActionResult(await categoryService.SetActiveAsync(id, request.IsActive, cancellationToken));
+        ToActionResult(await categoryService.SetActiveAsync(GetAdministratorId(), id, request.IsActive, cancellationToken));
+
+    private string GetAdministratorId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new InvalidOperationException("Phiên quản trị thiếu định danh tài khoản.");
 
     private ActionResult<AdminCategoryDto> ToActionResult(CategoryWriteResult result, bool created = false) =>
         result.Failure switch

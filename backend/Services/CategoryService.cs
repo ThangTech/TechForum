@@ -4,7 +4,9 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class CategoryService(ICategoryRepository categoryRepository) : ICategoryService
+public sealed class CategoryService(
+    ICategoryRepository categoryRepository,
+    IAdminAuditService auditService) : ICategoryService
 {
     public async Task<IReadOnlyList<CategoryDto>> GetAllAsync(CancellationToken cancellationToken)
     {
@@ -31,6 +33,7 @@ public sealed class CategoryService(ICategoryRepository categoryRepository) : IC
             .ToList();
 
     public async Task<CategoryWriteResult> CreateAsync(
+        string administratorId,
         SaveCategoryRequest request,
         CancellationToken cancellationToken)
     {
@@ -51,10 +54,13 @@ public sealed class CategoryService(ICategoryRepository categoryRepository) : IC
         };
         if (!await categoryRepository.AddAsync(category, cancellationToken))
             return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+        await auditService.RecordAsync(administratorId, "category-created", "Category", category.Id.ToString(), null,
+            $"name={category.Name};slug={category.Slug};active=true", "Tạo chuyên mục.", cancellationToken);
         return CategoryWriteResult.Success(MapAdminDto(category, 0));
     }
 
     public async Task<CategoryWriteResult> UpdateAsync(
+        string administratorId,
         int id,
         SaveCategoryRequest request,
         CancellationToken cancellationToken)
@@ -68,18 +74,22 @@ public sealed class CategoryService(ICategoryRepository categoryRepository) : IC
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await categoryRepository.SlugExistsAsync(slug, id, cancellationToken))
             return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+        var previous = $"name={category.Name};slug={category.Slug};order={category.DisplayOrder}";
         category.Name = request.Name!.Trim();
         category.Slug = slug;
         category.Description = NormalizeDescription(request.Description);
         category.DisplayOrder = request.DisplayOrder;
         if (!await categoryRepository.SaveChangesAsync(cancellationToken))
             return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+        await auditService.RecordAsync(administratorId, "category-updated", "Category", category.Id.ToString(), previous,
+            $"name={category.Name};slug={category.Slug};order={category.DisplayOrder}", "Cập nhật chuyên mục.", cancellationToken);
         return CategoryWriteResult.Success(MapAdminDto(
             category,
             await categoryRepository.GetTopicCountAsync(id, cancellationToken)));
     }
 
     public async Task<CategoryWriteResult> SetActiveAsync(
+        string administratorId,
         int id,
         bool isActive,
         CancellationToken cancellationToken)
@@ -87,8 +97,12 @@ public sealed class CategoryService(ICategoryRepository categoryRepository) : IC
         var category = await categoryRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (category is null)
             return CategoryWriteResult.Failed(CategoryWriteFailure.NotFound, "Không tìm thấy chuyên mục.");
+        var previous = category.IsActive;
         category.IsActive = isActive;
         await categoryRepository.SaveChangesAsync(cancellationToken);
+        await auditService.RecordAsync(administratorId, isActive ? "category-activated" : "category-deactivated", "Category",
+            category.Id.ToString(), $"active={previous}", $"active={isActive}",
+            isActive ? "Kích hoạt chuyên mục." : "Ngừng sử dụng chuyên mục.", cancellationToken);
         return CategoryWriteResult.Success(MapAdminDto(
             category,
             await categoryRepository.GetTopicCountAsync(id, cancellationToken)));

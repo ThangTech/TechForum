@@ -6,6 +6,7 @@ namespace TechForum.Api.Services;
 
 public sealed class AdminAccountService(
     IAdminAccountRepository accountRepository,
+    IAdminAuditService auditService,
     TimeProvider timeProvider) : IAdminAccountService
 {
     public async Task<PagedResultDto<AdminAccountDto>> GetPageAsync(
@@ -28,7 +29,8 @@ public sealed class AdminAccountService(
     public async Task<AdminAccountWriteResult> SetLockedAsync(
         string targetUserId,
         string administratorId,
-        bool isLocked)
+        bool isLocked,
+        CancellationToken cancellationToken)
     {
         var user = await accountRepository.GetByIdAsync(targetUserId);
         if (user is null)
@@ -40,9 +42,13 @@ public sealed class AdminAccountService(
         if (isLocked && isAdministrator)
             return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.AdministratorProtected, "Không thể khóa tài khoản quản trị viên từ chức năng này.");
 
+        var wasLocked = user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow();
         var result = await accountRepository.SetLockedAsync(user, isLocked);
         if (!result.Succeeded)
             return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.UpdateFailed, "Không thể cập nhật trạng thái khóa tài khoản.");
+        await auditService.RecordAsync(administratorId, isLocked ? "account-locked" : "account-unlocked", "Account",
+            user.Id, $"locked={wasLocked}", $"locked={isLocked}",
+            isLocked ? "Khóa tài khoản thành viên." : "Mở khóa tài khoản thành viên.", cancellationToken);
         return AdminAccountWriteResult.Success(Map(user, isAdministrator));
     }
 

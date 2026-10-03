@@ -30,11 +30,12 @@ public sealed class AdminAccountsController(IAdminAccountService accountService)
     [HttpPut("{userId}/lock")]
     public async Task<ActionResult<AdminAccountDto>> SetLocked(
         string userId,
-        [FromBody] SetAccountLockRequest request)
+        [FromBody] SetAccountLockRequest request,
+        CancellationToken cancellationToken)
     {
         var administratorId = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new InvalidOperationException("Phiên quản trị thiếu định danh tài khoản.");
-        var result = await accountService.SetLockedAsync(userId, administratorId, request.IsLocked);
+        var result = await accountService.SetLockedAsync(userId, administratorId, request.IsLocked, cancellationToken);
         return result.Failure switch
         {
             AdminAccountWriteFailure.None => Ok(result.Account),

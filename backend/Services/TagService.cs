@@ -4,7 +4,7 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class TagService(ITagRepository tagRepository) : ITagService
+public sealed class TagService(ITagRepository tagRepository, IAdminAuditService auditService) : ITagService
 {
     public async Task<IReadOnlyList<TagDto>> GetActiveAsync(CancellationToken cancellationToken)
     {
@@ -29,7 +29,7 @@ public sealed class TagService(ITagRepository tagRepository) : ITagService
             .Select(item => MapAdminDto(item.Tag, item.TopicCount))
             .ToList();
 
-    public async Task<TagWriteResult> CreateAsync(SaveTagRequest request, CancellationToken cancellationToken)
+    public async Task<TagWriteResult> CreateAsync(string administratorId, SaveTagRequest request, CancellationToken cancellationToken)
     {
         var validation = Validate(request);
         if (validation is not null) return validation;
@@ -46,10 +46,13 @@ public sealed class TagService(ITagRepository tagRepository) : ITagService
         };
         if (!await tagRepository.AddAsync(tag, cancellationToken))
             return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+        await auditService.RecordAsync(administratorId, "tag-created", "Tag", tag.Id.ToString(), null,
+            $"name={tag.Name};slug={tag.Slug};active=true", "Tạo thẻ.", cancellationToken);
         return TagWriteResult.Success(MapAdminDto(tag, 0));
     }
 
     public async Task<TagWriteResult> UpdateAsync(
+        string administratorId,
         int id,
         SaveTagRequest request,
         CancellationToken cancellationToken)
@@ -62,23 +65,31 @@ public sealed class TagService(ITagRepository tagRepository) : ITagService
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await tagRepository.SlugExistsAsync(slug, id, cancellationToken))
             return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+        var previous = $"name={tag.Name};slug={tag.Slug}";
         tag.Name = request.Name!.Trim();
         tag.Slug = slug;
         tag.Description = NormalizeDescription(request.Description);
         if (!await tagRepository.SaveChangesAsync(cancellationToken))
             return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+        await auditService.RecordAsync(administratorId, "tag-updated", "Tag", tag.Id.ToString(), previous,
+            $"name={tag.Name};slug={tag.Slug}", "Cập nhật thẻ.", cancellationToken);
         return TagWriteResult.Success(MapAdminDto(tag, await tagRepository.GetTopicCountAsync(id, cancellationToken)));
     }
 
     public async Task<TagWriteResult> SetActiveAsync(
+        string administratorId,
         int id,
         bool isActive,
         CancellationToken cancellationToken)
     {
         var tag = await tagRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (tag is null) return TagWriteResult.Failed(TagWriteFailure.NotFound, "Không tìm thấy thẻ.");
+        var previous = tag.IsActive;
         tag.IsActive = isActive;
         await tagRepository.SaveChangesAsync(cancellationToken);
+        await auditService.RecordAsync(administratorId, isActive ? "tag-activated" : "tag-deactivated", "Tag",
+            tag.Id.ToString(), $"active={previous}", $"active={isActive}",
+            isActive ? "Kích hoạt thẻ." : "Ngừng sử dụng thẻ.", cancellationToken);
         return TagWriteResult.Success(MapAdminDto(tag, await tagRepository.GetTopicCountAsync(id, cancellationToken)));
     }
 

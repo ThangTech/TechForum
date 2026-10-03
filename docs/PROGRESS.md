@@ -121,8 +121,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Ẩn/khôi phục, khóa/mở, ghim/bỏ ghim, chuyển chuyên mục.
 - [x] Xử lý báo cáo một lần, có lý do/người/thời điểm.
 - [x] Khóa/mở tài khoản, ngăn tự khóa và middleware vô hiệu phiên cũ.
-- [x] Thống kê từ CSDL và nhật ký thao tác kiểm duyệt nội dung.
-- Nhật ký tạo/sửa chuyên mục, thẻ và khóa tài khoản chưa hợp nhất vào audit log.
+- [x] Thống kê từ CSDL và nhật ký kiểm duyệt nội dung, thay đổi chuyên mục/thẻ,
+  khóa/mở tài khoản với quản trị viên, trạng thái trước/sau và lý do hệ thống.
 
 ### P6 — Hoàn thiện trải nghiệm
 
