@@ -28,6 +28,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<ContentReport> ContentReports => Set<ContentReport>();
     public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
     public DbSet<TopicView> TopicViews => Set<TopicView>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -212,6 +213,19 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         auditLog.HasIndex(item => new { item.TargetType, item.TargetId, item.CreatedAtUtc });
         auditLog.HasIndex(item => new { item.AdministratorId, item.CreatedAtUtc });
         auditLog.HasOne(item => item.Administrator).WithMany().HasForeignKey(item => item.AdministratorId).OnDelete(DeleteBehavior.Restrict);
+
+        var notification = modelBuilder.Entity<Notification>();
+        notification.ToTable("Notifications");
+        notification.HasKey(item => item.Id);
+        notification.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        notification.Property(item => item.Type).HasMaxLength(40).IsRequired();
+        notification.Property(item => item.Title).HasMaxLength(160).IsRequired();
+        notification.Property(item => item.Message).HasMaxLength(500).IsRequired();
+        notification.Property(item => item.Link).HasMaxLength(300).IsRequired();
+        notification.Property(item => item.SourceKey).HasMaxLength(160).IsRequired();
+        notification.HasIndex(item => new { item.UserId, item.SourceKey }).IsUnique();
+        notification.HasIndex(item => new { item.UserId, item.ReadAtUtc, item.CreatedAtUtc });
+        notification.HasOne(item => item.User).WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {

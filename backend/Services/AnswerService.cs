@@ -10,6 +10,7 @@ namespace TechForum.Api.Services;
 public sealed partial class AnswerService(
     IAnswerRepository answerRepository,
     ITopicRepository topicRepository,
+    INotificationService notificationService,
     IContentSanitizer contentSanitizer,
     TimeProvider timeProvider) : IAnswerService
 {
@@ -118,6 +119,15 @@ public sealed partial class AnswerService(
         }
 
         topic.AcceptedAnswerId = answer.Id;
+        if (answer.AuthorId != authorId)
+        {
+            await notificationService.AddAcceptedAnswerAsync(
+                answer.AuthorId,
+                topic.Id,
+                answer.Id,
+                topic.Title,
+                cancellationToken);
+        }
         await topicRepository.SaveChangesAsync(cancellationToken);
 
         return AcceptAnswerResult.Success(MapAnswer(answer, answer.Id));
