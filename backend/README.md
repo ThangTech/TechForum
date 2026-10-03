@@ -124,6 +124,17 @@ hiện hành trên mỗi chủ đề. Thêm hoặc bỏ lặp lại là thao tá
 không còn công khai trả 404. Sao hữu ích không phải thang điểm và không dùng làm
 bookmark.
 
+## Lưu bài P5
+
+- `GET /api/topics/{topicId}/bookmark`: số lượt lưu công khai và trạng thái của
+  tài khoản hiện tại.
+- `PUT`/`DELETE /api/topics/{topicId}/bookmark`: thêm hoặc bỏ lưu, yêu cầu đăng nhập.
+- `GET /api/bookmarks?page=1&pageSize=10`: danh sách nội dung đã lưu của tài
+  khoản, mới lưu trước và chỉ gồm chủ đề còn công khai.
+
+Bookmark dùng khóa chính kép `(TopicId, UserId)`, độc lập với Sao hữu ích và các
+thao tác thêm/bỏ được xử lý idempotent.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client

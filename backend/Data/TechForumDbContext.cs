@@ -23,6 +23,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<TopicStar> TopicStars => Set<TopicStar>();
 
+    public DbSet<TopicBookmark> TopicBookmarks => Set<TopicBookmark>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -142,6 +144,20 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
             .HasForeignKey(item => item.TopicId)
             .OnDelete(DeleteBehavior.Restrict);
         topicStar.HasOne(item => item.User)
+            .WithMany()
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var bookmark = modelBuilder.Entity<TopicBookmark>();
+        bookmark.ToTable("TopicBookmarks");
+        bookmark.HasKey(item => new { item.TopicId, item.UserId });
+        bookmark.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        bookmark.HasIndex(item => new { item.UserId, item.CreatedAtUtc });
+        bookmark.HasOne(item => item.Topic)
+            .WithMany(item => item.Bookmarks)
+            .HasForeignKey(item => item.TopicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        bookmark.HasOne(item => item.User)
             .WithMany()
             .HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Restrict);

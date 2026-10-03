@@ -34,3 +34,13 @@ GET {{TechForum.Api_HostAddress}}/api/topics/1/star
 Accept: application/json
 
 ###
+
+GET {{TechForum.Api_HostAddress}}/api/topics/1/bookmark
+Accept: application/json
+
+###
+
+GET {{TechForum.Api_HostAddress}}/api/bookmarks?page=1&pageSize=10
+Accept: application/json
+
+###
