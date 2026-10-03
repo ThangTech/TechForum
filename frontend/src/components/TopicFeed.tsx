@@ -80,7 +80,9 @@ export const TopicFeed = ({
               </Link>
               <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p>
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-500">
-                <span>{topic.author.displayName}</span>
+                <Link className="font-semibold text-slate-700 hover:text-blue-700" to={`/thanh-vien/${encodeURIComponent(topic.author.id)}`}>
+                  {topic.author.displayName}
+                </Link>
                 <span aria-hidden="true">·</span>
                 <span>{formatDate(topic.publishedAtUtc)}</span>
                 <button className="font-semibold text-blue-700 hover:underline" onClick={() => onFilter('categoryId', topic.category.id)} type="button">

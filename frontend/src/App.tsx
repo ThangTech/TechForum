@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { TopicDetailPage } from './pages/TopicDetailPage'
+import { PublicProfilePage } from './pages/PublicProfilePage'
 
 const App = () => {
   return (
@@ -25,6 +26,7 @@ const App = () => {
               element={<HomePage fixedType="Question" title="Hỏi đáp công nghệ" description="Tìm câu hỏi đang cần sự đóng góp từ cộng đồng TechForum." />}
             />
             <Route path="noi-dung/:id" element={<TopicDetailPage />} />
+            <Route path="thanh-vien/:userId" element={<PublicProfilePage />} />
             <Route
               path="tai-khoan"
               element={

@@ -52,7 +52,7 @@ const isTopicTag = (value: unknown): value is TopicTag =>
   typeof value.name === 'string' &&
   typeof value.slug === 'string'
 
-const isTopicSummary = (value: unknown): value is TopicSummary => {
+export const isTopicSummary = (value: unknown): value is TopicSummary => {
   if (!isRecord(value) || !isRecord(value.category) || !isRecord(value.author)) return false
   return (
     typeof value.id === 'number' &&

@@ -70,7 +70,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   retry; dùng contract thật, Tailwind và arrow function.
 - [x] Tìm kiếm giữ từ khóa, bộ lọc và trang trên URL.
 - [x] Chi tiết nội dung chỉ trả nội dung công khai.
-- [ ] Hồ sơ tác giả công khai chưa có.
+- [x] Hồ sơ tác giả công khai không trả email, có tổng nội dung công khai và
+  tối đa 5 nội dung gần nhất.
 - Sidebar câu hỏi mới/nhiều trả lời dùng dữ liệu và khoảng thời gian thật.
 
 ### P3 — Soạn và quản lý nội dung
@@ -165,7 +166,7 @@ dotnet build backend/TechForum.Api.csproj --no-restore
 Build succeeded, 0 warnings, 0 errors.
 
 dotnet test backend.Tests/TechForum.Api.Tests.csproj --no-restore
-Passed: 6, Failed: 0, Skipped: 0.
+Passed: 8, Failed: 0, Skipped: 0.
 
 npm run lint
 eslint: passed.
@@ -175,5 +176,7 @@ TypeScript + Vite build: passed, 2111 modules transformed.
 ```
 
 API danh sách, lọc, chi tiết và lỗi query đã được gọi trực tiếp với SQL Server
-trước khi nối frontend. Luồng frontend mới chưa kiểm thử thủ công trên trình duyệt
-theo yêu cầu tạm hoãn kiểm thử của người dùng.
+trước khi nối frontend. `GET /api/profiles/techforum-development-author` trả 200,
+2 nội dung công khai và không có email; mã thành viên không tồn tại trả 404.
+Luồng frontend mới chưa kiểm thử thủ công trên trình duyệt theo yêu cầu tạm hoãn
+kiểm thử của người dùng.
