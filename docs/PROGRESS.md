@@ -90,6 +90,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Frontend có route riêng tư `/viet-bai`, tải chuyên mục/thẻ thật, hỗ trợ lưu
   nháp/xuất bản và hiển thị lỗi field từ API; Froala được lazy-load để không làm
   tăng bundle trang công khai.
+- [x] `GET /api/topics/mine` và route riêng tư `/noi-dung-cua-toi` phân trang,
+  tìm kiếm/lọc loại trên URL; hiển thị bản nháp, trạng thái ẩn và khóa thảo luận.
 
 ### P4 — Thảo luận và tương tác
 
@@ -200,3 +202,8 @@ Frontend P3: `npm run lint` và `npm run build` đạt (2.120 module); `npm audi
 không phát hiện lỗ hổng. Chunk Froala lazy-load khoảng 1,98 MB (548 KB gzip) vẫn
 có cảnh báo kích thước từ Vite và cần theo dõi, nhưng bundle chính còn khoảng
 488 KB. Chưa chạy luồng soạn trên trình duyệt theo yêu cầu tạm hoãn kiểm thử.
+
+Endpoint nội dung cá nhân đã kiểm tra với SQL Server: thành viên A nhận đúng bản
+nháp mã `3`, còn khách nhận `401`. Backend đạt 13/13 test; frontend sau khi nối
+trang quản lý đạt lint và build (2.130 module). Chưa kiểm thử thủ công trên trình
+duyệt theo yêu cầu tạm hoãn.

@@ -56,6 +56,7 @@ export const SiteHeader = () => {
         <NavLink to="/bai-viet">Bài viết</NavLink>
         <NavLink to="/hoi-dap">Hỏi đáp</NavLink>
         <NavLink to="/viet-bai">Viết nội dung</NavLink>
+        <NavLink to="/noi-dung-cua-toi">Nội dung của tôi</NavLink>
         <NavLink to="/tai-khoan">Tài khoản</NavLink>
       </nav>
     </header>

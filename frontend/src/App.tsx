@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
+import { MyTopicsPage } from './pages/MyTopicsPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -39,6 +40,14 @@ const App = () => {
                   <Suspense fallback={<div className="route-status">Đang tải trình soạn thảo…</div>}>
                     <WriteTopicPage />
                   </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="noi-dung-cua-toi"
+              element={
+                <ProtectedRoute>
+                  <MyTopicsPage />
                 </ProtectedRoute>
               }
             />

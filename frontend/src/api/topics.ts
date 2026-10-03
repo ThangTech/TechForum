@@ -67,6 +67,29 @@ export interface OwnTopic {
   publishedAtUtc: string | null
 }
 
+export interface OwnTopicSummary {
+  id: number
+  title: string
+  summary: string
+  type: TopicType
+  status: 'draft' | 'published'
+  category: TopicCategory
+  tags: TopicTag[]
+  createdAtUtc: string
+  updatedAtUtc: string | null
+  publishedAtUtc: string | null
+  isHiddenByModerator: boolean
+  isDiscussionLocked: boolean
+}
+
+export interface OwnTopicPage {
+  items: OwnTopicSummary[]
+  page: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -161,4 +184,47 @@ export const createTopic = async (input: CreateTopicInput): Promise<OwnTopic> =>
   }
 
   return data as unknown as OwnTopic
+}
+
+const isOwnTopicSummary = (value: unknown): value is OwnTopicSummary =>
+  isRecord(value) &&
+  typeof value.id === 'number' &&
+  typeof value.title === 'string' &&
+  typeof value.summary === 'string' &&
+  (value.type === 'article' || value.type === 'question') &&
+  (value.status === 'draft' || value.status === 'published') &&
+  isRecord(value.category) &&
+  typeof value.category.id === 'number' &&
+  typeof value.category.name === 'string' &&
+  typeof value.category.slug === 'string' &&
+  Array.isArray(value.tags) &&
+  value.tags.every(isTopicTag) &&
+  typeof value.createdAtUtc === 'string' &&
+  (value.updatedAtUtc === null || typeof value.updatedAtUtc === 'string') &&
+  (value.publishedAtUtc === null || typeof value.publishedAtUtc === 'string') &&
+  typeof value.isHiddenByModerator === 'boolean' &&
+  typeof value.isDiscussionLocked === 'boolean'
+
+export const getMyTopics = async (
+  filters: TopicFilters,
+  signal?: AbortSignal,
+): Promise<OwnTopicPage> => {
+  const params = new URLSearchParams()
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') params.set(key, String(value))
+  })
+  const data: unknown = await apiRequest(`/api/topics/mine?${params.toString()}`, { signal })
+  if (
+    !isRecord(data) ||
+    !Array.isArray(data.items) ||
+    !data.items.every(isOwnTopicSummary) ||
+    typeof data.page !== 'number' ||
+    typeof data.pageSize !== 'number' ||
+    typeof data.totalItems !== 'number' ||
+    typeof data.totalPages !== 'number'
+  ) {
+    throw new ApiError(500, 'Dữ liệu nội dung cá nhân từ API không đúng định dạng.')
+  }
+
+  return data as unknown as OwnTopicPage
 }
