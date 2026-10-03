@@ -10,6 +10,7 @@ import { DiscussionSection } from '../components/discussions/DiscussionSection'
 import { UsefulStarButton } from '../components/interactions/UsefulStarButton'
 import { BookmarkButton } from '../components/interactions/BookmarkButton'
 import { ReportAction } from '../components/reports/ReportAction'
+import { TopicEngagementBar } from '../components/interactions/TopicEngagementBar'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -111,6 +112,13 @@ export const TopicDetailPage = () => {
                 <UsefulStarButton topicId={topic.id} />
                 <BookmarkButton topicId={topic.id} />
                 <ReportAction targetId={topic.id} targetType="topic" />
+              </div>
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <TopicEngagementBar
+                  initial={{ viewCount: topic.viewCount, shareCount: topic.shareCount }}
+                  title={topic.title}
+                  topicId={topic.id}
+                />
               </div>
             </footer>
           </article>

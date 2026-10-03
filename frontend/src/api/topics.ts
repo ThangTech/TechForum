@@ -19,6 +19,8 @@ export interface TopicSummary {
   publishedAtUtc: string
   isPinned: boolean
   isDiscussionLocked: boolean
+  viewCount: number
+  shareCount: number
 }
 
 export interface TopicDetail extends TopicSummary {
@@ -119,7 +121,9 @@ export const isTopicSummary = (value: unknown): value is TopicSummary => {
     value.tags.every(isTopicTag) &&
     typeof value.publishedAtUtc === 'string' &&
     typeof value.isPinned === 'boolean' &&
-    typeof value.isDiscussionLocked === 'boolean'
+    typeof value.isDiscussionLocked === 'boolean' &&
+    typeof value.viewCount === 'number' &&
+    typeof value.shareCount === 'number'
   )
 }
 
