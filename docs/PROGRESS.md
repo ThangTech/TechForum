@@ -74,7 +74,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Chi tiết nội dung chỉ trả nội dung công khai.
 - [x] Hồ sơ tác giả công khai không trả email, có tổng nội dung công khai và
   tối đa 5 nội dung gần nhất.
-- Sidebar câu hỏi mới/nhiều trả lời dùng dữ liệu và khoảng thời gian thật.
+- [x] Sidebar câu hỏi mới/nhiều trả lời dùng dữ liệu thật; nhóm nhiều phản hồi
+  ghi rõ chu kỳ 30 ngày và chỉ đếm câu trả lời công khai.
 
 ### P3 — Soạn và quản lý nội dung
 

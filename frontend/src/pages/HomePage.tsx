@@ -7,6 +7,8 @@ import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../components/TopicFeed'
 import { HomeTour } from '../components/tour/HomeTour'
+import { getQuestionHighlights, type QuestionHighlights } from '../api/questionHighlights'
+import { QuestionHighlightsPanel } from '../components/questions/QuestionHighlightsPanel'
 
 interface HomePageProps {
   fixedType?: 'Article' | 'Question'
@@ -45,6 +47,22 @@ export const HomePage = ({
   const [topicError, setTopicError] = useState<string | null>(null)
   const [topicRequestVersion, setTopicRequestVersion] = useState(0)
   const [searchKeyword, setSearchKeyword] = useState(keyword)
+  const [questionHighlights, setQuestionHighlights] = useState<QuestionHighlights | null>(null)
+  const [areHighlightsLoading, setAreHighlightsLoading] = useState(true)
+  const [highlightsError, setHighlightsError] = useState<string | null>(null)
+  const [highlightsVersion, setHighlightsVersion] = useState(0)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    getQuestionHighlights(controller.signal)
+      .then(setQuestionHighlights)
+      .catch((requestError: unknown) => {
+        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+        setHighlightsError(requestError instanceof Error ? requestError.message : 'Không thể tải câu hỏi nổi bật.')
+      })
+      .finally(() => { if (!controller.signal.aborted) setAreHighlightsLoading(false) })
+    return () => controller.abort()
+  }, [highlightsVersion])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -169,6 +187,16 @@ export const HomePage = ({
               error={tagError}
               isLoading={areTagsLoading}
               onRetry={() => setTagRequestVersion((version) => version + 1)}
+            />
+            <QuestionHighlightsPanel
+              data={questionHighlights}
+              error={highlightsError}
+              isLoading={areHighlightsLoading}
+              onRetry={() => {
+                setAreHighlightsLoading(true)
+                setHighlightsError(null)
+                setHighlightsVersion((version) => version + 1)
+              }}
             />
           </aside>
         </div>
