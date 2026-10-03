@@ -20,7 +20,7 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### Chưa có
 
-- [ ] Hạ tầng test tự động backend/frontend.
+- [x] Backend có 4 test service xác thực; frontend chưa có test tự động.
 - [ ] Xác thực, phân quyền, phiên và tài khoản bị khóa.
 - [ ] Bài viết/câu hỏi, thẻ, tìm kiếm và phân trang.
 - [ ] Soạn thảo, upload media và làm sạch HTML.
@@ -34,8 +34,6 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - `RULE.md`: hướng dẫn dự án, không tự stage nếu chưa được yêu cầu.
 - `backend/TechForum.Api.sln`: solution local, chưa xác định có muốn commit.
 - `backend/WeatherForecast.cs`: file demo chưa dùng, không tự xóa.
-- `frontend/src/assets/background.png`: ảnh người dùng cung cấp cho trang xác thực;
-  chỉ stage cùng chức năng login/register.
 
 ## Kế hoạch và tiêu chí nghiệm thu
 
@@ -50,17 +48,17 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
    - [x] Có migration, 4 test service và request thật qua SQL Server.
 
 2. **Frontend xác thực và bảo vệ route**
-   - Router, Auth context/service và API client dùng chung.
-   - Login/register dùng `background.png`, responsive, tiếng Việt.
-   - Loading, validation, lỗi API và chống submit lặp.
-   - `returnUrl` chỉ chấp nhận đường dẫn nội bộ; không tự gửi lại thao tác ghi.
-   - Modal yêu cầu đăng nhập dùng chung có Đăng nhập, Đăng ký, Để sau.
-   - Header phân biệt khách/thành viên bằng dữ liệu phiên thật.
+   - [x] Router, Auth context/service và API client dùng chung.
+   - [x] Login/register dùng `background.png`, responsive, tiếng Việt.
+   - [x] Loading, validation, lỗi API và chống submit lặp.
+   - [x] `returnUrl` chỉ chấp nhận đường dẫn nội bộ; không tự gửi lại thao tác ghi.
+   - [x] Modal yêu cầu đăng nhập dùng chung có Đăng nhập, Đăng ký, Để sau.
+   - [x] Header phân biệt khách/thành viên bằng dữ liệu phiên thật.
 
 3. **Astryx thử nghiệm trước khi áp dụng rộng**
-   - Core/theme/peer dependency tương thích React và build Vite.
-   - Dùng component thật cho ít nhất button/input hoặc dialog trong P1.
-   - Không đoán prop: đọc tài liệu CLI của phiên bản đã cài.
+   - [x] Core/theme/peer dependency tương thích React và build Vite.
+   - [x] Dùng Button, TextInput, CheckboxInput và Dialog thật trong P1.
+   - [x] Không đoán prop: đọc tài liệu CLI của phiên bản 0.6.5 đã cài.
 
 ### P2 — Nội dung công khai
 
@@ -125,3 +123,31 @@ TypeScript + Vite build: passed.
 Astryx 0.6.5 được xác minh từ registry chính thức: yêu cầu React/ReactDOM >=19,
 `@stylexjs/stylex` ^0.19.0 và Node >=22.13; repo hiện đáp ứng React 19.2 và
 Node 22.19. Tài liệu chính thức: <https://astryx.atmeta.com/components>.
+
+## Kiểm chứng P1
+
+```text
+dotnet build backend/TechForum.Api.csproj --no-restore
+Build succeeded, 0 warnings, 0 errors.
+
+dotnet test backend.Tests/TechForum.Api.Tests.csproj --no-restore
+Passed: 4, Failed: 0, Skipped: 0.
+
+dotnet format backend/TechForum.Api.csproj --verify-no-changes --no-restore
+Passed, không có file cần format.
+
+npm run lint
+eslint: passed.
+
+npm run build
+TypeScript + Vite build: passed, 2106 modules transformed.
+```
+
+Kiểm thử tích hợp trình duyệt với API và SQL Server thật:
+
+- Khách tải được 3 chuyên mục; khi API dừng thấy lỗi kết nối và `Thử lại` tải lại thành công.
+- Route `/tai-khoan` mở modal đăng nhập; đăng ký giữ `returnUrl=/tai-khoan`.
+- Đăng nhập thành công về `/tai-khoan`, hiển thị đúng tên/email/role từ `/api/auth/me`.
+- Đăng xuất xóa phiên và về trang chủ; lỗi thứ tự authentication/CSRF được phát hiện và sửa.
+- Đăng ký trùng email hiển thị nội dung tiếng Việt từ `application/problem+json`.
+- Trang đăng nhập được kiểm tra trực quan ở desktop và viewport mobile 390×844.
