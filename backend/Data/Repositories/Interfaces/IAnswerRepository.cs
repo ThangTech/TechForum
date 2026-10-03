@@ -16,4 +16,12 @@ public interface IAnswerRepository
         int topicId,
         int answerId,
         CancellationToken cancellationToken);
+
+    Task<Answer?> GetOwnedByIdAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CancellationToken cancellationToken);
+
+    Task SaveChangesAsync(CancellationToken cancellationToken);
 }

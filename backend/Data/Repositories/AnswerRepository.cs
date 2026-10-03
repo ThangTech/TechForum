@@ -50,4 +50,22 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
                 !answer.IsDeleted &&
                 !answer.IsHiddenByModerator,
                 cancellationToken);
+
+    public Task<Answer?> GetOwnedByIdAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CancellationToken cancellationToken) =>
+        dbContext.Answers
+            .Include(answer => answer.Author)
+            .Include(answer => answer.Topic)
+            .SingleOrDefaultAsync(answer =>
+                answer.Id == answerId &&
+                answer.TopicId == topicId &&
+                answer.AuthorId == authorId &&
+                !answer.IsDeleted,
+                cancellationToken);
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        dbContext.SaveChangesAsync(cancellationToken);
 }

@@ -108,6 +108,52 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         };
     }
 
+    [Authorize]
+    [HttpPut("{answerId:int}")]
+    public async Task<ActionResult<AnswerDto>> Update(
+        int topicId,
+        int answerId,
+        [FromBody] CreateAnswerRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await answerService.UpdateAsync(
+            topicId, answerId, GetUserId(), request, cancellationToken);
+        return result.Failure switch
+        {
+            UpdateAnswerFailure.None => Ok(result.Answer),
+            UpdateAnswerFailure.NotFound => NotFound(new ProblemDetails
+            {
+                Status = 404,
+                Title = "Không tìm thấy câu trả lời",
+                Detail = result.Message
+            }),
+            UpdateAnswerFailure.Validation => BadRequest(new ValidationProblemDetails(
+                new Dictionary<string, string[]> { [result.Field ?? "bodyHtml"] = [result.Message ?? "Câu trả lời chưa hợp lệ."] })),
+            _ => throw new InvalidOperationException("Trạng thái sửa câu trả lời không được hỗ trợ.")
+        };
+    }
+
+    [Authorize]
+    [HttpDelete("{answerId:int}")]
+    public async Task<IActionResult> Delete(
+        int topicId,
+        int answerId,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await answerService.DeleteAsync(
+            topicId, answerId, GetUserId(), cancellationToken);
+        return deleted ? NoContent() : NotFound(new ProblemDetails
+        {
+            Status = 404,
+            Title = "Không tìm thấy câu trả lời",
+            Detail = "Câu trả lời không tồn tại hoặc không thuộc tài khoản của bạn."
+        });
+    }
+
+    private string GetUserId() =>
+        User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+
     private static ValidationProblemDetails? Validate(AnswerQuery query)
     {
         var errors = new Dictionary<string, string[]>();

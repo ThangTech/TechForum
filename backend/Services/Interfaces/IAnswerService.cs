@@ -20,4 +20,17 @@ public interface IAnswerService
         int answerId,
         string authorId,
         CancellationToken cancellationToken);
+
+    Task<UpdateAnswerResult> UpdateAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CreateAnswerRequest request,
+        CancellationToken cancellationToken);
+
+    Task<bool> DeleteAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CancellationToken cancellationToken);
 }

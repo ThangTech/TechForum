@@ -123,6 +123,46 @@ public sealed partial class AnswerService(
         return AcceptAnswerResult.Success(MapAnswer(answer, answer.Id));
     }
 
+    public async Task<UpdateAnswerResult> UpdateAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CreateAnswerRequest request,
+        CancellationToken cancellationToken)
+    {
+        var answer = await answerRepository.GetOwnedByIdAsync(
+            topicId, answerId, authorId, cancellationToken);
+        if (answer is null)
+            return UpdateAnswerResult.Failed(UpdateAnswerFailure.NotFound, "Không tìm thấy câu trả lời thuộc tài khoản của bạn.");
+
+        if (request.BodyHtml is null || request.BodyHtml.Length > 20_000)
+            return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.", "bodyHtml");
+        var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
+        if (!HasMeaningfulContent(sanitizedBody))
+            return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời phải có nội dung văn bản hợp lệ.", "bodyHtml");
+
+        answer.BodyHtml = sanitizedBody;
+        answer.UpdatedAtUtc = timeProvider.GetUtcNow();
+        await answerRepository.SaveChangesAsync(cancellationToken);
+        return UpdateAnswerResult.Success(MapAnswer(answer, answer.Topic.AcceptedAnswerId));
+    }
+
+    public async Task<bool> DeleteAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CancellationToken cancellationToken)
+    {
+        var answer = await answerRepository.GetOwnedByIdAsync(
+            topicId, answerId, authorId, cancellationToken);
+        if (answer is null) return false;
+        answer.IsDeleted = true;
+        answer.UpdatedAtUtc = timeProvider.GetUtcNow();
+        if (answer.Topic.AcceptedAnswerId == answer.Id) answer.Topic.AcceptedAnswerId = null;
+        await answerRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private static AnswerDto MapAnswer(Answer answer, int? acceptedAnswerId) => new(
         answer.Id,
         answer.TopicId,
