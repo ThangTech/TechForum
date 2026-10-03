@@ -27,9 +27,13 @@ Các route chính:
 - `/register`: đăng ký thành viên và tự tạo phiên.
 - `/account`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
 - `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
-- `/topics/:id`, `/members/:userId`: chi tiết và hồ sơ tác giả công khai.
-- `/write`: route riêng tư dùng Froala để lưu bản nháp hoặc xuất bản. Ảnh/video
-  chưa bật cho tới khi endpoint upload backend hoàn tất.
+- `/topics/:id`, `/members/:userId`: chi tiết, câu trả lời và hồ sơ tác giả công khai.
+- `/write`: route riêng tư dùng Froala để lưu bản nháp hoặc xuất bản, hỗ trợ
+  upload ảnh/video qua TechForum API.
+
+Khu vực thảo luận gọi API thật tại `/api/topics/{topicId}/answers`. Khách đọc
+được câu trả lời và được yêu cầu đăng nhập khi muốn phản hồi; thành viên có thể
+gửi văn bản, còn chủ đề bị khóa không hiển thị form gửi.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
 `credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.

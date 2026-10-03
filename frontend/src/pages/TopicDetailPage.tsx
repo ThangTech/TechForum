@@ -6,6 +6,7 @@ import { toDisplayMediaHtml } from '../api/media'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
 import { appRoutes } from '../appRoutes'
+import { DiscussionSection } from '../components/discussions/DiscussionSection'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -103,12 +104,15 @@ export const TopicDetailPage = () => {
               dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(topic.bodyHtml) }}
             />
 
-            <footer className="border-t border-slate-200 bg-slate-50 px-6 py-5 text-sm text-slate-600 sm:px-8">
-              {topic.isDiscussionLocked
-                ? 'Thảo luận đã bị khóa và không nhận phản hồi mới.'
-                : 'Khu vực trả lời và thảo luận sẽ được bổ sung ở P4.'}
-            </footer>
           </article>
+        )}
+
+        {!isLoading && !error && topic && (
+          <DiscussionSection
+            isLocked={topic.isDiscussionLocked}
+            key={topic.id}
+            topicId={topic.id}
+          />
         )}
       </div>
     </main>
