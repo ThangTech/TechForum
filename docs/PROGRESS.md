@@ -96,6 +96,9 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Frontend có route riêng tư `/viet-bai`, tải chuyên mục/thẻ thật, hỗ trợ lưu
   nháp/xuất bản và hiển thị lỗi field từ API; Froala được lazy-load để không làm
   tăng bundle trang công khai.
+- [x] Froala tải ảnh/video vào API thật với cookie + CSRF, theo dõi media ID,
+  đổi URL tuyệt đối về `path` nội bộ trước khi lưu và bỏ media khỏi bài qua
+  endpoint xóa; file bị bỏ dở vẫn có tác vụ dọn nền.
 - [x] `GET /api/topics/mine` và route riêng tư `/noi-dung-cua-toi` phân trang,
   tìm kiếm/lọc loại trên URL; hiển thị bản nháp, trạng thái ẩn và khóa thảo luận.
 
@@ -224,3 +227,10 @@ Server local. Upload trả `201` với JSON
 GET file trả 200 `image/png` và `nosniff`; `DELETE /api/media/{id}` trả 204 và
 GET lại file trả 404. File/bản ghi media thử nghiệm đã được xóa. Backend đạt
 19/19 test, build/format sạch và EF báo không còn model change chưa có migration.
+
+Contract upload cuối cùng đã gọi lại với SQL Server thật:
+`{ "id": "6c30f134-53a8-4e82-b201-7e665df3bc8f", "link": "http://localhost:5045/media/images/6c30f13453a84e82b2017e665df3bc8f.png", "path": "/media/images/6c30f13453a84e82b2017e665df3bc8f.png" }`;
+DELETE trả 204 và tài khoản/file test đã được dọn. Frontend lint/build đạt với
+2.170 module; bundle Froala lazy khoảng 1,98 MB (549 KB gzip), vẫn có cảnh báo
+chunk lớn. Trình duyệt xác nhận khách vào `/viet-bai` thấy modal đăng nhập và
+không có console error; luồng upload thành viên trên UI còn cần kiểm thử thủ công.

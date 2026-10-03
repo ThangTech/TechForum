@@ -40,7 +40,7 @@ const toApiError = (response: Response, problem: ProblemDetails | null) => {
   return new ApiError(response.status, message, problem?.errors)
 }
 
-const getAntiforgeryToken = async (): Promise<string> => {
+export const getAntiforgeryToken = async (): Promise<string> => {
   const response = await fetch(`${apiBaseUrl}/api/auth/antiforgery-token`, {
     credentials: 'include',
     headers: { Accept: 'application/json' },
@@ -63,7 +63,7 @@ export const apiRequest = async <T>(path: string, init: RequestInit = {}): Promi
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')
 
-  if (init.body != null && !headers.has('Content-Type')) {
+  if (init.body != null && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 

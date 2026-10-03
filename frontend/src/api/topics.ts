@@ -50,6 +50,7 @@ export interface CreateTopicInput {
   type: TopicType
   categoryId: number
   tagIds: number[]
+  mediaIds: string[]
   publish: boolean
 }
 

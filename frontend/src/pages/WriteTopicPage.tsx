@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError } from '../api/client'
 import { getCategories, type Category } from '../api/categories'
 import { getTags, type Tag } from '../api/tags'
+import { toStoredMediaHtml, type UploadedMedia } from '../api/media'
 import { createTopic, type OwnTopic, type TopicType } from '../api/topics'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicEditorField } from '../components/topics/TopicEditorField'
@@ -22,6 +23,7 @@ export const WriteTopicPage = () => {
   const [type, setType] = useState<TopicType>('article')
   const [categoryId, setCategoryId] = useState('')
   const [tagIds, setTagIds] = useState<number[]>([])
+  const [media, setMedia] = useState<UploadedMedia[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
@@ -70,10 +72,11 @@ export const WriteTopicPage = () => {
       setCreatedTopic(await createTopic({
         title,
         summary,
-        bodyHtml,
+        bodyHtml: toStoredMediaHtml(bodyHtml, media),
         type,
         categoryId: Number(categoryId),
         tagIds,
+        mediaIds: media.map((item) => item.id),
         publish,
       }))
     } catch (requestError) {
@@ -103,7 +106,7 @@ export const WriteTopicPage = () => {
         <p className="text-xs font-bold uppercase tracking-widest text-blue-700">P3 · Soạn nội dung</p>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Viết cho cộng đồng</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Ảnh và video tạm thời chưa khả dụng cho đến khi endpoint upload an toàn hoàn tất.
+          Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
         </p>
         {!hasFroalaKey && (
           <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -138,7 +141,12 @@ export const WriteTopicPage = () => {
               title={title}
               type={type}
             />
-            <TopicEditorField error={fieldErrors.bodyHtml?.[0]} onChange={setBodyHtml} value={bodyHtml} />
+            <TopicEditorField
+              error={fieldErrors.bodyHtml?.[0] || fieldErrors.mediaIds?.[0]}
+              onChange={setBodyHtml}
+              onMediaChange={setMedia}
+              value={bodyHtml}
+            />
             <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-5">
               <Button isDisabled={isSubmitting} label={isSubmitting ? 'Đang lưu…' : 'Lưu bản nháp'} type="submit" variant="secondary" />
               <Button isDisabled={isSubmitting} label={isSubmitting ? 'Đang xuất bản…' : 'Xuất bản'} onClick={() => void submit(true)} type="button" variant="primary" />
