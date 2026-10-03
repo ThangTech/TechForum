@@ -87,6 +87,9 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   backend tự lấy tác giả từ phiên, kiểm tra chuyên mục/thẻ và làm sạch HTML.
 - [ ] Media chưa được sanitizer cho phép cho tới khi endpoint upload riêng hoàn tất;
   API hiện loại thẻ ảnh/video thay vì chấp nhận URL ngoài.
+- [x] Frontend có route riêng tư `/viet-bai`, tải chuyên mục/thẻ thật, hỗ trợ lưu
+  nháp/xuất bản và hiển thị lỗi field từ API; Froala được lazy-load để không làm
+  tăng bundle trang công khai.
 
 ### P4 — Thảo luận và tương tác
 
@@ -192,3 +195,8 @@ API tạo nội dung P3 đã được gọi với cookie thành viên, CSRF toke
 thật. Bản nháp mã `3` trả `201`, `bodyHtml` đã loại `onclick`/`script`, trạng thái
 `draft`, và endpoint công khai trả `404` cho bản nháp. Bộ test backend sau bước
 này: Passed 12, Failed 0, Skipped 0.
+
+Frontend P3: `npm run lint` và `npm run build` đạt (2.120 module); `npm audit`
+không phát hiện lỗ hổng. Chunk Froala lazy-load khoảng 1,98 MB (548 KB gzip) vẫn
+có cảnh báo kích thước từ Vite và cần theo dõi, nhưng bundle chính còn khoảng
+488 KB. Chưa chạy luồng soạn trên trình duyệt theo yêu cầu tạm hoãn kiểm thử.

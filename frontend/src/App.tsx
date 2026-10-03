@@ -1,4 +1,5 @@
 import './App.css'
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './auth/ProtectedRoute'
@@ -9,6 +10,10 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
+
+const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
+  default: module.WriteTopicPage,
+})))
 
 const App = () => {
   return (
@@ -27,6 +32,16 @@ const App = () => {
             />
             <Route path="noi-dung/:id" element={<TopicDetailPage />} />
             <Route path="thanh-vien/:userId" element={<PublicProfilePage />} />
+            <Route
+              path="viet-bai"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="route-status">Đang tải trình soạn thảo…</div>}>
+                    <WriteTopicPage />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="tai-khoan"
               element={

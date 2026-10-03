@@ -43,6 +43,30 @@ export interface TopicFilters {
   tagId?: number
 }
 
+export interface CreateTopicInput {
+  title: string
+  summary: string
+  bodyHtml: string
+  type: TopicType
+  categoryId: number
+  tagIds: number[]
+  publish: boolean
+}
+
+export interface OwnTopic {
+  id: number
+  title: string
+  slug: string
+  summary: string
+  bodyHtml: string
+  type: TopicType
+  status: 'draft' | 'published'
+  category: TopicCategory
+  tags: TopicTag[]
+  createdAtUtc: string
+  publishedAtUtc: string | null
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -108,4 +132,33 @@ export const getTopic = async (id: number, signal?: AbortSignal): Promise<TopicD
     throw new ApiError(500, 'Chi tiết nội dung từ API không đúng định dạng.')
   }
   return data as unknown as TopicDetail
+}
+
+export const createTopic = async (input: CreateTopicInput): Promise<OwnTopic> => {
+  const data: unknown = await apiRequest('/api/topics', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  if (
+    !isRecord(data) ||
+    typeof data.id !== 'number' ||
+    typeof data.title !== 'string' ||
+    typeof data.slug !== 'string' ||
+    typeof data.summary !== 'string' ||
+    typeof data.bodyHtml !== 'string' ||
+    (data.type !== 'article' && data.type !== 'question') ||
+    (data.status !== 'draft' && data.status !== 'published') ||
+    !isRecord(data.category) ||
+    typeof data.category.id !== 'number' ||
+    typeof data.category.name !== 'string' ||
+    typeof data.category.slug !== 'string' ||
+    !Array.isArray(data.tags) ||
+    !data.tags.every(isTopicTag) ||
+    typeof data.createdAtUtc !== 'string' ||
+    (data.publishedAtUtc !== null && typeof data.publishedAtUtc !== 'string')
+  ) {
+    throw new ApiError(500, 'Dữ liệu nội dung vừa tạo từ API không đúng định dạng.')
+  }
+
+  return data as unknown as OwnTopic
 }
