@@ -66,7 +66,11 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
             });
         }
 
-        return StatusCode(StatusCodes.Status201Created, result.Media);
+        var media = result.Media!;
+        var absoluteLink = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{media.Path}";
+        return StatusCode(
+            StatusCodes.Status201Created,
+            media with { Link = absoluteLink });
     }
 
     private string GetUserId() =>

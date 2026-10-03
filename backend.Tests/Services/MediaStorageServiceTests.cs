@@ -31,6 +31,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         Assert.NotNull(result.Media);
         Assert.NotEqual(Guid.Empty, result.Media.Id);
         Assert.Matches("^/media/images/[a-f0-9]{32}\\.png$", result.Media.Link);
+        Assert.Equal(result.Media.Link, result.Media.Path);
         var storedName = Path.GetFileName(result.Media.Link);
         Assert.True(File.Exists(Path.Combine(testRoot, "uploads", "images", storedName)));
         Assert.Equal(UserId, Assert.Single(repository.Items).UploaderId);

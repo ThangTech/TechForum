@@ -63,8 +63,10 @@ khi có bước làm sạch HTML phía server.
 Hai endpoint yêu cầu cookie đăng nhập và CSRF header. Backend kiểm tra cả MIME và
 magic bytes, bỏ tên file client và lưu bằng GUID trong `App_Data/uploads` (đã
 ignore Git). Mỗi upload có bản ghi chủ sở hữu trong `MediaAssets`. Contract trả
-về có dạng `{ "id": "guid", "link": "/media/images/{guid}.png" }`; trường
-`link` tương thích contract upload của Froala.
+về có dạng
+`{ "id": "guid", "link": "http://localhost:5045/media/images/{guid}.png", "path": "/media/images/{guid}.png" }`.
+`link` là URL tuyệt đối để Froala hiển thị khi FE/BE khác origin; `path` là đường
+dẫn nội bộ phải được gửi trong HTML khi tạo nội dung.
 
 - `DELETE /api/media/{id}`: chỉ chủ sở hữu được xóa media chưa gắn vào nội dung;
   trả 404 nếu không tồn tại/không thuộc tài khoản và 409 nếu đã được sử dụng.
