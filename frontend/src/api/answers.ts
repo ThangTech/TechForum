@@ -8,6 +8,7 @@ export interface Answer {
   author: TopicAuthor
   createdAtUtc: string
   updatedAtUtc: string | null
+  isAccepted: boolean
 }
 
 export interface AnswerPage {
@@ -30,7 +31,8 @@ const isAnswer = (value: unknown): value is Answer =>
   typeof value.author.id === 'string' &&
   typeof value.author.displayName === 'string' &&
   typeof value.createdAtUtc === 'string' &&
-  (value.updatedAtUtc === null || typeof value.updatedAtUtc === 'string')
+  (value.updatedAtUtc === null || typeof value.updatedAtUtc === 'string') &&
+  typeof value.isAccepted === 'boolean'
 
 const parseAnswer = (data: unknown): Answer => {
   if (!isAnswer(data)) {
@@ -70,4 +72,9 @@ export const createAnswer = async (topicId: number, bodyHtml: string): Promise<A
   parseAnswer(await apiRequest(`/api/topics/${topicId}/answers`, {
     method: 'POST',
     body: JSON.stringify({ bodyHtml }),
+  }))
+
+export const acceptAnswer = async (topicId: number, answerId: number): Promise<Answer> =>
+  parseAnswer(await apiRequest(`/api/topics/${topicId}/answers/${answerId}/accepted`, {
+    method: 'PUT',
   }))

@@ -34,6 +34,8 @@ Các route chính:
 Khu vực thảo luận gọi API thật tại `/api/topics/{topicId}/answers`. Khách đọc
 được câu trả lời và được yêu cầu đăng nhập khi muốn phản hồi; thành viên có thể
 gửi văn bản, còn chủ đề bị khóa không hiển thị form gửi.
+Tác giả của Câu hỏi có thể chọn hoặc thay đổi câu trả lời được chấp nhận ngay
+trong danh sách; Bài viết không hiển thị thao tác này.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
 `credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.

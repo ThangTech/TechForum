@@ -1,6 +1,6 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState } from 'react'
-import { getAnswers, type AnswerPage } from '../../api/answers'
+import { acceptAnswer, getAnswers, type AnswerPage } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { AuthRequiredDialog } from '../AuthRequiredDialog'
@@ -10,12 +10,19 @@ import { AnswerList } from './AnswerList'
 
 interface DiscussionSectionProps {
   isLocked: boolean
+  topicAuthorId: string
   topicId: number
+  topicType: 'article' | 'question'
 }
 
 const PAGE_SIZE = 20
 
-export const DiscussionSection = ({ isLocked, topicId }: DiscussionSectionProps) => {
+export const DiscussionSection = ({
+  isLocked,
+  topicAuthorId,
+  topicId,
+  topicType,
+}: DiscussionSectionProps) => {
   const { user } = useAuth()
   const [data, setData] = useState<AnswerPage | null>(null)
   const [page, setPage] = useState(1)
@@ -24,6 +31,9 @@ export const DiscussionSection = ({ isLocked, topicId }: DiscussionSectionProps)
   const [requestVersion, setRequestVersion] = useState(0)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [acceptingAnswerId, setAcceptingAnswerId] = useState<number | null>(null)
+  const canAcceptAnswers = user?.id === topicAuthorId && topicType === 'question'
 
   useEffect(() => {
     const controller = new AbortController()
@@ -55,6 +65,40 @@ export const DiscussionSection = ({ isLocked, topicId }: DiscussionSectionProps)
     setSuccessMessage('Câu trả lời đã được đăng.')
     setPage(lastPage)
     setRequestVersion((version) => version + 1)
+  }
+
+  const handleAccept = async (answerId: number) => {
+    if (acceptingAnswerId !== null) return
+
+    setActionError(null)
+    setSuccessMessage(null)
+    setAcceptingAnswerId(answerId)
+    try {
+      await acceptAnswer(topicId, answerId)
+      setData((current) => {
+        if (!current) return current
+
+        return {
+          ...current,
+          items: current.items.map((answer) => ({
+            ...answer,
+            isAccepted: answer.id === answerId,
+          })),
+        }
+      })
+      setSuccessMessage('Đã cập nhật câu trả lời được chấp nhận.')
+    } catch (requestError) {
+      if (requestError instanceof ApiError && requestError.status === 401) {
+        setIsAuthDialogOpen(true)
+      }
+      setActionError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Không thể chọn câu trả lời lúc này.',
+      )
+    } finally {
+      setAcceptingAnswerId(null)
+    }
   }
 
   return (
@@ -89,6 +133,11 @@ export const DiscussionSection = ({ isLocked, topicId }: DiscussionSectionProps)
           {successMessage}
         </p>
       )}
+      {actionError && (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {actionError}
+        </p>
+      )}
 
       <div className="mt-5">
         <AsyncStatePanel
@@ -98,7 +147,14 @@ export const DiscussionSection = ({ isLocked, topicId }: DiscussionSectionProps)
           onRetry={() => setRequestVersion((version) => version + 1)}
         />
         {!isLoading && !error && data && (
-          <AnswerList data={data} isLocked={isLocked} onPageChange={setPage} />
+          <AnswerList
+            acceptingAnswerId={acceptingAnswerId}
+            canAcceptAnswers={canAcceptAnswers}
+            data={data}
+            isLocked={isLocked}
+            onAccept={(answerId) => void handleAccept(answerId)}
+            onPageChange={setPage}
+          />
         )}
       </div>
 

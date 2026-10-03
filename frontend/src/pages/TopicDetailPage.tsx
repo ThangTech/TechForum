@@ -111,7 +111,9 @@ export const TopicDetailPage = () => {
           <DiscussionSection
             isLocked={topic.isDiscussionLocked}
             key={topic.id}
+            topicAuthorId={topic.author.id}
             topicId={topic.id}
+            topicType={topic.type}
           />
         )}
       </div>

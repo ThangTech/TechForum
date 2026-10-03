@@ -4,8 +4,11 @@ import type { AnswerPage } from '../../api/answers'
 import { appRoutes } from '../../appRoutes'
 
 interface AnswerListProps {
+  acceptingAnswerId: number | null
+  canAcceptAnswers: boolean
   data: AnswerPage
   isLocked: boolean
+  onAccept: (answerId: number) => void
   onPageChange: (page: number) => void
 }
 
@@ -14,7 +17,14 @@ const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   timeStyle: 'short',
 }).format(new Date(value))
 
-export const AnswerList = ({ data, isLocked, onPageChange }: AnswerListProps) => {
+export const AnswerList = ({
+  acceptingAnswerId,
+  canAcceptAnswers,
+  data,
+  isLocked,
+  onAccept,
+  onPageChange,
+}: AnswerListProps) => {
   if (data.items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
@@ -39,11 +49,27 @@ export const AnswerList = ({ data, isLocked, onPageChange }: AnswerListProps) =>
               </Link>
               <span aria-hidden="true">·</span>
               <time dateTime={answer.createdAtUtc}>{formatDateTime(answer.createdAtUtc)}</time>
+              {answer.isAccepted && (
+                <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
+                  Câu trả lời được chấp nhận
+                </span>
+              )}
             </header>
             <div
               className="mt-4 text-sm leading-7 text-slate-800 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
               dangerouslySetInnerHTML={{ __html: answer.bodyHtml }}
             />
+            {canAcceptAnswers && !answer.isAccepted && (
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <Button
+                  isDisabled={acceptingAnswerId !== null}
+                  isLoading={acceptingAnswerId === answer.id}
+                  label="Chấp nhận câu trả lời"
+                  onClick={() => onAccept(answer.id)}
+                  variant="secondary"
+                />
+              </div>
+            )}
           </article>
         ))}
       </div>
