@@ -77,6 +77,11 @@ dọn sau 24 giờ theo mặc định; cấu hình bằng `Media__OrphanRetentio
 Editor chưa bật media cho tới khi luồng gắn ownership vào chủ đề và allowlist URL
 `/media/` trong sanitizer hoàn tất.
 
+Khi tạo chủ đề, client gửi thêm `mediaIds` chứa ID media thực sự xuất hiện trong
+`bodyHtml`. Backend chỉ nhận media chưa dùng của chính tác giả, đối chiếu URL sau
+khi làm sạch HTML và gắn chúng với chủ đề trong cùng lần `SaveChanges`. Media đã
+gắn không còn được xóa bằng endpoint media riêng.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client

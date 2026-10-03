@@ -11,6 +11,11 @@ public interface IMediaAssetRepository
         string uploaderId,
         CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<MediaAsset>> GetOwnedUnattachedByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        string uploaderId,
+        CancellationToken cancellationToken);
+
     Task<IReadOnlyList<MediaAsset>> GetOrphansOlderThanAsync(
         DateTimeOffset threshold,
         int take,

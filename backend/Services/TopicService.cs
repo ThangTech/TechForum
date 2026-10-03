@@ -11,6 +11,7 @@ namespace TechForum.Api.Services;
 
 public sealed partial class TopicService(
     ITopicRepository topicRepository,
+    IMediaAssetRepository mediaAssetRepository,
     IContentSanitizer contentSanitizer,
     TimeProvider timeProvider) : ITopicService
 {
@@ -122,6 +123,39 @@ public sealed partial class TopicService(
                 "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
         }
 
+        var mediaIds = (request.MediaIds ?? []).Distinct().ToArray();
+        if (mediaIds.Length > 20 || mediaIds.Any(id => id == Guid.Empty))
+        {
+            return CreateTopicResult.ValidationError(
+                "mediaIds",
+                "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
+        }
+
+        var mediaAssets = await mediaAssetRepository.GetOwnedUnattachedByIdsAsync(
+            mediaIds,
+            authorId,
+            cancellationToken);
+        if (mediaAssets.Count != mediaIds.Length)
+        {
+            return CreateTopicResult.ValidationError(
+                "mediaIds",
+                "Một hoặc nhiều media không tồn tại, đã được sử dụng hoặc không thuộc tài khoản này.");
+        }
+
+        var embeddedMediaUrls = MediaUrl().Matches(sanitizedBody)
+            .Select(match => match.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (embeddedMediaUrls.Length != mediaAssets.Count ||
+            mediaAssets.Any(asset => !embeddedMediaUrls.Contains(
+                asset.PublicUrl,
+                StringComparer.OrdinalIgnoreCase)))
+        {
+            return CreateTopicResult.ValidationError(
+                "mediaIds",
+                "Danh sách media không khớp với ảnh hoặc video trong nội dung.");
+        }
+
         var slug = await CreateUniqueSlugAsync(title, cancellationToken);
         var now = timeProvider.GetUtcNow();
         var topic = new Topic
@@ -136,7 +170,8 @@ public sealed partial class TopicService(
             AuthorId = authorId,
             CreatedAtUtc = now,
             PublishedAtUtc = request.Publish ? now : null,
-            TopicTags = tags.Select(tag => new TopicTag { TagId = tag.Id }).ToList()
+            TopicTags = tags.Select(tag => new TopicTag { TagId = tag.Id }).ToList(),
+            MediaAssets = mediaAssets.ToList()
         };
 
         await topicRepository.AddAsync(topic, cancellationToken);
@@ -194,7 +229,7 @@ public sealed partial class TopicService(
     private static bool HasMeaningfulContent(string html)
     {
         var text = WebUtility.HtmlDecode(HtmlTags().Replace(html, string.Empty)).Trim();
-        return !string.IsNullOrWhiteSpace(text);
+        return !string.IsNullOrWhiteSpace(text) || MediaUrl().IsMatch(html);
     }
 
     private static bool TryParseType(string? value, out TopicType type)
@@ -220,6 +255,9 @@ public sealed partial class TopicService(
 
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTags();
+
+    [GeneratedRegex(@"/media/(?:images|videos)/[a-f0-9]{32}\.(?:png|jpg|gif|webp|mp4|webm)", RegexOptions.IgnoreCase)]
+    private static partial Regex MediaUrl();
 
     private static TopicSummaryDto MapSummary(Topic topic) => new(
         topic.Id,

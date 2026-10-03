@@ -28,20 +28,22 @@ public sealed class ContentSanitizerTests
     }
 
     [Fact]
-    public void Sanitize_PreservesTextAndCodeButRemovesMediaUntilUploadIsAvailable()
+    public void Sanitize_PreservesInternalMediaAndRejectsExternalMediaUrls()
     {
         const string html = """
             <h2>Tiêu đề</h2>
             <pre><code class="language-csharp">var answer = 42;</code></pre>
-            <img src="https://localhost/uploads/image.png" alt="Mô tả">
-            <video controls src="https://localhost/uploads/video.mp4"></video>
+            <img src="/media/images/0123456789abcdef0123456789abcdef.png" alt="Mô tả">
+            <video controls src="/media/videos/0123456789abcdef0123456789abcdef.mp4"></video>
+            <img src="https://evil.example/image.png" alt="Ảnh ngoài">
             """;
 
         var result = sanitizer.Sanitize(html);
 
         Assert.Contains("<h2>Tiêu đề</h2>", result);
         Assert.Contains("<code class=\"language-csharp\">", result);
-        Assert.DoesNotContain("<img", result, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("<video", result, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/media/images/0123456789abcdef0123456789abcdef.png", result);
+        Assert.Contains("/media/videos/0123456789abcdef0123456789abcdef.mp4", result);
+        Assert.DoesNotContain("https://evil.example", result, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -88,8 +88,9 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   handler, URI `javascript:`/`data:`; API gọi sanitizer trước khi lưu nội dung.
 - [x] Thành viên có thể tạo bản nháp hoặc xuất bản bài viết/câu hỏi qua API;
   backend tự lấy tác giả từ phiên, kiểm tra chuyên mục/thẻ và làm sạch HTML.
-- [ ] Media chưa được sanitizer cho phép cho tới khi endpoint upload riêng hoàn tất;
-  API hiện loại thẻ ảnh/video thay vì chấp nhận URL ngoài.
+- [x] Sanitizer chỉ cho phép media từ URL nội bộ `/media/images` và
+  `/media/videos`; API đồng thời đối
+  chiếu `mediaIds` với ownership trước khi gắn vào chủ đề.
 - [x] Endpoint ảnh/video có auth+CSRF, giới hạn cấu hình, kiểm tra MIME và magic
   bytes, tên GUID, thư mục ignore Git và static response `nosniff`.
 - [x] Frontend có route riêng tư `/viet-bai`, tải chuyên mục/thẻ thật, hỗ trợ lưu

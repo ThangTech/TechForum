@@ -19,6 +19,17 @@ public sealed class MediaAssetRepository(TechForumDbContext dbContext) : IMediaA
             item => item.Id == id && item.UploaderId == uploaderId,
             cancellationToken);
 
+    public async Task<IReadOnlyList<MediaAsset>> GetOwnedUnattachedByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        string uploaderId,
+        CancellationToken cancellationToken) =>
+        await dbContext.MediaAssets
+            .Where(item =>
+                ids.Contains(item.Id) &&
+                item.UploaderId == uploaderId &&
+                item.TopicId == null)
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<MediaAsset>> GetOrphansOlderThanAsync(
         DateTimeOffset threshold,
         int take,

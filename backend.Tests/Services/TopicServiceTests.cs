@@ -86,6 +86,7 @@ public sealed class TopicServiceTests
             "article",
             2,
             [4],
+            [],
             true);
 
         var result = await service.CreateAsync("member-a", request, CancellationToken.None);
@@ -111,6 +112,7 @@ public sealed class TopicServiceTests
             "<p>Nội dung hợp lệ.</p>",
             "question",
             999,
+            [],
             [],
             false);
 
@@ -153,8 +155,73 @@ public sealed class TopicServiceTests
         };
     }
 
-    private static TopicService CreateService(FakeTopicRepository repository) =>
-        new(repository, new ContentSanitizer(), TimeProvider.System);
+    [Fact]
+    public async Task CreateAsync_WithOwnedMedia_AttachesMatchingAsset()
+    {
+        var mediaId = Guid.NewGuid();
+        var media = new MediaAsset
+        {
+            Id = mediaId,
+            UploaderId = "member-a",
+            RelativePath = $"images/{mediaId:N}.png",
+            PublicUrl = $"/media/images/{mediaId:N}.png",
+            ContentType = "image/png",
+            Length = 100,
+            CreatedAtUtc = DateTimeOffset.UtcNow
+        };
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+        };
+        var mediaRepository = new FakeMediaAssetRepository { Items = [media] };
+        var service = CreateService(repository, mediaRepository);
+        var request = new CreateTopicRequest(
+            "Bài viết có ảnh hợp lệ",
+            "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
+            $"<p>Nội dung có ảnh.</p><img src=\"{media.PublicUrl}\" alt=\"Ảnh\">",
+            "article",
+            2,
+            [],
+            [mediaId],
+            false);
+
+        var result = await service.CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Same(media, Assert.Single(repository.AddedTopic!.MediaAssets));
+        Assert.Contains(media.PublicUrl, result.Topic!.BodyHtml);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithMediaFromDifferentOwner_ReturnsFieldError()
+    {
+        var mediaId = Guid.NewGuid();
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+        };
+        var service = CreateService(repository, new FakeMediaAssetRepository());
+        var request = new CreateTopicRequest(
+            "Bài viết dùng ảnh không hợp lệ",
+            "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
+            $"<p>Nội dung.</p><img src=\"/media/images/{mediaId:N}.png\">",
+            "article",
+            2,
+            [],
+            [mediaId],
+            false);
+
+        var result = await service.CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("mediaIds", result.Errors.Keys);
+        Assert.Null(repository.AddedTopic);
+    }
+
+    private static TopicService CreateService(
+        FakeTopicRepository repository,
+        FakeMediaAssetRepository? mediaRepository = null) =>
+        new(repository, mediaRepository ?? new FakeMediaAssetRepository(), new ContentSanitizer(), TimeProvider.System);
 
     private sealed class FakeTopicRepository : ITopicRepository
     {
@@ -203,5 +270,38 @@ public sealed class TopicServiceTests
             AddedTopic = topic;
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FakeMediaAssetRepository : IMediaAssetRepository
+    {
+        public IReadOnlyList<MediaAsset> Items { get; init; } = [];
+
+        public Task AddAsync(MediaAsset mediaAsset, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
+
+        public Task<MediaAsset?> GetOwnedAsync(
+            Guid id,
+            string uploaderId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(Items.SingleOrDefault(item =>
+                item.Id == id && item.UploaderId == uploaderId));
+
+        public Task<IReadOnlyList<MediaAsset>> GetOwnedUnattachedByIdsAsync(
+            IReadOnlyCollection<Guid> ids,
+            string uploaderId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<MediaAsset>>(Items.Where(item =>
+                ids.Contains(item.Id) &&
+                item.UploaderId == uploaderId &&
+                item.TopicId == null).ToList());
+
+        public Task<IReadOnlyList<MediaAsset>> GetOrphansOlderThanAsync(
+            DateTimeOffset threshold,
+            int take,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<MediaAsset>>([]);
+
+        public Task DeleteAsync(MediaAsset mediaAsset, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
     }
 }

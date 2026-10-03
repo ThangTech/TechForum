@@ -7,4 +7,5 @@ public sealed record CreateTopicRequest(
     string? Type,
     int CategoryId,
     IReadOnlyList<int>? TagIds,
+    IReadOnlyList<Guid>? MediaIds,
     bool Publish);
