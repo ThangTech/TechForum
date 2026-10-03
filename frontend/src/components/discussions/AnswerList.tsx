@@ -2,6 +2,7 @@ import { Button } from '@astryxdesign/core/Button'
 import { Link } from 'react-router-dom'
 import type { AnswerPage } from '../../api/answers'
 import { appRoutes } from '../../appRoutes'
+import { ReportAction } from '../reports/ReportAction'
 
 interface AnswerListProps {
   acceptingAnswerId: number | null
@@ -59,8 +60,8 @@ export const AnswerList = ({
               className="mt-4 text-sm leading-7 text-slate-800 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
               dangerouslySetInnerHTML={{ __html: answer.bodyHtml }}
             />
-            {canAcceptAnswers && !answer.isAccepted && (
-              <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+              {canAcceptAnswers && !answer.isAccepted && (
                 <Button
                   isDisabled={acceptingAnswerId !== null}
                   isLoading={acceptingAnswerId === answer.id}
@@ -68,8 +69,9 @@ export const AnswerList = ({
                   onClick={() => onAccept(answer.id)}
                   variant="secondary"
                 />
-              </div>
-            )}
+              )}
+              <ReportAction targetId={answer.id} targetType="answer" />
+            </div>
           </article>
         ))}
       </div>

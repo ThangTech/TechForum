@@ -9,6 +9,7 @@ import { appRoutes } from '../appRoutes'
 import { DiscussionSection } from '../components/discussions/DiscussionSection'
 import { UsefulStarButton } from '../components/interactions/UsefulStarButton'
 import { BookmarkButton } from '../components/interactions/BookmarkButton'
+import { ReportAction } from '../components/reports/ReportAction'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -109,6 +110,7 @@ export const TopicDetailPage = () => {
               <div className="flex flex-wrap gap-3">
                 <UsefulStarButton topicId={topic.id} />
                 <BookmarkButton topicId={topic.id} />
+                <ReportAction targetId={topic.id} targetType="topic" />
               </div>
             </footer>
           </article>
