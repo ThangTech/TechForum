@@ -8,6 +8,7 @@ export const appRoutes = {
   account: '/account',
   adminReports: '/admin/reports',
   adminCategories: '/admin/categories',
+  adminTags: '/admin/tags',
   login: '/login',
   register: '/register',
   topic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}`,
