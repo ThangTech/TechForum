@@ -42,12 +42,12 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 ### P1 — Auth và nền UI
 
 1. **Backend đăng ký/đăng nhập/phiên/đăng xuất**
-   - Email duy nhất, mật khẩu được hash bởi ASP.NET Core Identity.
-   - Đăng ký không nhận role từ client và luôn tạo thành viên.
-   - Cookie phiên HttpOnly; API trả DTO không có email công khai ngoài chính chủ.
-   - `GET /api/auth/me` phản ánh phiên thật; logout làm phiên hiện tại hết hiệu lực.
-   - Tài khoản bị khóa không tiếp tục gọi API riêng tư bằng cookie cũ.
-   - Có migration, test nghiệp vụ quan trọng và request thật qua SQL Server.
+   - [x] Email duy nhất, mật khẩu được hash bởi ASP.NET Core Identity.
+   - [x] Đăng ký không nhận role từ client và luôn tạo thành viên.
+   - [x] Cookie phiên HttpOnly; API chỉ trả email cho chính tài khoản đang xác thực.
+   - [x] `GET /api/auth/me` phản ánh phiên thật; logout làm phiên hết hiệu lực.
+   - [x] Tài khoản bị khóa không tiếp tục gọi API riêng tư bằng cookie cũ.
+   - [x] Có migration, 4 test service và request thật qua SQL Server.
 
 2. **Frontend xác thực và bảo vệ route**
    - Router, Auth context/service và API client dùng chung.

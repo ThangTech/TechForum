@@ -9,3 +9,13 @@ GET {{TechForum.Api_HostAddress}}/api/categories/1
 Accept: application/json
 
 ###
+
+GET {{TechForum.Api_HostAddress}}/api/auth/antiforgery-token
+Accept: application/json
+
+###
+
+GET {{TechForum.Api_HostAddress}}/api/auth/me
+Accept: application/json
+
+###

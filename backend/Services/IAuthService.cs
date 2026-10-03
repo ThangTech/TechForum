@@ -1,0 +1,14 @@
+using TechForum.Api.Dtos.Auth;
+
+namespace TechForum.Api.Services;
+
+public interface IAuthService
+{
+    Task<AuthResult> RegisterAsync(RegisterRequest request);
+
+    Task<AuthResult> LoginAsync(LoginRequest request);
+
+    Task<CurrentUserDto?> GetCurrentUserAsync(string userId);
+
+    Task LogoutAsync();
+}

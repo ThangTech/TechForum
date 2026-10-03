@@ -9,7 +9,7 @@ authentication và tạo cơ sở dữ liệu `TechForumDev`.
 Có thể thay connection string mà không sửa file được commit:
 
 ```powershell
-$env:ConnectionStrings__DefaultConnection = "Server=localhost;Database=TechForumDev;Trusted_Connection=True;Encrypt=False"
+$env:ConnectionStrings__DefaultConnection = "Server=DESKTOP-5J0CNUJ;Database=TechForumDev;Trusted_Connection=True;Encrypt=False"
 dotnet run --launch-profile http
 ```
 
@@ -29,3 +29,29 @@ không seed.
 
 Luồng xử lý cho chức năng chuyên mục là
 `CategoriesController` → `CategoryService` → `CategoryRepository` → EF Core.
+
+## Xác thực P1
+
+Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client
+phải gửi cookie bằng `credentials: include`. Mọi request ghi cần lấy token từ
+`GET /api/auth/antiforgery-token` rồi gửi token trong header `X-CSRF-TOKEN`.
+
+- `POST /api/auth/register`: đăng ký thành viên và tạo phiên, trả HTTP 201.
+- `POST /api/auth/login`: đăng nhập, trả HTTP 200; sai thông tin là 401; tài
+  khoản bị khóa là 423.
+- `GET /api/auth/me`: thông tin của chính tài khoản đang đăng nhập.
+- `POST /api/auth/logout`: kết thúc phiên hiện tại, trả HTTP 204.
+
+Đăng ký luôn gán role `Member`; client không được gửi hoặc tự chọn role. Sau 5
+lần đăng nhập sai, tài khoản bị khóa 15 phút. Middleware kiểm tra trạng thái khóa
+trên mỗi request có phiên nên cookie cũ không tiếp tục dùng được.
+
+Mật khẩu phát triển phải có ít nhất 8 ký tự, chữ hoa, chữ thường, chữ số và ký
+tự đặc biệt. Không ghi mật khẩu thật hoặc cookie phiên vào source/log.
+
+## Kiểm thử backend
+
+```powershell
+cd ..\backend.Tests
+dotnet test
+```
