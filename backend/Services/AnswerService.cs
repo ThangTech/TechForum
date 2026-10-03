@@ -97,6 +97,7 @@ public sealed partial class AnswerService(
         var topic = await topicRepository.GetOwnedByIdAsync(topicId, authorId, cancellationToken);
         if (topic is null ||
             topic.Status != TopicStatus.Published ||
+            topic.PublishedAtUtc is null ||
             topic.IsHiddenByModerator)
         {
             return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
