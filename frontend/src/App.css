@@ -59,6 +59,20 @@
   color: var(--color-muted);
   background: var(--color-subtle);
   font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.search-unavailable input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: var(--color-text);
+  background: transparent;
+  font: inherit;
+}
+
+.search-unavailable input::placeholder {
+  color: var(--color-muted);
 }
 
 .search-unavailable__icon {

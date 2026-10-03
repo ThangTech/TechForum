@@ -22,7 +22,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 - [x] Backend có 4 test service xác thực; frontend chưa có test tự động.
 - [ ] Xác thực, phân quyền, phiên và tài khoản bị khóa.
-- [ ] Bài viết/câu hỏi, thẻ, tìm kiếm và phân trang.
+- [ ] Bài viết/câu hỏi, thẻ, tìm kiếm và phân trang (phần đọc công khai đã có;
+  phần tạo/sửa và hồ sơ công khai chưa có).
 - [ ] Soạn thảo, upload media và làm sạch HTML.
 - [ ] Thảo luận, câu trả lời được chấp nhận và khóa thảo luận.
 - [ ] Sao hữu ích, lưu bài, chia sẻ và quy tắc lượt xem.
@@ -64,9 +65,12 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 - [x] Thẻ công khai có migration, seed development và endpoint danh sách/chi tiết.
 - [x] Backend danh sách/chi tiết chủ đề công khai có phân trang và lọc loại,
-  chuyên mục, thẻ, từ khóa; frontend chưa nối.
-- Tìm kiếm giữ từ khóa, bộ lọc và trang trên URL.
-- Chi tiết nội dung chỉ trả nội dung công khai; có hồ sơ tác giả công khai.
+  chuyên mục, thẻ, từ khóa.
+- [x] Frontend có danh sách Bài viết/Hỏi đáp, chi tiết, loading, empty, error,
+  retry; dùng contract thật, Tailwind và arrow function.
+- [x] Tìm kiếm giữ từ khóa, bộ lọc và trang trên URL.
+- [x] Chi tiết nội dung chỉ trả nội dung công khai.
+- [ ] Hồ sơ tác giả công khai chưa có.
 - Sidebar câu hỏi mới/nhiều trả lời dùng dữ liệu và khoảng thời gian thật.
 
 ### P3 — Soạn và quản lý nội dung
@@ -153,3 +157,23 @@ Kiểm thử tích hợp trình duyệt với API và SQL Server thật:
 - Đăng xuất xóa phiên và về trang chủ; lỗi thứ tự authentication/CSRF được phát hiện và sửa.
 - Đăng ký trùng email hiển thị nội dung tiếng Việt từ `application/problem+json`.
 - Trang đăng nhập được kiểm tra trực quan ở desktop và viewport mobile 390×844.
+
+## Kiểm chứng P2 đang thực hiện
+
+```text
+dotnet build backend/TechForum.Api.csproj --no-restore
+Build succeeded, 0 warnings, 0 errors.
+
+dotnet test backend.Tests/TechForum.Api.Tests.csproj --no-restore
+Passed: 6, Failed: 0, Skipped: 0.
+
+npm run lint
+eslint: passed.
+
+npm run build
+TypeScript + Vite build: passed, 2111 modules transformed.
+```
+
+API danh sách, lọc, chi tiết và lỗi query đã được gọi trực tiếp với SQL Server
+trước khi nối frontend. Luồng frontend mới chưa kiểm thử thủ công trên trình duyệt
+theo yêu cầu tạm hoãn kiểm thử của người dùng.

@@ -1,8 +1,18 @@
-import { NavLink } from 'react-router-dom'
+import { useState, type FormEvent } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
 
 export const SiteHeader = () => {
   const { user, isLoading } = useAuth()
+  const navigate = useNavigate()
+  const [keyword, setKeyword] = useState('')
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const params = new URLSearchParams()
+    if (keyword.trim()) params.set('keyword', keyword.trim())
+    navigate({ pathname: '/', search: params.toString() })
+  }
 
   return (
     <header className="site-header">
@@ -11,10 +21,16 @@ export const SiteHeader = () => {
           Tech<span>Forum</span>
         </NavLink>
 
-        <div className="search-unavailable" aria-label="Tìm kiếm chưa khả dụng">
+        <form className="search-unavailable" onSubmit={handleSearch} role="search">
           <span className="search-unavailable__icon" aria-hidden="true" />
-          <span>Tìm kiếm sẽ được mở khi chức năng sẵn sàng</span>
-        </div>
+          <label className="sr-only" htmlFor="header-search">Tìm bài viết và câu hỏi</label>
+          <input
+            id="header-search"
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Tìm bài viết và câu hỏi"
+            value={keyword}
+          />
+        </form>
 
         <div className="account-actions">
           {isLoading ? (
@@ -36,7 +52,9 @@ export const SiteHeader = () => {
       </div>
 
       <nav className="category-nav" aria-label="Điều hướng chính">
-        <NavLink to="/">Chuyên mục</NavLink>
+        <NavLink to="/" end>Trang chủ</NavLink>
+        <NavLink to="/bai-viet">Bài viết</NavLink>
+        <NavLink to="/hoi-dap">Hỏi đáp</NavLink>
         <NavLink to="/tai-khoan">Tài khoản</NavLink>
       </nav>
     </header>

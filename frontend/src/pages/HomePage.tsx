@@ -1,10 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { getTags, type Tag } from '../api/tags'
+import { getTopics, type TopicPage, type TopicType } from '../api/topics'
 import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
+import { TopicFeed } from '../components/TopicFeed'
 
-export const HomePage = () => {
+interface HomePageProps {
+  fixedType?: 'Article' | 'Question'
+  title?: string
+  description?: string
+}
+
+const readPositiveInteger = (value: string | null) => {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
+export const HomePage = ({
+  fixedType,
+  title = 'Cùng học hỏi, chia sẻ và làm chủ công nghệ.',
+  description = 'Khám phá các bài viết và câu hỏi mới nhất từ cộng đồng TechForum.',
+}: HomePageProps) => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const page = readPositiveInteger(searchParams.get('page')) ?? 1
+  const categoryId = readPositiveInteger(searchParams.get('categoryId'))
+  const tagId = readPositiveInteger(searchParams.get('tagId'))
+  const keyword = searchParams.get('keyword')?.trim() ?? ''
+
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -13,6 +37,11 @@ export const HomePage = () => {
   const [areTagsLoading, setAreTagsLoading] = useState(true)
   const [tagError, setTagError] = useState<string | null>(null)
   const [tagRequestVersion, setTagRequestVersion] = useState(0)
+  const [topics, setTopics] = useState<TopicPage | null>(null)
+  const [areTopicsLoading, setAreTopicsLoading] = useState(true)
+  const [topicError, setTopicError] = useState<string | null>(null)
+  const [topicRequestVersion, setTopicRequestVersion] = useState(0)
+  const [searchKeyword, setSearchKeyword] = useState(keyword)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -20,24 +49,13 @@ export const HomePage = () => {
     const loadCategories = async () => {
       setIsLoading(true)
       setError(null)
-
       try {
-        const result = await getCategories(controller.signal)
-        setCategories(result)
+        setCategories(await getCategories(controller.signal))
       } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') {
-          return
-        }
-
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : 'Đã xảy ra lỗi không xác định.',
-        )
+        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+        setError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
       } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
+        if (!controller.signal.aborted) setIsLoading(false)
       }
     }
 
@@ -62,44 +80,94 @@ export const HomePage = () => {
     }
 
     void loadTags()
-
     return () => controller.abort()
   }, [tagRequestVersion])
 
-  return (
-      <main className="main-area" id="main-content">
-        <div className="page-content">
-          <section className="intro" aria-labelledby="page-title">
-            <p className="eyebrow">Cộng đồng công nghệ Việt</p>
-            <h1 id="page-title">Cùng học hỏi, chia sẻ và làm chủ công nghệ.</h1>
-            <p className="intro__description">
-              Khám phá các chuyên mục để bắt đầu theo dõi những lĩnh vực bạn quan tâm.
-            </p>
-          </section>
+  useEffect(() => {
+    const controller = new AbortController()
 
-          <div className="content-grid">
+    const loadTopics = async () => {
+      setAreTopicsLoading(true)
+      setTopicError(null)
+      try {
+        setTopics(await getTopics({
+          page,
+          pageSize: 10,
+          keyword: keyword || undefined,
+          type: fixedType,
+          categoryId,
+          tagId,
+        }, controller.signal))
+      } catch (requestError) {
+        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+        setTopicError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
+      } finally {
+        if (!controller.signal.aborted) setAreTopicsLoading(false)
+      }
+    }
+
+    void loadTopics()
+    return () => controller.abort()
+  }, [page, keyword, fixedType, categoryId, tagId, topicRequestVersion])
+
+  const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
+    const next = new URLSearchParams(searchParams)
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === '') next.delete(key)
+      else next.set(key, String(value))
+    })
+    setSearchParams(next)
+  }
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    updateSearchParams({ keyword: searchKeyword.trim() || undefined, page: undefined })
+  }
+
+  const handleFilter = (key: 'categoryId' | 'tagId', value: number) => {
+    updateSearchParams({ [key]: value, page: undefined })
+  }
+
+  return (
+    <main className="main-area" id="main-content">
+      <div className="page-content">
+        <section className="intro" aria-labelledby="page-title">
+          <p className="eyebrow">Cộng đồng công nghệ Việt</p>
+          <h1 id="page-title">{title}</h1>
+          <p className="intro__description">{description}</p>
+        </section>
+
+        <div className="content-grid">
+          <TopicFeed
+            key={keyword}
+            data={topics}
+            error={topicError}
+            isLoading={areTopicsLoading}
+            keyword={searchKeyword}
+            onFilter={handleFilter}
+            onKeywordChange={setSearchKeyword}
+            onPageChange={(nextPage) => updateSearchParams({ page: nextPage <= 1 ? undefined : nextPage })}
+            onRetry={() => setTopicRequestVersion((version) => version + 1)}
+            onSearch={handleSearch}
+            selectedType={fixedType?.toLowerCase() as TopicType | undefined}
+          />
+
+          <aside className="grid gap-6">
             <CategoryPanel
               categories={categories}
               error={error}
               isLoading={isLoading}
               onRetry={() => setRequestVersion((version) => version + 1)}
             />
-
-            <aside className="grid gap-6">
-              <TagPanel
-                tags={tags}
-                error={tagError}
-                isLoading={areTagsLoading}
-                onRetry={() => setTagRequestVersion((version) => version + 1)}
-              />
-              <div className="panel coming-soon" id="topics-coming-soon">
-                <span className="coming-soon__label">Lộ trình sản phẩm</span>
-                <h2>Chủ đề đang được xây dựng ở P2</h2>
-                <p>Chuyên mục và thẻ hiện đều được tải từ TechForum API.</p>
-              </div>
-            </aside>
-          </div>
+            <TagPanel
+              tags={tags}
+              error={tagError}
+              isLoading={areTagsLoading}
+              onRetry={() => setTagRequestVersion((version) => version + 1)}
+            />
+          </aside>
         </div>
-      </main>
+      </div>
+    </main>
   )
 }

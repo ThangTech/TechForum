@@ -9,7 +9,7 @@ export const SiteLayout = () => {
       <footer className="site-footer">
         <div className="site-footer__inner">
           <span>TechForum · Nơi kiến thức được sẻ chia</span>
-          <span>P1 · Xác thực và nền giao diện</span>
+          <span>P2 · Nội dung công khai</span>
         </div>
       </footer>
     </div>

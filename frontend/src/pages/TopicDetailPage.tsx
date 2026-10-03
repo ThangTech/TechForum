@@ -1,0 +1,119 @@
+import { Button } from '@astryxdesign/core/Button'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { ApiError } from '../api/client'
+import { getTopic, type TopicDetail } from '../api/topics'
+
+const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
+  dateStyle: 'long',
+  timeStyle: 'short',
+}).format(new Date(value))
+
+export const TopicDetailPage = () => {
+  const { id } = useParams()
+  const topicId = Number(id)
+  const [topic, setTopic] = useState<TopicDetail | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [requestVersion, setRequestVersion] = useState(0)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const loadTopic = async () => {
+      if (!Number.isInteger(topicId) || topicId <= 0) {
+        setError('Đường dẫn nội dung không hợp lệ.')
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(true)
+      setError(null)
+      try {
+        setTopic(await getTopic(topicId, controller.signal))
+      } catch (requestError) {
+        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+        if (requestError instanceof ApiError && requestError.status === 404) {
+          setError('Nội dung không tồn tại hoặc không còn được công khai.')
+        } else {
+          setError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    }
+
+    void loadTopic()
+    return () => controller.abort()
+  }, [topicId, requestVersion])
+
+  return (
+    <main className="main-area" id="main-content">
+      <div className="mx-auto w-[min(820px,calc(100%-40px))] py-10 sm:py-14">
+        <Link className="text-sm font-semibold text-blue-700 hover:underline" to="/">
+          ← Quay lại danh sách
+        </Link>
+
+        {isLoading && (
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">
+            Đang tải nội dung…
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="mt-6 space-y-4 rounded-xl border border-red-200 bg-white p-10 text-center" role="alert">
+            <p className="text-sm text-red-700">{error}</p>
+            <Button label="Thử lại" onClick={() => setRequestVersion((version) => version + 1)} variant="secondary" />
+          </div>
+        )}
+
+        {!isLoading && !error && topic && (
+          <article className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <header className="border-b border-slate-200 p-6 sm:p-8">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className={topic.type === 'question'
+                  ? 'rounded-full bg-amber-100 px-2.5 py-1 font-bold text-amber-800'
+                  : 'rounded-full bg-blue-100 px-2.5 py-1 font-bold text-blue-800'}>
+                  {topic.type === 'question' ? 'Câu hỏi' : 'Bài viết'}
+                </span>
+                {topic.isPinned && <span className="font-semibold text-blue-700">Đã ghim</span>}
+                {topic.isDiscussionLocked && <span className="font-semibold text-slate-500">Đã khóa thảo luận</span>}
+              </div>
+              <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl">
+                {topic.title}
+              </h1>
+              <p className="mt-4 text-base leading-7 text-slate-600">{topic.summary}</p>
+              <div className="mt-5 flex flex-wrap gap-x-3 gap-y-2 text-sm text-slate-500">
+                <span className="font-semibold text-slate-700">{topic.author.displayName}</span>
+                <span aria-hidden="true">·</span>
+                <span>{formatDateTime(topic.publishedAtUtc)}</span>
+                <span aria-hidden="true">·</span>
+                <span>{topic.category.name}</span>
+              </div>
+              {topic.tags.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {topic.tags.map((tag) => (
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600" key={tag.id}>
+                      #{tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </header>
+
+            <div
+              className="p-6 text-base leading-8 text-slate-800 sm:p-8 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_img]:h-auto [&_img]:max-w-full [&_p]:mb-5 [&_pre]:mb-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
+              dangerouslySetInnerHTML={{ __html: topic.bodyHtml }}
+            />
+
+            <footer className="border-t border-slate-200 bg-slate-50 px-6 py-5 text-sm text-slate-600 sm:px-8">
+              {topic.isDiscussionLocked
+                ? 'Thảo luận đã bị khóa và không nhận phản hồi mới.'
+                : 'Khu vực trả lời và thảo luận sẽ được bổ sung ở P4.'}
+            </footer>
+          </article>
+        )}
+      </div>
+    </main>
+  )
+}

@@ -7,6 +7,7 @@ import { AccountPage } from './pages/AccountPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { TopicDetailPage } from './pages/TopicDetailPage'
 
 const App = () => {
   return (
@@ -15,6 +16,15 @@ const App = () => {
         <Routes>
           <Route element={<SiteLayout />}>
             <Route index element={<HomePage />} />
+            <Route
+              path="bai-viet"
+              element={<HomePage fixedType="Article" title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng." />}
+            />
+            <Route
+              path="hoi-dap"
+              element={<HomePage fixedType="Question" title="Hỏi đáp công nghệ" description="Tìm câu hỏi đang cần sự đóng góp từ cộng đồng TechForum." />}
+            />
+            <Route path="noi-dung/:id" element={<TopicDetailPage />} />
             <Route
               path="tai-khoan"
               element={
