@@ -76,10 +76,13 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### P3 — Soạn và quản lý nội dung
 
-- Froala được xác minh license trước khi dùng; không dùng key giả.
+- [x] Froala React 5.4.0 tương thích cách tích hợp functional component theo tài
+  liệu chính thức; repo chưa có activation key nên chỉ được dùng chế độ đánh giá
+  có attribution cho tới khi chủ dự án cung cấp license.
 - Thành viên đăng/sửa/xóa mềm nội dung của mình; backend kiểm tra ownership.
 - Upload ảnh/video có xác thực, validation và cleanup file mồ côi.
-- HTML được làm sạch ở server trước khi lưu/hiển thị.
+- [x] Backend có `ContentSanitizer` allowlist hẹp và test loại script, event
+  handler, URI `javascript:`/`data:`; sẽ được gọi trước khi lưu nội dung ở bước API.
 
 ### P4 — Thảo luận và tương tác
 
