@@ -38,6 +38,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         category.Property(item => item.Name).HasMaxLength(100).IsRequired();
         category.Property(item => item.Slug).HasMaxLength(100).IsRequired();
         category.Property(item => item.Description).HasMaxLength(500);
+        category.Property(item => item.IsActive).HasDefaultValue(true).IsRequired();
         category.HasIndex(item => item.Slug).IsUnique();
 
         var tag = modelBuilder.Entity<Tag>();

@@ -11,4 +11,6 @@ public sealed class Category
     public string? Description { get; set; }
 
     public int DisplayOrder { get; set; }
+
+    public bool IsActive { get; set; } = true;
 }

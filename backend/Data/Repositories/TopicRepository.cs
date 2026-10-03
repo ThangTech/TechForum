@@ -128,7 +128,7 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
     public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) =>
         dbContext.Categories
             .AsNoTracking()
-            .SingleOrDefaultAsync(category => category.Id == id, cancellationToken);
+            .SingleOrDefaultAsync(category => category.Id == id && category.IsActive, cancellationToken);
 
     public async Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(
         IReadOnlyCollection<int> ids,
