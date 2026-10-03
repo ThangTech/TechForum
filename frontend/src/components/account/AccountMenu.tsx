@@ -38,6 +38,7 @@ export const AccountMenu = () => {
           { id: 'admin-categories', label: 'Quản trị chuyên mục', onClick: () => navigate(appRoutes.adminCategories) },
           { id: 'admin-tags', label: 'Quản trị thẻ', onClick: () => navigate(appRoutes.adminTags) },
           { id: 'admin-accounts', label: 'Quản trị tài khoản', onClick: () => navigate(appRoutes.adminAccounts) },
+          { id: 'admin-topics', label: 'Kiểm duyệt nội dung', onClick: () => navigate(appRoutes.adminTopics) },
         ]
       : []),
     { type: 'divider' },

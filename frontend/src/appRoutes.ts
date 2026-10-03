@@ -10,6 +10,7 @@ export const appRoutes = {
   adminCategories: '/admin/categories',
   adminTags: '/admin/tags',
   adminAccounts: '/admin/accounts',
+  adminTopics: '/admin/topics',
   login: '/login',
   register: '/register',
   topic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}`,
