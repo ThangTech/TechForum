@@ -9,4 +9,9 @@ public interface ITopicService
         CancellationToken cancellationToken);
 
     Task<TopicDetailDto?> GetPublicByIdAsync(int id, CancellationToken cancellationToken);
+
+    Task<CreateTopicResult> CreateAsync(
+        string authorId,
+        CreateTopicRequest request,
+        CancellationToken cancellationToken);
 }

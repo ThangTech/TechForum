@@ -28,7 +28,7 @@ public sealed class ContentSanitizerTests
     }
 
     [Fact]
-    public void Sanitize_PreservesSupportedTextCodeAndHttpsMedia()
+    public void Sanitize_PreservesTextAndCodeButRemovesMediaUntilUploadIsAvailable()
     {
         const string html = """
             <h2>Tiêu đề</h2>
@@ -41,8 +41,7 @@ public sealed class ContentSanitizerTests
 
         Assert.Contains("<h2>Tiêu đề</h2>", result);
         Assert.Contains("<code class=\"language-csharp\">", result);
-        Assert.Contains("https://localhost/uploads/image.png", result);
-        Assert.Contains("controls", result);
-        Assert.Contains("https://localhost/uploads/video.mp4", result);
+        Assert.DoesNotContain("<img", result, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<video", result, StringComparison.OrdinalIgnoreCase);
     }
 }

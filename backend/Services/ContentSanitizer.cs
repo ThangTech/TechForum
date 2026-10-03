@@ -16,15 +16,13 @@ public sealed class ContentSanitizer : IContentSanitizer
         AddAll(options.AllowedTags,
         [
             "p", "br", "hr", "h2", "h3", "h4", "strong", "em", "u", "s",
-            "ul", "ol", "li", "blockquote", "pre", "code", "a", "img", "video",
-            "source", "figure", "figcaption", "span"
+            "ul", "ol", "li", "blockquote", "pre", "code", "a", "span"
         ]);
         AddAll(options.AllowedAttributes,
         [
-            "href", "title", "src", "alt", "width", "height", "controls", "poster",
-            "type", "class"
+            "href", "title", "class"
         ]);
-        AddAll(options.UriAttributes, ["href", "src", "poster"]);
+        AddAll(options.UriAttributes, ["href"]);
         AddAll(options.AllowedSchemes, ["http", "https"]);
         sanitizer = new HtmlSanitizer(options);
     }

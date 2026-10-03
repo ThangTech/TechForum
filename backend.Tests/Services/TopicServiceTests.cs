@@ -16,7 +16,7 @@ public sealed class TopicServiceTests
         {
             Page = new TopicPage([CreateTopic()], 11)
         };
-        var service = new TopicService(repository);
+        var service = CreateService(repository);
         var query = new TopicQuery { Page = 2, PageSize = 5, Type = TopicType.Question };
 
         var result = await service.GetPublicPageAsync(query, CancellationToken.None);
@@ -36,13 +36,64 @@ public sealed class TopicServiceTests
     public async Task GetPublicPageAsync_WhenEmpty_ReturnsZeroTotalPages()
     {
         var repository = new FakeTopicRepository();
-        var service = new TopicService(repository);
+        var service = CreateService(repository);
 
         var result = await service.GetPublicPageAsync(new TopicQuery(), CancellationToken.None);
 
         Assert.Empty(result.Items);
         Assert.Equal(0, result.TotalItems);
         Assert.Equal(0, result.TotalPages);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithValidRequest_SanitizesAndBuildsOwnedContract()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" },
+            Tags = [new Tag { Id = 4, Name = "TypeScript", Slug = "typescript", IsActive = true }]
+        };
+        var service = CreateService(repository);
+        var request = new CreateTopicRequest(
+            "Bắt đầu TypeScript an toàn",
+            "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
+            "<p onclick=\"alert(1)\">Nội dung hữu ích</p><script>alert(1)</script>",
+            "article",
+            2,
+            [4],
+            true);
+
+        var result = await service.CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Topic);
+        Assert.Equal(99, result.Topic.Id);
+        Assert.Equal("published", result.Topic.Status);
+        Assert.Equal("bat-dau-typescript-an-toan", result.Topic.Slug);
+        Assert.DoesNotContain("onclick", result.Topic.BodyHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<script", result.Topic.BodyHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("member-a", repository.AddedTopic?.AuthorId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithUnknownCategory_ReturnsFieldErrorWithoutSaving()
+    {
+        var repository = new FakeTopicRepository();
+        var service = CreateService(repository);
+        var request = new CreateTopicRequest(
+            "Tiêu đề đủ độ dài",
+            "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
+            "<p>Nội dung hợp lệ.</p>",
+            "question",
+            999,
+            [],
+            false);
+
+        var result = await service.CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("categoryId", result.Errors.Keys);
+        Assert.Null(repository.AddedTopic);
     }
 
     private static Topic CreateTopic()
@@ -77,10 +128,16 @@ public sealed class TopicServiceTests
         };
     }
 
+    private static TopicService CreateService(FakeTopicRepository repository) =>
+        new(repository, new ContentSanitizer(), TimeProvider.System);
+
     private sealed class FakeTopicRepository : ITopicRepository
     {
         public TopicPage Page { get; init; } = new([], 0);
         public TopicQuery? LastQuery { get; private set; }
+        public Category? Category { get; init; }
+        public IReadOnlyList<Tag> Tags { get; init; } = [];
+        public Topic? AddedTopic { get; private set; }
 
         public Task<TopicPage> GetPublicPageAsync(
             TopicQuery query,
@@ -92,5 +149,23 @@ public sealed class TopicServiceTests
 
         public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) =>
             Task.FromResult(Page.Items.SingleOrDefault(topic => topic.Id == id));
+
+        public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) =>
+            Task.FromResult(Category?.Id == id ? Category : null);
+
+        public Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(
+            IReadOnlyCollection<int> ids,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Tag>>(Tags.Where(tag => ids.Contains(tag.Id)).ToList());
+
+        public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
+            Task.FromResult(false);
+
+        public Task AddAsync(Topic topic, CancellationToken cancellationToken)
+        {
+            topic.Id = 99;
+            AddedTopic = topic;
+            return Task.CompletedTask;
+        }
     }
 }

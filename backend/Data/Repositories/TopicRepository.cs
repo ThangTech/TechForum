@@ -63,6 +63,30 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
             .SingleOrDefaultAsync(topic => topic.Id == id, cancellationToken);
     }
 
+    public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) =>
+        dbContext.Categories
+            .AsNoTracking()
+            .SingleOrDefaultAsync(category => category.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(
+        IReadOnlyCollection<int> ids,
+        CancellationToken cancellationToken) =>
+        await dbContext.Tags
+            .AsNoTracking()
+            .Where(tag => ids.Contains(tag.Id) && tag.IsActive)
+            .OrderBy(tag => tag.Name)
+            .ThenBy(tag => tag.Id)
+            .ToListAsync(cancellationToken);
+
+    public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
+        dbContext.Topics.AnyAsync(topic => topic.Slug == slug, cancellationToken);
+
+    public async Task AddAsync(Topic topic, CancellationToken cancellationToken)
+    {
+        dbContext.Topics.Add(topic);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private IQueryable<Topic> PublicTopics() => dbContext.Topics
         .AsNoTracking()
         .Where(topic =>

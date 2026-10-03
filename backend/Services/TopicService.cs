@@ -1,3 +1,7 @@
+using System.Globalization;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
 using TechForum.Api.Data.Repositories;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
@@ -5,7 +9,10 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class TopicService(ITopicRepository topicRepository) : ITopicService
+public sealed partial class TopicService(
+    ITopicRepository topicRepository,
+    IContentSanitizer contentSanitizer,
+    TimeProvider timeProvider) : ITopicService
 {
     public async Task<PagedResultDto<TopicSummaryDto>> GetPublicPageAsync(
         TopicQuery query,
@@ -29,6 +36,172 @@ public sealed class TopicService(ITopicRepository topicRepository) : ITopicServi
         var topic = await topicRepository.GetPublicByIdAsync(id, cancellationToken);
         return topic is null ? null : MapDetail(topic);
     }
+
+    public async Task<CreateTopicResult> CreateAsync(
+        string authorId,
+        CreateTopicRequest request,
+        CancellationToken cancellationToken)
+    {
+        var title = request.Title?.Trim();
+        if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
+        {
+            return CreateTopicResult.ValidationError(
+                "title",
+                "Tiêu đề phải có từ 10 đến 200 ký tự.");
+        }
+
+        var summary = request.Summary?.Trim();
+        if (string.IsNullOrWhiteSpace(summary) || summary.Length is < 20 or > 500)
+        {
+            return CreateTopicResult.ValidationError(
+                "summary",
+                "Tóm tắt phải có từ 20 đến 500 ký tự.");
+        }
+
+        if (!TryParseType(request.Type, out var type))
+        {
+            return CreateTopicResult.ValidationError(
+                "type",
+                "Loại nội dung phải là 'article' hoặc 'question'.");
+        }
+
+        if (request.BodyHtml is null || request.BodyHtml.Length > 100_000)
+        {
+            return CreateTopicResult.ValidationError(
+                "bodyHtml",
+                "Nội dung không được để trống hoặc vượt quá 100.000 ký tự.");
+        }
+
+        var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
+        if (!HasMeaningfulContent(sanitizedBody))
+        {
+            return CreateTopicResult.ValidationError(
+                "bodyHtml",
+                "Nội dung phải có văn bản hoặc media hợp lệ.");
+        }
+
+        var category = await topicRepository.GetCategoryByIdAsync(
+            request.CategoryId,
+            cancellationToken);
+        if (category is null)
+        {
+            return CreateTopicResult.ValidationError("categoryId", "Chuyên mục không tồn tại.");
+        }
+
+        var tagIds = (request.TagIds ?? []).Distinct().ToArray();
+        if (tagIds.Length > 5 || tagIds.Any(id => id <= 0))
+        {
+            return CreateTopicResult.ValidationError(
+                "tagIds",
+                "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
+        }
+
+        var tags = await topicRepository.GetActiveTagsByIdsAsync(tagIds, cancellationToken);
+        if (tags.Count != tagIds.Length)
+        {
+            return CreateTopicResult.ValidationError(
+                "tagIds",
+                "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
+        }
+
+        var slug = await CreateUniqueSlugAsync(title, cancellationToken);
+        var now = timeProvider.GetUtcNow();
+        var topic = new Topic
+        {
+            Title = title,
+            Slug = slug,
+            Summary = summary,
+            BodyHtml = sanitizedBody,
+            Type = type,
+            Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft,
+            CategoryId = category.Id,
+            AuthorId = authorId,
+            CreatedAtUtc = now,
+            PublishedAtUtc = request.Publish ? now : null,
+            TopicTags = tags.Select(tag => new TopicTag { TagId = tag.Id }).ToList()
+        };
+
+        await topicRepository.AddAsync(topic, cancellationToken);
+
+        return CreateTopicResult.Success(new OwnTopicDto(
+            topic.Id,
+            topic.Title,
+            topic.Slug,
+            topic.Summary,
+            topic.BodyHtml,
+            MapType(topic.Type),
+            topic.Status == TopicStatus.Published ? "published" : "draft",
+            new TopicCategoryDto(category.Id, category.Name, category.Slug),
+            tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
+            topic.CreatedAtUtc,
+            topic.PublishedAtUtc));
+    }
+
+    private async Task<string> CreateUniqueSlugAsync(
+        string title,
+        CancellationToken cancellationToken)
+    {
+        var baseSlug = CreateSlug(title);
+        var candidate = baseSlug;
+        var suffix = 2;
+        while (await topicRepository.SlugExistsAsync(candidate, cancellationToken))
+        {
+            candidate = $"{baseSlug}-{suffix}";
+            suffix++;
+        }
+
+        return candidate;
+    }
+
+    private static string CreateSlug(string value)
+    {
+        var normalized = value
+            .Replace('đ', 'd')
+            .Replace('Đ', 'D')
+            .Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(normalized.Length);
+
+        foreach (var character in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(character);
+            }
+        }
+
+        var slug = NonSlugCharacters().Replace(builder.ToString().ToLowerInvariant(), "-").Trim('-');
+        return string.IsNullOrWhiteSpace(slug) ? "noi-dung" : slug[..Math.Min(slug.Length, 180)].TrimEnd('-');
+    }
+
+    private static bool HasMeaningfulContent(string html)
+    {
+        var text = WebUtility.HtmlDecode(HtmlTags().Replace(html, string.Empty)).Trim();
+        return !string.IsNullOrWhiteSpace(text);
+    }
+
+    private static bool TryParseType(string? value, out TopicType type)
+    {
+        if (string.Equals(value?.Trim(), "article", StringComparison.OrdinalIgnoreCase))
+        {
+            type = TopicType.Article;
+            return true;
+        }
+
+        if (string.Equals(value?.Trim(), "question", StringComparison.OrdinalIgnoreCase))
+        {
+            type = TopicType.Question;
+            return true;
+        }
+
+        type = default;
+        return false;
+    }
+
+    [GeneratedRegex("[^a-z0-9]+")]
+    private static partial Regex NonSlugCharacters();
+
+    [GeneratedRegex("<[^>]+>")]
+    private static partial Regex HtmlTags();
 
     private static TopicSummaryDto MapSummary(Topic topic) => new(
         topic.Id,

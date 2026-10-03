@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Services;
@@ -47,6 +49,39 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         }
 
         return Ok(topic);
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ProducesResponseType<OwnTopicDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<OwnTopicDto>> Create(
+        [FromBody] CreateTopicRequest request,
+        CancellationToken cancellationToken)
+    {
+        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(authorId))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Bạn cần đăng nhập"
+            });
+        }
+
+        var result = await topicService.CreateAsync(authorId, request, cancellationToken);
+        if (!result.Succeeded)
+        {
+            return BadRequest(new ValidationProblemDetails(
+                result.Errors.ToDictionary(item => item.Key, item => item.Value))
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Nội dung gửi lên chưa hợp lệ"
+            });
+        }
+
+        return StatusCode(StatusCodes.Status201Created, result.Topic);
     }
 
     private static Dictionary<string, string[]> Validate(TopicQuery query)

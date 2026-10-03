@@ -82,7 +82,11 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - Thành viên đăng/sửa/xóa mềm nội dung của mình; backend kiểm tra ownership.
 - Upload ảnh/video có xác thực, validation và cleanup file mồ côi.
 - [x] Backend có `ContentSanitizer` allowlist hẹp và test loại script, event
-  handler, URI `javascript:`/`data:`; sẽ được gọi trước khi lưu nội dung ở bước API.
+  handler, URI `javascript:`/`data:`; API gọi sanitizer trước khi lưu nội dung.
+- [x] Thành viên có thể tạo bản nháp hoặc xuất bản bài viết/câu hỏi qua API;
+  backend tự lấy tác giả từ phiên, kiểm tra chuyên mục/thẻ và làm sạch HTML.
+- [ ] Media chưa được sanitizer cho phép cho tới khi endpoint upload riêng hoàn tất;
+  API hiện loại thẻ ảnh/video thay vì chấp nhận URL ngoài.
 
 ### P4 — Thảo luận và tương tác
 
@@ -183,3 +187,8 @@ trước khi nối frontend. `GET /api/profiles/techforum-development-author` tr
 2 nội dung công khai và không có email; mã thành viên không tồn tại trả 404.
 Luồng frontend mới chưa kiểm thử thủ công trên trình duyệt theo yêu cầu tạm hoãn
 kiểm thử của người dùng.
+
+API tạo nội dung P3 đã được gọi với cookie thành viên, CSRF token và SQL Server
+thật. Bản nháp mã `3` trả `201`, `bodyHtml` đã loại `onclick`/`script`, trạng thái
+`draft`, và endpoint công khai trả `404` cho bản nháp. Bộ test backend sau bước
+này: Passed 12, Failed 0, Skipped 0.
