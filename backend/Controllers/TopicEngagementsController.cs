@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Services;
@@ -21,6 +22,7 @@ public sealed class TopicEngagementsController(ITopicEngagementService engagemen
     }
 
     [HttpPost("share")]
+    [Authorize]
     public async Task<ActionResult<TopicEngagementDto>> RecordShare(int topicId, CancellationToken cancellationToken)
     {
         var result = await engagementService.RecordShareAsync(topicId, cancellationToken);
