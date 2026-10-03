@@ -16,6 +16,7 @@ import { LegacyRouteRedirect } from './components/LegacyRouteRedirect'
 import { AdminReportsPage } from './pages/AdminReportsPage'
 import { AdminCategoriesPage } from './pages/AdminCategoriesPage'
 import { AdminTagsPage } from './pages/AdminTagsPage'
+import { AdminAccountsPage } from './pages/AdminAccountsPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -99,6 +100,14 @@ const App = () => {
               element={
                 <ProtectedRoute requiredRole="Administrator">
                   <AdminTagsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/accounts"
+              element={
+                <ProtectedRoute requiredRole="Administrator">
+                  <AdminAccountsPage />
                 </ProtectedRoute>
               }
             />

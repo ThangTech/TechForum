@@ -37,6 +37,7 @@ export const AccountMenu = () => {
           { id: 'admin-reports', label: 'Quản trị báo cáo', onClick: () => navigate(appRoutes.adminReports) },
           { id: 'admin-categories', label: 'Quản trị chuyên mục', onClick: () => navigate(appRoutes.adminCategories) },
           { id: 'admin-tags', label: 'Quản trị thẻ', onClick: () => navigate(appRoutes.adminTags) },
+          { id: 'admin-accounts', label: 'Quản trị tài khoản', onClick: () => navigate(appRoutes.adminAccounts) },
         ]
       : []),
     { type: 'divider' },
