@@ -12,6 +12,7 @@ interface HomePageProps {
   fixedType?: 'Article' | 'Question'
   title?: string
   description?: string
+  sort?: 'discussion'
 }
 
 const readPositiveInteger = (value: string | null) => {
@@ -23,6 +24,7 @@ export const HomePage = ({
   fixedType,
   title = 'Cùng học hỏi, chia sẻ và làm chủ công nghệ.',
   description = 'Khám phá các bài viết và câu hỏi mới nhất từ cộng đồng TechForum.',
+  sort,
 }: HomePageProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPositiveInteger(searchParams.get('page')) ?? 1
@@ -98,6 +100,7 @@ export const HomePage = ({
           type: fixedType,
           categoryId,
           tagId,
+          sort,
         }, controller.signal))
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return
@@ -109,7 +112,7 @@ export const HomePage = ({
 
     void loadTopics()
     return () => controller.abort()
-  }, [page, keyword, fixedType, categoryId, tagId, topicRequestVersion])
+  }, [page, keyword, fixedType, categoryId, tagId, sort, topicRequestVersion])
 
   const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams)

@@ -111,7 +111,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Một sao hữu ích và một bookmark hiện hành cho mỗi tài khoản/chủ đề.
 - [x] Chia sẻ chỉ tăng sau Web Share/copy thành công và yêu cầu đăng nhập; lượt
   xem chống đếm lặp theo khách/tài khoản trong một ngày UTC.
-- Trang Thảo luận sắp theo hoạt động phản hồi gần nhất.
+- [x] Trang Thảo luận chỉ lấy chủ đề có phản hồi công khai và sắp theo hoạt động
+  phản hồi gần nhất; vẫn dùng hai loại nội dung Bài viết/Câu hỏi.
 
 ### P5 — Quản trị
 

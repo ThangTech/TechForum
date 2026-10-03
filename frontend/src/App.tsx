@@ -41,6 +41,10 @@ const App = () => {
               path="questions"
               element={<HomePage fixedType="Question" title="Hỏi đáp công nghệ" description="Tìm câu hỏi đang cần sự đóng góp từ cộng đồng TechForum." />}
             />
+            <Route
+              path="discussions"
+              element={<HomePage sort="discussion" title="Thảo luận đang diễn ra" description="Các bài viết và câu hỏi đã có phản hồi, sắp xếp theo hoạt động thảo luận mới nhất." />}
+            />
             <Route path="topics/:id" element={<TopicDetailPage />} />
             <Route path="members/:userId" element={<PublicProfilePage />} />
             <Route

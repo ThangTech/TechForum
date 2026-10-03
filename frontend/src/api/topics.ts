@@ -44,6 +44,7 @@ export interface TopicFilters {
   type?: 'Article' | 'Question'
   categoryId?: number
   tagId?: number
+  sort?: 'discussion'
 }
 
 export interface CreateTopicInput {

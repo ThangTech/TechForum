@@ -61,6 +61,7 @@ export const SiteHeader = () => {
         <NavLink to={appRoutes.home} end>Trang chủ</NavLink>
         <NavLink to={appRoutes.articles}>Bài viết</NavLink>
         <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
+        <NavLink to={appRoutes.discussions}>Thảo luận</NavLink>
         <NavLink data-tour="write" to={appRoutes.write}>Viết nội dung</NavLink>
       </nav>
     </header>

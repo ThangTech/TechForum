@@ -2,6 +2,7 @@ export const appRoutes = {
   home: '/',
   articles: '/articles',
   questions: '/questions',
+  discussions: '/discussions',
   write: '/write',
   myTopics: '/my-topics',
   saved: '/saved',
