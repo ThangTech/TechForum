@@ -1,7 +1,7 @@
 import { Button } from '@astryxdesign/core/Button'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import type { TopicPage, TopicType } from '../api/topics'
+import { TopicSummaryItem } from './topics/TopicSummaryItem'
 
 interface TopicFeedProps {
   data: TopicPage | null
@@ -15,10 +15,6 @@ interface TopicFeedProps {
   onFilter: (key: 'categoryId' | 'tagId', value: number) => void
   selectedType?: TopicType
 }
-
-const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
-  dateStyle: 'medium',
-}).format(new Date(value))
 
 export const TopicFeed = ({
   data,
@@ -66,36 +62,7 @@ export const TopicFeed = ({
         <ul className="divide-y divide-slate-200">
           {data.items.map((topic) => (
             <li className="p-5 sm:p-6" key={topic.id}>
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className={topic.type === 'question'
-                  ? 'rounded-full bg-amber-100 px-2.5 py-1 font-bold text-amber-800'
-                  : 'rounded-full bg-blue-100 px-2.5 py-1 font-bold text-blue-800'}>
-                  {topic.type === 'question' ? 'Câu hỏi' : 'Bài viết'}
-                </span>
-                {topic.isPinned && <span className="font-semibold text-blue-700">Đã ghim</span>}
-                {topic.isDiscussionLocked && <span className="font-semibold text-slate-500">Đã khóa thảo luận</span>}
-              </div>
-              <Link className="mt-3 block text-lg font-bold leading-7 text-slate-950 hover:text-blue-700" to={`/noi-dung/${topic.id}`}>
-                {topic.title}
-              </Link>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-500">
-                <Link className="font-semibold text-slate-700 hover:text-blue-700" to={`/thanh-vien/${encodeURIComponent(topic.author.id)}`}>
-                  {topic.author.displayName}
-                </Link>
-                <span aria-hidden="true">·</span>
-                <span>{formatDate(topic.publishedAtUtc)}</span>
-                <button className="font-semibold text-blue-700 hover:underline" onClick={() => onFilter('categoryId', topic.category.id)} type="button">
-                  {topic.category.name}
-                </button>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {topic.tags.map((tag) => (
-                  <button className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-blue-50 hover:text-blue-700" key={tag.id} onClick={() => onFilter('tagId', tag.id)} type="button">
-                    #{tag.name}
-                  </button>
-                ))}
-              </div>
+              <TopicSummaryItem onFilter={onFilter} topic={topic} />
             </li>
           ))}
         </ul>

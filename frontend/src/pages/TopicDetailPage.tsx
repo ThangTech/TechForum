@@ -1,8 +1,9 @@
-import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { getTopic, type TopicDetail } from '../api/topics'
+import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -54,28 +55,20 @@ export const TopicDetailPage = () => {
           ← Quay lại danh sách
         </Link>
 
-        {isLoading && (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">
-            Đang tải nội dung…
-          </div>
-        )}
-
-        {!isLoading && error && (
-          <div className="mt-6 space-y-4 rounded-xl border border-red-200 bg-white p-10 text-center" role="alert">
-            <p className="text-sm text-red-700">{error}</p>
-            <Button label="Thử lại" onClick={() => setRequestVersion((version) => version + 1)} variant="secondary" />
-          </div>
-        )}
+        <div className="mt-6">
+          <AsyncStatePanel
+            error={error}
+            isLoading={isLoading}
+            loadingText="Đang tải nội dung…"
+            onRetry={() => setRequestVersion((version) => version + 1)}
+          />
+        </div>
 
         {!isLoading && !error && topic && (
           <article className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
             <header className="border-b border-slate-200 p-6 sm:p-8">
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className={topic.type === 'question'
-                  ? 'rounded-full bg-amber-100 px-2.5 py-1 font-bold text-amber-800'
-                  : 'rounded-full bg-blue-100 px-2.5 py-1 font-bold text-blue-800'}>
-                  {topic.type === 'question' ? 'Câu hỏi' : 'Bài viết'}
-                </span>
+                <TopicTypeBadge type={topic.type} />
                 {topic.isPinned && <span className="font-semibold text-blue-700">Đã ghim</span>}
                 {topic.isDiscussionLocked && <span className="font-semibold text-slate-500">Đã khóa thảo luận</span>}
               </div>

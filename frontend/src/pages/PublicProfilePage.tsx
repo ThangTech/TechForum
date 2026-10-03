@@ -1,8 +1,9 @@
-import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { getPublicProfile, type PublicProfile } from '../api/profiles'
+import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { TopicSummaryItem } from '../components/topics/TopicSummaryItem'
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -52,18 +53,14 @@ export const PublicProfilePage = () => {
           ← Về trang chủ
         </Link>
 
-        {isLoading && (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">
-            Đang tải hồ sơ…
-          </div>
-        )}
-
-        {!isLoading && error && (
-          <div className="mt-6 space-y-4 rounded-xl border border-red-200 bg-white p-10 text-center" role="alert">
-            <p className="text-sm text-red-700">{error}</p>
-            <Button label="Thử lại" onClick={() => setRequestVersion((version) => version + 1)} variant="secondary" />
-          </div>
-        )}
+        <div className="mt-6">
+          <AsyncStatePanel
+            error={error}
+            isLoading={isLoading}
+            loadingText="Đang tải hồ sơ…"
+            onRetry={() => setRequestVersion((version) => version + 1)}
+          />
+        </div>
 
         {!isLoading && !error && profile && (
           <div className="mt-6 space-y-6">
@@ -95,16 +92,7 @@ export const PublicProfilePage = () => {
                 <ul className="divide-y divide-slate-200">
                   {profile.recentTopics.map((topic) => (
                     <li className="p-5 sm:p-6" key={topic.id}>
-                      <span className={topic.type === 'question'
-                        ? 'text-xs font-bold text-amber-700'
-                        : 'text-xs font-bold text-blue-700'}>
-                        {topic.type === 'question' ? 'Câu hỏi' : 'Bài viết'}
-                      </span>
-                      <Link className="mt-2 block text-lg font-bold text-slate-950 hover:text-blue-700" to={`/noi-dung/${topic.id}`}>
-                        {topic.title}
-                      </Link>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p>
-                      <p className="mt-3 text-xs text-slate-500">{formatDate(topic.publishedAtUtc)} · {topic.category.name}</p>
+                      <TopicSummaryItem showAuthor={false} topic={topic} />
                     </li>
                   ))}
                 </ul>
