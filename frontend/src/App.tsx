@@ -21,6 +21,7 @@ import { AdminTopicsPage } from './pages/AdminTopicsPage'
 import { AdminOverviewPage } from './pages/AdminOverviewPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
+import { ActivityPage } from './pages/ActivityPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -89,6 +90,7 @@ const App = () => {
             />
             <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+            <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
             <Route
               path="admin/reports"
               element={

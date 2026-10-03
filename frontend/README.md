@@ -28,6 +28,7 @@ Các route chính:
 - `/account`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
 - `/settings`: tùy chỉnh cá nhân, hiện cho phép chạy lại tour hướng dẫn trang chủ.
 - `/notifications`: thông báo riêng của tài khoản, hiển thị số chưa đọc thật trên header.
+- `/activity`: lịch sử nội dung và câu trả lời công khai của tài khoản hiện tại.
 - `/saved`: danh sách nội dung đã lưu của tài khoản, phân trang bằng API thật.
 - `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
 - `/discussions`: chủ đề có phản hồi, sắp theo hoạt động thảo luận gần nhất.

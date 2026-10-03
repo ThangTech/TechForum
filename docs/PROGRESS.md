@@ -126,7 +126,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### P6 — Hoàn thiện trải nghiệm
 
-- Hồ sơ cá nhân và lịch sử hoạt động chưa hoàn thiện; nội dung đã lưu hoạt động.
+- [x] Trang tài khoản hiển thị phiên thật; lịch sử hoạt động phân trang các nội
+  dung/câu trả lời còn công khai; nội dung đã lưu hoạt động.
 - [x] Tùy chỉnh có thao tác chạy lại tour thật.
 - [x] Thông báo “câu trả lời được chấp nhận” có bản ghi backend chống trùng,
   danh sách riêng tư, đánh dấu đã đọc và số chưa đọc thật trên header.
