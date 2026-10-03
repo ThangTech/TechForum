@@ -33,7 +33,10 @@ export const AccountMenu = () => {
     { id: 'saved', label: 'Nội dung đã lưu', onClick: () => navigate(appRoutes.saved) },
     { id: 'write', label: 'Viết nội dung', onClick: () => navigate(appRoutes.write) },
     ...(user.roles.includes('Administrator')
-      ? [{ id: 'admin-reports', label: 'Quản trị báo cáo', onClick: () => navigate(appRoutes.adminReports) }]
+      ? [
+          { id: 'admin-reports', label: 'Quản trị báo cáo', onClick: () => navigate(appRoutes.adminReports) },
+          { id: 'admin-categories', label: 'Quản trị chuyên mục', onClick: () => navigate(appRoutes.adminCategories) },
+        ]
       : []),
     { type: 'divider' },
     {
