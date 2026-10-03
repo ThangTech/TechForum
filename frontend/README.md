@@ -27,6 +27,7 @@ Các route chính:
 - `/register`: đăng ký thành viên và tự tạo phiên.
 - `/account`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
 - `/settings`: tùy chỉnh cá nhân, hiện cho phép chạy lại tour hướng dẫn trang chủ.
+- `/notifications`: thông báo riêng của tài khoản, hiển thị số chưa đọc thật trên header.
 - `/saved`: danh sách nội dung đã lưu của tài khoản, phân trang bằng API thật.
 - `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
 - `/topics/:id`, `/members/:userId`: chi tiết, câu trả lời và hồ sơ tác giả công khai.
@@ -48,6 +49,10 @@ khoản. Trạng thái hoàn tất được lưu riêng theo khách/tài khoản
 thành viên có thể chạy lại từ menu **Tùy chỉnh**. Intro.js dùng giấy phép
 AGPL-3.0; phù hợp với đồ án phi thương mại khi dự án tuân thủ điều kiện giấy
 phép. Nếu triển khai thương mại, cần rà soát và mua license phù hợp từ Intro.js.
+
+Thông báo hiện được tạo khi câu trả lời của thành viên được tác giả câu hỏi chấp
+nhận. Header tải `unreadCount` từ backend; mở một thông báo chưa đọc sẽ đánh dấu
+đã đọc rồi mới điều hướng đến đúng câu trả lời.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
 `credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.

@@ -7,6 +7,7 @@ export const appRoutes = {
   saved: '/saved',
   account: '/account',
   settings: '/settings',
+  notifications: '/notifications',
   adminReports: '/admin/reports',
   adminCategories: '/admin/categories',
   adminTags: '/admin/tags',

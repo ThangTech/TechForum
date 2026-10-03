@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
 import { appRoutes } from '../appRoutes'
+import { NotificationLink } from './notifications/NotificationLink'
 
 const AccountMenu = lazy(() => import('./account/AccountMenu').then((module) => ({
   default: module.AccountMenu,
@@ -41,9 +42,12 @@ export const SiteHeader = () => {
           {isLoading ? (
             <span className="account-loading" role="status">Đang kiểm tra phiên…</span>
           ) : user ? (
-            <Suspense fallback={<span className="account-loading">Đang tải tài khoản…</span>}>
-              <AccountMenu />
-            </Suspense>
+            <>
+              <NotificationLink />
+              <Suspense fallback={<span className="account-loading">Đang tải tài khoản…</span>}>
+                <AccountMenu />
+              </Suspense>
+            </>
           ) : (
             <>
               <NavLink className="header-link" to={appRoutes.login}>Đăng nhập</NavLink>

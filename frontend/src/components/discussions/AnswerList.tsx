@@ -66,7 +66,7 @@ export const AnswerList = ({
       {actionError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{actionError}</p>}
       <div className="grid gap-4">
         {data.items.map((answer) => (
-          <article className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6" key={answer.id}>
+          <article className="scroll-mt-32 rounded-xl border border-slate-200 bg-white p-5 sm:p-6" id={`answer-${answer.id}`} key={answer.id}>
             <header className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
               <Link className="font-bold text-slate-800 hover:text-blue-700" to={appRoutes.member(answer.author.id)}>
                 {answer.author.displayName}

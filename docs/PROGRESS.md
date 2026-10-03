@@ -127,7 +127,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 - Hồ sơ cá nhân và lịch sử hoạt động chưa hoàn thiện; nội dung đã lưu hoạt động.
 - [x] Tùy chỉnh có thao tác chạy lại tour thật.
-- Thông báo với số chưa đọc từ backend.
+- [x] Thông báo “câu trả lời được chấp nhận” có bản ghi backend chống trùng,
+  danh sách riêng tư, đánh dấu đã đọc và số chưa đọc thật trên header.
 - [x] Intro.js 8.6.0 build được với React/Vite; tour có bước phù hợp khách/thành
   viên, ghi trạng thái theo người dùng và có thể chạy lại. Package là AGPL-3.0,
   cần rà soát lại license nếu dự án chuyển sang mục đích thương mại.
