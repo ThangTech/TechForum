@@ -1,3 +1,4 @@
+import { Button } from '@astryxdesign/core/Button'
 import type { Category } from '../api/categories'
 
 interface CategoryPanelProps {
@@ -36,9 +37,9 @@ export function CategoryPanel({
           <div className="status-box" role="alert">
             <h3>Chưa tải được chuyên mục</h3>
             <p>{error} Kiểm tra API đang chạy rồi thử lại.</p>
-            <button className="retry-button" type="button" onClick={onRetry}>
-              Thử lại
-            </button>
+            <div className="retry-action">
+              <Button label="Thử lại" variant="primary" onClick={onRetry} />
+            </div>
           </div>
         )}
 
