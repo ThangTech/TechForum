@@ -7,6 +7,7 @@ import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
 import { appRoutes } from '../appRoutes'
 import { DiscussionSection } from '../components/discussions/DiscussionSection'
+import { UsefulStarButton } from '../components/interactions/UsefulStarButton'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -103,7 +104,9 @@ export const TopicDetailPage = () => {
               className="p-6 text-base leading-8 text-slate-800 sm:p-8 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_img]:h-auto [&_img]:max-w-full [&_p]:mb-5 [&_pre]:mb-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
               dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(topic.bodyHtml) }}
             />
-
+            <footer className="border-t border-slate-200 bg-slate-50 px-6 py-5 sm:px-8">
+              <UsefulStarButton topicId={topic.id} />
+            </footer>
           </article>
         )}
 

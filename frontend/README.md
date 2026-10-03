@@ -36,6 +36,8 @@ Khu vực thảo luận gọi API thật tại `/api/topics/{topicId}/answers`. 
 gửi văn bản, còn chủ đề bị khóa không hiển thị form gửi.
 Tác giả của Câu hỏi có thể chọn hoặc thay đổi câu trả lời được chấp nhận ngay
 trong danh sách; Bài viết không hiển thị thao tác này.
+Chi tiết nội dung hiển thị số Sao hữu ích từ API. Thành viên có thể thêm/bỏ một
+sao; khách bấm thao tác này sẽ nhận modal yêu cầu đăng nhập dùng chung.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
 `credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.
