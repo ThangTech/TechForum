@@ -205,6 +205,12 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
             errors["tagId"] = ["Mã thẻ phải lớn hơn 0."];
         }
 
+        if (query.Sort is not null &&
+            !string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
+        {
+            errors["sort"] = ["Kiểu sắp xếp chỉ hỗ trợ giá trị 'discussion'."];
+        }
+
         return errors;
     }
 }

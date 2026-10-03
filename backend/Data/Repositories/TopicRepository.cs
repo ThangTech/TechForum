@@ -35,11 +35,22 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
             topics = topics.Where(topic => topic.TopicTags.Any(item => item.TagId == query.TagId.Value));
         }
 
+        if (string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
+        {
+            topics = topics.Where(topic => topic.Answers.Any(answer =>
+                !answer.IsDeleted && !answer.IsHiddenByModerator));
+        }
+
         var totalItems = await topics.CountAsync(cancellationToken);
-        var items = await topics
-            .OrderByDescending(topic => topic.IsPinned)
-            .ThenByDescending(topic => topic.PublishedAtUtc)
-            .ThenByDescending(topic => topic.Id)
+        var orderedTopics = string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase)
+            ? topics.OrderByDescending(topic => topic.Answers
+                    .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator)
+                    .Max(answer => answer.UpdatedAtUtc ?? answer.CreatedAtUtc))
+                .ThenByDescending(topic => topic.Id)
+            : topics.OrderByDescending(topic => topic.IsPinned)
+                .ThenByDescending(topic => topic.PublishedAtUtc)
+                .ThenByDescending(topic => topic.Id);
+        var items = await orderedTopics
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .Include(topic => topic.Category)
