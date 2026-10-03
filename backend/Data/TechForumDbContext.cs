@@ -11,6 +11,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 {
     public DbSet<Category> Categories => Set<Category>();
 
+    public DbSet<Tag> Tags => Set<Tag>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -23,6 +25,15 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         category.Property(item => item.Slug).HasMaxLength(100).IsRequired();
         category.Property(item => item.Description).HasMaxLength(500);
         category.HasIndex(item => item.Slug).IsUnique();
+
+        var tag = modelBuilder.Entity<Tag>();
+        tag.ToTable("Tags");
+        tag.HasKey(item => item.Id);
+        tag.Property(item => item.Name).HasMaxLength(60).IsRequired();
+        tag.Property(item => item.Slug).HasMaxLength(60).IsRequired();
+        tag.Property(item => item.Description).HasMaxLength(300);
+        tag.Property(item => item.IsActive).IsRequired();
+        tag.HasIndex(item => item.Slug).IsUnique();
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {

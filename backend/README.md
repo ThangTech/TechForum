@@ -18,9 +18,9 @@ biến môi trường, .NET user secrets hoặc `appsettings.Local.json` (đã �
 `Encrypt=False` chỉ dành cho SQL Server local phục vụ phát triển; môi trường triển
 khai phải bật mã hóa và dùng chứng thư hợp lệ.
 
-Ở môi trường Development, ứng dụng tự áp dụng migration còn thiếu và chỉ thêm dữ
-liệu mẫu khi bảng `Categories` đang rỗng. Các môi trường khác không tự migrate và
-không seed.
+Ở môi trường Development, ứng dụng tự áp dụng migration còn thiếu và seed riêng
+từng nhóm dữ liệu khi bảng `Categories` hoặc `Tags` tương ứng đang rỗng. Các môi
+trường khác không tự migrate và không seed.
 
 ## Endpoint M1
 
@@ -29,6 +29,15 @@ không seed.
 
 Luồng xử lý cho chức năng chuyên mục là
 `CategoriesController` → `CategoryService` → `CategoryRepository` → EF Core.
+
+## Thẻ công khai P2
+
+- `GET /api/tags`: danh sách thẻ đang hoạt động, sắp theo `name`, `id`.
+- `GET /api/tags/{id}`: chi tiết thẻ đang hoạt động hoặc Problem Details HTTP 404.
+
+Entity `Tag` có `IsActive` để hỗ trợ ngừng sử dụng ở phần quản trị sau này, nhưng
+DTO công khai không lộ cờ nội bộ này. Luồng xử lý là
+`TagsController` → `TagService` → `TagRepository` → EF Core.
 
 ## Xác thực P1
 
