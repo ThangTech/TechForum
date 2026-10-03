@@ -26,6 +26,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<TopicBookmark> TopicBookmarks => Set<TopicBookmark>();
 
     public DbSet<ContentReport> ContentReports => Set<ContentReport>();
+    public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -185,6 +186,20 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         report.HasOne(item => item.Answer).WithMany().HasForeignKey(item => item.AnswerId).OnDelete(DeleteBehavior.Restrict);
         report.HasOne(item => item.Reporter).WithMany().HasForeignKey(item => item.ReporterId).OnDelete(DeleteBehavior.Restrict);
         report.HasOne(item => item.ResolvedBy).WithMany().HasForeignKey(item => item.ResolvedById).OnDelete(DeleteBehavior.Restrict);
+
+        var auditLog = modelBuilder.Entity<AdminAuditLog>();
+        auditLog.ToTable("AdminAuditLogs");
+        auditLog.HasKey(item => item.Id);
+        auditLog.Property(item => item.AdministratorId).HasMaxLength(450).IsRequired();
+        auditLog.Property(item => item.Action).HasMaxLength(60).IsRequired();
+        auditLog.Property(item => item.TargetType).HasMaxLength(40).IsRequired();
+        auditLog.Property(item => item.TargetId).HasMaxLength(100).IsRequired();
+        auditLog.Property(item => item.PreviousValue).HasMaxLength(1000);
+        auditLog.Property(item => item.NewValue).HasMaxLength(1000);
+        auditLog.Property(item => item.Reason).HasMaxLength(1000).IsRequired();
+        auditLog.HasIndex(item => new { item.TargetType, item.TargetId, item.CreatedAtUtc });
+        auditLog.HasIndex(item => new { item.AdministratorId, item.CreatedAtUtc });
+        auditLog.HasOne(item => item.Administrator).WithMany().HasForeignKey(item => item.AdministratorId).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {
