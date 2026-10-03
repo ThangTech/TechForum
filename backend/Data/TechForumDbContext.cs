@@ -21,6 +21,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<Answer> Answers => Set<Answer>();
 
+    public DbSet<TopicStar> TopicStars => Set<TopicStar>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -128,6 +130,20 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         topic.HasOne(item => item.AcceptedAnswer)
             .WithMany()
             .HasForeignKey(item => item.AcceptedAnswerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var topicStar = modelBuilder.Entity<TopicStar>();
+        topicStar.ToTable("TopicStars");
+        topicStar.HasKey(item => new { item.TopicId, item.UserId });
+        topicStar.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        topicStar.HasIndex(item => new { item.TopicId, item.CreatedAtUtc });
+        topicStar.HasOne(item => item.Topic)
+            .WithMany(item => item.Stars)
+            .HasForeignKey(item => item.TopicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        topicStar.HasOne(item => item.User)
+            .WithMany()
+            .HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>

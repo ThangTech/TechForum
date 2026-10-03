@@ -94,6 +94,8 @@ builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IAnswerRepository, AnswerRepository>();
 builder.Services.AddScoped<IAnswerService, AnswerService>();
+builder.Services.AddScoped<ITopicStarRepository, TopicStarRepository>();
+builder.Services.AddScoped<ITopicStarService, TopicStarService>();
 builder.Services.AddScoped<IPublicProfileRepository, PublicProfileRepository>();
 builder.Services.AddScoped<IPublicProfileService, PublicProfileService>();
 builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();

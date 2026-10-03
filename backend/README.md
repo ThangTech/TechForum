@@ -112,6 +112,18 @@ Trường `isAccepted` trong DTO câu trả
 lời cho biết lựa chọn hiện tại; chỉ câu hỏi công khai và câu trả lời thuộc đúng
 chủ đề mới được chấp nhận.
 
+## Sao hữu ích P5
+
+- `GET /api/topics/{topicId}/star`: công khai, trả số sao và trạng thái của tài
+  khoản hiện tại dưới dạng `{ "count": 3, "hasStar": true }`.
+- `PUT /api/topics/{topicId}/star`: thêm sao của tài khoản đang đăng nhập.
+- `DELETE /api/topics/{topicId}/star`: bỏ sao của tài khoản đang đăng nhập.
+
+Khóa chính kép `(TopicId, UserId)` bảo đảm mỗi tài khoản chỉ có tối đa một sao
+hiện hành trên mỗi chủ đề. Thêm hoặc bỏ lặp lại là thao tác idempotent; chủ đề
+không còn công khai trả 404. Sao hữu ích không phải thang điểm và không dùng làm
+bookmark.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client

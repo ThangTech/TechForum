@@ -27,4 +27,5 @@ public sealed class Topic
     public ICollection<TopicTag> TopicTags { get; set; } = [];
     public ICollection<MediaAsset> MediaAssets { get; set; } = [];
     public ICollection<Answer> Answers { get; set; } = [];
+    public ICollection<TopicStar> Stars { get; set; } = [];
 }

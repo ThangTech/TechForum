@@ -29,3 +29,8 @@ PUT {{TechForum.Api_HostAddress}}/api/topics/1/answers/1/accepted
 Accept: application/json
 
 ###
+
+GET {{TechForum.Api_HostAddress}}/api/topics/1/star
+Accept: application/json
+
+###
