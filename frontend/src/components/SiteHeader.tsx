@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
+import { appRoutes } from '../appRoutes'
 
 const AccountMenu = lazy(() => import('./account/AccountMenu').then((module) => ({
   default: module.AccountMenu,
@@ -15,13 +16,13 @@ export const SiteHeader = () => {
     event.preventDefault()
     const params = new URLSearchParams()
     if (keyword.trim()) params.set('keyword', keyword.trim())
-    navigate({ pathname: '/', search: params.toString() })
+    navigate({ pathname: appRoutes.home, search: params.toString() })
   }
 
   return (
     <header className="site-header">
       <div className="header-bar">
-        <NavLink className="brand" to="/" aria-label="TechForum - trang chủ">
+        <NavLink className="brand" to={appRoutes.home} aria-label="TechForum - trang chủ">
           Tech<span>Forum</span>
         </NavLink>
 
@@ -45,18 +46,18 @@ export const SiteHeader = () => {
             </Suspense>
           ) : (
             <>
-              <NavLink className="header-link" to="/dang-nhap">Đăng nhập</NavLink>
-              <NavLink className="header-register" to="/dang-ky">Đăng ký</NavLink>
+              <NavLink className="header-link" to={appRoutes.login}>Đăng nhập</NavLink>
+              <NavLink className="header-register" to={appRoutes.register}>Đăng ký</NavLink>
             </>
           )}
         </div>
       </div>
 
       <nav className="category-nav" aria-label="Điều hướng chính">
-        <NavLink to="/" end>Trang chủ</NavLink>
-        <NavLink to="/bai-viet">Bài viết</NavLink>
-        <NavLink to="/hoi-dap">Hỏi đáp</NavLink>
-        <NavLink to="/viet-bai">Viết nội dung</NavLink>
+        <NavLink to={appRoutes.home} end>Trang chủ</NavLink>
+        <NavLink to={appRoutes.articles}>Bài viết</NavLink>
+        <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
+        <NavLink to={appRoutes.write}>Viết nội dung</NavLink>
       </nav>
     </header>
   )

@@ -23,12 +23,12 @@ trong backend. Không đổi `localhost` thành `127.0.0.1` nếu chưa cập nh
 
 Các route chính:
 
-- `/dang-nhap`: đăng nhập, hỗ trợ `returnUrl` nội bộ.
-- `/dang-ky`: đăng ký thành viên và tự tạo phiên.
-- `/tai-khoan`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
-- `/bai-viet`, `/hoi-dap`: duyệt, tìm kiếm và phân trang nội dung công khai.
-- `/noi-dung/:id`, `/thanh-vien/:userId`: chi tiết và hồ sơ tác giả công khai.
-- `/viet-bai`: route riêng tư dùng Froala để lưu bản nháp hoặc xuất bản. Ảnh/video
+- `/login`: đăng nhập, hỗ trợ `returnUrl` nội bộ.
+- `/register`: đăng ký thành viên và tự tạo phiên.
+- `/account`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
+- `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
+- `/topics/:id`, `/members/:userId`: chi tiết và hồ sơ tác giả công khai.
+- `/write`: route riêng tư dùng Froala để lưu bản nháp hoặc xuất bản. Ảnh/video
   chưa bật cho tới khi endpoint upload backend hoàn tất.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng

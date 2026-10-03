@@ -1,0 +1,13 @@
+export const appRoutes = {
+  home: '/',
+  articles: '/articles',
+  questions: '/questions',
+  write: '/write',
+  myTopics: '/my-topics',
+  account: '/account',
+  login: '/login',
+  register: '/register',
+  topic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}`,
+  editTopic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}/edit`,
+  member: (userId: string) => `/members/${encodeURIComponent(userId)}`,
+} as const

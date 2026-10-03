@@ -1,17 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Theme } from '@astryxdesign/core/theme'
+import { InternationalizationProvider } from '@astryxdesign/core/i18n'
+import viVN from '@astryxdesign/core/locales/vi-VN.generated.js'
 import { neutralTheme } from '@astryxdesign/theme-neutral/built'
-import '@astryxdesign/core/reset.css'
-import '@astryxdesign/core/astryx.css'
-import '@astryxdesign/theme-neutral/theme.css'
 import './index.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Theme theme={neutralTheme} mode="light">
-      <App />
-    </Theme>
+    <InternationalizationProvider locale="vi-VN" messages={{ 'vi-VN': viVN }}>
+      <Theme theme={neutralTheme} mode="light">
+        <App />
+      </Theme>
+    </InternationalizationProvider>
   </StrictMode>,
 )

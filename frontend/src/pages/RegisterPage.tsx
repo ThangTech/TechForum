@@ -7,6 +7,7 @@ import { useAuth } from '../auth/authState'
 import { createAuthUrl, getSafeReturnUrl } from '../auth/returnUrl'
 import background from '../assets/background.png'
 import { AuthPageLayout } from './LoginPage'
+import { appRoutes } from '../appRoutes'
 
 const fieldError = (error: ApiError | null, name: string) => {
   if (!error) return undefined
@@ -129,7 +130,7 @@ export const RegisterPage = () => {
 
         <p className="auth-form__switch">
           Đã có tài khoản?{' '}
-          <Link to={createAuthUrl('/dang-nhap', returnUrl)}>Đăng nhập</Link>
+          <Link to={createAuthUrl(appRoutes.login, returnUrl)}>Đăng nhập</Link>
         </p>
       </form>
     </AuthPageLayout>

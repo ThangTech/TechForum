@@ -2,6 +2,7 @@ import { Button } from '@astryxdesign/core/Button'
 import { Dialog } from '@astryxdesign/core/Dialog'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { createAuthUrl } from '../auth/returnUrl'
+import { appRoutes } from '../appRoutes'
 
 interface AuthRequiredDialogProps {
   isOpen: boolean
@@ -13,7 +14,7 @@ export const AuthRequiredDialog = ({ isOpen, onClose }: AuthRequiredDialogProps)
   const navigate = useNavigate()
   const returnUrl = `${location.pathname}${location.search}${location.hash}`
 
-  const goTo = (path: '/dang-nhap' | '/dang-ky') => {
+  const goTo = (path: '/login' | '/register') => {
     navigate(createAuthUrl(path, returnUrl))
   }
 
@@ -34,8 +35,8 @@ export const AuthRequiredDialog = ({ isOpen, onClose }: AuthRequiredDialogProps)
           đang xem.
         </p>
         <div className="auth-dialog__actions">
-          <Button label="Đăng nhập" variant="primary" onClick={() => goTo('/dang-nhap')} />
-          <Button label="Đăng ký" variant="secondary" onClick={() => goTo('/dang-ky')} />
+          <Button label="Đăng nhập" variant="primary" onClick={() => goTo(appRoutes.login)} />
+          <Button label="Đăng ký" variant="secondary" onClick={() => goTo(appRoutes.register)} />
           <Button label="Để sau" variant="ghost" onClick={onClose} />
         </div>
       </div>

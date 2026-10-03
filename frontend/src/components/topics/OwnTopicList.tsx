@@ -1,6 +1,7 @@
 import { Button } from '@astryxdesign/core/Button'
 import { Link } from 'react-router-dom'
 import type { OwnTopicPage } from '../../api/topics'
+import { appRoutes } from '../../appRoutes'
 import { TopicTypeBadge } from './TopicTypeBadge'
 
 interface OwnTopicListProps {
@@ -18,7 +19,7 @@ export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
         <p className="text-sm text-slate-600">Bạn chưa có nội dung phù hợp với bộ lọc.</p>
-        <Link className="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to="/viet-bai">
+        <Link className="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to={appRoutes.write}>
           Viết nội dung đầu tiên
         </Link>
       </div>
@@ -41,7 +42,7 @@ export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps
               {topic.isDiscussionLocked && <span className="text-xs font-semibold text-slate-500">Đã khóa thảo luận</span>}
             </div>
             {topic.status === 'published' && !topic.isHiddenByModerator ? (
-              <Link className="mt-3 block text-lg font-bold text-slate-950 hover:text-blue-700" to={`/noi-dung/${topic.id}`}>
+              <Link className="mt-3 block text-lg font-bold text-slate-950 hover:text-blue-700" to={appRoutes.topic(topic.id)}>
                 {topic.title}
               </Link>
             ) : (
@@ -62,7 +63,7 @@ export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps
               </div>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700" to={`/chinh-sua/${topic.id}`}>
+              <Link className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700" to={appRoutes.editTopic(topic.id)}>
                 Chỉnh sửa
               </Link>
               <Button label="Xóa" onClick={() => onDelete(topic.id)} variant="ghost" />

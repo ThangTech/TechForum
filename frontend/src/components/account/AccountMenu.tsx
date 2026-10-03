@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
+import { appRoutes } from '../../appRoutes'
 
 export const AccountMenu = () => {
   const { user, logout } = useAuth()
@@ -18,7 +19,7 @@ export const AccountMenu = () => {
     setError(null)
     try {
       await logout()
-      navigate('/', { replace: true })
+      navigate(appRoutes.home, { replace: true })
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : 'Không thể đăng xuất lúc này.')
     } finally {
@@ -27,9 +28,9 @@ export const AccountMenu = () => {
   }
 
   const items: DropdownMenuOption[] = [
-    { id: 'account', label: 'Trang tài khoản', onClick: () => navigate('/tai-khoan') },
-    { id: 'content', label: 'Nội dung của tôi', onClick: () => navigate('/noi-dung-cua-toi') },
-    { id: 'write', label: 'Viết nội dung', onClick: () => navigate('/viet-bai') },
+    { id: 'account', label: 'Trang tài khoản', onClick: () => navigate(appRoutes.account) },
+    { id: 'content', label: 'Nội dung của tôi', onClick: () => navigate(appRoutes.myTopics) },
+    { id: 'write', label: 'Viết nội dung', onClick: () => navigate(appRoutes.write) },
     { type: 'divider' },
     {
       id: 'logout',

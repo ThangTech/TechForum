@@ -5,6 +5,7 @@ import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { ConfirmDialog } from '../components/feedback/ConfirmDialog'
 import { OwnTopicFilters } from '../components/topics/OwnTopicFilters'
 import { OwnTopicList } from '../components/topics/OwnTopicList'
+import { appRoutes } from '../appRoutes'
 
 const readPositiveInteger = (value: string | null) => {
   const parsed = Number(value)
@@ -84,7 +85,7 @@ export const MyTopicsPage = () => {
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Nội dung của tôi</h1>
             <p className="mt-3 text-sm text-slate-600">Quản lý bản nháp và theo dõi trạng thái nội dung đã xuất bản.</p>
           </div>
-          <Link className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to="/viet-bai">Viết nội dung</Link>
+          <Link className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to={appRoutes.write}>Viết nội dung</Link>
         </div>
 
         <div className="mt-6">

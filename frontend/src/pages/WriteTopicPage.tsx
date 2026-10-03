@@ -11,6 +11,7 @@ import { TopicEditorField } from '../components/topics/TopicEditorField'
 import { TopicCreatedPanel } from '../components/topics/TopicCreatedPanel'
 import { TopicMetadataFields } from '../components/topics/TopicMetadataFields'
 import { hasFroalaKey } from '../config/froala'
+import { appRoutes } from '../appRoutes'
 
 export const WriteTopicPage = () => {
   const navigate = useNavigate()
@@ -122,7 +123,7 @@ export const WriteTopicPage = () => {
 
   const handleSuccessAction = () => {
     if (editingId) {
-      navigate('/noi-dung-cua-toi')
+      navigate(appRoutes.myTopics)
       return
     }
 

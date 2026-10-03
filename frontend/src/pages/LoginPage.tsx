@@ -7,6 +7,7 @@ import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
 import { createAuthUrl, getSafeReturnUrl } from '../auth/returnUrl'
 import background from '../assets/background.png'
+import { appRoutes } from '../appRoutes'
 
 export const LoginPage = () => {
   const { user, login } = useAuth()
@@ -94,7 +95,7 @@ export const LoginPage = () => {
 
         <p className="auth-form__switch">
           Chưa có tài khoản?{' '}
-          <Link to={createAuthUrl('/dang-ky', returnUrl)}>Đăng ký</Link>
+          <Link to={createAuthUrl(appRoutes.register, returnUrl)}>Đăng ký</Link>
         </p>
       </form>
     </AuthPageLayout>
@@ -112,7 +113,7 @@ export const AuthPageLayout = ({ image, title, description, children }: AuthPage
   return (
     <main className="auth-page">
       <section className="auth-visual" aria-label="Giới thiệu TechForum">
-        <Link className="auth-visual__brand" to="/">Tech<span>Forum</span></Link>
+        <Link className="auth-visual__brand" to={appRoutes.home}>Tech<span>Forum</span></Link>
         <div className="auth-visual__copy">
           <img src={image} alt="Cộng đồng cùng trao đổi kiến thức công nghệ" />
           <h2>{title}</h2>

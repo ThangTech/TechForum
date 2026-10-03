@@ -1,4 +1,3 @@
-import './App.css'
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
@@ -11,6 +10,8 @@ import { RegisterPage } from './pages/RegisterPage'
 import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
 import { MyTopicsPage } from './pages/MyTopicsPage'
+import { appRoutes } from './appRoutes'
+import { LegacyRouteRedirect } from './components/LegacyRouteRedirect'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -24,17 +25,17 @@ const App = () => {
           <Route element={<SiteLayout />}>
             <Route index element={<HomePage />} />
             <Route
-              path="bai-viet"
+              path="articles"
               element={<HomePage fixedType="Article" title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng." />}
             />
             <Route
-              path="hoi-dap"
+              path="questions"
               element={<HomePage fixedType="Question" title="Hỏi đáp công nghệ" description="Tìm câu hỏi đang cần sự đóng góp từ cộng đồng TechForum." />}
             />
-            <Route path="noi-dung/:id" element={<TopicDetailPage />} />
-            <Route path="thanh-vien/:userId" element={<PublicProfilePage />} />
+            <Route path="topics/:id" element={<TopicDetailPage />} />
+            <Route path="members/:userId" element={<PublicProfilePage />} />
             <Route
-              path="viet-bai"
+              path="write"
               element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="route-status">Đang tải trình soạn thảo…</div>}>
@@ -44,7 +45,7 @@ const App = () => {
               }
             />
             <Route
-              path="chinh-sua/:id"
+              path="topics/:id/edit"
               element={
                 <ProtectedRoute>
                   <Suspense fallback={<div className="route-status">Đang tải trình chỉnh sửa…</div>}>
@@ -54,7 +55,7 @@ const App = () => {
               }
             />
             <Route
-              path="noi-dung-cua-toi"
+              path="my-topics"
               element={
                 <ProtectedRoute>
                   <MyTopicsPage />
@@ -62,17 +63,27 @@ const App = () => {
               }
             />
             <Route
-              path="tai-khoan"
+              path="account"
               element={
                 <ProtectedRoute>
                   <AccountPage />
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="bai-viet" element={<LegacyRouteRedirect to={appRoutes.articles} />} />
+            <Route path="hoi-dap" element={<LegacyRouteRedirect to={appRoutes.questions} />} />
+            <Route path="noi-dung/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.topic(params.id ?? '')} />} />
+            <Route path="thanh-vien/:userId" element={<LegacyRouteRedirect to={(params) => appRoutes.member(params.userId ?? '')} />} />
+            <Route path="viet-bai" element={<LegacyRouteRedirect to={appRoutes.write} />} />
+            <Route path="chinh-sua/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.editTopic(params.id ?? '')} />} />
+            <Route path="noi-dung-cua-toi" element={<LegacyRouteRedirect to={appRoutes.myTopics} />} />
+            <Route path="tai-khoan" element={<LegacyRouteRedirect to={appRoutes.account} />} />
+            <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
           </Route>
-          <Route path="dang-nhap" element={<LoginPage />} />
-          <Route path="dang-ky" element={<RegisterPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
+          <Route path="dang-nhap" element={<LegacyRouteRedirect to={appRoutes.login} />} />
+          <Route path="dang-ky" element={<LegacyRouteRedirect to={appRoutes.register} />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

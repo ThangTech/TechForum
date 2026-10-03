@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { OwnTopic } from '../../api/topics'
+import { appRoutes } from '../../appRoutes'
 
 interface TopicCreatedPanelProps {
   actionLabel?: string
@@ -18,7 +19,7 @@ export const TopicCreatedPanel = ({ actionLabel = 'Soạn nội dung khác', top
         </p>
         <div className="mt-6 flex justify-center gap-3">
           {topic.status === 'published' && (
-            <Link className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to={`/noi-dung/${topic.id}`}>
+            <Link className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to={appRoutes.topic(topic.id)}>
               Xem nội dung
             </Link>
           )}

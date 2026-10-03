@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { TopicSummary } from '../../api/topics'
+import { appRoutes } from '../../appRoutes'
 import { TopicTypeBadge } from './TopicTypeBadge'
 
 interface TopicSummaryItemProps {
@@ -23,14 +24,14 @@ export const TopicSummaryItem = ({
       {topic.isPinned && <span className="text-xs font-semibold text-blue-700">Đã ghim</span>}
       {topic.isDiscussionLocked && <span className="text-xs font-semibold text-slate-500">Đã khóa thảo luận</span>}
     </div>
-    <Link className="mt-3 block text-lg font-bold leading-7 text-slate-950 hover:text-blue-700" to={`/noi-dung/${topic.id}`}>
+    <Link className="mt-3 block text-lg font-bold leading-7 text-slate-950 hover:text-blue-700" to={appRoutes.topic(topic.id)}>
       {topic.title}
     </Link>
     <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p>
     <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-500">
       {showAuthor && (
         <>
-          <Link className="font-semibold text-slate-700 hover:text-blue-700" to={`/thanh-vien/${encodeURIComponent(topic.author.id)}`}>
+          <Link className="font-semibold text-slate-700 hover:text-blue-700" to={appRoutes.member(topic.author.id)}>
             {topic.author.displayName}
           </Link>
           <span aria-hidden="true">·</span>

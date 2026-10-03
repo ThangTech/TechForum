@@ -5,6 +5,7 @@ import { getTopic, type TopicDetail } from '../api/topics'
 import { toDisplayMediaHtml } from '../api/media'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
+import { appRoutes } from '../appRoutes'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -78,7 +79,7 @@ export const TopicDetailPage = () => {
               </h1>
               <p className="mt-4 text-base leading-7 text-slate-600">{topic.summary}</p>
               <div className="mt-5 flex flex-wrap gap-x-3 gap-y-2 text-sm text-slate-500">
-                <Link className="font-semibold text-slate-700 hover:text-blue-700" to={`/thanh-vien/${encodeURIComponent(topic.author.id)}`}>
+                <Link className="font-semibold text-slate-700 hover:text-blue-700" to={appRoutes.member(topic.author.id)}>
                   {topic.author.displayName}
                 </Link>
                 <span aria-hidden="true">·</span>
