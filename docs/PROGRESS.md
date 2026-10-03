@@ -55,6 +55,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
    - [x] `returnUrl` chỉ chấp nhận đường dẫn nội bộ; không tự gửi lại thao tác ghi.
    - [x] Modal yêu cầu đăng nhập dùng chung có Đăng nhập, Đăng ký, Để sau.
    - [x] Header phân biệt khách/thành viên bằng dữ liệu phiên thật.
+   - [x] Menu tài khoản Astryx có Trang tài khoản, Nội dung của tôi, Viết nội
+     dung và Đăng xuất; mọi mục đều có hành vi thật và menu được lazy-load.
 
 3. **Astryx thử nghiệm trước khi áp dụng rộng**
    - [x] Core/theme/peer dependency tương thích React và build Vite.

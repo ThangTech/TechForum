@@ -1,6 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { lazy, Suspense, useState, type FormEvent } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
+
+const AccountMenu = lazy(() => import('./account/AccountMenu').then((module) => ({
+  default: module.AccountMenu,
+})))
 
 export const SiteHeader = () => {
   const { user, isLoading } = useAuth()
@@ -36,12 +40,9 @@ export const SiteHeader = () => {
           {isLoading ? (
             <span className="account-loading" role="status">Đang kiểm tra phiên…</span>
           ) : user ? (
-            <NavLink className="account-state" to="/tai-khoan">
-              <span className="account-state__avatar" aria-hidden="true">
-                {user.displayName.slice(0, 1).toUpperCase()}
-              </span>
-              <span>{user.displayName}</span>
-            </NavLink>
+            <Suspense fallback={<span className="account-loading">Đang tải tài khoản…</span>}>
+              <AccountMenu />
+            </Suspense>
           ) : (
             <>
               <NavLink className="header-link" to="/dang-nhap">Đăng nhập</NavLink>
@@ -56,8 +57,6 @@ export const SiteHeader = () => {
         <NavLink to="/bai-viet">Bài viết</NavLink>
         <NavLink to="/hoi-dap">Hỏi đáp</NavLink>
         <NavLink to="/viet-bai">Viết nội dung</NavLink>
-        <NavLink to="/noi-dung-cua-toi">Nội dung của tôi</NavLink>
-        <NavLink to="/tai-khoan">Tài khoản</NavLink>
       </nav>
     </header>
   )

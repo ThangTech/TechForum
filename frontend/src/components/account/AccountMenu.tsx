@@ -1,0 +1,55 @@
+import { DropdownMenu, type DropdownMenuOption } from '@astryxdesign/core/DropdownMenu'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ApiError } from '../../api/client'
+import { useAuth } from '../../auth/authState'
+
+export const AccountMenu = () => {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  if (!user) return null
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    setError(null)
+    try {
+      await logout()
+      navigate('/', { replace: true })
+    } catch (requestError) {
+      setError(requestError instanceof ApiError ? requestError.message : 'Không thể đăng xuất lúc này.')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
+  const items: DropdownMenuOption[] = [
+    { id: 'account', label: 'Trang tài khoản', onClick: () => navigate('/tai-khoan') },
+    { id: 'content', label: 'Nội dung của tôi', onClick: () => navigate('/noi-dung-cua-toi') },
+    { id: 'write', label: 'Viết nội dung', onClick: () => navigate('/viet-bai') },
+    { type: 'divider' },
+    {
+      id: 'logout',
+      label: isLoggingOut ? 'Đang đăng xuất…' : 'Đăng xuất',
+      isDisabled: isLoggingOut,
+      onClick: () => void handleLogout(),
+      variant: 'destructive',
+    },
+  ]
+
+  return (
+    <div className="grid justify-items-end gap-1">
+      <DropdownMenu
+        alignment="end"
+        button={{ label: `${user.displayName.slice(0, 1).toLocaleUpperCase('vi-VN')} · ${user.displayName}` }}
+        items={items}
+        menuWidth={220}
+        placement="below"
+      />
+      {error && <span className="max-w-56 text-right text-xs text-red-700" role="alert">{error}</span>}
+    </div>
+  )
+}
