@@ -98,6 +98,8 @@ builder.Services.AddScoped<ITopicStarRepository, TopicStarRepository>();
 builder.Services.AddScoped<ITopicStarService, TopicStarService>();
 builder.Services.AddScoped<ITopicBookmarkRepository, TopicBookmarkRepository>();
 builder.Services.AddScoped<ITopicBookmarkService, TopicBookmarkService>();
+builder.Services.AddScoped<IContentReportRepository, ContentReportRepository>();
+builder.Services.AddScoped<IContentReportService, ContentReportService>();
 builder.Services.AddScoped<IPublicProfileRepository, PublicProfileRepository>();
 builder.Services.AddScoped<IPublicProfileService, PublicProfileService>();
 builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();

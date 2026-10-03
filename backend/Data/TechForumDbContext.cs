@@ -25,6 +25,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<TopicBookmark> TopicBookmarks => Set<TopicBookmark>();
 
+    public DbSet<ContentReport> ContentReports => Set<ContentReport>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -161,6 +163,27 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
             .WithMany()
             .HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        var report = modelBuilder.Entity<ContentReport>();
+        report.ToTable("ContentReports", table => table.HasCheckConstraint(
+            "CK_ContentReports_OneTarget",
+            "([TopicId] IS NOT NULL AND [AnswerId] IS NULL) OR ([TopicId] IS NULL AND [AnswerId] IS NOT NULL)"));
+        report.HasKey(item => item.Id);
+        report.Property(item => item.ReporterId).HasMaxLength(450).IsRequired();
+        report.Property(item => item.ResolvedById).HasMaxLength(450);
+        report.Property(item => item.Reason).HasMaxLength(40).IsRequired();
+        report.Property(item => item.Details).HasMaxLength(1000);
+        report.Property(item => item.ResolutionNote).HasMaxLength(1000);
+        report.Property(item => item.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+        report.HasIndex(item => new { item.Status, item.CreatedAtUtc });
+        report.HasIndex(item => new { item.ReporterId, item.TopicId }).IsUnique()
+            .HasFilter("[Status] = 'Pending' AND [TopicId] IS NOT NULL");
+        report.HasIndex(item => new { item.ReporterId, item.AnswerId }).IsUnique()
+            .HasFilter("[Status] = 'Pending' AND [AnswerId] IS NOT NULL");
+        report.HasOne(item => item.Topic).WithMany().HasForeignKey(item => item.TopicId).OnDelete(DeleteBehavior.Restrict);
+        report.HasOne(item => item.Answer).WithMany().HasForeignKey(item => item.AnswerId).OnDelete(DeleteBehavior.Restrict);
+        report.HasOne(item => item.Reporter).WithMany().HasForeignKey(item => item.ReporterId).OnDelete(DeleteBehavior.Restrict);
+        report.HasOne(item => item.ResolvedBy).WithMany().HasForeignKey(item => item.ResolvedById).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {

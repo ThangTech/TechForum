@@ -135,6 +135,17 @@ bookmark.
 Bookmark dùng khóa chính kép `(TopicId, UserId)`, độc lập với Sao hữu ích và các
 thao tác thêm/bỏ được xử lý idempotent.
 
+## Báo cáo nội dung P6
+
+- `POST /api/reports`: báo cáo một `topic` hoặc `answer` với `targetId`, `reason`
+  và mô tả tùy chọn tối đa 1.000 ký tự.
+- Lý do hợp lệ: `spam`, `harassment`, `misinformation`, `copyright`, `other`;
+  lý do `other` bắt buộc có mô tả.
+
+Mỗi tài khoản chỉ có một báo cáo `Pending` trên cùng nội dung. Constraint lọc ở
+SQL Server và xử lý unique conflict bảo vệ cả trường hợp request đồng thời. Bản
+ghi đã có sẵn trạng thái, người/thời gian xử lý và ghi chú để dùng cho quản trị.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client

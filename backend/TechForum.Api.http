@@ -44,3 +44,15 @@ GET {{TechForum.Api_HostAddress}}/api/bookmarks?page=1&pageSize=10
 Accept: application/json
 
 ###
+
+POST {{TechForum.Api_HostAddress}}/api/reports
+Content-Type: application/json
+
+{
+  "targetType": "topic",
+  "targetId": 1,
+  "reason": "spam",
+  "details": "Nội dung quảng cáo lặp lại."
+}
+
+###
