@@ -19,3 +19,8 @@ GET {{TechForum.Api_HostAddress}}/api/auth/me
 Accept: application/json
 
 ###
+
+GET {{TechForum.Api_HostAddress}}/api/topics/1/answers?page=1&pageSize=20
+Accept: application/json
+
+###

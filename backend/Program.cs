@@ -92,6 +92,8 @@ builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<ITopicService, TopicService>();
+builder.Services.AddScoped<IAnswerRepository, AnswerRepository>();
+builder.Services.AddScoped<IAnswerService, AnswerService>();
 builder.Services.AddScoped<IPublicProfileRepository, PublicProfileRepository>();
 builder.Services.AddScoped<IPublicProfileService, PublicProfileService>();
 builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();

@@ -24,4 +24,5 @@ public sealed class Topic
     public bool IsPinned { get; set; }
     public ICollection<TopicTag> TopicTags { get; set; } = [];
     public ICollection<MediaAsset> MediaAssets { get; set; } = [];
+    public ICollection<Answer> Answers { get; set; } = [];
 }

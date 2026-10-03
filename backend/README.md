@@ -95,6 +95,19 @@ Tài nguyên không tồn tại hoặc không thuộc tài khoản đều trả 
 liệu của người khác. Hiện P4 chưa có phản hồi nên thành viên được xóa mềm nội
 dung của mình; chính sách khi đã có phản hồi sẽ được bổ sung cùng phase thảo luận.
 
+## Câu trả lời P4
+
+- `GET /api/topics/{topicId}/answers?page=1&pageSize=20`: danh sách câu trả lời
+  công khai, phân trang tối đa 50 phần tử và sắp theo thời điểm tạo rồi `id` tăng
+  dần để giữ đúng thứ tự hội thoại.
+- `POST /api/topics/{topicId}/answers`: thành viên đã đăng nhập gửi
+  `{ "bodyHtml": "<p>Nội dung trả lời</p>" }`, trả HTTP 201.
+
+Backend làm sạch HTML trước khi lưu. Chủ đề không công khai trả 404; chủ đề đã
+khóa thảo luận trả 409; dữ liệu rỗng hoặc quá 20.000 ký tự trả Validation Problem
+HTTP 400. P4.1 chưa triển khai sửa/xóa và chọn câu trả lời được chấp nhận vì các
+quy tắc đó được tách sang chức năng kế tiếp.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client

@@ -19,6 +19,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
 
+    public DbSet<Answer> Answers => Set<Answer>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -99,6 +101,27 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         mediaAsset.HasOne(item => item.Topic)
             .WithMany(item => item.MediaAssets)
             .HasForeignKey(item => item.TopicId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var answer = modelBuilder.Entity<Answer>();
+        answer.ToTable("Answers");
+        answer.HasKey(item => item.Id);
+        answer.Property(item => item.AuthorId).HasMaxLength(450).IsRequired();
+        answer.Property(item => item.BodyHtml).IsRequired();
+        answer.HasIndex(item => new
+        {
+            item.TopicId,
+            item.IsDeleted,
+            item.IsHiddenByModerator,
+            item.CreatedAtUtc
+        });
+        answer.HasOne(item => item.Topic)
+            .WithMany(item => item.Answers)
+            .HasForeignKey(item => item.TopicId)
+            .OnDelete(DeleteBehavior.Restrict);
+        answer.HasOne(item => item.Author)
+            .WithMany()
+            .HasForeignKey(item => item.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>
