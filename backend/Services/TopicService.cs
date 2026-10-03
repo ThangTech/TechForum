@@ -195,6 +195,7 @@ public sealed partial class TopicService(
             topic.Status == TopicStatus.Published ? "published" : "draft",
             new TopicCategoryDto(category.Id, category.Name, category.Slug),
             tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
+            mediaAssets.Select(MapMedia).ToList(),
             topic.CreatedAtUtc,
             topic.PublishedAtUtc));
     }
@@ -288,6 +289,7 @@ public sealed partial class TopicService(
             topic.Status == TopicStatus.Published ? "published" : "draft",
             new TopicCategoryDto(category.Id, category.Name, category.Slug),
             tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
+            mediaAssets.Select(MapMedia).ToList(),
             topic.CreatedAtUtc,
             topic.PublishedAtUtc));
     }
@@ -427,8 +429,12 @@ public sealed partial class TopicService(
         topic.Status == TopicStatus.Published ? "published" : "draft",
         MapCategory(topic),
         MapTags(topic),
+        topic.MediaAssets.OrderBy(item => item.CreatedAtUtc).Select(MapMedia).ToList(),
         topic.CreatedAtUtc,
         topic.PublishedAtUtc);
+
+    private static TopicMediaDto MapMedia(MediaAsset mediaAsset) =>
+        new(mediaAsset.Id, mediaAsset.PublicUrl, mediaAsset.ContentType);
 
     private static string MapType(TopicType type) => type switch
     {

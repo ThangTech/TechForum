@@ -10,5 +10,6 @@ public sealed record OwnTopicDto(
     string Status,
     TopicCategoryDto Category,
     IReadOnlyList<TopicTagDto> Tags,
+    IReadOnlyList<TopicMediaDto> Media,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? PublishedAtUtc);
