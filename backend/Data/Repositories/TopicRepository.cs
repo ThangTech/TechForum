@@ -52,6 +52,52 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
         return new TopicPage(items, totalItems);
     }
 
+    public async Task<TopicPage> GetOwnedPageAsync(
+        string authorId,
+        TopicQuery query,
+        CancellationToken cancellationToken)
+    {
+        var topics = dbContext.Topics
+            .AsNoTracking()
+            .Where(topic => topic.AuthorId == authorId && !topic.IsDeleted);
+        var keyword = query.Keyword?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            topics = topics.Where(topic =>
+                topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
+        }
+
+        if (query.Type.HasValue)
+        {
+            topics = topics.Where(topic => topic.Type == query.Type.Value);
+        }
+
+        if (query.CategoryId.HasValue)
+        {
+            topics = topics.Where(topic => topic.CategoryId == query.CategoryId.Value);
+        }
+
+        if (query.TagId.HasValue)
+        {
+            topics = topics.Where(topic => topic.TopicTags.Any(item => item.TagId == query.TagId.Value));
+        }
+
+        var totalItems = await topics.CountAsync(cancellationToken);
+        var items = await topics
+            .OrderByDescending(topic => topic.UpdatedAtUtc ?? topic.CreatedAtUtc)
+            .ThenByDescending(topic => topic.Id)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Include(topic => topic.Category)
+            .Include(topic => topic.TopicTags)
+                .ThenInclude(item => item.Tag)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+
+        return new TopicPage(items, totalItems);
+    }
+
     public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken)
     {
         return PublicTopics()

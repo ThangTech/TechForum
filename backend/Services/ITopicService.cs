@@ -8,6 +8,11 @@ public interface ITopicService
         TopicQuery query,
         CancellationToken cancellationToken);
 
+    Task<PagedResultDto<OwnTopicSummaryDto>> GetOwnedPageAsync(
+        string authorId,
+        TopicQuery query,
+        CancellationToken cancellationToken);
+
     Task<TopicDetailDto?> GetPublicByIdAsync(int id, CancellationToken cancellationToken);
 
     Task<CreateTopicResult> CreateAsync(

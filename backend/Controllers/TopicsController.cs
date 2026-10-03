@@ -30,6 +30,34 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         return Ok(await topicService.GetPublicPageAsync(query, cancellationToken));
     }
 
+    [Authorize]
+    [HttpGet("mine")]
+    [ProducesResponseType<PagedResultDto<OwnTopicSummaryDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PagedResultDto<OwnTopicSummaryDto>>> GetMine(
+        [FromQuery] TopicQuery query,
+        CancellationToken cancellationToken)
+    {
+        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(authorId))
+        {
+            return Unauthorized();
+        }
+
+        var errors = Validate(query);
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ValidationProblemDetails(errors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bộ lọc nội dung chưa hợp lệ"
+            });
+        }
+
+        return Ok(await topicService.GetOwnedPageAsync(authorId, query, cancellationToken));
+    }
+
     [HttpGet("{id:int}")]
     [ProducesResponseType<TopicDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

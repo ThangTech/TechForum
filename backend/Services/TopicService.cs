@@ -37,6 +37,24 @@ public sealed partial class TopicService(
         return topic is null ? null : MapDetail(topic);
     }
 
+    public async Task<PagedResultDto<OwnTopicSummaryDto>> GetOwnedPageAsync(
+        string authorId,
+        TopicQuery query,
+        CancellationToken cancellationToken)
+    {
+        var page = await topicRepository.GetOwnedPageAsync(authorId, query, cancellationToken);
+        var totalPages = page.TotalItems == 0
+            ? 0
+            : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
+
+        return new PagedResultDto<OwnTopicSummaryDto>(
+            page.Items.Select(MapOwnedSummary).ToList(),
+            query.Page,
+            query.PageSize,
+            page.TotalItems,
+            totalPages);
+    }
+
     public async Task<CreateTopicResult> CreateAsync(
         string authorId,
         CreateTopicRequest request,
@@ -230,6 +248,20 @@ public sealed partial class TopicService(
         topic.PublishedAtUtc!.Value,
         topic.UpdatedAtUtc,
         topic.IsPinned,
+        topic.IsDiscussionLocked);
+
+    private static OwnTopicSummaryDto MapOwnedSummary(Topic topic) => new(
+        topic.Id,
+        topic.Title,
+        topic.Summary,
+        MapType(topic.Type),
+        topic.Status == TopicStatus.Published ? "published" : "draft",
+        MapCategory(topic),
+        MapTags(topic),
+        topic.CreatedAtUtc,
+        topic.UpdatedAtUtc,
+        topic.PublishedAtUtc,
+        topic.IsHiddenByModerator,
         topic.IsDiscussionLocked);
 
     private static string MapType(TopicType type) => type switch

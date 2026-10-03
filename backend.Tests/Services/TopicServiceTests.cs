@@ -46,6 +46,31 @@ public sealed class TopicServiceTests
     }
 
     [Fact]
+    public async Task GetOwnedPageAsync_ReturnsDraftAndModerationStateForRequestedAuthor()
+    {
+        var topic = CreateTopic();
+        topic.Status = TopicStatus.Draft;
+        topic.PublishedAtUtc = null;
+        topic.IsHiddenByModerator = true;
+        var repository = new FakeTopicRepository
+        {
+            OwnedPage = new TopicPage([topic], 1)
+        };
+        var service = CreateService(repository);
+
+        var result = await service.GetOwnedPageAsync(
+            "member-a",
+            new TopicQuery(),
+            CancellationToken.None);
+
+        var item = Assert.Single(result.Items);
+        Assert.Equal("draft", item.Status);
+        Assert.True(item.IsHiddenByModerator);
+        Assert.Null(item.PublishedAtUtc);
+        Assert.Equal("member-a", repository.LastOwnedAuthorId);
+    }
+
+    [Fact]
     public async Task CreateAsync_WithValidRequest_SanitizesAndBuildsOwnedContract()
     {
         var repository = new FakeTopicRepository
@@ -134,7 +159,9 @@ public sealed class TopicServiceTests
     private sealed class FakeTopicRepository : ITopicRepository
     {
         public TopicPage Page { get; init; } = new([], 0);
+        public TopicPage OwnedPage { get; init; } = new([], 0);
         public TopicQuery? LastQuery { get; private set; }
+        public string? LastOwnedAuthorId { get; private set; }
         public Category? Category { get; init; }
         public IReadOnlyList<Tag> Tags { get; init; } = [];
         public Topic? AddedTopic { get; private set; }
@@ -149,6 +176,15 @@ public sealed class TopicServiceTests
 
         public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) =>
             Task.FromResult(Page.Items.SingleOrDefault(topic => topic.Id == id));
+
+        public Task<TopicPage> GetOwnedPageAsync(
+            string authorId,
+            TopicQuery query,
+            CancellationToken cancellationToken)
+        {
+            LastOwnedAuthorId = authorId;
+            return Task.FromResult(OwnedPage);
+        }
 
         public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) =>
             Task.FromResult(Category?.Id == id ? Category : null);
