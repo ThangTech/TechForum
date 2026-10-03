@@ -13,6 +13,10 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<Tag> Tags => Set<Tag>();
 
+    public DbSet<Topic> Topics => Set<Topic>();
+
+    public DbSet<TopicTag> TopicTags => Set<TopicTag>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -34,6 +38,46 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         tag.Property(item => item.Description).HasMaxLength(300);
         tag.Property(item => item.IsActive).IsRequired();
         tag.HasIndex(item => item.Slug).IsUnique();
+
+        var topic = modelBuilder.Entity<Topic>();
+        topic.ToTable("Topics");
+        topic.HasKey(item => item.Id);
+        topic.Property(item => item.Title).HasMaxLength(200).IsRequired();
+        topic.Property(item => item.Slug).HasMaxLength(220).IsRequired();
+        topic.Property(item => item.Summary).HasMaxLength(500).IsRequired();
+        topic.Property(item => item.BodyHtml).IsRequired();
+        topic.Property(item => item.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
+        topic.Property(item => item.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+        topic.Property(item => item.AuthorId).HasMaxLength(450).IsRequired();
+        topic.HasIndex(item => item.Slug).IsUnique();
+        topic.HasIndex(item => new
+        {
+            item.Status,
+            item.IsDeleted,
+            item.IsHiddenByModerator,
+            item.IsPinned,
+            item.PublishedAtUtc
+        });
+        topic.HasOne(item => item.Category)
+            .WithMany()
+            .HasForeignKey(item => item.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+        topic.HasOne(item => item.Author)
+            .WithMany()
+            .HasForeignKey(item => item.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var topicTag = modelBuilder.Entity<TopicTag>();
+        topicTag.ToTable("TopicTags");
+        topicTag.HasKey(item => new { item.TopicId, item.TagId });
+        topicTag.HasOne(item => item.Topic)
+            .WithMany(item => item.TopicTags)
+            .HasForeignKey(item => item.TopicId)
+            .OnDelete(DeleteBehavior.Cascade);
+        topicTag.HasOne(item => item.Tag)
+            .WithMany()
+            .HasForeignKey(item => item.TagId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {
