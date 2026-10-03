@@ -5,6 +5,7 @@ import { TopicTypeBadge } from './TopicTypeBadge'
 
 interface OwnTopicListProps {
   data: OwnTopicPage
+  onDelete: (id: number) => void
   onPageChange: (page: number) => void
 }
 
@@ -12,7 +13,7 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'medium',
 }).format(new Date(value))
 
-export const OwnTopicList = ({ data, onPageChange }: OwnTopicListProps) => {
+export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps) => {
   if (data.items.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
@@ -60,6 +61,12 @@ export const OwnTopicList = ({ data, onPageChange }: OwnTopicListProps) => {
                 ))}
               </div>
             )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700" to={`/chinh-sua/${topic.id}`}>
+                Chỉnh sửa
+              </Link>
+              <Button label="Xóa" onClick={() => onDelete(topic.id)} variant="ghost" />
+            </div>
           </li>
         ))}
       </ul>

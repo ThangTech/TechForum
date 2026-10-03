@@ -9,6 +9,7 @@ import { createFroalaConfig } from '../../config/froala'
 
 interface TopicEditorFieldProps {
   error?: string
+  initialMedia?: UploadedMedia[]
   value: string
   onChange: (value: string) => void
   onMediaChange: (media: UploadedMedia[]) => void
@@ -16,11 +17,14 @@ interface TopicEditorFieldProps {
 
 export const TopicEditorField = ({
   error,
+  initialMedia = [],
   value,
   onChange,
   onMediaChange,
 }: TopicEditorFieldProps) => {
-  const [uploadedMedia] = useState(() => new Map<string, UploadedMedia>())
+  const [uploadedMedia] = useState(() => new Map(
+    initialMedia.map((media) => [media.link, media]),
+  ))
   const [antiforgeryToken, setAntiforgeryToken] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
 

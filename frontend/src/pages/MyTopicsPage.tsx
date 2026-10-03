@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getMyTopics, type OwnTopicPage, type TopicType } from '../api/topics'
+import { deleteTopic, getMyTopics, type OwnTopicPage, type TopicType } from '../api/topics'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { ConfirmDialog } from '../components/feedback/ConfirmDialog'
 import { OwnTopicFilters } from '../components/topics/OwnTopicFilters'
 import { OwnTopicList } from '../components/topics/OwnTopicList'
 
@@ -22,6 +23,8 @@ export const MyTopicsPage = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [requestVersion, setRequestVersion] = useState(0)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -57,6 +60,21 @@ export const MyTopicsPage = () => {
     setSearchParams(next)
   }
 
+  const confirmDelete = async () => {
+    if (deletingId === null || isDeleting) return
+    setIsDeleting(true)
+    setError(null)
+    try {
+      await deleteTopic(deletingId)
+      setDeletingId(null)
+      setRequestVersion((version) => version + 1)
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Không thể xóa nội dung.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <main className="main-area" id="main-content">
       <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
@@ -88,11 +106,21 @@ export const MyTopicsPage = () => {
           {!isLoading && !error && data && (
             <OwnTopicList
               data={data}
+              onDelete={setDeletingId}
               onPageChange={(nextPage) => updateParams({ page: nextPage <= 1 ? undefined : nextPage })}
             />
           )}
         </div>
       </div>
+      <ConfirmDialog
+        confirmLabel="Xóa nội dung"
+        description="Nội dung sẽ không còn xuất hiện công khai hoặc trong danh sách của bạn. Hành động này chưa thể hoàn tác trên giao diện."
+        isBusy={isDeleting}
+        isOpen={deletingId !== null}
+        onCancel={() => setDeletingId(null)}
+        onConfirm={() => void confirmDelete()}
+        title="Xóa nội dung này?"
+      />
     </main>
   )
 }

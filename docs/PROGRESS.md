@@ -82,7 +82,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   liệu chính thức; repo chưa có activation key nên chỉ được dùng chế độ đánh giá
   có attribution cho tới khi chủ dự án cung cấp license.
 - [x] Backend cho thành viên đọc chi tiết riêng, sửa và xóa mềm nội dung của
-  mình; sai ownership trả 404. Frontend sửa/xóa chưa nối.
+  mình; sai ownership trả 404. Frontend có route chỉnh sửa dùng lại form/editor,
+  nút xóa với dialog xác nhận và tải lại danh sách từ backend.
 - [x] Upload media có ownership trong CSDL, endpoint xóa file chưa dùng và tác vụ
   nền dọn file mồ côi quá hạn theo cấu hình.
 - [x] Backend có `ContentSanitizer` allowlist hẹp và test loại script, event
@@ -235,3 +236,9 @@ DELETE trả 204 và tài khoản/file test đã được dọn. Frontend lint/b
 2.170 module; bundle Froala lazy khoảng 1,98 MB (549 KB gzip), vẫn có cảnh báo
 chunk lớn. Trình duyệt xác nhận khách vào `/viet-bai` thấy modal đăng nhập và
 không có console error; luồng upload thành viên trên UI còn cần kiểm thử thủ công.
+
+API quản lý nội dung đã kiểm tra với SQL Server thật: tạo bản nháp mã `5`,
+`GET /api/topics/mine/5` trả đúng nội dung, `PUT /api/topics/5` đổi sang câu hỏi
+đã xuất bản, `DELETE /api/topics/5` trả 204 và GET riêng sau xóa trả 404. Dữ liệu
+tích hợp đã được dọn. Backend đạt 23/23 test. Frontend sửa/xóa đạt lint/build;
+luồng thành viên trên trình duyệt vẫn chờ kiểm thử thủ công.

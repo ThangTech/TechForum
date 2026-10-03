@@ -41,6 +41,14 @@ export const toStoredMediaHtml = (html: string, mediaItems: UploadedMedia[]): st
 export const toDisplayMediaHtml = (html: string): string =>
   html.replace(/(\bsrc=["'])\/media\//gi, `$1${apiBaseUrl}/media/`)
 
+export const toEditableMedia = (
+  media: { id: string; path: string }[],
+): UploadedMedia[] => media.map((item) => ({
+  id: item.id,
+  link: `${apiBaseUrl}${item.path}`,
+  path: item.path,
+}))
+
 export const deleteUnusedMedia = async (id: string): Promise<void> => {
   await apiRequest(`/api/media/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }

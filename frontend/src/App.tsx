@@ -44,6 +44,16 @@ const App = () => {
               }
             />
             <Route
+              path="chinh-sua/:id"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="route-status">Đang tải trình chỉnh sửa…</div>}>
+                    <WriteTopicPage />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="noi-dung-cua-toi"
               element={
                 <ProtectedRoute>

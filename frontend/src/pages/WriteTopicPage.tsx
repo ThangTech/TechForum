@@ -1,10 +1,11 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { getCategories, type Category } from '../api/categories'
 import { getTags, type Tag } from '../api/tags'
-import { toStoredMediaHtml, type UploadedMedia } from '../api/media'
-import { createTopic, type OwnTopic, type TopicType } from '../api/topics'
+import { toDisplayMediaHtml, toEditableMedia, toStoredMediaHtml, type UploadedMedia } from '../api/media'
+import { createTopic, getMyTopic, updateTopic, type OwnTopic, type TopicType } from '../api/topics'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicEditorField } from '../components/topics/TopicEditorField'
 import { TopicCreatedPanel } from '../components/topics/TopicCreatedPanel'
@@ -12,6 +13,9 @@ import { TopicMetadataFields } from '../components/topics/TopicMetadataFields'
 import { hasFroalaKey } from '../config/froala'
 
 export const WriteTopicPage = () => {
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const editingId = id ? Number(id) : null
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [isOptionsLoading, setIsOptionsLoading] = useState(true)
@@ -36,13 +40,30 @@ export const WriteTopicPage = () => {
       setIsOptionsLoading(true)
       setOptionsError(null)
       try {
-        const [categoryResult, tagResult] = await Promise.all([
+        if (id && (!Number.isInteger(editingId) || (editingId ?? 0) <= 0)) {
+          throw new Error('Mã nội dung cần chỉnh sửa không hợp lệ.')
+        }
+        const [categoryResult, tagResult, topicResult] = await Promise.all([
           getCategories(controller.signal),
           getTags(controller.signal),
+          editingId && Number.isInteger(editingId) && editingId > 0
+            ? getMyTopic(editingId, controller.signal)
+            : Promise.resolve(null),
         ])
         setCategories(categoryResult)
         setTags(tagResult)
-        if (categoryResult.length > 0) setCategoryId(String(categoryResult[0].id))
+        if (topicResult) {
+          const existingMedia = toEditableMedia(topicResult.media)
+          setTitle(topicResult.title)
+          setSummary(topicResult.summary)
+          setBodyHtml(toDisplayMediaHtml(topicResult.bodyHtml))
+          setType(topicResult.type)
+          setCategoryId(String(topicResult.category.id))
+          setTagIds(topicResult.tags.map((tag) => tag.id))
+          setMedia(existingMedia)
+        } else if (categoryResult.length > 0) {
+          setCategoryId(String(categoryResult[0].id))
+        }
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return
         setOptionsError(requestError instanceof Error ? requestError.message : 'Không tải được dữ liệu biểu mẫu.')
@@ -53,7 +74,7 @@ export const WriteTopicPage = () => {
 
     void loadOptions()
     return () => controller.abort()
-  }, [requestVersion])
+  }, [editingId, id, requestVersion])
 
   const toggleTag = (tagId: number) => {
     setTagIds((current) => current.includes(tagId)
@@ -69,7 +90,7 @@ export const WriteTopicPage = () => {
     setCreatedTopic(null)
 
     try {
-      setCreatedTopic(await createTopic({
+      const input = {
         title,
         summary,
         bodyHtml: toStoredMediaHtml(bodyHtml, media),
@@ -78,7 +99,10 @@ export const WriteTopicPage = () => {
         tagIds,
         mediaIds: media.map((item) => item.id),
         publish,
-      }))
+      }
+      setCreatedTopic(editingId
+        ? await updateTopic(editingId, input)
+        : await createTopic(input))
     } catch (requestError) {
       if (requestError instanceof ApiError) {
         setSubmitError(requestError.message)
@@ -96,15 +120,40 @@ export const WriteTopicPage = () => {
     void submit(false)
   }
 
+  const handleSuccessAction = () => {
+    if (editingId) {
+      navigate('/noi-dung-cua-toi')
+      return
+    }
+
+    setCreatedTopic(null)
+    setTitle('')
+    setSummary('')
+    setBodyHtml('')
+    setType('article')
+    setCategoryId(categories[0] ? String(categories[0].id) : '')
+    setTagIds([])
+    setMedia([])
+    setFieldErrors({})
+  }
+
   if (createdTopic) {
-    return <TopicCreatedPanel onReset={() => setCreatedTopic(null)} topic={createdTopic} />
+    return (
+      <TopicCreatedPanel
+        actionLabel={editingId ? 'Về nội dung của tôi' : 'Soạn nội dung khác'}
+        onReset={handleSuccessAction}
+        topic={createdTopic}
+      />
+    )
   }
 
   return (
     <main className="main-area" id="main-content">
       <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">P3 · Soạn nội dung</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Viết cho cộng đồng</h1>
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">P3 · {editingId ? 'Chỉnh sửa' : 'Soạn nội dung'}</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
+          {editingId ? 'Chỉnh sửa nội dung' : 'Viết cho cộng đồng'}
+        </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
           Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
         </p>
@@ -143,6 +192,8 @@ export const WriteTopicPage = () => {
             />
             <TopicEditorField
               error={fieldErrors.bodyHtml?.[0] || fieldErrors.mediaIds?.[0]}
+              initialMedia={media}
+              key={editingId ?? 'create'}
               onChange={setBodyHtml}
               onMediaChange={setMedia}
               value={bodyHtml}

@@ -5,6 +5,7 @@ export type TopicType = 'article' | 'question'
 export interface TopicCategory { id: number; name: string; slug: string }
 export interface TopicAuthor { id: string; displayName: string }
 export interface TopicTag { id: number; name: string; slug: string }
+export interface TopicMedia { id: string; path: string; contentType: string }
 
 export interface TopicSummary {
   id: number
@@ -64,6 +65,7 @@ export interface OwnTopic {
   status: 'draft' | 'published'
   category: TopicCategory
   tags: TopicTag[]
+  media: TopicMedia[]
   createdAtUtc: string
   publishedAtUtc: string | null
 }
@@ -158,11 +160,13 @@ export const getTopic = async (id: number, signal?: AbortSignal): Promise<TopicD
   return data as unknown as TopicDetail
 }
 
-export const createTopic = async (input: CreateTopicInput): Promise<OwnTopic> => {
-  const data: unknown = await apiRequest('/api/topics', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  })
+const isTopicMedia = (value: unknown): value is TopicMedia =>
+  isRecord(value) &&
+  typeof value.id === 'string' &&
+  typeof value.path === 'string' &&
+  typeof value.contentType === 'string'
+
+const parseOwnTopic = (data: unknown): OwnTopic => {
   if (
     !isRecord(data) ||
     typeof data.id !== 'number' ||
@@ -178,13 +182,33 @@ export const createTopic = async (input: CreateTopicInput): Promise<OwnTopic> =>
     typeof data.category.slug !== 'string' ||
     !Array.isArray(data.tags) ||
     !data.tags.every(isTopicTag) ||
+    !Array.isArray(data.media) ||
+    !data.media.every(isTopicMedia) ||
     typeof data.createdAtUtc !== 'string' ||
     (data.publishedAtUtc !== null && typeof data.publishedAtUtc !== 'string')
   ) {
-    throw new ApiError(500, 'Dữ liệu nội dung vừa tạo từ API không đúng định dạng.')
+    throw new ApiError(500, 'Dữ liệu nội dung cá nhân từ API không đúng định dạng.')
   }
-
   return data as unknown as OwnTopic
+}
+
+export const createTopic = async (input: CreateTopicInput): Promise<OwnTopic> =>
+  parseOwnTopic(await apiRequest('/api/topics', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  }))
+
+export const getMyTopic = async (id: number, signal?: AbortSignal): Promise<OwnTopic> =>
+  parseOwnTopic(await apiRequest(`/api/topics/mine/${id}`, { signal }))
+
+export const updateTopic = async (id: number, input: CreateTopicInput): Promise<OwnTopic> =>
+  parseOwnTopic(await apiRequest(`/api/topics/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  }))
+
+export const deleteTopic = async (id: number): Promise<void> => {
+  await apiRequest(`/api/topics/${id}`, { method: 'DELETE' })
 }
 
 const isOwnTopicSummary = (value: unknown): value is OwnTopicSummary =>

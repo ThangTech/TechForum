@@ -2,11 +2,12 @@ import { Link } from 'react-router-dom'
 import type { OwnTopic } from '../../api/topics'
 
 interface TopicCreatedPanelProps {
+  actionLabel?: string
   topic: OwnTopic
   onReset: () => void
 }
 
-export const TopicCreatedPanel = ({ topic, onReset }: TopicCreatedPanelProps) => (
+export const TopicCreatedPanel = ({ actionLabel = 'Soạn nội dung khác', topic, onReset }: TopicCreatedPanelProps) => (
   <main className="main-area" id="main-content">
     <div className="mx-auto w-[min(720px,calc(100%-40px))] py-12">
       <section className="rounded-xl border border-green-200 bg-white p-8 text-center" role="status">
@@ -22,7 +23,7 @@ export const TopicCreatedPanel = ({ topic, onReset }: TopicCreatedPanelProps) =>
             </Link>
           )}
           <button className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700" onClick={onReset} type="button">
-            Soạn nội dung khác
+            {actionLabel}
           </button>
         </div>
       </section>
