@@ -112,11 +112,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseCors("Frontend");
 
-app.UseMiddleware<ApiAntiforgeryMiddleware>();
-
 app.UseAuthentication();
 
 app.UseMiddleware<ActiveAccountMiddleware>();
+
+app.UseMiddleware<ApiAntiforgeryMiddleware>();
 
 app.UseAuthorization();
 
