@@ -6,6 +6,7 @@ export const appRoutes = {
   myTopics: '/my-topics',
   saved: '/saved',
   account: '/account',
+  adminReports: '/admin/reports',
   login: '/login',
   register: '/register',
   topic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}`,

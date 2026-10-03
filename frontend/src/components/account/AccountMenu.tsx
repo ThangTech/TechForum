@@ -32,6 +32,9 @@ export const AccountMenu = () => {
     { id: 'content', label: 'Nội dung của tôi', onClick: () => navigate(appRoutes.myTopics) },
     { id: 'saved', label: 'Nội dung đã lưu', onClick: () => navigate(appRoutes.saved) },
     { id: 'write', label: 'Viết nội dung', onClick: () => navigate(appRoutes.write) },
+    ...(user.roles.includes('Administrator')
+      ? [{ id: 'admin-reports', label: 'Quản trị báo cáo', onClick: () => navigate(appRoutes.adminReports) }]
+      : []),
     { type: 'divider' },
     {
       id: 'logout',
