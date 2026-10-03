@@ -36,4 +36,18 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         await dbContext.SaveChangesAsync(cancellationToken);
         await dbContext.Entry(answer).Reference(item => item.Author).LoadAsync(cancellationToken);
     }
+
+    public Task<Answer?> GetVisibleByIdAsync(
+        int topicId,
+        int answerId,
+        CancellationToken cancellationToken) =>
+        dbContext.Answers
+            .AsNoTracking()
+            .Include(answer => answer.Author)
+            .SingleOrDefaultAsync(answer =>
+                answer.Id == answerId &&
+                answer.TopicId == topicId &&
+                !answer.IsDeleted &&
+                !answer.IsHiddenByModerator,
+                cancellationToken);
 }

@@ -124,6 +124,12 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
             .HasForeignKey(item => item.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        topic.HasIndex(item => item.AcceptedAnswerId).IsUnique();
+        topic.HasOne(item => item.AcceptedAnswer)
+            .WithMany()
+            .HasForeignKey(item => item.AcceptedAnswerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<ApplicationUser>(user =>
         {
             user.Property(item => item.DisplayName).HasMaxLength(80).IsRequired();

@@ -92,8 +92,8 @@ gắn không còn được xóa bằng endpoint media riêng.
 - `DELETE /api/topics/{id}`: xóa mềm nội dung của chính tài khoản.
 
 Tài nguyên không tồn tại hoặc không thuộc tài khoản đều trả 404 để không lộ dữ
-liệu của người khác. Hiện P4 chưa có phản hồi nên thành viên được xóa mềm nội
-dung của mình; chính sách khi đã có phản hồi sẽ được bổ sung cùng phase thảo luận.
+liệu của người khác. Xóa chủ đề hiện là xóa mềm nên câu trả lời không bị xóa vật
+lý; chính sách cho phép tác giả xóa khi đã có phản hồi vẫn cần được chốt.
 
 ## Câu trả lời P4
 
@@ -102,11 +102,15 @@ dung của mình; chính sách khi đã có phản hồi sẽ được bổ sung
   dần để giữ đúng thứ tự hội thoại.
 - `POST /api/topics/{topicId}/answers`: thành viên đã đăng nhập gửi
   `{ "bodyHtml": "<p>Nội dung trả lời</p>" }`, trả HTTP 201.
+- `PUT /api/topics/{topicId}/answers/{answerId}/accepted`: tác giả của chủ đề
+  loại Câu hỏi chọn hoặc thay đổi câu trả lời được chấp nhận, trả HTTP 200.
 
 Backend làm sạch HTML trước khi lưu. Chủ đề không công khai trả 404; chủ đề đã
 khóa thảo luận trả 409; dữ liệu rỗng hoặc quá 20.000 ký tự trả Validation Problem
-HTTP 400. P4.1 chưa triển khai sửa/xóa và chọn câu trả lời được chấp nhận vì các
-quy tắc đó được tách sang chức năng kế tiếp.
+HTTP 400. P4 chưa triển khai sửa/xóa phản hồi vì chính sách này chưa được chốt.
+Trường `isAccepted` trong DTO câu trả
+lời cho biết lựa chọn hiện tại; chỉ câu hỏi công khai và câu trả lời thuộc đúng
+chủ đề mới được chấp nhận.
 
 ## Xác thực P1
 

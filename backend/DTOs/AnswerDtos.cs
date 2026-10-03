@@ -6,7 +6,8 @@ public sealed record AnswerDto(
     string BodyHtml,
     TopicAuthorDto Author,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc);
+    DateTimeOffset? UpdatedAtUtc,
+    bool IsAccepted);
 
 public sealed record CreateAnswerRequest(string? BodyHtml);
 

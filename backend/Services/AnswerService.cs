@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using TechForum.Api.Data.Repositories;
 using TechForum.Api.Dtos;
+using TechForum.Api.Enums;
 using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
@@ -30,7 +31,7 @@ public sealed partial class AnswerService(
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
 
         return new PagedResultDto<AnswerDto>(
-            page.Items.Select(MapAnswer).ToList(),
+            page.Items.Select(answer => MapAnswer(answer, topic.AcceptedAnswerId)).ToList(),
             query.Page,
             query.PageSize,
             page.TotalItems,
@@ -84,16 +85,51 @@ public sealed partial class AnswerService(
         };
 
         await answerRepository.AddAsync(answer, cancellationToken);
-        return CreateAnswerResult.Success(MapAnswer(answer));
+        return CreateAnswerResult.Success(MapAnswer(answer, topic.AcceptedAnswerId));
     }
 
-    private static AnswerDto MapAnswer(Answer answer) => new(
+    public async Task<AcceptAnswerResult> AcceptAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CancellationToken cancellationToken)
+    {
+        var topic = await topicRepository.GetOwnedByIdAsync(topicId, authorId, cancellationToken);
+        if (topic is null ||
+            topic.Status != TopicStatus.Published ||
+            topic.IsHiddenByModerator)
+        {
+            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
+        }
+
+        if (topic.Type != TopicType.Question)
+        {
+            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotQuestion);
+        }
+
+        var answer = await answerRepository.GetVisibleByIdAsync(
+            topicId,
+            answerId,
+            cancellationToken);
+        if (answer is null)
+        {
+            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
+        }
+
+        topic.AcceptedAnswerId = answer.Id;
+        await topicRepository.SaveChangesAsync(cancellationToken);
+
+        return AcceptAnswerResult.Success(MapAnswer(answer, answer.Id));
+    }
+
+    private static AnswerDto MapAnswer(Answer answer, int? acceptedAnswerId) => new(
         answer.Id,
         answer.TopicId,
         answer.BodyHtml,
         new TopicAuthorDto(answer.Author.Id, answer.Author.DisplayName),
         answer.CreatedAtUtc,
-        answer.UpdatedAtUtc);
+        answer.UpdatedAtUtc,
+        answer.Id == acceptedAnswerId);
 
     private static bool HasMeaningfulContent(string html)
     {

@@ -11,4 +11,9 @@ public interface IAnswerRepository
         CancellationToken cancellationToken);
 
     Task AddAsync(Answer answer, CancellationToken cancellationToken);
+
+    Task<Answer?> GetVisibleByIdAsync(
+        int topicId,
+        int answerId,
+        CancellationToken cancellationToken);
 }

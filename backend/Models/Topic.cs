@@ -22,6 +22,8 @@ public sealed class Topic
     public bool IsHiddenByModerator { get; set; }
     public bool IsDiscussionLocked { get; set; }
     public bool IsPinned { get; set; }
+    public int? AcceptedAnswerId { get; set; }
+    public Answer? AcceptedAnswer { get; set; }
     public ICollection<TopicTag> TopicTags { get; set; } = [];
     public ICollection<MediaAsset> MediaAssets { get; set; } = [];
     public ICollection<Answer> Answers { get; set; } = [];

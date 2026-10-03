@@ -70,6 +70,44 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         };
     }
 
+    [Authorize]
+    [HttpPut("{answerId:int}/accepted")]
+    [ProducesResponseType<AnswerDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<AnswerDto>> Accept(
+        int topicId,
+        int answerId,
+        CancellationToken cancellationToken)
+    {
+        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(authorId)) return Unauthorized();
+
+        var result = await answerService.AcceptAsync(
+            topicId,
+            answerId,
+            authorId,
+            cancellationToken);
+
+        return result.Failure switch
+        {
+            AcceptAnswerFailure.None => Ok(result.Answer),
+            AcceptAnswerFailure.NotFound => NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Không thể chọn câu trả lời",
+                Detail = "Chủ đề hoặc câu trả lời không tồn tại, không công khai hoặc không thuộc quyền quản lý của bạn."
+            }),
+            AcceptAnswerFailure.NotQuestion => Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Chỉ câu hỏi mới có câu trả lời được chấp nhận"
+            }),
+            _ => throw new InvalidOperationException("Trạng thái chọn câu trả lời không được hỗ trợ.")
+        };
+    }
+
     private static ValidationProblemDetails? Validate(AnswerQuery query)
     {
         var errors = new Dictionary<string, string[]>();

@@ -14,4 +14,10 @@ public interface IAnswerService
         string authorId,
         CreateAnswerRequest request,
         CancellationToken cancellationToken);
+
+    Task<AcceptAnswerResult> AcceptAsync(
+        int topicId,
+        int answerId,
+        string authorId,
+        CancellationToken cancellationToken);
 }
