@@ -15,7 +15,9 @@ public sealed record TopicSummaryDto(
     IReadOnlyList<TopicTagDto> Tags,
     DateTimeOffset PublishedAtUtc,
     bool IsPinned,
-    bool IsDiscussionLocked);
+    bool IsDiscussionLocked,
+    int ViewCount,
+    int ShareCount);
 
 public sealed record TopicDetailDto(
     int Id,
@@ -31,4 +33,8 @@ public sealed record TopicDetailDto(
     DateTimeOffset PublishedAtUtc,
     DateTimeOffset? UpdatedAtUtc,
     bool IsPinned,
-    bool IsDiscussionLocked);
+    bool IsDiscussionLocked,
+    int ViewCount,
+    int ShareCount);
+
+public sealed record TopicEngagementDto(int ViewCount, int ShareCount);

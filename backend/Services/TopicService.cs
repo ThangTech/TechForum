@@ -387,7 +387,9 @@ public sealed partial class TopicService(
         MapTags(topic),
         topic.PublishedAtUtc!.Value,
         topic.IsPinned,
-        topic.IsDiscussionLocked);
+        topic.IsDiscussionLocked,
+        topic.ViewCount,
+        topic.ShareCount);
 
     private static TopicDetailDto MapDetail(Topic topic) => new(
         topic.Id,
@@ -403,7 +405,9 @@ public sealed partial class TopicService(
         topic.PublishedAtUtc!.Value,
         topic.UpdatedAtUtc,
         topic.IsPinned,
-        topic.IsDiscussionLocked);
+        topic.IsDiscussionLocked,
+        topic.ViewCount,
+        topic.ShareCount);
 
     private static OwnTopicSummaryDto MapOwnedSummary(Topic topic) => new(
         topic.Id,

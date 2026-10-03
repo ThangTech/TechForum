@@ -22,6 +22,8 @@ public sealed class Topic
     public bool IsHiddenByModerator { get; set; }
     public bool IsDiscussionLocked { get; set; }
     public bool IsPinned { get; set; }
+    public int ViewCount { get; set; }
+    public int ShareCount { get; set; }
     public int? AcceptedAnswerId { get; set; }
     public Answer? AcceptedAnswer { get; set; }
     public ICollection<TopicTag> TopicTags { get; set; } = [];
@@ -29,4 +31,5 @@ public sealed class Topic
     public ICollection<Answer> Answers { get; set; } = [];
     public ICollection<TopicStar> Stars { get; set; } = [];
     public ICollection<TopicBookmark> Bookmarks { get; set; } = [];
+    public ICollection<TopicView> Views { get; set; } = [];
 }

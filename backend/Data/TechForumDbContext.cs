@@ -27,6 +27,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<ContentReport> ContentReports => Set<ContentReport>();
     public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
+    public DbSet<TopicView> TopicViews => Set<TopicView>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -164,6 +165,17 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         bookmark.HasOne(item => item.User)
             .WithMany()
             .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var topicView = modelBuilder.Entity<TopicView>();
+        topicView.ToTable("TopicViews");
+        topicView.HasKey(item => new { item.TopicId, item.VisitorKeyHash, item.ViewedOnUtc });
+        topicView.Property(item => item.VisitorKeyHash).HasMaxLength(64).IsRequired();
+        topicView.Property(item => item.ViewedOnUtc).HasColumnType("date");
+        topicView.HasIndex(item => new { item.TopicId, item.FirstViewedAtUtc });
+        topicView.HasOne(item => item.Topic)
+            .WithMany(item => item.Views)
+            .HasForeignKey(item => item.TopicId)
             .OnDelete(DeleteBehavior.Restrict);
 
         var report = modelBuilder.Entity<ContentReport>();

@@ -47,5 +47,7 @@ public sealed class PublicProfileService(IPublicProfileRepository profileReposit
             .ToList(),
         topic.PublishedAtUtc!.Value,
         topic.IsPinned,
-        topic.IsDiscussionLocked);
+        topic.IsDiscussionLocked,
+        topic.ViewCount,
+        topic.ShareCount);
 }
