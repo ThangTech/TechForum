@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getCategories, type Category } from '../api/categories'
 import { CategoryPanel } from '../components/CategoryPanel'
-import { SiteHeader } from '../components/SiteHeader'
 
 export function HomePage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -41,9 +40,6 @@ export function HomePage() {
   }, [requestVersion])
 
   return (
-    <div className="site-shell">
-      <SiteHeader />
-
       <main className="main-area" id="main-content">
         <div className="page-content">
           <section className="intro" aria-labelledby="page-title">
@@ -72,13 +68,5 @@ export function HomePage() {
           </div>
         </div>
       </main>
-
-      <footer className="site-footer">
-        <div className="site-footer__inner">
-          <span>TechForum · Nơi kiến thức được sẻ chia</span>
-          <span>Phiên bản M1</span>
-        </div>
-      </footer>
-    </div>
   )
 }

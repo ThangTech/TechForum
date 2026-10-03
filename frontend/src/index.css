@@ -17,10 +17,12 @@
   --color-muted: #687386;
   --color-border: #e4e8ef;
   --color-border-strong: #cfd6e2;
-  --color-primary: #0f6b55;
-  --color-primary-dark: #0b5745;
-  --color-primary-soft: #eaf5f1;
-  --color-focus: rgba(15, 107, 85, 0.25);
+  --color-primary: #1463d6;
+  --color-primary-dark: #0f4fac;
+  --color-primary-soft: #eaf2ff;
+  --color-focus: rgba(20, 99, 214, 0.25);
+  --color-danger: #b42318;
+  --color-danger-soft: #fff1f0;
   --color-loading: #edf0f4;
 }
 
@@ -41,6 +43,10 @@ body {
 button,
 input {
   font: inherit;
+}
+
+a {
+  color: inherit;
 }
 
 @media (prefers-reduced-motion: reduce) {
