@@ -14,6 +14,11 @@ public interface ITopicRepository
 
     Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken);
 
+    Task<Topic?> GetOwnedByIdAsync(
+        int id,
+        string authorId,
+        CancellationToken cancellationToken);
+
     Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(
@@ -23,4 +28,6 @@ public interface ITopicRepository
     Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken);
 
     Task AddAsync(Topic topic, CancellationToken cancellationToken);
+
+    Task SaveChangesAsync(CancellationToken cancellationToken);
 }

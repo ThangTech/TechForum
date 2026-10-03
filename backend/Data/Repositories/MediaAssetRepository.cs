@@ -30,6 +30,18 @@ public sealed class MediaAssetRepository(TechForumDbContext dbContext) : IMediaA
                 item.TopicId == null)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        string uploaderId,
+        int topicId,
+        CancellationToken cancellationToken) =>
+        await dbContext.MediaAssets
+            .Where(item =>
+                ids.Contains(item.Id) &&
+                item.UploaderId == uploaderId &&
+                (item.TopicId == null || item.TopicId == topicId))
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<MediaAsset>> GetOrphansOlderThanAsync(
         DateTimeOffset threshold,
         int take,

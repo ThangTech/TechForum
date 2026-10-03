@@ -38,6 +38,15 @@ public sealed partial class TopicService(
         return topic is null ? null : MapDetail(topic);
     }
 
+    public async Task<OwnTopicDto?> GetOwnedByIdAsync(
+        int id,
+        string authorId,
+        CancellationToken cancellationToken)
+    {
+        var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
+        return topic is null ? null : MapOwnTopic(topic);
+    }
+
     public async Task<PagedResultDto<OwnTopicSummaryDto>> GetOwnedPageAsync(
         string authorId,
         TopicQuery query,
@@ -190,6 +199,112 @@ public sealed partial class TopicService(
             topic.PublishedAtUtc));
     }
 
+    public async Task<CreateTopicResult?> UpdateAsync(
+        int id,
+        string authorId,
+        UpdateTopicRequest request,
+        CancellationToken cancellationToken)
+    {
+        var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
+        if (topic is null) return null;
+
+        var title = request.Title?.Trim();
+        if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
+            return CreateTopicResult.ValidationError("title", "Tiêu đề phải có từ 10 đến 200 ký tự.");
+
+        var summary = request.Summary?.Trim();
+        if (string.IsNullOrWhiteSpace(summary) || summary.Length is < 20 or > 500)
+            return CreateTopicResult.ValidationError("summary", "Tóm tắt phải có từ 20 đến 500 ký tự.");
+
+        if (!TryParseType(request.Type, out var type))
+            return CreateTopicResult.ValidationError("type", "Loại nội dung phải là 'article' hoặc 'question'.");
+
+        if (request.BodyHtml is null || request.BodyHtml.Length > 100_000)
+            return CreateTopicResult.ValidationError("bodyHtml", "Nội dung không được để trống hoặc vượt quá 100.000 ký tự.");
+
+        var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
+        if (!HasMeaningfulContent(sanitizedBody))
+            return CreateTopicResult.ValidationError("bodyHtml", "Nội dung phải có văn bản hoặc media hợp lệ.");
+
+        var category = await topicRepository.GetCategoryByIdAsync(request.CategoryId, cancellationToken);
+        if (category is null)
+            return CreateTopicResult.ValidationError("categoryId", "Chuyên mục không tồn tại.");
+
+        var tagIds = (request.TagIds ?? []).Distinct().ToArray();
+        if (tagIds.Length > 5 || tagIds.Any(tagId => tagId <= 0))
+            return CreateTopicResult.ValidationError("tagIds", "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
+
+        var tags = await topicRepository.GetActiveTagsByIdsAsync(tagIds, cancellationToken);
+        if (tags.Count != tagIds.Length)
+            return CreateTopicResult.ValidationError("tagIds", "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
+
+        var mediaIds = (request.MediaIds ?? []).Distinct().ToArray();
+        if (mediaIds.Length > 20 || mediaIds.Any(mediaId => mediaId == Guid.Empty))
+            return CreateTopicResult.ValidationError("mediaIds", "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
+
+        var mediaAssets = await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(
+            mediaIds,
+            authorId,
+            topic.Id,
+            cancellationToken);
+        if (mediaAssets.Count != mediaIds.Length)
+            return CreateTopicResult.ValidationError("mediaIds", "Một hoặc nhiều media không hợp lệ hoặc không thuộc tài khoản này.");
+
+        var embeddedMediaUrls = MediaUrl().Matches(sanitizedBody)
+            .Select(match => match.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (embeddedMediaUrls.Length != mediaAssets.Count ||
+            mediaAssets.Any(asset => !embeddedMediaUrls.Contains(asset.PublicUrl, StringComparer.OrdinalIgnoreCase)))
+            return CreateTopicResult.ValidationError("mediaIds", "Danh sách media không khớp với ảnh hoặc video trong nội dung.");
+
+        topic.Title = title;
+        topic.Summary = summary;
+        topic.BodyHtml = sanitizedBody;
+        topic.Type = type;
+        topic.CategoryId = category.Id;
+        topic.Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft;
+        topic.PublishedAtUtc = request.Publish ? topic.PublishedAtUtc ?? timeProvider.GetUtcNow() : null;
+        topic.UpdatedAtUtc = timeProvider.GetUtcNow();
+
+        foreach (var topicTag in topic.TopicTags.Where(item => !tagIds.Contains(item.TagId)).ToList())
+            topic.TopicTags.Remove(topicTag);
+        foreach (var tag in tags.Where(tag => topic.TopicTags.All(item => item.TagId != tag.Id)))
+            topic.TopicTags.Add(new TopicTag { TopicId = topic.Id, TagId = tag.Id, Tag = tag });
+
+        foreach (var mediaAsset in topic.MediaAssets.Where(item => !mediaIds.Contains(item.Id)).ToList())
+            topic.MediaAssets.Remove(mediaAsset);
+        foreach (var mediaAsset in mediaAssets.Where(item => topic.MediaAssets.All(current => current.Id != item.Id)))
+            topic.MediaAssets.Add(mediaAsset);
+
+        await topicRepository.SaveChangesAsync(cancellationToken);
+        return CreateTopicResult.Success(new OwnTopicDto(
+            topic.Id,
+            topic.Title,
+            topic.Slug,
+            topic.Summary,
+            topic.BodyHtml,
+            MapType(topic.Type),
+            topic.Status == TopicStatus.Published ? "published" : "draft",
+            new TopicCategoryDto(category.Id, category.Name, category.Slug),
+            tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
+            topic.CreatedAtUtc,
+            topic.PublishedAtUtc));
+    }
+
+    public async Task<bool> SoftDeleteAsync(
+        int id,
+        string authorId,
+        CancellationToken cancellationToken)
+    {
+        var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
+        if (topic is null) return false;
+        topic.IsDeleted = true;
+        topic.UpdatedAtUtc = timeProvider.GetUtcNow();
+        await topicRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private async Task<string> CreateUniqueSlugAsync(
         string title,
         CancellationToken cancellationToken)
@@ -301,6 +416,19 @@ public sealed partial class TopicService(
         topic.PublishedAtUtc,
         topic.IsHiddenByModerator,
         topic.IsDiscussionLocked);
+
+    private static OwnTopicDto MapOwnTopic(Topic topic) => new(
+        topic.Id,
+        topic.Title,
+        topic.Slug,
+        topic.Summary,
+        topic.BodyHtml,
+        MapType(topic.Type),
+        topic.Status == TopicStatus.Published ? "published" : "draft",
+        MapCategory(topic),
+        MapTags(topic),
+        topic.CreatedAtUtc,
+        topic.PublishedAtUtc);
 
     private static string MapType(TopicType type) => type switch
     {

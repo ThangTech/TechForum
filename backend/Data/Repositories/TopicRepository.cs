@@ -109,6 +109,22 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
             .SingleOrDefaultAsync(topic => topic.Id == id, cancellationToken);
     }
 
+    public Task<Topic?> GetOwnedByIdAsync(
+        int id,
+        string authorId,
+        CancellationToken cancellationToken) =>
+        dbContext.Topics
+            .Include(topic => topic.Category)
+            .Include(topic => topic.TopicTags)
+                .ThenInclude(item => item.Tag)
+            .Include(topic => topic.MediaAssets)
+            .AsSplitQuery()
+            .SingleOrDefaultAsync(topic =>
+                topic.Id == id &&
+                topic.AuthorId == authorId &&
+                !topic.IsDeleted,
+                cancellationToken);
+
     public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) =>
         dbContext.Categories
             .AsNoTracking()
@@ -132,6 +148,9 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
         dbContext.Topics.Add(topic);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        dbContext.SaveChangesAsync(cancellationToken);
 
     private IQueryable<Topic> PublicTopics() => dbContext.Topics
         .AsNoTracking()

@@ -136,6 +136,7 @@ public sealed class TopicServiceTests
             BodyHtml = "<p>Nội dung</p>",
             Type = TopicType.Question,
             Status = TopicStatus.Published,
+            CategoryId = 1,
             Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
             AuthorId = "member-a",
             Author = new ApplicationUser
@@ -218,6 +219,50 @@ public sealed class TopicServiceTests
         Assert.Null(repository.AddedTopic);
     }
 
+    [Fact]
+    public async Task UpdateAsync_WithOwnedTopic_UpdatesContentAndKeepsStableSlug()
+    {
+        var existing = CreateTopic();
+        var repository = new FakeTopicRepository
+        {
+            OwnedTopic = existing,
+            Category = existing.Category
+        };
+        var service = CreateService(repository);
+        var request = new UpdateTopicRequest(
+            "Tiêu đề đã được cập nhật",
+            "Tóm tắt mới hợp lệ có nhiều hơn hai mươi ký tự.",
+            "<p>Nội dung sau khi chỉnh sửa.</p>",
+            "article",
+            existing.CategoryId,
+            [],
+            [],
+            false);
+
+        var result = await service.UpdateAsync(existing.Id, "member-a", request, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+        Assert.Equal("Tiêu đề đã được cập nhật", existing.Title);
+        Assert.Equal("cau-hoi-kiem-thu", existing.Slug);
+        Assert.Equal(TopicStatus.Draft, existing.Status);
+        Assert.Null(existing.PublishedAtUtc);
+        Assert.True(repository.SavedChanges);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_WithDifferentOwner_DoesNotDeleteTopic()
+    {
+        var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };
+        var service = CreateService(repository);
+
+        var deleted = await service.SoftDeleteAsync(10, "member-b", CancellationToken.None);
+
+        Assert.False(deleted);
+        Assert.False(repository.OwnedTopic.IsDeleted);
+        Assert.False(repository.SavedChanges);
+    }
+
     private static TopicService CreateService(
         FakeTopicRepository repository,
         FakeMediaAssetRepository? mediaRepository = null) =>
@@ -232,6 +277,8 @@ public sealed class TopicServiceTests
         public Category? Category { get; init; }
         public IReadOnlyList<Tag> Tags { get; init; } = [];
         public Topic? AddedTopic { get; private set; }
+        public Topic? OwnedTopic { get; init; }
+        public bool SavedChanges { get; private set; }
 
         public Task<TopicPage> GetPublicPageAsync(
             TopicQuery query,
@@ -243,6 +290,17 @@ public sealed class TopicServiceTests
 
         public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) =>
             Task.FromResult(Page.Items.SingleOrDefault(topic => topic.Id == id));
+
+        public Task<Topic?> GetOwnedByIdAsync(
+            int id,
+            string authorId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(OwnedTopic is not null &&
+                OwnedTopic.Id == id &&
+                OwnedTopic.AuthorId == authorId &&
+                !OwnedTopic.IsDeleted
+                    ? OwnedTopic
+                    : null);
 
         public Task<TopicPage> GetOwnedPageAsync(
             string authorId,
@@ -270,6 +328,12 @@ public sealed class TopicServiceTests
             AddedTopic = topic;
             return Task.CompletedTask;
         }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            SavedChanges = true;
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeMediaAssetRepository : IMediaAssetRepository
@@ -294,6 +358,16 @@ public sealed class TopicServiceTests
                 ids.Contains(item.Id) &&
                 item.UploaderId == uploaderId &&
                 item.TopicId == null).ToList());
+
+        public Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
+            IReadOnlyCollection<Guid> ids,
+            string uploaderId,
+            int topicId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<MediaAsset>>(Items.Where(item =>
+                ids.Contains(item.Id) &&
+                item.UploaderId == uploaderId &&
+                (item.TopicId == null || item.TopicId == topicId)).ToList());
 
         public Task<IReadOnlyList<MediaAsset>> GetOrphansOlderThanAsync(
             DateTimeOffset threshold,

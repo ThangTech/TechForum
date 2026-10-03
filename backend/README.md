@@ -84,6 +84,17 @@ Khi tạo chủ đề, client gửi thêm `mediaIds` chứa ID media thực sự
 khi làm sạch HTML và gắn chúng với chủ đề trong cùng lần `SaveChanges`. Media đã
 gắn không còn được xóa bằng endpoint media riêng.
 
+### Quản lý nội dung của thành viên
+
+- `GET /api/topics/mine/{id}`: lấy nội dung chưa xóa của chính tài khoản để sửa.
+- `PUT /api/topics/{id}`: cập nhật metadata, HTML, thẻ, media và trạng thái
+  nháp/xuất bản; slug giữ ổn định.
+- `DELETE /api/topics/{id}`: xóa mềm nội dung của chính tài khoản.
+
+Tài nguyên không tồn tại hoặc không thuộc tài khoản đều trả 404 để không lộ dữ
+liệu của người khác. Hiện P4 chưa có phản hồi nên thành viên được xóa mềm nội
+dung của mình; chính sách khi đã có phản hồi sẽ được bổ sung cùng phase thảo luận.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client

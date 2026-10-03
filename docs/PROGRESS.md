@@ -81,7 +81,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Froala React 5.4.0 tương thích cách tích hợp functional component theo tài
   liệu chính thức; repo chưa có activation key nên chỉ được dùng chế độ đánh giá
   có attribution cho tới khi chủ dự án cung cấp license.
-- Thành viên đăng/sửa/xóa mềm nội dung của mình; backend kiểm tra ownership.
+- [x] Backend cho thành viên đọc chi tiết riêng, sửa và xóa mềm nội dung của
+  mình; sai ownership trả 404. Frontend sửa/xóa chưa nối.
 - [x] Upload media có ownership trong CSDL, endpoint xóa file chưa dùng và tác vụ
   nền dọn file mồ côi quá hạn theo cấu hình.
 - [x] Backend có `ContentSanitizer` allowlist hẹp và test loại script, event

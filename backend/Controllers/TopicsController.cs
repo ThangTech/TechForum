@@ -58,6 +58,20 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         return Ok(await topicService.GetOwnedPageAsync(authorId, query, cancellationToken));
     }
 
+    [Authorize]
+    [HttpGet("mine/{id:int}")]
+    [ProducesResponseType<OwnTopicDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<OwnTopicDto>> GetMineById(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var topic = await topicService.GetOwnedByIdAsync(id, GetUserId(), cancellationToken);
+        return topic is null
+            ? NotFound(CreateNotFoundProblem())
+            : Ok(topic);
+    }
+
     [HttpGet("{id:int}")]
     [ProducesResponseType<TopicDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -111,6 +125,52 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
         return StatusCode(StatusCodes.Status201Created, result.Topic);
     }
+
+    [Authorize]
+    [HttpPut("{id:int}")]
+    [ProducesResponseType<OwnTopicDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<OwnTopicDto>> Update(
+        int id,
+        [FromBody] UpdateTopicRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await topicService.UpdateAsync(id, GetUserId(), request, cancellationToken);
+        if (result is null) return NotFound(CreateNotFoundProblem());
+        if (!result.Succeeded)
+        {
+            return BadRequest(new ValidationProblemDetails(
+                result.Errors.ToDictionary(item => item.Key, item => item.Value))
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Nội dung gửi lên chưa hợp lệ"
+            });
+        }
+
+        return Ok(result.Topic);
+    }
+
+    [Authorize]
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        var deleted = await topicService.SoftDeleteAsync(id, GetUserId(), cancellationToken);
+        return deleted ? NoContent() : NotFound(CreateNotFoundProblem());
+    }
+
+    private string GetUserId() =>
+        User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+
+    private static ProblemDetails CreateNotFoundProblem() => new()
+    {
+        Status = StatusCodes.Status404NotFound,
+        Title = "Không tìm thấy nội dung",
+        Detail = "Nội dung không tồn tại hoặc không thuộc tài khoản này."
+    };
 
     private static Dictionary<string, string[]> Validate(TopicQuery query)
     {

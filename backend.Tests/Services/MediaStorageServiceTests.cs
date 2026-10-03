@@ -181,6 +181,16 @@ public sealed class MediaStorageServiceTests : IDisposable
                 item.UploaderId == uploaderId &&
                 item.TopicId == null).ToList());
 
+        public Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
+            IReadOnlyCollection<Guid> ids,
+            string uploaderId,
+            int topicId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<MediaAsset>>(Items.Where(item =>
+                ids.Contains(item.Id) &&
+                item.UploaderId == uploaderId &&
+                (item.TopicId == null || item.TopicId == topicId)).ToList());
+
         public Task<IReadOnlyList<MediaAsset>> GetOrphansOlderThanAsync(
             DateTimeOffset threshold,
             int take,
