@@ -82,13 +82,15 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   liệu chính thức; repo chưa có activation key nên chỉ được dùng chế độ đánh giá
   có attribution cho tới khi chủ dự án cung cấp license.
 - Thành viên đăng/sửa/xóa mềm nội dung của mình; backend kiểm tra ownership.
-- Upload ảnh/video có xác thực, validation và cleanup file mồ côi.
+- [ ] Upload media đã có hạ tầng an toàn; ownership và cleanup file mồ côi chưa hoàn tất.
 - [x] Backend có `ContentSanitizer` allowlist hẹp và test loại script, event
   handler, URI `javascript:`/`data:`; API gọi sanitizer trước khi lưu nội dung.
 - [x] Thành viên có thể tạo bản nháp hoặc xuất bản bài viết/câu hỏi qua API;
   backend tự lấy tác giả từ phiên, kiểm tra chuyên mục/thẻ và làm sạch HTML.
 - [ ] Media chưa được sanitizer cho phép cho tới khi endpoint upload riêng hoàn tất;
   API hiện loại thẻ ảnh/video thay vì chấp nhận URL ngoài.
+- [x] Endpoint ảnh/video có auth+CSRF, giới hạn cấu hình, kiểm tra MIME và magic
+  bytes, tên GUID, thư mục ignore Git và static response `nosniff`.
 - [x] Frontend có route riêng tư `/viet-bai`, tải chuyên mục/thẻ thật, hỗ trợ lưu
   nháp/xuất bản và hiển thị lỗi field từ API; Froala được lazy-load để không làm
   tăng bundle trang công khai.
@@ -209,3 +211,7 @@ Endpoint nội dung cá nhân đã kiểm tra với SQL Server: thành viên A n
 nháp mã `3`, còn khách nhận `401`. Backend đạt 13/13 test; frontend sau khi nối
 trang quản lý đạt lint và build (2.130 module). Chưa kiểm thử thủ công trên trình
 duyệt theo yêu cầu tạm hoãn.
+
+Upload ảnh thật đã trả `201` với JSON `{ "link": "/media/images/{guid}.png" }`;
+GET URL trả 200, `Content-Type: image/png`, `X-Content-Type-Options: nosniff`.
+File và cookie kiểm thử đã được xóa ngay sau kiểm tra. Backend đạt 16/16 test.

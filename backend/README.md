@@ -54,6 +54,21 @@ bản và `id` giảm dần. DTO tác giả chỉ có `id` và `displayName`, kh
 lập. HTML seed là nội dung development tin cậy; endpoint ghi ở P3 chỉ được mở sau
 khi có bước làm sạch HTML phía server.
 
+## Upload media P3
+
+- `POST /api/media/images`: multipart field `file`, hỗ trợ PNG/JPEG/GIF/WebP,
+  tối đa 5 MB.
+- `POST /api/media/videos`: multipart field `file`, hỗ trợ MP4/WebM, tối đa 50 MB.
+
+Hai endpoint yêu cầu cookie đăng nhập và CSRF header. Backend kiểm tra cả MIME và
+magic bytes, bỏ tên file client và lưu bằng GUID trong `App_Data/uploads` (đã
+ignore Git). URL trả về có dạng `{ "link": "/media/images/{guid}.png" }` phù
+hợp contract upload của Froala. Có thể đổi giới hạn bằng `Media__MaxImageBytes`
+và `Media__MaxVideoBytes`; không đặt `Media__StoragePath` ra ngoài thư mục backend.
+
+Editor chưa bật media cho tới khi bản ghi ownership/cleanup file mồ côi và
+allowlist URL `/media/` trong sanitizer hoàn tất.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client

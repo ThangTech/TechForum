@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using TechForum.Api.Configuration;
 using TechForum.Api.Data;
 using TechForum.Api.Data.Repositories;
 using TechForum.Api.Middleware;
@@ -19,6 +22,15 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+var mediaOptions = builder.Configuration
+    .GetSection(MediaOptions.SectionName)
+    .Get<MediaOptions>() ?? new MediaOptions();
+builder.Services.Configure<MediaOptions>(
+    builder.Configuration.GetSection(MediaOptions.SectionName));
+builder.Services.Configure<FormOptions>(options =>
+    options.MultipartBodyLengthLimit = Math.Max(
+        mediaOptions.MaxImageBytes,
+        mediaOptions.MaxVideoBytes) + 1024 * 1024);
 builder.Services.AddDbContext<TechForumDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services
@@ -83,6 +95,7 @@ builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IPublicProfileRepository, PublicProfileRepository>();
 builder.Services.AddScoped<IPublicProfileService, PublicProfileService>();
 builder.Services.AddSingleton<IContentSanitizer, ContentSanitizer>();
+builder.Services.AddSingleton<IMediaStorageService, MediaStorageService>();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
@@ -116,6 +129,26 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+var contentRoot = Path.GetFullPath(app.Environment.ContentRootPath);
+var mediaStorageRoot = Path.GetFullPath(Path.Combine(contentRoot, mediaOptions.StoragePath));
+if (Path.IsPathRooted(mediaOptions.StoragePath) ||
+    !mediaStorageRoot.StartsWith(contentRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+{
+    throw new InvalidOperationException("Media:StoragePath phải nằm trong thư mục backend.");
+}
+
+Directory.CreateDirectory(mediaStorageRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(mediaStorageRoot),
+    RequestPath = mediaOptions.RequestPath,
+    OnPrepareResponse = context =>
+    {
+        context.Context.Response.Headers.XContentTypeOptions = "nosniff";
+        context.Context.Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+    }
+});
 
 app.UseCors("Frontend");
 

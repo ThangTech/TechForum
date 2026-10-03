@@ -11,6 +11,7 @@ dist-ssr/
 [Oo]bj/
 artifacts/
 TestResults/
+backend/App_Data/uploads/
 *.user
 *.suo
 *.userosscache
