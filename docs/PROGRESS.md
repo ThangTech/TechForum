@@ -63,7 +63,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 ### P2 — Nội dung công khai
 
 - [x] Thẻ công khai có migration, seed development và endpoint danh sách/chi tiết.
-- Danh sách chủ đề phân trang thật, lọc Bài viết/Câu hỏi, chuyên mục/thẻ.
+- [x] Backend danh sách/chi tiết chủ đề công khai có phân trang và lọc loại,
+  chuyên mục, thẻ, từ khóa; frontend chưa nối.
 - Tìm kiếm giữ từ khóa, bộ lọc và trang trên URL.
 - Chi tiết nội dung chỉ trả nội dung công khai; có hồ sơ tác giả công khai.
 - Sidebar câu hỏi mới/nhiều trả lời dùng dữ liệu và khoảng thời gian thật.

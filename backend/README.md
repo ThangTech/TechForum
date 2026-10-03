@@ -39,6 +39,21 @@ Entity `Tag` có `IsActive` để hỗ trợ ngừng sử dụng ở phần qu�
 DTO công khai không lộ cờ nội bộ này. Luồng xử lý là
 `TagsController` → `TagService` → `TagRepository` → EF Core.
 
+## Nội dung công khai P2
+
+- `GET /api/topics`: danh sách phân trang; hỗ trợ `page`, `pageSize` (tối đa 50),
+  `keyword`, `type` (`Article`/`Question`), `categoryId` và `tagId`.
+- `GET /api/topics/{id}`: chi tiết nội dung công khai hoặc Problem Details 404.
+
+Endpoint công khai chỉ đọc nội dung `Published`, có thời điểm xuất bản, chưa xóa
+mềm và chưa bị kiểm duyệt ẩn. Thứ tự ổn định: ghim trước, sau đó thời điểm xuất
+bản và `id` giảm dần. DTO tác giả chỉ có `id` và `displayName`, không trả email.
+
+`Draft`/`Published` là trạng thái vòng đời; `IsDeleted`,
+`IsHiddenByModerator`, `IsDiscussionLocked` và `IsPinned` là các trạng thái độc
+lập. HTML seed là nội dung development tin cậy; endpoint ghi ở P3 chỉ được mở sau
+khi có bước làm sạch HTML phía server.
+
 ## Xác thực P1
 
 Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client
