@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
 
-export function SiteHeader() {
+export const SiteHeader = () => {
   const { user, isLoading } = useAuth()
 
   return (

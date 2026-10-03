@@ -1,7 +1,7 @@
 import type { CurrentUser, LoginInput, RegisterInput } from '../types/auth'
 import { ApiError, apiRequest } from './client'
 
-function isCurrentUser(value: unknown): value is CurrentUser {
+const isCurrentUser = (value: unknown): value is CurrentUser => {
   if (typeof value !== 'object' || value === null) {
     return false
   }
@@ -16,7 +16,7 @@ function isCurrentUser(value: unknown): value is CurrentUser {
   )
 }
 
-async function requestUser(path: string, init?: RequestInit): Promise<CurrentUser> {
+const requestUser = async (path: string, init?: RequestInit): Promise<CurrentUser> => {
   const data: unknown = await apiRequest(path, init)
 
   if (!isCurrentUser(data)) {
@@ -26,24 +26,24 @@ async function requestUser(path: string, init?: RequestInit): Promise<CurrentUse
   return data
 }
 
-export function getCurrentUser(signal?: AbortSignal) {
+export const getCurrentUser = (signal?: AbortSignal) => {
   return requestUser('/api/auth/me', { signal })
 }
 
-export function login(input: LoginInput) {
+export const login = (input: LoginInput) => {
   return requestUser('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(input),
   })
 }
 
-export function register(input: RegisterInput) {
+export const register = (input: RegisterInput) => {
   return requestUser('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(input),
   })
 }
 
-export function logout() {
+export const logout = () => {
   return apiRequest<void>('/api/auth/logout', { method: 'POST' })
 }

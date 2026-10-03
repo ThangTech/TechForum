@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
 
-export function AccountPage() {
+export const AccountPage = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
@@ -12,7 +12,7 @@ export function AccountPage() {
 
   if (!user) return null
 
-  async function handleLogout() {
+  const handleLogout = async () => {
     if (isSubmitting) return
     setError(null)
     setIsSubmitting(true)

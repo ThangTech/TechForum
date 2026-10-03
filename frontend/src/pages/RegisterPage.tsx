@@ -8,7 +8,7 @@ import { createAuthUrl, getSafeReturnUrl } from '../auth/returnUrl'
 import background from '../assets/background.png'
 import { AuthPageLayout } from './LoginPage'
 
-function fieldError(error: ApiError | null, name: string) {
+const fieldError = (error: ApiError | null, name: string) => {
   if (!error) return undefined
   const key = Object.keys(error.fieldErrors).find(
     (field) => field.toLowerCase() === name.toLowerCase(),
@@ -16,7 +16,7 @@ function fieldError(error: ApiError | null, name: string) {
   return key ? error.fieldErrors[key]?.join(' ') : undefined
 }
 
-export function RegisterPage() {
+export const RegisterPage = () => {
   const { user, register } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -33,7 +33,7 @@ export function RegisterPage() {
     return <Navigate to={returnUrl} replace />
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (isSubmitting) return
 

@@ -8,16 +8,16 @@ interface CategoryPanelProps {
   onRetry: () => void
 }
 
-function getCategoryMark(name: string) {
+const getCategoryMark = (name: string) => {
   return name.trim().slice(0, 1).toLocaleUpperCase('vi-VN') || '•'
 }
 
-export function CategoryPanel({
+export const CategoryPanel = ({
   categories,
   error,
   isLoading,
   onRetry,
-}: CategoryPanelProps) {
+}: CategoryPanelProps) => {
   return (
     <section className="panel" id="categories" aria-labelledby="categories-title">
       <div className="panel__heading">
@@ -70,7 +70,7 @@ export function CategoryPanel({
   )
 }
 
-function CategoryLoading() {
+const CategoryLoading = () => {
   return (
     <div className="loading-list" aria-label="Đang tải chuyên mục">
       {[0, 1, 2].map((item) => (

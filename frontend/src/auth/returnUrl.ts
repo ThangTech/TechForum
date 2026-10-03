@@ -1,4 +1,4 @@
-export function getSafeReturnUrl(value: string | null, fallback = '/') {
+export const getSafeReturnUrl = (value: string | null, fallback = '/') => {
   if (!value || !value.startsWith('/') || value.startsWith('//')) {
     return fallback
   }
@@ -13,7 +13,7 @@ export function getSafeReturnUrl(value: string | null, fallback = '/') {
   }
 }
 
-export function createAuthUrl(path: '/dang-nhap' | '/dang-ky', returnUrl: string) {
+export const createAuthUrl = (path: '/dang-nhap' | '/dang-ky', returnUrl: string) => {
   const params = new URLSearchParams({ returnUrl })
   return `${path}?${params.toString()}`
 }

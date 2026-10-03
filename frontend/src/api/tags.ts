@@ -7,7 +7,7 @@ export interface Tag {
   description: string | null
 }
 
-function isTag(value: unknown): value is Tag {
+const isTag = (value: unknown): value is Tag => {
   if (typeof value !== 'object' || value === null) return false
   const tag = value as Record<string, unknown>
   return (
@@ -18,7 +18,7 @@ function isTag(value: unknown): value is Tag {
   )
 }
 
-export async function getTags(signal?: AbortSignal): Promise<Tag[]> {
+export const getTags = async (signal?: AbortSignal): Promise<Tag[]> => {
   const data: unknown = await apiRequest('/api/tags', { signal })
   if (!Array.isArray(data) || !data.every(isTag)) {
     throw new ApiError(500, 'Dữ liệu thẻ từ API không đúng định dạng.')

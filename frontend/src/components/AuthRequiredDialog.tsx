@@ -8,12 +8,12 @@ interface AuthRequiredDialogProps {
   onClose: () => void
 }
 
-export function AuthRequiredDialog({ isOpen, onClose }: AuthRequiredDialogProps) {
+export const AuthRequiredDialog = ({ isOpen, onClose }: AuthRequiredDialogProps) => {
   const location = useLocation()
   const navigate = useNavigate()
   const returnUrl = `${location.pathname}${location.search}${location.hash}`
 
-  function goTo(path: '/dang-nhap' | '/dang-ky') {
+  const goTo = (path: '/dang-nhap' | '/dang-ky') => {
     navigate(createAuthUrl(path, returnUrl))
   }
 

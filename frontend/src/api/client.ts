@@ -20,7 +20,7 @@ export class ApiError extends Error {
   }
 }
 
-async function readProblem(response: Response): Promise<ProblemDetails | null> {
+const readProblem = async (response: Response): Promise<ProblemDetails | null> => {
   const contentType = response.headers.get('content-type')
   const mediaType = contentType?.split(';', 1)[0]?.trim().toLowerCase()
   if (mediaType !== 'application/json' && !mediaType?.endsWith('+json')) {
@@ -34,13 +34,13 @@ async function readProblem(response: Response): Promise<ProblemDetails | null> {
   }
 }
 
-function toApiError(response: Response, problem: ProblemDetails | null) {
+const toApiError = (response: Response, problem: ProblemDetails | null) => {
   const message =
     problem?.detail || problem?.title || `API trả về mã lỗi ${response.status}.`
   return new ApiError(response.status, message, problem?.errors)
 }
 
-async function getAntiforgeryToken(): Promise<string> {
+const getAntiforgeryToken = async (): Promise<string> => {
   const response = await fetch(`${apiBaseUrl}/api/auth/antiforgery-token`, {
     credentials: 'include',
     headers: { Accept: 'application/json' },
@@ -58,7 +58,7 @@ async function getAntiforgeryToken(): Promise<string> {
   return data.token
 }
 
-export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export const apiRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const method = (init.method || 'GET').toUpperCase()
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')

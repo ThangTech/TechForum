@@ -15,7 +15,7 @@ import { ApiError } from '../api/client'
 import type { CurrentUser, LoginInput, RegisterInput } from '../types/auth'
 import { AuthContext } from './authState'
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 

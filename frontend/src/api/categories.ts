@@ -8,7 +8,7 @@ export interface Category {
   displayOrder: number
 }
 
-function isCategory(value: unknown): value is Category {
+const isCategory = (value: unknown): value is Category => {
   if (typeof value !== 'object' || value === null) {
     return false
   }
@@ -23,7 +23,7 @@ function isCategory(value: unknown): value is Category {
   )
 }
 
-export async function getCategories(signal?: AbortSignal): Promise<Category[]> {
+export const getCategories = async (signal?: AbortSignal): Promise<Category[]> => {
   const data: unknown = await apiRequest('/api/categories', { signal })
   if (!Array.isArray(data) || !data.every(isCategory)) {
     throw new Error('Dữ liệu chuyên mục từ API không đúng định dạng.')

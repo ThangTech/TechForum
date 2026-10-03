@@ -372,45 +372,6 @@ a:focus-visible {
   padding: 24px;
 }
 
-.sidebar-stack {
-  display: grid;
-  gap: 24px;
-}
-
-.tag-panel .panel__heading {
-  padding: 20px;
-}
-
-.compact-status {
-  padding: 20px;
-  color: var(--color-muted);
-  font-size: 0.88rem;
-  line-height: 1.5;
-}
-
-.compact-status p {
-  margin: 0 0 12px;
-}
-
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin: 0;
-  padding: 20px;
-  list-style: none;
-}
-
-.tag-list li {
-  padding: 6px 9px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 999px;
-  color: var(--color-primary-dark);
-  background: var(--color-primary-soft);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
 .coming-soon__label {
   display: inline-flex;
   margin-bottom: 18px;

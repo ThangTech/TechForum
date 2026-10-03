@@ -4,7 +4,7 @@ import { getTags, type Tag } from '../api/tags'
 import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
 
-export function HomePage() {
+export const HomePage = () => {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -17,7 +17,7 @@ export function HomePage() {
   useEffect(() => {
     const controller = new AbortController()
 
-    async function loadCategories() {
+    const loadCategories = async () => {
       setIsLoading(true)
       setError(null)
 
@@ -48,7 +48,7 @@ export function HomePage() {
   useEffect(() => {
     const controller = new AbortController()
 
-    async function loadTags() {
+    const loadTags = async () => {
       setAreTagsLoading(true)
       setTagError(null)
       try {
@@ -85,7 +85,7 @@ export function HomePage() {
               onRetry={() => setRequestVersion((version) => version + 1)}
             />
 
-            <aside className="sidebar-stack">
+            <aside className="grid gap-6">
               <TagPanel
                 tags={tags}
                 error={tagError}

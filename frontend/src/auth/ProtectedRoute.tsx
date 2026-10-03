@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
 import { useAuth } from './authState'
 
-export function ProtectedRoute({ children }: { children: ReactNode }) {
+export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, isLoading } = useAuth()
   const navigate = useNavigate()
   const [isDialogOpen, setIsDialogOpen] = useState(true)

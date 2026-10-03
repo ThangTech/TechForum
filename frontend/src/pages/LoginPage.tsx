@@ -8,7 +8,7 @@ import { useAuth } from '../auth/authState'
 import { createAuthUrl, getSafeReturnUrl } from '../auth/returnUrl'
 import background from '../assets/background.png'
 
-export function LoginPage() {
+export const LoginPage = () => {
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -23,7 +23,7 @@ export function LoginPage() {
     return <Navigate to={returnUrl} replace />
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (isSubmitting) return
 
@@ -108,7 +108,7 @@ interface AuthPageLayoutProps {
   children: ReactNode
 }
 
-export function AuthPageLayout({ image, title, description, children }: AuthPageLayoutProps) {
+export const AuthPageLayout = ({ image, title, description, children }: AuthPageLayoutProps) => {
   return (
     <main className="auth-page">
       <section className="auth-visual" aria-label="Giới thiệu TechForum">
