@@ -14,3 +14,26 @@ public sealed record ReportReceiptDto(
     string? Details,
     string Status,
     DateTimeOffset CreatedAtUtc);
+
+public sealed record ResolveReportRequest(
+    string? Decision,
+    string? ResolutionNote);
+
+public sealed record ReportUserDto(
+    string Id,
+    string DisplayName);
+
+public sealed record AdminReportDto(
+    int Id,
+    string TargetType,
+    int TargetId,
+    string TargetTitle,
+    string TargetBodyHtml,
+    ReportUserDto Reporter,
+    string Reason,
+    string? Details,
+    string Status,
+    DateTimeOffset CreatedAtUtc,
+    ReportUserDto? ResolvedBy,
+    DateTimeOffset? ResolvedAtUtc,
+    string? ResolutionNote);
