@@ -153,7 +153,15 @@ export const DiscussionSection = ({
             data={data}
             isLocked={isLocked}
             onAccept={(answerId) => void handleAccept(answerId)}
+            onDeleted={(answerId) => {
+              setData((current) => current ? { ...current, items: current.items.filter((answer) => answer.id !== answerId), totalItems: Math.max(0, current.totalItems - 1) } : current)
+              setSuccessMessage('Đã xóa câu trả lời.')
+            }}
             onPageChange={setPage}
+            onUpdated={(updated) => {
+              setData((current) => current ? { ...current, items: current.items.map((answer) => answer.id === updated.id ? updated : answer) } : current)
+              setSuccessMessage('Đã cập nhật câu trả lời.')
+            }}
           />
         )}
       </div>

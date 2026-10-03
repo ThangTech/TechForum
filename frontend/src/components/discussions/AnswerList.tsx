@@ -1,8 +1,13 @@
 import { Button } from '@astryxdesign/core/Button'
 import { Link } from 'react-router-dom'
-import type { AnswerPage } from '../../api/answers'
+import { useState } from 'react'
+import { deleteAnswer, type Answer, type AnswerPage } from '../../api/answers'
+import { ApiError } from '../../api/client'
+import { useAuth } from '../../auth/authState'
 import { appRoutes } from '../../appRoutes'
 import { ReportAction } from '../reports/ReportAction'
+import { ConfirmDialog } from '../feedback/ConfirmDialog'
+import { AnswerEditDialog } from './AnswerEditDialog'
 
 interface AnswerListProps {
   acceptingAnswerId: number | null
@@ -10,7 +15,9 @@ interface AnswerListProps {
   data: AnswerPage
   isLocked: boolean
   onAccept: (answerId: number) => void
+  onDeleted: (answerId: number) => void
   onPageChange: (page: number) => void
+  onUpdated: (answer: Answer) => void
 }
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
@@ -24,8 +31,23 @@ export const AnswerList = ({
   data,
   isLocked,
   onAccept,
+  onDeleted,
   onPageChange,
+  onUpdated,
 }: AnswerListProps) => {
+  const { user } = useAuth()
+  const [editing, setEditing] = useState<Answer | null>(null)
+  const [deleting, setDeleting] = useState<Answer | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+
+  const confirmDelete = async () => {
+    if (!deleting || isDeleting) return
+    setIsDeleting(true); setActionError(null)
+    try { await deleteAnswer(deleting.topicId, deleting.id); onDeleted(deleting.id); setDeleting(null) }
+    catch (requestError) { setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể xóa câu trả lời.'); setDeleting(null) }
+    finally { setIsDeleting(false) }
+  }
   if (data.items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
@@ -41,6 +63,7 @@ export const AnswerList = ({
 
   return (
     <>
+      {actionError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{actionError}</p>}
       <div className="grid gap-4">
         {data.items.map((answer) => (
           <article className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6" key={answer.id}>
@@ -71,6 +94,10 @@ export const AnswerList = ({
                 />
               )}
               <ReportAction targetId={answer.id} targetType="answer" />
+              {user?.id === answer.author.id && <>
+                <Button label="Sửa" onClick={() => setEditing(answer)} variant="ghost" />
+                <Button label="Xóa" onClick={() => setDeleting(answer)} variant="ghost" />
+              </>}
             </div>
           </article>
         ))}
@@ -93,6 +120,8 @@ export const AnswerList = ({
           />
         </nav>
       )}
+      {editing && <AnswerEditDialog answer={editing} onClose={() => setEditing(null)} onUpdated={(answer) => { onUpdated(answer); setEditing(null) }} />}
+      <ConfirmDialog confirmLabel="Xóa câu trả lời" description="Câu trả lời sẽ không còn hiển thị công khai. Nếu đang được chấp nhận, trạng thái chấp nhận cũng sẽ được gỡ." isBusy={isDeleting} isOpen={deleting !== null} onCancel={() => setDeleting(null)} onConfirm={() => void confirmDelete()} title="Xóa câu trả lời?" />
     </>
   )
 }

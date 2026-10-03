@@ -2,24 +2,12 @@ import { Button } from '@astryxdesign/core/Button'
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { createAnswer, type Answer } from '../../api/answers'
+import { toAnswerHtml } from './answerContent'
 
 interface AnswerFormProps {
   topicId: number
   onCreated: (answer: Answer) => void
 }
-
-const escapeHtml = (value: string) => value
-  .replaceAll('&', '&amp;')
-  .replaceAll('<', '&lt;')
-  .replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;')
-  .replaceAll("'", '&#039;')
-
-const toParagraphHtml = (value: string) => value
-  .trim()
-  .split(/\n{2,}/)
-  .map((paragraph) => `<p>${escapeHtml(paragraph).replaceAll('\n', '<br>')}</p>`)
-  .join('')
 
 export const AnswerForm = ({ topicId, onCreated }: AnswerFormProps) => {
   const [content, setContent] = useState('')
@@ -38,7 +26,7 @@ export const AnswerForm = ({ topicId, onCreated }: AnswerFormProps) => {
     setError(null)
     setIsSubmitting(true)
     try {
-      const answer = await createAnswer(topicId, toParagraphHtml(content))
+      const answer = await createAnswer(topicId, toAnswerHtml(content))
       setContent('')
       onCreated(answer)
     } catch (requestError) {

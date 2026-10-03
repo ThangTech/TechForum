@@ -78,3 +78,12 @@ export const acceptAnswer = async (topicId: number, answerId: number): Promise<A
   parseAnswer(await apiRequest(`/api/topics/${topicId}/answers/${answerId}/accepted`, {
     method: 'PUT',
   }))
+
+export const updateAnswer = async (topicId: number, answerId: number, bodyHtml: string): Promise<Answer> =>
+  parseAnswer(await apiRequest(`/api/topics/${topicId}/answers/${answerId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ bodyHtml }),
+  }))
+
+export const deleteAnswer = async (topicId: number, answerId: number): Promise<void> =>
+  apiRequest(`/api/topics/${topicId}/answers/${answerId}`, { method: 'DELETE' })
