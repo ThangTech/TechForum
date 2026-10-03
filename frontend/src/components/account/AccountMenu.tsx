@@ -34,6 +34,7 @@ export const AccountMenu = () => {
     { id: 'write', label: 'Viết nội dung', onClick: () => navigate(appRoutes.write) },
     ...(user.roles.includes('Administrator')
       ? [
+          { id: 'admin-overview', label: 'Tổng quan quản trị', onClick: () => navigate(appRoutes.adminOverview) },
           { id: 'admin-reports', label: 'Quản trị báo cáo', onClick: () => navigate(appRoutes.adminReports) },
           { id: 'admin-categories', label: 'Quản trị chuyên mục', onClick: () => navigate(appRoutes.adminCategories) },
           { id: 'admin-tags', label: 'Quản trị thẻ', onClick: () => navigate(appRoutes.adminTags) },

@@ -11,6 +11,7 @@ export const appRoutes = {
   adminTags: '/admin/tags',
   adminAccounts: '/admin/accounts',
   adminTopics: '/admin/topics',
+  adminOverview: '/admin',
   login: '/login',
   register: '/register',
   topic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}`,
