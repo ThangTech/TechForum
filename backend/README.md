@@ -62,12 +62,20 @@ khi có bước làm sạch HTML phía server.
 
 Hai endpoint yêu cầu cookie đăng nhập và CSRF header. Backend kiểm tra cả MIME và
 magic bytes, bỏ tên file client và lưu bằng GUID trong `App_Data/uploads` (đã
-ignore Git). URL trả về có dạng `{ "link": "/media/images/{guid}.png" }` phù
-hợp contract upload của Froala. Có thể đổi giới hạn bằng `Media__MaxImageBytes`
-và `Media__MaxVideoBytes`; không đặt `Media__StoragePath` ra ngoài thư mục backend.
+ignore Git). Mỗi upload có bản ghi chủ sở hữu trong `MediaAssets`. Contract trả
+về có dạng `{ "id": "guid", "link": "/media/images/{guid}.png" }`; trường
+`link` tương thích contract upload của Froala.
 
-Editor chưa bật media cho tới khi bản ghi ownership/cleanup file mồ côi và
-allowlist URL `/media/` trong sanitizer hoàn tất.
+- `DELETE /api/media/{id}`: chỉ chủ sở hữu được xóa media chưa gắn vào nội dung;
+  trả 404 nếu không tồn tại/không thuộc tài khoản và 409 nếu đã được sử dụng.
+
+Có thể đổi giới hạn bằng `Media__MaxImageBytes` và `Media__MaxVideoBytes`; không
+đặt `Media__StoragePath` ra ngoài thư mục backend. Media chưa gắn vào chủ đề được
+dọn sau 24 giờ theo mặc định; cấu hình bằng `Media__OrphanRetentionHours`,
+`Media__CleanupIntervalMinutes` và `Media__CleanupBatchSize`.
+
+Editor chưa bật media cho tới khi luồng gắn ownership vào chủ đề và allowlist URL
+`/media/` trong sanitizer hoàn tất.
 
 ## Xác thực P1
 

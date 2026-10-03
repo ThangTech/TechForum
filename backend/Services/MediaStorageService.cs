@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Options;
 using TechForum.Api.Configuration;
+using TechForum.Api.Data.Repositories;
+using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
@@ -16,12 +18,18 @@ public sealed class MediaStorageService : IMediaStorageService
 
     private readonly MediaOptions options;
     private readonly string storageRoot;
+    private readonly IMediaAssetRepository repository;
+    private readonly TimeProvider timeProvider;
 
     public MediaStorageService(
         IWebHostEnvironment environment,
-        IOptions<MediaOptions> optionsAccessor)
+        IOptions<MediaOptions> optionsAccessor,
+        IMediaAssetRepository repository,
+        TimeProvider timeProvider)
     {
         options = optionsAccessor.Value;
+        this.repository = repository;
+        this.timeProvider = timeProvider;
         if (Path.IsPathRooted(options.StoragePath))
         {
             throw new InvalidOperationException("Media:StoragePath phải là đường dẫn tương đối trong backend.");
@@ -36,16 +44,52 @@ public sealed class MediaStorageService : IMediaStorageService
     }
 
     public Task<MediaUploadResult> StoreImageAsync(
+        string uploaderId,
         IFormFile file,
         CancellationToken cancellationToken) =>
-        StoreAsync(file, "images", options.MaxImageBytes, DetectImage, cancellationToken);
+        StoreAsync(uploaderId, file, "images", options.MaxImageBytes, DetectImage, cancellationToken);
 
     public Task<MediaUploadResult> StoreVideoAsync(
+        string uploaderId,
         IFormFile file,
         CancellationToken cancellationToken) =>
-        StoreAsync(file, "videos", options.MaxVideoBytes, DetectVideo, cancellationToken);
+        StoreAsync(uploaderId, file, "videos", options.MaxVideoBytes, DetectVideo, cancellationToken);
+
+    public async Task<MediaDeleteResult> DeleteUnusedAsync(
+        string uploaderId,
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var mediaAsset = await repository.GetOwnedAsync(id, uploaderId, cancellationToken);
+        if (mediaAsset is null) return MediaDeleteResult.NotFound;
+        if (mediaAsset.TopicId.HasValue) return MediaDeleteResult.Attached;
+
+        DeleteStoredFile(mediaAsset.RelativePath);
+        await repository.DeleteAsync(mediaAsset, cancellationToken);
+        return MediaDeleteResult.Deleted;
+    }
+
+    public async Task<int> CleanupOrphansAsync(CancellationToken cancellationToken)
+    {
+        var retentionHours = Math.Max(1, options.OrphanRetentionHours);
+        var batchSize = Math.Clamp(options.CleanupBatchSize, 1, 1000);
+        var threshold = timeProvider.GetUtcNow().AddHours(-retentionHours);
+        var orphans = await repository.GetOrphansOlderThanAsync(
+            threshold,
+            batchSize,
+            cancellationToken);
+
+        foreach (var orphan in orphans)
+        {
+            DeleteStoredFile(orphan.RelativePath);
+            await repository.DeleteAsync(orphan, cancellationToken);
+        }
+
+        return orphans.Count;
+    }
 
     private async Task<MediaUploadResult> StoreAsync(
+        string uploaderId,
         IFormFile file,
         string folder,
         long maxBytes,
@@ -66,9 +110,10 @@ public sealed class MediaStorageService : IMediaStorageService
             return MediaUploadResult.Invalid("Loại tệp hoặc nội dung tệp không được hỗ trợ.");
         }
 
+        var id = Guid.NewGuid();
         var directory = Path.Combine(storageRoot, folder);
         Directory.CreateDirectory(directory);
-        var fileName = $"{Guid.NewGuid():N}{media.Extension}";
+        var fileName = $"{id:N}{media.Extension}";
         var filePath = Path.Combine(directory, fileName);
 
         try
@@ -89,8 +134,47 @@ public sealed class MediaStorageService : IMediaStorageService
             throw;
         }
 
+        var relativePath = Path.Combine(folder, fileName);
         var requestRoot = "/" + options.RequestPath.Trim('/');
-        return MediaUploadResult.Success($"{requestRoot}/{folder}/{fileName}");
+        var publicUrl = $"{requestRoot}/{folder}/{fileName}";
+        var mediaAsset = new MediaAsset
+        {
+            Id = id,
+            UploaderId = uploaderId,
+            RelativePath = relativePath,
+            PublicUrl = publicUrl,
+            ContentType = media.ContentTypes[0],
+            Length = file.Length,
+            CreatedAtUtc = timeProvider.GetUtcNow()
+        };
+
+        try
+        {
+            await repository.AddAsync(mediaAsset, cancellationToken);
+        }
+        catch
+        {
+            if (File.Exists(filePath)) File.Delete(filePath);
+            throw;
+        }
+
+        return MediaUploadResult.Success(id, publicUrl);
+    }
+
+    private void DeleteStoredFile(string relativePath)
+    {
+        if (Path.IsPathRooted(relativePath))
+        {
+            throw new InvalidOperationException("Đường dẫn media trong dữ liệu không hợp lệ.");
+        }
+
+        var filePath = Path.GetFullPath(Path.Combine(storageRoot, relativePath));
+        if (!filePath.StartsWith(storageRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Đường dẫn media nằm ngoài thư mục lưu trữ.");
+        }
+
+        if (File.Exists(filePath)) File.Delete(filePath);
     }
 
     private static DetectedMedia? DetectImage(byte[] header)

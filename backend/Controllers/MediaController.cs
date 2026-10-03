@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TechForum.Api.Dtos;
 using TechForum.Api.Services;
 
@@ -16,7 +17,7 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
     public Task<ActionResult<MediaUploadDto>> UploadImage(
         IFormFile file,
         CancellationToken cancellationToken) =>
-        StoreAsync(() => mediaStorageService.StoreImageAsync(file, cancellationToken));
+        StoreAsync(userId => mediaStorageService.StoreImageAsync(userId, file, cancellationToken));
 
     [HttpPost("videos")]
     [ProducesResponseType<MediaUploadDto>(StatusCodes.Status201Created)]
@@ -24,11 +25,37 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
     public Task<ActionResult<MediaUploadDto>> UploadVideo(
         IFormFile file,
         CancellationToken cancellationToken) =>
-        StoreAsync(() => mediaStorageService.StoreVideoAsync(file, cancellationToken));
+        StoreAsync(userId => mediaStorageService.StoreVideoAsync(userId, file, cancellationToken));
 
-    private async Task<ActionResult<MediaUploadDto>> StoreAsync(Func<Task<MediaUploadResult>> store)
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> DeleteUnused(Guid id, CancellationToken cancellationToken)
     {
-        var result = await store();
+        var userId = GetUserId();
+        var result = await mediaStorageService.DeleteUnusedAsync(userId, id, cancellationToken);
+        return result switch
+        {
+            MediaDeleteResult.Deleted => NoContent(),
+            MediaDeleteResult.Attached => Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Media đang được sử dụng",
+                Detail = "Không thể xóa media đã gắn với nội dung."
+            }),
+            _ => NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Không tìm thấy media"
+            })
+        };
+    }
+
+    private async Task<ActionResult<MediaUploadDto>> StoreAsync(
+        Func<string, Task<MediaUploadResult>> store)
+    {
+        var result = await store(GetUserId());
         if (!result.Succeeded)
         {
             return BadRequest(new ProblemDetails
@@ -41,4 +68,8 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
 
         return StatusCode(StatusCodes.Status201Created, result.Media);
     }
+
+    private string GetUserId() =>
+        User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 }

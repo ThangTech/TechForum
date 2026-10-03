@@ -82,7 +82,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   liệu chính thức; repo chưa có activation key nên chỉ được dùng chế độ đánh giá
   có attribution cho tới khi chủ dự án cung cấp license.
 - Thành viên đăng/sửa/xóa mềm nội dung của mình; backend kiểm tra ownership.
-- [ ] Upload media đã có hạ tầng an toàn; ownership và cleanup file mồ côi chưa hoàn tất.
+- [x] Upload media có ownership trong CSDL, endpoint xóa file chưa dùng và tác vụ
+  nền dọn file mồ côi quá hạn theo cấu hình.
 - [x] Backend có `ContentSanitizer` allowlist hẹp và test loại script, event
   handler, URI `javascript:`/`data:`; API gọi sanitizer trước khi lưu nội dung.
 - [x] Thành viên có thể tạo bản nháp hoặc xuất bản bài viết/câu hỏi qua API;
@@ -215,3 +216,10 @@ duyệt theo yêu cầu tạm hoãn.
 Upload ảnh thật đã trả `201` với JSON `{ "link": "/media/images/{guid}.png" }`;
 GET URL trả 200, `Content-Type: image/png`, `X-Content-Type-Options: nosniff`.
 File và cookie kiểm thử đã được xóa ngay sau kiểm tra. Backend đạt 16/16 test.
+
+Sau khi bổ sung ownership, migration `AddMediaOwnership` đã áp dụng trên SQL
+Server local. Upload trả `201` với JSON
+`{ "id": "c4aeb640-2412-42b0-b8f0-3d9b2ec43970", "link": "/media/images/c4aeb640241242b0b8f03d9b2ec43970.png" }`;
+GET file trả 200 `image/png` và `nosniff`; `DELETE /api/media/{id}` trả 204 và
+GET lại file trả 404. File/bản ghi media thử nghiệm đã được xóa. Backend đạt
+19/19 test, build/format sạch và EF báo không còn model change chưa có migration.

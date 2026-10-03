@@ -23,4 +23,5 @@ public sealed class Topic
     public bool IsDiscussionLocked { get; set; }
     public bool IsPinned { get; set; }
     public ICollection<TopicTag> TopicTags { get; set; } = [];
+    public ICollection<MediaAsset> MediaAssets { get; set; } = [];
 }

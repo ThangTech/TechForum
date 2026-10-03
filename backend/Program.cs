@@ -94,8 +94,10 @@ builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IPublicProfileRepository, PublicProfileRepository>();
 builder.Services.AddScoped<IPublicProfileService, PublicProfileService>();
+builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
 builder.Services.AddSingleton<IContentSanitizer, ContentSanitizer>();
-builder.Services.AddSingleton<IMediaStorageService, MediaStorageService>();
+builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
+builder.Services.AddHostedService<MediaCleanupBackgroundService>();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>

@@ -17,6 +17,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<TopicTag> TopicTags => Set<TopicTag>();
 
+    public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -77,6 +79,26 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         topicTag.HasOne(item => item.Tag)
             .WithMany()
             .HasForeignKey(item => item.TagId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var mediaAsset = modelBuilder.Entity<MediaAsset>();
+        mediaAsset.ToTable("MediaAssets");
+        mediaAsset.HasKey(item => item.Id);
+        mediaAsset.Property(item => item.UploaderId).HasMaxLength(450).IsRequired();
+        mediaAsset.Property(item => item.RelativePath).HasMaxLength(300).IsRequired();
+        mediaAsset.Property(item => item.PublicUrl).HasMaxLength(400).IsRequired();
+        mediaAsset.Property(item => item.ContentType).HasMaxLength(100).IsRequired();
+        mediaAsset.HasIndex(item => item.RelativePath).IsUnique();
+        mediaAsset.HasIndex(item => item.PublicUrl).IsUnique();
+        mediaAsset.HasIndex(item => new { item.TopicId, item.CreatedAtUtc });
+        mediaAsset.HasIndex(item => new { item.UploaderId, item.TopicId });
+        mediaAsset.HasOne(item => item.Uploader)
+            .WithMany()
+            .HasForeignKey(item => item.UploaderId)
+            .OnDelete(DeleteBehavior.Restrict);
+        mediaAsset.HasOne(item => item.Topic)
+            .WithMany(item => item.MediaAssets)
+            .HasForeignKey(item => item.TopicId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>
