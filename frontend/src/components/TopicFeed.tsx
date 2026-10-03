@@ -28,7 +28,7 @@ export const TopicFeed = ({
   onFilter,
   selectedType,
 }: TopicFeedProps) => (
-  <section aria-labelledby="topic-feed-title" className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+  <section aria-labelledby="topic-feed-title" className="overflow-hidden rounded-xl border border-slate-200 bg-white" data-tour="content-feed">
     <div className="border-b border-slate-200 p-5 sm:p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Nội dung mới</p>
       <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950" id="topic-feed-title">

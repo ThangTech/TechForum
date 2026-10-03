@@ -6,6 +6,7 @@ export const appRoutes = {
   myTopics: '/my-topics',
   saved: '/saved',
   account: '/account',
+  settings: '/settings',
   adminReports: '/admin/reports',
   adminCategories: '/admin/categories',
   adminTags: '/admin/tags',

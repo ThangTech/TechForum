@@ -4,6 +4,7 @@ import { Theme } from '@astryxdesign/core/theme'
 import { InternationalizationProvider } from '@astryxdesign/core/i18n'
 import viVN from '@astryxdesign/core/locales/vi-VN.generated.js'
 import { neutralTheme } from '@astryxdesign/theme-neutral/built'
+import 'intro.js/introjs.css'
 import './index.css'
 import App from './App.tsx'
 

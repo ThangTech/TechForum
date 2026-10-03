@@ -26,7 +26,7 @@ export const SiteHeader = () => {
           Tech<span>Forum</span>
         </NavLink>
 
-        <form className="search-unavailable" onSubmit={handleSearch} role="search">
+        <form className="search-unavailable" data-tour="search" onSubmit={handleSearch} role="search">
           <span className="search-unavailable__icon" aria-hidden="true" />
           <label className="sr-only" htmlFor="header-search">Tìm bài viết và câu hỏi</label>
           <input
@@ -37,7 +37,7 @@ export const SiteHeader = () => {
           />
         </form>
 
-        <div className="account-actions">
+        <div className="account-actions" data-tour="account">
           {isLoading ? (
             <span className="account-loading" role="status">Đang kiểm tra phiên…</span>
           ) : user ? (
@@ -53,11 +53,11 @@ export const SiteHeader = () => {
         </div>
       </div>
 
-      <nav className="category-nav" aria-label="Điều hướng chính">
+      <nav className="category-nav" aria-label="Điều hướng chính" data-tour="content-types">
         <NavLink to={appRoutes.home} end>Trang chủ</NavLink>
         <NavLink to={appRoutes.articles}>Bài viết</NavLink>
         <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
-        <NavLink to={appRoutes.write}>Viết nội dung</NavLink>
+        <NavLink data-tour="write" to={appRoutes.write}>Viết nội dung</NavLink>
       </nav>
     </header>
   )

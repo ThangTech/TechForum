@@ -19,6 +19,7 @@ import { AdminTagsPage } from './pages/AdminTagsPage'
 import { AdminAccountsPage } from './pages/AdminAccountsPage'
 import { AdminTopicsPage } from './pages/AdminTopicsPage'
 import { AdminOverviewPage } from './pages/AdminOverviewPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -81,6 +82,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route
               path="admin/reports"
               element={

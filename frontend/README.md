@@ -26,6 +26,7 @@ Các route chính:
 - `/login`: đăng nhập, hỗ trợ `returnUrl` nội bộ.
 - `/register`: đăng ký thành viên và tự tạo phiên.
 - `/account`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
+- `/settings`: tùy chỉnh cá nhân, hiện cho phép chạy lại tour hướng dẫn trang chủ.
 - `/saved`: danh sách nội dung đã lưu của tài khoản, phân trang bằng API thật.
 - `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
 - `/topics/:id`, `/members/:userId`: chi tiết, câu trả lời và hồ sơ tác giả công khai.
@@ -41,6 +42,12 @@ Chi tiết nội dung hiển thị số Sao hữu ích từ API. Thành viên c�
 sao; khách bấm thao tác này sẽ nhận modal yêu cầu đăng nhập dùng chung.
 Lưu bài dùng trạng thái riêng với Sao hữu ích; số lượt lưu hiển thị trên chi tiết
 và danh sách cá nhân chỉ chứa nội dung còn công khai.
+
+Trang chủ dùng Intro.js 8.6.0 cho tour tìm kiếm, loại nội dung, viết bài và tài
+khoản. Trạng thái hoàn tất được lưu riêng theo khách/tài khoản trong trình duyệt;
+thành viên có thể chạy lại từ menu **Tùy chỉnh**. Intro.js dùng giấy phép
+AGPL-3.0; phù hợp với đồ án phi thương mại khi dự án tuân thủ điều kiện giấy
+phép. Nếu triển khai thương mại, cần rà soát và mua license phù hợp từ Intro.js.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
 `credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.

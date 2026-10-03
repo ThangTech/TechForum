@@ -6,6 +6,7 @@ import { getTopics, type TopicPage, type TopicType } from '../api/topics'
 import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../components/TopicFeed'
+import { HomeTour } from '../components/tour/HomeTour'
 
 interface HomePageProps {
   fixedType?: 'Article' | 'Question'
@@ -130,6 +131,7 @@ export const HomePage = ({
 
   return (
     <main className="main-area" id="main-content">
+      {!fixedType && <HomeTour />}
       <div className="page-content">
         <section className="intro" aria-labelledby="page-title">
           <p className="eyebrow">Cộng đồng công nghệ Việt</p>

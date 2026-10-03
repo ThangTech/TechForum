@@ -106,25 +106,31 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### P4 — Thảo luận và tương tác
 
-- Trả lời/phản hồi, khóa thảo luận và accepted answer đúng quyền.
-- Một sao hữu ích và một bookmark hiện hành cho mỗi tài khoản/chủ đề.
-- Chia sẻ chỉ tăng sau Web Share/copy thành công; lượt xem chống đếm lặp ngắn hạn.
+- [x] Trả lời cấp một, sửa/xóa phản hồi của mình, khóa thảo luận và accepted
+  answer đúng quyền; xóa accepted answer tự bỏ liên kết.
+- [x] Một sao hữu ích và một bookmark hiện hành cho mỗi tài khoản/chủ đề.
+- [x] Chia sẻ chỉ tăng sau Web Share/copy thành công và yêu cầu đăng nhập; lượt
+  xem chống đếm lặp theo khách/tài khoản trong một ngày UTC.
 - Trang Thảo luận sắp theo hoạt động phản hồi gần nhất.
 
 ### P5 — Quản trị
 
-- API và route riêng cho Admin; kiểm tra quyền ở server.
-- CRUD/ngừng sử dụng chuyên mục và thẻ có quy tắc dữ liệu tham chiếu.
-- Ẩn/khôi phục, khóa/mở, ghim/bỏ ghim, chuyển chuyên mục.
-- Xử lý báo cáo một lần, có lý do/người/thời điểm.
-- Khóa/mở tài khoản, ngăn tự khóa và vô hiệu phiên cũ.
-- Thống kê CSDL thật và nhật ký thao tác quản trị.
+- [x] API và route riêng cho Admin; kiểm tra quyền ở server.
+- [x] Tạo/sửa/ngừng sử dụng chuyên mục và thẻ có quy tắc dữ liệu tham chiếu.
+- [x] Ẩn/khôi phục, khóa/mở, ghim/bỏ ghim, chuyển chuyên mục.
+- [x] Xử lý báo cáo một lần, có lý do/người/thời điểm.
+- [x] Khóa/mở tài khoản, ngăn tự khóa và middleware vô hiệu phiên cũ.
+- [x] Thống kê từ CSDL và nhật ký thao tác kiểm duyệt nội dung.
+- Nhật ký tạo/sửa chuyên mục, thẻ và khóa tài khoản chưa hợp nhất vào audit log.
 
 ### P6 — Hoàn thiện trải nghiệm
 
-- Hồ sơ cá nhân, nội dung đã lưu, lịch sử và tùy chỉnh có tác dụng thật.
+- Hồ sơ cá nhân và lịch sử hoạt động chưa hoàn thiện; nội dung đã lưu hoạt động.
+- [x] Tùy chỉnh có thao tác chạy lại tour thật.
 - Thông báo với số chưa đọc từ backend.
-- Intro.js được xác minh license/tương thích, không lặp ngoài ý muốn.
+- [x] Intro.js 8.6.0 build được với React/Vite; tour có bước phù hợp khách/thành
+  viên, ghi trạng thái theo người dùng và có thể chạy lại. Package là AGPL-3.0,
+  cần rà soát lại license nếu dự án chuyển sang mục đích thương mại.
 - Kiểm thử tổng hợp Khách, Thành viên A/B và Quản trị viên.
 
 ## Quyết định còn cần xác nhận khi đến phase phụ thuộc
