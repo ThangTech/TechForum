@@ -10,6 +10,7 @@ import { RegisterPage } from './pages/RegisterPage'
 import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
 import { MyTopicsPage } from './pages/MyTopicsPage'
+import { SavedTopicsPage } from './pages/SavedTopicsPage'
 import { appRoutes } from './appRoutes'
 import { LegacyRouteRedirect } from './components/LegacyRouteRedirect'
 
@@ -61,6 +62,10 @@ const App = () => {
                   <MyTopicsPage />
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="saved"
+              element={<ProtectedRoute><SavedTopicsPage /></ProtectedRoute>}
             />
             <Route
               path="account"

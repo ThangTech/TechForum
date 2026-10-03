@@ -4,6 +4,7 @@ export const appRoutes = {
   questions: '/questions',
   write: '/write',
   myTopics: '/my-topics',
+  saved: '/saved',
   account: '/account',
   login: '/login',
   register: '/register',

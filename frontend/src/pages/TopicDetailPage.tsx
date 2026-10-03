@@ -8,6 +8,7 @@ import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
 import { appRoutes } from '../appRoutes'
 import { DiscussionSection } from '../components/discussions/DiscussionSection'
 import { UsefulStarButton } from '../components/interactions/UsefulStarButton'
+import { BookmarkButton } from '../components/interactions/BookmarkButton'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -105,7 +106,10 @@ export const TopicDetailPage = () => {
               dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(topic.bodyHtml) }}
             />
             <footer className="border-t border-slate-200 bg-slate-50 px-6 py-5 sm:px-8">
-              <UsefulStarButton topicId={topic.id} />
+              <div className="flex flex-wrap gap-3">
+                <UsefulStarButton topicId={topic.id} />
+                <BookmarkButton topicId={topic.id} />
+              </div>
             </footer>
           </article>
         )}

@@ -26,6 +26,7 @@ Các route chính:
 - `/login`: đăng nhập, hỗ trợ `returnUrl` nội bộ.
 - `/register`: đăng ký thành viên và tự tạo phiên.
 - `/account`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
+- `/saved`: danh sách nội dung đã lưu của tài khoản, phân trang bằng API thật.
 - `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
 - `/topics/:id`, `/members/:userId`: chi tiết, câu trả lời và hồ sơ tác giả công khai.
 - `/write`: route riêng tư dùng Froala để lưu bản nháp hoặc xuất bản, hỗ trợ
@@ -38,6 +39,8 @@ Tác giả của Câu hỏi có thể chọn hoặc thay đổi câu trả lời
 trong danh sách; Bài viết không hiển thị thao tác này.
 Chi tiết nội dung hiển thị số Sao hữu ích từ API. Thành viên có thể thêm/bỏ một
 sao; khách bấm thao tác này sẽ nhận modal yêu cầu đăng nhập dùng chung.
+Lưu bài dùng trạng thái riêng với Sao hữu ích; số lượt lưu hiển thị trên chi tiết
+và danh sách cá nhân chỉ chứa nội dung còn công khai.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
 `credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.
