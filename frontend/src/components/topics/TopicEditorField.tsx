@@ -1,5 +1,5 @@
 import FroalaEditorModule from 'react-froala-wysiwyg'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import 'froala-editor/css/froala_editor.pkgd.min.css'
 import 'froala-editor/js/plugins.pkgd.min.js'
 import { getAntiforgeryToken } from '../../api/client'
@@ -15,6 +15,7 @@ interface TopicEditorFieldProps {
   value: string
   onChange: (value: string) => void
   onMediaChange: (media: UploadedMedia[]) => void
+  onUploadStateChange: (isUploading: boolean) => void
 }
 
 export const TopicEditorField = ({
@@ -23,12 +24,14 @@ export const TopicEditorField = ({
   value,
   onChange,
   onMediaChange,
+  onUploadStateChange,
 }: TopicEditorFieldProps) => {
   const [uploadedMedia] = useState(() => new Map(
     initialMedia.map((media) => [media.link, media]),
   ))
   const [antiforgeryToken, setAntiforgeryToken] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [pendingUploadCount, setPendingUploadCount] = useState(0)
 
   useEffect(() => {
     let isActive = true
@@ -46,9 +49,43 @@ export const TopicEditorField = ({
     return () => { isActive = false }
   }, [])
 
+  useEffect(() => {
+    onUploadStateChange(pendingUploadCount > 0)
+  }, [onUploadStateChange, pendingUploadCount])
+
+  const handleChange = useCallback((html: string) => {
+    const activeMedia: UploadedMedia[] = []
+    uploadedMedia.forEach((media, link) => {
+      if (html.includes(link)) activeMedia.push(media)
+    })
+    onMediaChange(activeMedia)
+    onChange(html)
+  }, [onChange, onMediaChange, uploadedMedia])
+
+  const startUpload = useCallback(() => {
+    setPendingUploadCount((current) => current + 1)
+    setUploadError(null)
+  }, [])
+
+  const finishUpload = useCallback(() => {
+    setPendingUploadCount((current) => Math.max(0, current - 1))
+  }, [])
+
+  const syncInsertedMedia = useCallback((mediaElement: unknown) => {
+    const editorHtml = getEditorHtml(mediaElement)
+    if (editorHtml !== null) handleChange(editorHtml)
+    finishUpload()
+  }, [finishUpload, handleChange])
+
+  const handleUploadError = useCallback((message: string) => {
+    setUploadError(message)
+    finishUpload()
+  }, [finishUpload])
+
   const config = useMemo(() => antiforgeryToken
     ? createFroalaConfig({
         antiforgeryToken,
+        onMediaInserted: syncInsertedMedia,
         onMediaRemoved: (link) => {
           const media = uploadedMedia.get(link)
           if (!media) return
@@ -67,22 +104,10 @@ export const TopicEditorField = ({
             setUploadError(requestError instanceof Error ? requestError.message : 'Upload media thất bại.')
           }
         },
-        onUploadError: setUploadError,
+        onUploadStarted: startUpload,
+        onUploadError: handleUploadError,
       })
-    : null, [antiforgeryToken, onMediaChange, uploadedMedia])
-
-  const handleChange = (html: string) => {
-    const activeMedia: UploadedMedia[] = []
-    uploadedMedia.forEach((media, link) => {
-      if (html.includes(link)) {
-        activeMedia.push(media)
-        return
-      }
-
-    })
-    onMediaChange(activeMedia)
-    onChange(html)
-  }
+    : null, [antiforgeryToken, handleUploadError, onMediaChange, startUpload, syncInsertedMedia, uploadedMedia])
 
   return (
     <div className="grid gap-2">
@@ -95,8 +120,17 @@ export const TopicEditorField = ({
       {config && (
         <FroalaEditorComponent config={config} model={value} onModelChange={handleChange} tag="textarea" />
       )}
+      {pendingUploadCount > 0 && (
+        <p className="text-sm text-blue-700" role="status">Đang tải media lên, vui lòng chờ hoàn tất…</p>
+      )}
       {uploadError && <p className="text-sm text-amber-700" role="status">{uploadError}</p>}
       {error && <p className="text-sm text-red-700">{error}</p>}
     </div>
   )
+}
+
+const getEditorHtml = (mediaElement: unknown): string | null => {
+  if (typeof mediaElement !== 'object' || mediaElement === null) return null
+  const element = (mediaElement as { 0?: Element })[0]
+  return element?.closest<HTMLElement>('.fr-element')?.innerHTML ?? null
 }

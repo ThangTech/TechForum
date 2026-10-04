@@ -5,15 +5,19 @@ export const hasFroalaKey = Boolean(import.meta.env.VITE_FROALA_KEY?.trim())
 
 interface FroalaConfigOptions {
   antiforgeryToken: string
+  onMediaInserted: (mediaElement: unknown) => void
   onMediaRemoved: (link: string) => void
   onMediaUploaded: (media: UploadedMedia) => void
+  onUploadStarted: () => void
   onUploadError: (message: string) => void
 }
 
 export const createFroalaConfig = ({
   antiforgeryToken,
+  onMediaInserted,
   onMediaRemoved,
   onMediaUploaded,
+  onUploadStarted,
   onUploadError,
 }: FroalaConfigOptions) => ({
   ...(hasFroalaKey ? { key: import.meta.env.VITE_FROALA_KEY.trim() } : {}),
@@ -40,6 +44,7 @@ export const createFroalaConfig = ({
   videoUploadParam: 'file',
   videoUploadURL: `${apiBaseUrl}/api/media/videos`,
   events: {
+    'image.beforeUpload': onUploadStarted,
     'image.uploaded': (response: unknown) => {
       try {
         onMediaUploaded(parseUploadedMedia(response))
@@ -49,17 +54,22 @@ export const createFroalaConfig = ({
         return false
       }
     },
+    'image.inserted': onMediaInserted,
     'image.removed': (image: unknown) => {
       const link = getMediaSource(image)
       if (link) onMediaRemoved(link)
     },
+    'video.beforeUpload': onUploadStarted,
     'video.uploaded': (response: unknown) => {
       try {
         onMediaUploaded(parseUploadedMedia(response))
+        return true
       } catch {
         onUploadError('Không đọc được kết quả tải video từ API.')
+        return false
       }
     },
+    'video.inserted': onMediaInserted,
     'video.removed': (video: unknown) => {
       const link = getMediaSource(video)
       if (link) onMediaRemoved(link)

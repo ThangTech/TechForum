@@ -31,6 +31,8 @@ export const WriteTopicPage = () => {
   const [tagIds, setTagIds] = useState<number[]>([])
   const [media, setMedia] = useState<UploadedMedia[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isMediaUploading, setIsMediaUploading] = useState(false)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [createdTopic, setCreatedTopic] = useState<OwnTopic | null>(null)
@@ -86,7 +88,7 @@ export const WriteTopicPage = () => {
   }
 
   const submit = async (publish: boolean) => {
-    if (isSubmitting) return
+    if (isSubmitting || isMediaUploading) return
     setIsSubmitting(true)
     setSubmitError(null)
     setFieldErrors({})
@@ -137,6 +139,7 @@ export const WriteTopicPage = () => {
     setCategoryId(categories[0] ? String(categories[0].id) : '')
     setTagIds([])
     setMedia([])
+    setIsPreviewOpen(false)
     setFieldErrors({})
   }
 
@@ -193,11 +196,27 @@ export const WriteTopicPage = () => {
               key={editingId ?? 'create'}
               onChange={setBodyHtml}
               onMediaChange={setMedia}
+              onUploadStateChange={setIsMediaUploading}
               value={bodyHtml}
             />
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <Button
+                isDisabled={isMediaUploading}
+                label={isPreviewOpen ? 'Đóng xem trước' : 'Xem trước nội dung'}
+                onClick={() => setIsPreviewOpen((current) => !current)}
+                type="button"
+                variant="secondary"
+              />
+              {isPreviewOpen && (
+                <div
+                  className="fr-view mt-4 rounded-lg border border-slate-200 bg-white p-5 text-base leading-8 text-slate-800 [&_img]:h-auto [&_img]:max-w-full [&_video]:block [&_video]:max-h-[70vh] [&_video]:w-full [&_video]:rounded-lg [&_video]:bg-black"
+                  dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(bodyHtml) }}
+                />
+              )}
+            </div>
             <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-5">
-              <Button isDisabled={isSubmitting} label={isSubmitting ? 'Đang lưu…' : 'Lưu bản nháp'} type="submit" variant="secondary" />
-              <Button isDisabled={isSubmitting} label={isSubmitting ? 'Đang xuất bản…' : 'Xuất bản'} onClick={() => void submit(true)} type="button" variant="primary" />
+              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải media…' : isSubmitting ? 'Đang lưu…' : 'Lưu bản nháp'} type="submit" variant="secondary" />
+              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải media…' : isSubmitting ? 'Đang xuất bản…' : 'Xuất bản'} onClick={() => void submit(true)} type="button" variant="primary" />
             </div>
           </form>
         )}
