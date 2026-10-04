@@ -7,6 +7,9 @@ import { NotificationLink } from './notifications/NotificationLink'
 const AccountMenu = lazy(() => import('./account/AccountMenu').then((module) => ({
   default: module.AccountMenu,
 })))
+const WriteMenu = lazy(() => import('./header/WriteMenu').then((module) => ({
+  default: module.WriteMenu,
+})))
 
 export const SiteHeader = () => {
   const { user, isLoading } = useAuth()
@@ -17,15 +20,21 @@ export const SiteHeader = () => {
     event.preventDefault()
     const params = new URLSearchParams()
     if (keyword.trim()) params.set('keyword', keyword.trim())
-    navigate({ pathname: appRoutes.home, search: params.toString() })
+    navigate({ pathname: appRoutes.search, search: params.toString() })
   }
 
   return (
     <header className="site-header">
       <div className="header-bar">
-        <NavLink className="brand" to={appRoutes.home} aria-label="TechForum - trang chủ">
+        <NavLink className="brand" to={appRoutes.home} aria-label="TechForum - danh sách bài viết">
           Tech<span>Forum</span>
         </NavLink>
+
+        <nav className="primary-nav" aria-label="Điều hướng chính" data-tour="content-types">
+          <NavLink to={appRoutes.home} end>Bài viết</NavLink>
+          <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
+          <NavLink to={appRoutes.discussions}>Thảo luận</NavLink>
+        </nav>
 
         <form className="search-unavailable" data-tour="search" onSubmit={handleSearch} role="search">
           <span className="search-unavailable__icon" aria-hidden="true" />
@@ -39,6 +48,7 @@ export const SiteHeader = () => {
         </form>
 
         <div className="account-actions" data-tour="account">
+          <Suspense fallback={<span className="account-loading">…</span>}><WriteMenu /></Suspense>
           {isLoading ? (
             <span className="account-loading" role="status">Đang kiểm tra phiên…</span>
           ) : user ? (
@@ -57,13 +67,6 @@ export const SiteHeader = () => {
         </div>
       </div>
 
-      <nav className="category-nav" aria-label="Điều hướng chính" data-tour="content-types">
-        <NavLink to={appRoutes.home} end>Trang chủ</NavLink>
-        <NavLink to={appRoutes.articles}>Bài viết</NavLink>
-        <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
-        <NavLink to={appRoutes.discussions}>Thảo luận</NavLink>
-        <NavLink data-tour="write" to={appRoutes.write}>Viết nội dung</NavLink>
-      </nav>
     </header>
   )
 }

@@ -25,7 +25,7 @@ export const HomeTour = () => {
     const timer = window.setTimeout(async () => {
       const steps = [
         getPresentStep('[data-tour="search"]', 'Tìm kiếm', 'Tìm bài viết và câu hỏi công khai bằng từ khóa.'),
-        getPresentStep('[data-tour="content-types"]', 'Duyệt nội dung', 'Chuyển nhanh giữa bài viết, hỏi đáp và trang chủ.'),
+        getPresentStep('[data-tour="content-types"]', 'Duyệt nội dung', 'Chuyển nhanh giữa bài viết, hỏi đáp và các thảo luận đang hoạt động.'),
         getPresentStep('[data-tour="content-feed"]', 'Khám phá cộng đồng', 'Mở một nội dung để đọc, thảo luận và xem các số liệu tương tác thật.'),
         getPresentStep('[data-tour="write"]', 'Chia sẻ kiến thức', user
           ? 'Viết bài hoặc đặt câu hỏi mới cho cộng đồng.'

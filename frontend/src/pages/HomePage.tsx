@@ -15,6 +15,7 @@ interface HomePageProps {
   title?: string
   description?: string
   sort?: 'discussion'
+  showTour?: boolean
 }
 
 const readPositiveInteger = (value: string | null) => {
@@ -27,6 +28,7 @@ export const HomePage = ({
   title = 'Cùng học hỏi, chia sẻ và làm chủ công nghệ.',
   description = 'Khám phá các bài viết và câu hỏi mới nhất từ cộng đồng TechForum.',
   sort,
+  showTour = false,
 }: HomePageProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPositiveInteger(searchParams.get('page')) ?? 1
@@ -152,7 +154,7 @@ export const HomePage = ({
 
   return (
     <main className="main-area" id="main-content">
-      {!fixedType && <HomeTour />}
+      {showTour && <HomeTour />}
       <div className="page-content">
         <section className="intro" aria-labelledby="page-title">
           <p className="eyebrow">Cộng đồng công nghệ Việt</p>

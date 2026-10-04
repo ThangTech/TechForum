@@ -22,6 +22,7 @@ import { AdminOverviewPage } from './pages/AdminOverviewPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ActivityPage } from './pages/ActivityPage'
+import { SkillCommunityPage } from './pages/SkillCommunityPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -33,7 +34,11 @@ const App = () => {
       <AuthProvider>
         <Routes>
           <Route element={<SiteLayout />}>
-            <Route index element={<HomePage />} />
+            <Route index element={<HomePage fixedType="Article" showTour title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng TechForum." />} />
+            <Route
+              path="search"
+              element={<HomePage title="Tìm kiếm nội dung" description="Tìm bài viết và câu hỏi công khai trong cộng đồng TechForum." />}
+            />
             <Route
               path="articles"
               element={<HomePage fixedType="Article" title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng." />}
@@ -91,6 +96,7 @@ const App = () => {
             <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
+            <Route path="skills/:tagId" element={<SkillCommunityPage />} />
             <Route
               path="admin/reports"
               element={

@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { getPublicProfile, type PublicProfile } from '../api/profiles'
+import { followMember, getPublicProfile, unfollowMember, type PublicProfile } from '../api/profiles'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicSummaryItem } from '../components/topics/TopicSummaryItem'
+import { Button } from '@astryxdesign/core/Button'
+import { useAuth } from '../auth/authState'
+import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
+import { appRoutes } from '../appRoutes'
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -15,6 +19,10 @@ export const PublicProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [requestVersion, setRequestVersion] = useState(0)
+  const { user } = useAuth()
+  const [isFollowBusy, setIsFollowBusy] = useState(false)
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -46,6 +54,18 @@ export const PublicProfilePage = () => {
     return () => controller.abort()
   }, [userId, requestVersion])
 
+  const toggleFollow = async () => {
+    if (!profile || isFollowBusy) return
+    if (!user) { setIsAuthOpen(true); return }
+    setIsFollowBusy(true); setActionError(null)
+    try {
+      const status = profile.isFollowedByViewer ? await unfollowMember(profile.id) : await followMember(profile.id)
+      setProfile({ ...profile, isFollowedByViewer: status.isFollowing, followerCount: status.followerCount })
+    } catch (requestError) {
+      setActionError(requestError instanceof Error ? requestError.message : 'Không thể cập nhật theo dõi.')
+    } finally { setIsFollowBusy(false) }
+  }
+
   return (
     <main className="main-area" id="main-content">
       <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
@@ -76,10 +96,12 @@ export const PublicProfilePage = () => {
                   </h1>
                   <p className="mt-2 text-sm text-slate-500">Tham gia từ {formatDate(profile.joinedAtUtc)}</p>
                 </div>
+                {user?.id !== profile.id && <div className="ml-auto"><Button isLoading={isFollowBusy} label={profile.isFollowedByViewer ? 'Đang theo dõi' : 'Theo dõi'} onClick={() => void toggleFollow()} variant={profile.isFollowedByViewer ? 'secondary' : 'primary'} /></div>}
               </div>
-              <div className="mt-6 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                <strong className="text-slate-950">{profile.publishedTopicCount}</strong> nội dung đang được công khai
-              </div>
+              {actionError && <p className="mt-4 text-sm text-red-700" role="alert">{actionError}</p>}
+              <div className="mt-6 grid gap-3 sm:grid-cols-3"><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.publishedTopicCount}</strong> nội dung</div><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.followerCount}</strong> người theo dõi</div><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.receivedStarCount}</strong> Sao hữu ích</div></div>
+              {profile.badges.length > 0 && <div className="mt-6"><h2 className="text-base font-bold text-slate-950">Danh hiệu</h2><div className="mt-3 flex flex-wrap gap-2">{profile.badges.map((badge) => <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-bold text-amber-800" key={badge.code} title={badge.description}>{badge.name}</span>)}</div></div>}
+              {profile.skills.length > 0 && <div className="mt-6"><h2 className="text-base font-bold text-slate-950">Kỹ năng</h2><div className="mt-3 flex flex-wrap gap-2">{profile.skills.map((skill) => <Link className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-700 hover:bg-blue-100" key={skill.tagId} to={appRoutes.skill(skill.tagId)}>#{skill.name} · {skill.topicCount}</Link>)}</div></div>}
             </section>
 
             <section className="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-labelledby="recent-topics-title">
@@ -101,6 +123,7 @@ export const PublicProfilePage = () => {
           </div>
         )}
       </div>
+      <AuthRequiredDialog isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </main>
   )
 }

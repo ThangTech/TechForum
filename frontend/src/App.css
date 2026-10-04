@@ -2,6 +2,17 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.site-shell h1,
+.site-shell h2,
+.site-shell h3,
+.site-shell h4,
+.site-shell h5,
+.site-shell h6,
+.site-shell .brand {
+  font-family: "Open Sans", Roboto, Arial, sans-serif;
 }
 
 .astryx-button[data-variant='primary'] {
@@ -19,7 +30,6 @@
 }
 
 .header-bar,
-.category-nav,
 .page-content,
 .site-footer__inner {
   width: min(1120px, calc(100% - 40px));
@@ -29,9 +39,9 @@
 .header-bar {
   min-height: 68px;
   display: grid;
-  grid-template-columns: auto minmax(240px, 1fr) auto;
+  grid-template-columns: auto auto minmax(220px, 1fr) auto;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
 }
 
 .brand {
@@ -152,16 +162,15 @@
   background: var(--color-primary-dark);
 }
 
-.category-nav {
-  min-height: 44px;
+.primary-nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   overflow-x: auto;
   scrollbar-width: thin;
 }
 
-.category-nav a {
+.primary-nav a {
   color: var(--color-text);
   font-size: 0.9rem;
   font-weight: 650;
@@ -169,8 +178,9 @@
   white-space: nowrap;
 }
 
-.category-nav a:hover,
-.category-nav a:focus-visible {
+.primary-nav a:hover,
+.primary-nav a:focus-visible,
+.primary-nav a.active {
   color: var(--color-primary);
 }
 
@@ -596,7 +606,6 @@ a:focus-visible {
 
 @media (max-width: 760px) {
   .header-bar,
-  .category-nav,
   .page-content,
   .site-footer__inner {
     width: min(100% - 28px, 1120px);
@@ -609,6 +618,12 @@ a:focus-visible {
 
   .search-unavailable {
     display: none;
+  }
+
+  .primary-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding-bottom: 12px;
   }
 
   .account-state > span:last-child {

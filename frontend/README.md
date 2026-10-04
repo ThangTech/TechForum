@@ -26,9 +26,11 @@ Các route chính:
 - `/login`: đăng nhập, hỗ trợ `returnUrl` nội bộ.
 - `/register`: đăng ký thành viên và tự tạo phiên.
 - `/account`: route riêng tư, hiển thị dữ liệu từ `GET /api/auth/me` và đăng xuất.
-- `/settings`: tùy chỉnh cá nhân, hiện cho phép chạy lại tour hướng dẫn trang chủ.
+- `/settings`: tùy chỉnh cá nhân, hiện cho phép chạy lại tour hướng dẫn trang Bài viết.
 - `/notifications`: thông báo riêng của tài khoản, hiển thị số chưa đọc thật trên header.
 - `/activity`: lịch sử nội dung và câu trả lời công khai của tài khoản hiện tại.
+- `/skills/:tagId`: thống kê nội dung và thành viên sử dụng một kỹ năng/thẻ.
+- `/search`: tìm đồng thời bài viết và câu hỏi, giữ từ khóa/bộ lọc trên URL.
 - `/saved`: danh sách nội dung đã lưu của tài khoản, phân trang bằng API thật.
 - `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
 - `/discussions`: chủ đề có phản hồi, sắp theo hoạt động thảo luận gần nhất.
@@ -58,6 +60,16 @@ nhận. Header tải `unreadCount` từ backend; mở một thông báo chưa đ
 
 Cột phải trang duyệt gọi `/api/question-highlights` để hiển thị câu hỏi mới và
 câu hỏi nhiều phản hồi trong 30 ngày; không dùng số liệu tĩnh.
+
+Hồ sơ công khai hiển thị người theo dõi, Sao hữu ích nhận được, kỹ năng suy ra
+từ thẻ của nội dung công khai và danh hiệu theo ngưỡng dữ liệu thật. Thành viên
+có thể theo dõi/bỏ theo dõi người khác; khách dùng modal đăng nhập chung.
+
+Header desktop đặt Bài viết/Hỏi đáp/Thảo luận cạnh logo, sau đó mới tới tìm kiếm.
+Nút bút dùng menu Astryx với hai lựa chọn `Viết bài` và `Đặt câu hỏi`. Trang `/`
+là danh sách Bài viết; không còn mục Trang chủ trùng nghĩa. Giao diện dùng Roboto
+cho nội dung và Open Sans cho tiêu đề; font được tải từ Google Fonts nên khi máy
+không có mạng sẽ dùng fallback hệ thống.
 
 API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
 `credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.

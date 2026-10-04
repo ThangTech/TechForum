@@ -1,6 +1,6 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { getCategories, type Category } from '../api/categories'
 import { getTags, type Tag } from '../api/tags'
@@ -16,6 +16,8 @@ import { appRoutes } from '../appRoutes'
 export const WriteTopicPage = () => {
   const navigate = useNavigate()
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
+  const requestedType = searchParams.get('type') === 'question' ? 'question' : 'article'
   const editingId = id ? Number(id) : null
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
@@ -25,7 +27,7 @@ export const WriteTopicPage = () => {
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
   const [bodyHtml, setBodyHtml] = useState('')
-  const [type, setType] = useState<TopicType>('article')
+  const [type, setType] = useState<TopicType>(requestedType)
   const [categoryId, setCategoryId] = useState('')
   const [tagIds, setTagIds] = useState<number[]>([])
   const [media, setMedia] = useState<UploadedMedia[]>([])
@@ -64,6 +66,7 @@ export const WriteTopicPage = () => {
           setMedia(existingMedia)
         } else if (categoryResult.length > 0) {
           setCategoryId(String(categoryResult[0].id))
+          setType(requestedType)
         }
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return
@@ -75,7 +78,7 @@ export const WriteTopicPage = () => {
 
     void loadOptions()
     return () => controller.abort()
-  }, [editingId, id, requestVersion])
+  }, [editingId, id, requestVersion, requestedType])
 
   const toggleTag = (tagId: number) => {
     setTagIds((current) => current.includes(tagId)

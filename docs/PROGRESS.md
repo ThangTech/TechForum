@@ -20,15 +20,14 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### Chưa có
 
-- [x] Backend có 4 test service xác thực; frontend chưa có test tự động.
-- [ ] Xác thực, phân quyền, phiên và tài khoản bị khóa.
-- [ ] Bài viết/câu hỏi, thẻ, tìm kiếm và phân trang (phần đọc công khai đã có;
-  phần tạo/sửa và hồ sơ công khai chưa có).
-- [ ] Soạn thảo, upload media và làm sạch HTML.
-- [ ] Thảo luận, câu trả lời được chấp nhận và khóa thảo luận.
-- [ ] Sao hữu ích, lưu bài, chia sẻ và quy tắc lượt xem.
-- [ ] Báo cáo, kiểm duyệt, quản trị tài khoản, nhật ký và thống kê.
-- [ ] Hồ sơ, thông báo, tùy chỉnh và tour hướng dẫn.
+- [x] Backend có 25 test service; frontend chưa có test tự động.
+- [x] Xác thực, phân quyền, phiên và tài khoản bị khóa.
+- [x] Bài viết/câu hỏi, thẻ, tìm kiếm, phân trang, tạo/sửa và hồ sơ công khai.
+- [x] Soạn thảo, upload media và làm sạch HTML.
+- [x] Thảo luận cấp một, câu trả lời được chấp nhận và khóa thảo luận.
+- [x] Sao hữu ích, lưu bài, chia sẻ và quy tắc lượt xem.
+- [x] Báo cáo, kiểm duyệt, quản trị tài khoản, nhật ký và thống kê.
+- [x] Hồ sơ công khai/tài khoản, thông báo cần thiết, tùy chỉnh và tour hướng dẫn.
 
 ### File chưa theo dõi thuộc người dùng
 
@@ -135,14 +134,24 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Intro.js 8.6.0 build được với React/Vite; tour có bước phù hợp khách/thành
   viên, ghi trạng thái theo người dùng và có thể chạy lại. Package là AGPL-3.0,
   cần rà soát lại license nếu dự án chuyển sang mục đích thương mại.
-- Kiểm thử tổng hợp Khách, Thành viên A/B và Quản trị viên.
+- [x] Header một hàng trên desktop: điều hướng cạnh logo, tìm kiếm, menu bút
+  Viết bài/Đặt câu hỏi; trang `/` là Bài viết và không lặp mục Trang chủ.
+- [x] Roboto dùng cho nội dung, Open Sans cho tiêu đề; CSS Intro.js được cô lập
+  và đã kiểm tra trực quan desktop/mobile, nút Bỏ qua không còn bị co chữ.
+- [x] Theo dõi thành viên chống tự theo dõi/trùng; hồ sơ có số người theo dõi,
+  kỹ năng theo thẻ và danh hiệu suy ra từ nội dung/câu trả lời/Sao thật.
+- [x] Trang kỹ năng hiển thị tổng nội dung công khai, số thành viên và danh sách
+  người dùng thẻ theo đóng góp giảm dần.
+- [ ] Kiểm thử tổng hợp Khách, Thành viên A/B và Quản trị viên trên SQL Server
+  local sau các migration mới vẫn cần thực hiện.
 
 ## Quyết định còn cần xác nhận khi đến phase phụ thuộc
 
 - Chính sách xóa nội dung khi đã có phản hồi.
 - Số tầng phản hồi và giới hạn phản hồi.
 - Admin có được dùng đầy đủ chức năng thành viên hay chỉ quản trị.
-- Chu kỳ/định nghĩa khoảng thời gian cho “câu hỏi nhiều câu trả lời”.
+- Chu kỳ “câu hỏi nhiều câu trả lời” đang dùng giả định đơn giản 30 ngày và hiển
+  thị rõ trên giao diện; có thể đổi qua query/config nếu nghiệp vụ chốt khác.
 - License/key Froala và điều kiện license Intro.js.
 
 Các mục này không chặn P1 và phần công khai độc lập của P2.

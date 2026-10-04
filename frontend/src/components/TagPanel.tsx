@@ -1,5 +1,7 @@
 import { Button } from '@astryxdesign/core/Button'
 import type { Tag } from '../api/tags'
+import { Link } from 'react-router-dom'
+import { appRoutes } from '../appRoutes'
 
 interface TagPanelProps {
   tags: Tag[]
@@ -35,11 +37,10 @@ export const TagPanel = ({ tags, isLoading, error, onRetry }: TagPanelProps) => 
       {!isLoading && !error && tags.length > 0 && (
         <ul className="flex list-none flex-wrap gap-2 p-5">
           {tags.map((tag) => (
-            <li
-              className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-blue-700"
-              key={tag.id}
-            >
-              #{tag.name}
+            <li key={tag.id}>
+              <Link className="block rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-blue-700 hover:border-blue-400 hover:bg-blue-100" to={appRoutes.skill(tag.id)}>
+                #{tag.name}
+              </Link>
             </li>
           ))}
         </ul>

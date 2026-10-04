@@ -28,7 +28,8 @@ export const AccountMenu = () => {
   }
 
   const items: DropdownMenuOption[] = [
-    { id: 'account', label: 'Trang tài khoản', onClick: () => navigate(appRoutes.account) },
+    { id: 'profile', label: 'Trang cá nhân', onClick: () => navigate(appRoutes.member(user.id)) },
+    { id: 'account', label: 'Tài khoản', onClick: () => navigate(appRoutes.account) },
     { id: 'content', label: 'Nội dung của tôi', onClick: () => navigate(appRoutes.myTopics) },
     { id: 'saved', label: 'Nội dung đã lưu', onClick: () => navigate(appRoutes.saved) },
     { id: 'activity', label: 'Lịch sử hoạt động', onClick: () => navigate(appRoutes.activity) },
