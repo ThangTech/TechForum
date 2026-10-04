@@ -35,6 +35,10 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<ApplicationUser>()
+            .Property(user => user.Bio)
+            .HasMaxLength(500);
+
         var category = modelBuilder.Entity<Category>();
 
         category.ToTable("Categories");

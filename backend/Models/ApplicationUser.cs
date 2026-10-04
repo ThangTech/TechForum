@@ -6,5 +6,7 @@ public sealed class ApplicationUser : IdentityUser
 {
     public required string DisplayName { get; set; }
 
+    public string? Bio { get; set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 }

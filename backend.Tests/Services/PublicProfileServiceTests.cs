@@ -24,6 +24,7 @@ public sealed class PublicProfileServiceTests
         Assert.NotNull(result);
         Assert.Equal(user.Id, result.Id);
         Assert.Equal("Thành viên kiểm thử", result.DisplayName);
+        Assert.Equal("Lập trình viên frontend", result.Bio);
         Assert.Equal(3, result.PublishedTopicCount);
         Assert.Equal(3, result.Badges.Count);
         Assert.True(result.IsFollowedByViewer);
@@ -49,6 +50,7 @@ public sealed class PublicProfileServiceTests
         UserName = "profile@techforum.local",
         Email = "profile@techforum.local",
         DisplayName = "Thành viên kiểm thử",
+        Bio = "Lập trình viên frontend",
         CreatedAtUtc = new DateTimeOffset(2026, 10, 3, 0, 0, 0, TimeSpan.Zero)
     };
 

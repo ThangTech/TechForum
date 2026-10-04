@@ -111,12 +111,14 @@ public sealed class AuthServiceTests
 
         var result = await service.UpdateProfileAsync(user.Id, new UpdateProfileRequest
         {
-            DisplayName = "  Thành viên đã cập nhật  "
+            DisplayName = "  Thành viên đã cập nhật  ",
+            Bio = "  Chia sẻ kiến thức React và .NET.  "
         });
 
         Assert.True(result.Succeeded);
         Assert.Equal("Thành viên đã cập nhật", user.DisplayName);
         Assert.Equal("Thành viên đã cập nhật", result.User!.DisplayName);
+        Assert.Equal("Chia sẻ kiến thức React và .NET.", result.User.Bio);
         Assert.True(repository.WasSessionRefreshed);
     }
 

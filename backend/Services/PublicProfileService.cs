@@ -22,6 +22,7 @@ public sealed class PublicProfileService(IPublicProfileRepository profileReposit
         return new PublicProfileDto(
             profile.User.Id,
             profile.User.DisplayName,
+            profile.User.Bio,
             profile.User.CreatedAtUtc,
             profile.PublishedTopicCount,
             profile.PublicAnswerCount,

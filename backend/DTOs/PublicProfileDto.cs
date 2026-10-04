@@ -3,6 +3,7 @@ namespace TechForum.Api.Dtos;
 public sealed record PublicProfileDto(
     string Id,
     string DisplayName,
+    string? Bio,
     DateTimeOffset JoinedAtUtc,
     int PublishedTopicCount,
     int PublicAnswerCount,

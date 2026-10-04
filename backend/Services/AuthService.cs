@@ -93,6 +93,7 @@ public sealed class AuthService(
         }
 
         user.DisplayName = displayName;
+        user.Bio = string.IsNullOrWhiteSpace(request.Bio) ? null : request.Bio.Trim();
         var updateResult = await accountRepository.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
@@ -138,6 +139,7 @@ public sealed class AuthService(
         return new CurrentUserDto(
             user.Id,
             user.DisplayName,
+            user.Bio,
             user.Email ?? string.Empty,
             roles);
     }
