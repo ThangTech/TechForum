@@ -6,11 +6,13 @@ import { getFieldError } from '../../api/fieldErrors'
 
 interface ProfileFormProps {
   displayName: string
-  onSave: (displayName: string) => Promise<void>
+  bio: string | null
+  onSave: (displayName: string, bio: string | null) => Promise<void>
 }
 
-export const ProfileForm = ({ displayName, onSave }: ProfileFormProps) => {
+export const ProfileForm = ({ displayName, bio, onSave }: ProfileFormProps) => {
   const [value, setValue] = useState(displayName)
+  const [bioValue, setBioValue] = useState(bio ?? '')
   const [error, setError] = useState<ApiError | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -23,8 +25,9 @@ export const ProfileForm = ({ displayName, onSave }: ProfileFormProps) => {
     setMessage(null)
     setIsSubmitting(true)
     try {
-      await onSave(value)
+      await onSave(value, bioValue.trim() || null)
       setValue(value.trim())
+      setBioValue(bioValue.trim())
       setMessage('Đã cập nhật tên hiển thị.')
     } catch (requestError) {
       setError(requestError instanceof ApiError
@@ -52,6 +55,18 @@ export const ProfileForm = ({ displayName, onSave }: ProfileFormProps) => {
           value={value}
           width="100%"
         />
+      </div>
+      <div className="mt-4">
+        <label className="block text-sm font-bold text-slate-800" htmlFor="profile-bio">Giới thiệu công khai</label>
+        <textarea
+          className="mt-2 min-h-32 w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200"
+          id="profile-bio"
+          maxLength={500}
+          onChange={(event) => setBioValue(event.target.value)}
+          placeholder="Chia sẻ ngắn về kinh nghiệm và lĩnh vực bạn quan tâm."
+          value={bioValue}
+        />
+        <p className="mt-1 text-right text-xs text-slate-500">{bioValue.length}/500</p>
       </div>
       {error && !displayNameError && <p className="mt-4 text-sm text-red-700" role="alert">{error.message}</p>}
       {message && <p className="mt-4 text-sm text-green-700" role="status">{message}</p>}

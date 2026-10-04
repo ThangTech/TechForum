@@ -16,6 +16,7 @@ const isCurrentUser = (value: unknown): value is CurrentUser => {
   return (
     typeof user.id === 'string' &&
     typeof user.displayName === 'string' &&
+    (user.bio === null || typeof user.bio === 'string') &&
     typeof user.email === 'string' &&
     Array.isArray(user.roles) &&
     user.roles.every((role) => typeof role === 'string')

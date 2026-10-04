@@ -45,7 +45,11 @@ export const AccountPage = () => {
         </section>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <ProfileForm displayName={user.displayName} onSave={async (displayName) => { await updateProfile({ displayName }) }} />
+          <ProfileForm
+            bio={user.bio}
+            displayName={user.displayName}
+            onSave={async (displayName, bio) => { await updateProfile({ displayName, bio }) }}
+          />
           <PasswordForm onSave={async (currentPassword, newPassword) => { await changePassword({ currentPassword, newPassword }) }} />
         </div>
 

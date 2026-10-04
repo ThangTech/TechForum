@@ -70,7 +70,7 @@ export const PublicProfilePage = () => {
     <main className="main-area" id="main-content">
       <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
         <Link className="text-sm font-semibold text-blue-700 hover:underline" to="/">
-          ← Về trang chủ
+          ← Về danh sách bài viết
         </Link>
 
         <div className="mt-6">
@@ -98,6 +98,7 @@ export const PublicProfilePage = () => {
                 </div>
                 {user?.id !== profile.id && <div className="ml-auto"><Button isLoading={isFollowBusy} label={profile.isFollowedByViewer ? 'Đang theo dõi' : 'Theo dõi'} onClick={() => void toggleFollow()} variant={profile.isFollowedByViewer ? 'secondary' : 'primary'} /></div>}
               </div>
+              {profile.bio && <p className="mt-5 max-w-2xl whitespace-pre-line text-sm leading-6 text-slate-700">{profile.bio}</p>}
               {actionError && <p className="mt-4 text-sm text-red-700" role="alert">{actionError}</p>}
               <div className="mt-6 grid gap-3 sm:grid-cols-3"><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.publishedTopicCount}</strong> nội dung</div><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.followerCount}</strong> người theo dõi</div><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.receivedStarCount}</strong> Sao hữu ích</div></div>
               {profile.badges.length > 0 && <div className="mt-6"><h2 className="text-base font-bold text-slate-950">Danh hiệu</h2><div className="mt-3 flex flex-wrap gap-2">{profile.badges.map((badge) => <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-bold text-amber-800" key={badge.code} title={badge.description}>{badge.name}</span>)}</div></div>}

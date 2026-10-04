@@ -156,7 +156,8 @@ phải gửi cookie bằng `credentials: include`. Mọi request ghi cần lấy
 - `POST /api/auth/login`: đăng nhập, trả HTTP 200; sai thông tin là 401; tài
   khoản bị khóa là 423.
 - `GET /api/auth/me`: thông tin của chính tài khoản đang đăng nhập.
-- `PUT /api/auth/profile`: cập nhật tên hiển thị và trả phiên người dùng mới.
+- `PUT /api/auth/profile`: cập nhật tên hiển thị và giới thiệu công khai tối đa
+  500 ký tự, sau đó trả phiên người dùng mới.
 - `PUT /api/auth/password`: kiểm tra mật khẩu hiện tại, đổi mật khẩu và làm mới
   cookie của phiên đang dùng.
 - `POST /api/auth/logout`: kết thúc phiên hiện tại, trả HTTP 204.

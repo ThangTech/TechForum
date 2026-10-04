@@ -4,6 +4,7 @@ import { isTopicSummary, type TopicSummary } from './topics'
 export interface PublicProfile {
   id: string
   displayName: string
+  bio: string | null
   joinedAtUtc: string
   publishedTopicCount: number
   publicAnswerCount: number
@@ -32,6 +33,7 @@ export const getPublicProfile = async (
     !isRecord(data) ||
     typeof data.id !== 'string' ||
     typeof data.displayName !== 'string' ||
+    (data.bio !== null && typeof data.bio !== 'string') ||
     typeof data.joinedAtUtc !== 'string' ||
     typeof data.publishedTopicCount !== 'number' ||
     typeof data.publicAnswerCount !== 'number' ||

@@ -1,6 +1,7 @@
 export interface CurrentUser {
   id: string
   displayName: string
+  bio: string | null
   email: string
   roles: string[]
 }
@@ -19,6 +20,7 @@ export interface RegisterInput {
 
 export interface UpdateProfileInput {
   displayName: string
+  bio: string | null
 }
 
 export interface ChangePasswordInput {
