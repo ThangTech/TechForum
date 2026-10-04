@@ -17,6 +17,14 @@ public interface INotificationService
         string topicTitle,
         CancellationToken cancellationToken);
 
+    Task AddNewAnswerAsync(
+        string recipientId,
+        int topicId,
+        int answerId,
+        string answerAuthorName,
+        string topicTitle,
+        CancellationToken cancellationToken);
+
     Task<bool> MarkReadAsync(
         long id,
         string userId,

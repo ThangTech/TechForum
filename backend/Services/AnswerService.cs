@@ -86,6 +86,16 @@ public sealed partial class AnswerService(
         };
 
         await answerRepository.AddAsync(answer, cancellationToken);
+        if (topic.AuthorId != authorId)
+        {
+            await notificationService.AddNewAnswerAsync(
+                topic.AuthorId,
+                topic.Id,
+                answer.Id,
+                answer.Author.DisplayName,
+                topic.Title,
+                cancellationToken);
+        }
         return CreateAnswerResult.Success(MapAnswer(answer, topic.AcceptedAnswerId));
     }
 

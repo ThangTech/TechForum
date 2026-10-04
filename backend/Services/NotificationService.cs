@@ -44,6 +44,31 @@ public sealed class NotificationService(
             CreatedAtUtc = timeProvider.GetUtcNow()
         }, cancellationToken);
 
+    public async Task AddNewAnswerAsync(
+        string recipientId,
+        int topicId,
+        int answerId,
+        string answerAuthorName,
+        string topicTitle,
+        CancellationToken cancellationToken)
+    {
+        var added = await notificationRepository.AddIfMissingAsync(new Notification
+        {
+            UserId = recipientId,
+            Type = "new-answer",
+            Title = "Câu trả lời mới",
+            Message = $"{answerAuthorName} đã trả lời trong “{topicTitle}”.",
+            Link = $"/topics/{topicId}#answer-{answerId}",
+            SourceKey = $"new-answer:{topicId}:{answerId}",
+            CreatedAtUtc = timeProvider.GetUtcNow()
+        }, cancellationToken);
+
+        if (added)
+        {
+            await notificationRepository.SaveChangesAsync(cancellationToken);
+        }
+    }
+
     public async Task<bool> MarkReadAsync(
         long id,
         string userId,
