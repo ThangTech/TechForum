@@ -27,6 +27,8 @@ public interface ITopicRepository
 
     Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken);
 
+    Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken);
+
     Task AddAsync(Topic topic, CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);

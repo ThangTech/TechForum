@@ -294,17 +294,22 @@ public sealed partial class TopicService(
             topic.PublishedAtUtc));
     }
 
-    public async Task<bool> SoftDeleteAsync(
+    public async Task<SoftDeleteTopicResult> SoftDeleteAsync(
         int id,
         string authorId,
         CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
-        if (topic is null) return false;
+        if (topic is null)
+            return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.NotFound);
+
+        if (await topicRepository.HasPublicAnswersAsync(id, cancellationToken))
+            return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.HasPublicAnswers);
+
         topic.IsDeleted = true;
         topic.UpdatedAtUtc = timeProvider.GetUtcNow();
         await topicRepository.SaveChangesAsync(cancellationToken);
-        return true;
+        return SoftDeleteTopicResult.Success();
     }
 
     private async Task<string> CreateUniqueSlugAsync(

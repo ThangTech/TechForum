@@ -92,16 +92,20 @@ gắn không còn được xóa bằng endpoint media riêng.
 - `DELETE /api/topics/{id}`: xóa mềm nội dung của chính tài khoản.
 
 Tài nguyên không tồn tại hoặc không thuộc tài khoản đều trả 404 để không lộ dữ
-liệu của người khác. Xóa chủ đề hiện là xóa mềm nên câu trả lời không bị xóa vật
-lý; chính sách cho phép tác giả xóa khi đã có phản hồi vẫn cần được chốt.
+liệu của người khác. Xóa chủ đề là xóa mềm. Để giữ đóng góp cộng đồng, tác giả
+chỉ được xóa chủ đề khi chưa có câu trả lời công khai; quản trị viên vẫn dùng
+luồng kiểm duyệt ẩn/khôi phục riêng và không thay đổi cờ xóa của tác giả.
 
 ## Câu trả lời P4
 
 - `GET /api/topics/{topicId}/answers?page=1&pageSize=20`: danh sách câu trả lời
   công khai, phân trang tối đa 50 phần tử và sắp theo thời điểm tạo rồi `id` tăng
   dần để giữ đúng thứ tự hội thoại.
-- `POST /api/topics/{topicId}/answers`: thành viên đã đăng nhập gửi
-  `{ "bodyHtml": "<p>Nội dung trả lời</p>" }`, trả HTTP 201.
+- `POST /api/topics/{topicId}/answers`: thành viên đã đăng nhập gửi câu trả lời
+  cấp một bằng `{ "bodyHtml": "<p>Nội dung trả lời</p>" }`, hoặc phản hồi bằng
+  `{ "bodyHtml": "<p>Nội dung phản hồi</p>", "parentAnswerId": 12 }`, trả HTTP
+  201. Nếu trả lời một phản hồi, backend chuẩn hóa về câu trả lời gốc để giới
+  hạn giao diện ở hai cấp.
 - `PUT /api/topics/{topicId}/answers/{answerId}/accepted`: tác giả của chủ đề
   loại Câu hỏi chọn hoặc thay đổi câu trả lời được chấp nhận, trả HTTP 200.
 
@@ -109,8 +113,9 @@ Backend làm sạch HTML trước khi lưu. Chủ đề không công khai trả 
 khóa thảo luận trả 409; dữ liệu rỗng hoặc quá 20.000 ký tự trả Validation Problem
 HTTP 400. Thành viên có thể sửa/xóa phản hồi của mình; xóa câu trả lời đang được
 chấp nhận đồng thời bỏ liên kết accepted answer. Trường `isAccepted` trong DTO câu trả
-lời cho biết lựa chọn hiện tại; chỉ câu hỏi công khai và câu trả lời thuộc đúng
-chủ đề mới được chấp nhận.
+lời cho biết lựa chọn hiện tại; chỉ câu hỏi công khai và câu trả lời cấp một
+thuộc đúng chủ đề mới được chấp nhận. DTO trả `parentAnswerId` và `replyingTo`
+để frontend trình bày quan hệ hội thoại mà không trả entity EF trực tiếp.
 
 ## Sao hữu ích P5
 

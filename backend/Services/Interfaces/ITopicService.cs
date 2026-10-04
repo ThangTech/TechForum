@@ -31,7 +31,7 @@ public interface ITopicService
         UpdateTopicRequest request,
         CancellationToken cancellationToken);
 
-    Task<bool> SoftDeleteAsync(
+    Task<SoftDeleteTopicResult> SoftDeleteAsync(
         int id,
         string authorId,
         CancellationToken cancellationToken);

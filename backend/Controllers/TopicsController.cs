@@ -155,10 +155,21 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var deleted = await topicService.SoftDeleteAsync(id, GetUserId(), cancellationToken);
-        return deleted ? NoContent() : NotFound(CreateNotFoundProblem());
+        var result = await topicService.SoftDeleteAsync(id, GetUserId(), cancellationToken);
+        return result.Failure switch
+        {
+            SoftDeleteTopicFailure.None => NoContent(),
+            SoftDeleteTopicFailure.HasPublicAnswers => Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Không thể xóa nội dung",
+                Detail = "Nội dung đã có câu trả lời công khai. Bạn có thể giữ nguyên hoặc liên hệ quản trị viên khi cần xử lý."
+            }),
+            _ => NotFound(CreateNotFoundProblem())
+        };
     }
 
     private string GetUserId() =>

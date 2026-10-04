@@ -154,6 +154,13 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
     public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
         dbContext.Topics.AnyAsync(topic => topic.Slug == slug, cancellationToken);
 
+    public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) =>
+        dbContext.Answers.AnyAsync(answer =>
+            answer.TopicId == topicId &&
+            !answer.IsDeleted &&
+            !answer.IsHiddenByModerator,
+            cancellationToken);
+
     public async Task AddAsync(Topic topic, CancellationToken cancellationToken)
     {
         dbContext.Topics.Add(topic);

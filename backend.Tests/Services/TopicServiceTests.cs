@@ -256,11 +256,41 @@ public sealed class TopicServiceTests
         var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };
         var service = CreateService(repository);
 
-        var deleted = await service.SoftDeleteAsync(10, "member-b", CancellationToken.None);
+        var result = await service.SoftDeleteAsync(10, "member-b", CancellationToken.None);
 
-        Assert.False(deleted);
+        Assert.Equal(SoftDeleteTopicFailure.NotFound, result.Failure);
         Assert.False(repository.OwnedTopic.IsDeleted);
         Assert.False(repository.SavedChanges);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_WithPublicAnswers_ReturnsConflictWithoutDeleting()
+    {
+        var repository = new FakeTopicRepository
+        {
+            OwnedTopic = CreateTopic(),
+            HasPublicAnswers = true
+        };
+        var service = CreateService(repository);
+
+        var result = await service.SoftDeleteAsync(10, "member-a", CancellationToken.None);
+
+        Assert.Equal(SoftDeleteTopicFailure.HasPublicAnswers, result.Failure);
+        Assert.False(repository.OwnedTopic.IsDeleted);
+        Assert.False(repository.SavedChanges);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_WithoutPublicAnswers_SoftDeletesTopic()
+    {
+        var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };
+        var service = CreateService(repository);
+
+        var result = await service.SoftDeleteAsync(10, "member-a", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.True(repository.OwnedTopic.IsDeleted);
+        Assert.True(repository.SavedChanges);
     }
 
     private static TopicService CreateService(
@@ -278,6 +308,7 @@ public sealed class TopicServiceTests
         public IReadOnlyList<Tag> Tags { get; init; } = [];
         public Topic? AddedTopic { get; private set; }
         public Topic? OwnedTopic { get; init; }
+        public bool HasPublicAnswers { get; init; }
         public bool SavedChanges { get; private set; }
 
         public Task<TopicPage> GetPublicPageAsync(
@@ -321,6 +352,9 @@ public sealed class TopicServiceTests
 
         public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
             Task.FromResult(false);
+
+        public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) =>
+            Task.FromResult(HasPublicAnswers);
 
         public Task AddAsync(Topic topic, CancellationToken cancellationToken)
         {
