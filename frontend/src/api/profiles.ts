@@ -20,6 +20,8 @@ export interface PublicProfile {
 export interface ProfileSkill { tagId: number; name: string; slug: string; topicCount: number }
 export interface ProfileBadge { code: string; name: string; description: string }
 export interface FollowStatus { isFollowing: boolean; followerCount: number }
+export interface FollowMember { id: string; displayName: string; bio: string | null; publishedTopicCount: number; followedAtUtc: string }
+export interface FollowMemberPage { items: FollowMember[]; page: number; pageSize: number; totalItems: number; totalPages: number }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -66,3 +68,23 @@ export const followMember = async (userId: string): Promise<FollowStatus> =>
 
 export const unfollowMember = async (userId: string): Promise<FollowStatus> =>
   parseFollowStatus(await apiRequest(`/api/profiles/${encodeURIComponent(userId)}/follow`, { method: 'DELETE' }))
+
+export const getFollowMembers = async (
+  userId: string,
+  kind: 'followers' | 'following',
+  page: number,
+  signal?: AbortSignal,
+): Promise<FollowMemberPage> => {
+  const data = await apiRequest<unknown>(
+    `/api/profiles/${encodeURIComponent(userId)}/${kind}?page=${page}&pageSize=20`,
+    { signal },
+  )
+  if (!isRecord(data) || !Array.isArray(data.items) || !data.items.every((item) =>
+    isRecord(item) && typeof item.id === 'string' && typeof item.displayName === 'string' &&
+    (item.bio === null || typeof item.bio === 'string') && typeof item.publishedTopicCount === 'number' &&
+    typeof item.followedAtUtc === 'string') || typeof data.page !== 'number' ||
+    typeof data.pageSize !== 'number' || typeof data.totalItems !== 'number' || typeof data.totalPages !== 'number') {
+    throw new ApiError(500, 'Danh sách theo dõi không đúng định dạng.')
+  }
+  return data as unknown as FollowMemberPage
+}

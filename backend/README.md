@@ -169,6 +169,14 @@ trên mỗi request có phiên nên cookie cũ không tiếp tục dùng đượ
 Mật khẩu phát triển phải có ít nhất 8 ký tự, chữ hoa, chữ thường, chữ số và ký
 tự đặc biệt. Không ghi mật khẩu thật hoặc cookie phiên vào source/log.
 
+Hồ sơ công khai có danh sách theo dõi phân trang:
+
+- `GET /api/profiles/{userId}/followers`
+- `GET /api/profiles/{userId}/following`
+
+Hai endpoint chỉ trả ID, tên hiển thị, giới thiệu, số nội dung công khai và thời
+điểm theo dõi; không trả email hoặc dữ liệu tài khoản riêng tư.
+
 ## Kiểm thử backend
 
 Thông báo được tạo khi người khác trả lời chủ đề và khi câu trả lời được chấp

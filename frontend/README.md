@@ -36,6 +36,8 @@ Các route chính:
 - `/articles`, `/questions`: duyệt, tìm kiếm và phân trang nội dung công khai.
 - `/discussions`: chủ đề có phản hồi, sắp theo hoạt động thảo luận gần nhất.
 - `/topics/:id`, `/members/:userId`: chi tiết, câu trả lời và hồ sơ tác giả công khai.
+- `/members/:userId/followers`, `/members/:userId/following`: danh sách theo dõi
+  công khai có phân trang, không hiển thị email.
 - `/write`: route riêng tư dùng Froala để lưu bản nháp hoặc xuất bản, hỗ trợ
   upload ảnh/video qua TechForum API.
 

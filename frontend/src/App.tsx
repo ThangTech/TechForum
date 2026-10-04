@@ -23,6 +23,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SkillCommunityPage } from './pages/SkillCommunityPage'
+import { FollowMembersPage } from './pages/FollowMembersPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -53,6 +54,8 @@ const App = () => {
             />
             <Route path="topics/:id" element={<TopicDetailPage />} />
             <Route path="members/:userId" element={<PublicProfilePage />} />
+            <Route path="members/:userId/followers" element={<FollowMembersPage kind="followers" />} />
+            <Route path="members/:userId/following" element={<FollowMembersPage kind="following" />} />
             <Route
               path="write"
               element={

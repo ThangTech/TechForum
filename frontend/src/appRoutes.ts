@@ -23,4 +23,6 @@ export const appRoutes = {
   topic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}`,
   editTopic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}/edit`,
   member: (userId: string) => `/members/${encodeURIComponent(userId)}`,
+  followers: (userId: string) => `/members/${encodeURIComponent(userId)}/followers`,
+  following: (userId: string) => `/members/${encodeURIComponent(userId)}/following`,
 } as const

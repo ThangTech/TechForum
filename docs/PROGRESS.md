@@ -20,7 +20,7 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### Chưa có
 
-- [x] Backend có 31 test service; frontend có 10 test Vitest cho `returnUrl`,
+- [x] Backend có 32 test service; frontend có 10 test Vitest cho `returnUrl`,
   CSRF/API client và Problem Details.
 - [x] Xác thực, phân quyền, phiên và tài khoản bị khóa.
 - [x] Bài viết/câu hỏi, thẻ, tìm kiếm, phân trang, tạo/sửa và hồ sơ công khai.
@@ -145,6 +145,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   và đã kiểm tra trực quan desktop/mobile, nút Bỏ qua không còn bị co chữ.
 - [x] Theo dõi thành viên chống tự theo dõi/trùng; hồ sơ có số người theo dõi,
   kỹ năng theo thẻ và danh hiệu suy ra từ nội dung/câu trả lời/Sao thật.
+- [x] Hồ sơ liên kết tới danh sách người theo dõi/đang theo dõi phân trang; DTO
+  thành viên không trả email hoặc dữ liệu riêng tư.
 - [x] Trang kỹ năng hiển thị tổng nội dung công khai, số thành viên và danh sách
   người dùng thẻ theo đóng góp giảm dần.
 - [ ] Kiểm thử tổng hợp Khách, Thành viên A/B và Quản trị viên trên SQL Server
