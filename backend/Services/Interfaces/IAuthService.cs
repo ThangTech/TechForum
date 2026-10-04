@@ -10,5 +10,9 @@ public interface IAuthService
 
     Task<CurrentUserDto?> GetCurrentUserAsync(string userId);
 
+    Task<AuthResult> UpdateProfileAsync(string userId, UpdateProfileRequest request);
+
+    Task<AuthResult> ChangePasswordAsync(string userId, ChangePasswordRequest request);
+
     Task LogoutAsync();
 }

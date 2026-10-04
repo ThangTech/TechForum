@@ -101,6 +101,87 @@ public sealed class AuthServiceTests
         Assert.Equal(AuthFailureKind.LockedOut, result.Failure);
     }
 
+    [Fact]
+    public async Task UpdateProfileAsync_TrimsNameAndRefreshesCurrentSession()
+    {
+        var user = CreateUser();
+        var repository = new FakeAccountRepository();
+        repository.UsersByEmail[user.Email!] = user;
+        var service = CreateService(repository);
+
+        var result = await service.UpdateProfileAsync(user.Id, new UpdateProfileRequest
+        {
+            DisplayName = "  Thành viên đã cập nhật  "
+        });
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("Thành viên đã cập nhật", user.DisplayName);
+        Assert.Equal("Thành viên đã cập nhật", result.User!.DisplayName);
+        Assert.True(repository.WasSessionRefreshed);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_WhenNameIsWhitespace_ReturnsFieldError()
+    {
+        var repository = new FakeAccountRepository();
+        var service = CreateService(repository);
+
+        var result = await service.UpdateProfileAsync("member-a", new UpdateProfileRequest
+        {
+            DisplayName = "  "
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("Tên hiển thị phải từ 2 đến 80 ký tự.", result.Errors["displayName"][0]);
+        Assert.False(repository.WasSessionRefreshed);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_WhenCurrentPasswordIsWrong_ReturnsFieldError()
+    {
+        var user = CreateUser();
+        var repository = new FakeAccountRepository
+        {
+            ChangePasswordResult = IdentityResult.Failed(new IdentityError
+            {
+                Code = "PasswordMismatch",
+                Description = "Incorrect password."
+            })
+        };
+        repository.UsersByEmail[user.Email!] = user;
+        var service = CreateService(repository);
+
+        var result = await service.ChangePasswordAsync(user.Id, new ChangePasswordRequest
+        {
+            CurrentPassword = "SaiMatKhau!1",
+            NewPassword = "MatKhauMoi!2026"
+        });
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("Mật khẩu hiện tại không chính xác.", result.Errors["currentPassword"][0]);
+        Assert.False(repository.WasSessionRefreshed);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_WhenSuccessful_RefreshesCurrentSession()
+    {
+        var user = CreateUser();
+        var repository = new FakeAccountRepository();
+        repository.UsersByEmail[user.Email!] = user;
+        var service = CreateService(repository);
+
+        var result = await service.ChangePasswordAsync(user.Id, new ChangePasswordRequest
+        {
+            CurrentPassword = "TechForum!2026",
+            NewPassword = "MatKhauMoi!2026"
+        });
+
+        Assert.True(result.Succeeded);
+        Assert.True(repository.WasSessionRefreshed);
+        Assert.Equal("TechForum!2026", repository.LastCurrentPassword);
+        Assert.Equal("MatKhauMoi!2026", repository.LastNewPassword);
+    }
+
     private static AuthService CreateService(FakeAccountRepository repository) =>
         new(repository, new FixedTimeProvider(CurrentTime));
 
@@ -127,9 +208,19 @@ public sealed class AuthServiceTests
 
         public SignInResult PasswordSignInResult { get; init; } = SignInResult.Success;
 
+        public IdentityResult UpdateResult { get; init; } = IdentityResult.Success;
+
+        public IdentityResult ChangePasswordResult { get; init; } = IdentityResult.Success;
+
         public ApplicationUser? CreatedUser { get; private set; }
 
         public bool WasSignedIn { get; private set; }
+
+        public bool WasSessionRefreshed { get; private set; }
+
+        public string? LastCurrentPassword { get; private set; }
+
+        public string? LastNewPassword { get; private set; }
 
         public Task<ApplicationUser?> FindByEmailAsync(string email)
         {
@@ -162,5 +253,24 @@ public sealed class AuthServiceTests
 
         public Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user) =>
             Task.FromResult<IReadOnlyList<string>>([RoleNames.Member]);
+
+        public Task<IdentityResult> UpdateAsync(ApplicationUser user) =>
+            Task.FromResult(UpdateResult);
+
+        public Task<IdentityResult> ChangePasswordAsync(
+            ApplicationUser user,
+            string currentPassword,
+            string newPassword)
+        {
+            LastCurrentPassword = currentPassword;
+            LastNewPassword = newPassword;
+            return Task.FromResult(ChangePasswordResult);
+        }
+
+        public Task RefreshSignInAsync(ApplicationUser user)
+        {
+            WasSessionRefreshed = true;
+            return Task.CompletedTask;
+        }
     }
 }

@@ -21,4 +21,13 @@ public interface IAccountRepository
     Task SignOutAsync();
 
     Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user);
+
+    Task<IdentityResult> UpdateAsync(ApplicationUser user);
+
+    Task<IdentityResult> ChangePasswordAsync(
+        ApplicationUser user,
+        string currentPassword,
+        string newPassword);
+
+    Task RefreshSignInAsync(ApplicationUser user);
 }

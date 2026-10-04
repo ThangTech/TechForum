@@ -102,6 +102,28 @@ public sealed class AuthController(
     }
 
     [Authorize]
+    [HttpPut("profile")]
+    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<CurrentUserDto>> UpdateProfile(UpdateProfileRequest request)
+    {
+        var result = await authService.UpdateProfileAsync(GetUserId(), request);
+        return ToAccountUpdateResponse(result, "Không thể cập nhật hồ sơ");
+    }
+
+    [Authorize]
+    [HttpPut("password")]
+    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<CurrentUserDto>> ChangePassword(ChangePasswordRequest request)
+    {
+        var result = await authService.ChangePasswordAsync(GetUserId(), request);
+        return ToAccountUpdateResponse(result, "Không thể đổi mật khẩu");
+    }
+
+    [Authorize]
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -109,5 +131,30 @@ public sealed class AuthController(
     {
         await authService.LogoutAsync();
         return NoContent();
+    }
+
+    private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+
+    private ActionResult<CurrentUserDto> ToAccountUpdateResponse(
+        AuthResult result,
+        string title)
+    {
+        if (result.Succeeded)
+        {
+            return Ok(result.User);
+        }
+
+        if (result.Failure == AuthFailureKind.InvalidCredentials)
+        {
+            return Unauthorized();
+        }
+
+        return BadRequest(new ValidationProblemDetails(
+            result.Errors.ToDictionary(error => error.Key, error => error.Value))
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = title
+        });
     }
 }

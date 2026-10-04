@@ -51,4 +51,16 @@ public sealed class AccountRepository(
 
     public async Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user) =>
         (await userManager.GetRolesAsync(user)).ToList();
+
+    public Task<IdentityResult> UpdateAsync(ApplicationUser user) =>
+        userManager.UpdateAsync(user);
+
+    public Task<IdentityResult> ChangePasswordAsync(
+        ApplicationUser user,
+        string currentPassword,
+        string newPassword) =>
+        userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+    public Task RefreshSignInAsync(ApplicationUser user) =>
+        signInManager.RefreshSignInAsync(user);
 }
