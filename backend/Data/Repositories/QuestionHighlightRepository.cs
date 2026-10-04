@@ -17,24 +17,30 @@ public sealed class QuestionHighlightRepository(TechForumDbContext dbContext) : 
                 topic.Status == TopicStatus.Published &&
                 topic.PublishedAtUtc != null &&
                 !topic.IsDeleted &&
-                !topic.IsHiddenByModerator)
+                !topic.IsHiddenByModerator);
+
+        var latest = await questions
+            .OrderByDescending(topic => topic.PublishedAtUtc)
+            .ThenByDescending(topic => topic.Id)
+            .Take(limit)
             .Select(topic => new QuestionHighlightData(
                 topic.Id,
                 topic.Title,
                 topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator),
-                topic.PublishedAtUtc!.Value));
-
-        var latest = await questions
-            .OrderByDescending(item => item.PublishedAtUtc)
-            .ThenByDescending(item => item.Id)
-            .Take(limit)
+                topic.PublishedAtUtc!.Value))
             .ToListAsync(cancellationToken);
         var mostAnswered = await questions
-            .Where(item => item.PublishedAtUtc >= periodStartUtc)
-            .OrderByDescending(item => item.AnswerCount)
-            .ThenByDescending(item => item.PublishedAtUtc)
-            .ThenByDescending(item => item.Id)
+            .Where(topic => topic.PublishedAtUtc >= periodStartUtc)
+            .OrderByDescending(topic => topic.Answers.Count(answer =>
+                !answer.IsDeleted && !answer.IsHiddenByModerator))
+            .ThenByDescending(topic => topic.PublishedAtUtc)
+            .ThenByDescending(topic => topic.Id)
             .Take(limit)
+            .Select(topic => new QuestionHighlightData(
+                topic.Id,
+                topic.Title,
+                topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator),
+                topic.PublishedAtUtc!.Value))
             .ToListAsync(cancellationToken);
         return new QuestionHighlightsData(latest, mostAnswered);
     }
