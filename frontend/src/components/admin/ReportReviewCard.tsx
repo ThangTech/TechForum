@@ -54,7 +54,7 @@ export const ReportReviewCard = ({ onResolve, report }: ReportReviewCardProps) =
     <details className="mt-4 rounded-lg border border-slate-200 p-4">
       <summary className="cursor-pointer text-sm font-bold text-slate-800">Xem nội dung bị báo cáo</summary>
       <div
-        className="mt-4 max-h-80 overflow-auto text-sm leading-7 text-slate-700 [&_a]:text-blue-700 [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_img]:max-w-full [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
+        className="fr-view mt-4 max-h-80 overflow-auto text-sm leading-7 text-slate-700 [&_a]:text-blue-700 [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_img]:max-w-full [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
         dangerouslySetInnerHTML={{ __html: report.targetBodyHtml }}
       />
     </details>

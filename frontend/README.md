@@ -10,6 +10,11 @@ Nếu có license Froala hợp lệ, đặt activation key trong `VITE_FROALA_KE
 `.env.local`; không commit key. Khi để trống, trang soạn chạy chế độ đánh giá và
 giữ nguyên attribution của Froala.
 
+Froala được tích hợp bằng `react-froala-wysiwyg` và package npm cùng phiên bản;
+không thêm CDN `@latest` vào `index.html` vì sẽ nạp trùng runtime/plugin và có
+thể lệch phiên bản. CSS `froala_style.min.css` được tải toàn cục và nội dung đã
+làm sạch được hiển thị trong `.fr-view`.
+
 ```powershell
 npm install
 npm run dev

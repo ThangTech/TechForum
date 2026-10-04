@@ -87,7 +87,7 @@ export const AnswerList = ({
               {answer.replyingTo && <span className="text-xs text-slate-500">đang trả lời {answer.replyingTo.displayName}</span>}
             </header>
             <div
-              className="mt-4 text-sm leading-7 text-slate-800 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
+              className="fr-view mt-4 text-sm leading-7 text-slate-800 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
               dangerouslySetInnerHTML={{ __html: answer.bodyHtml }}
             />
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">

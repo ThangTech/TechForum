@@ -20,7 +20,7 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### Chưa có
 
-- [x] Backend có 35 test service; frontend có 10 test Vitest cho `returnUrl`,
+- [x] Backend có 37 test service/middleware; frontend có 10 test Vitest cho `returnUrl`,
   CSRF/API client và Problem Details.
 - [x] Xác thực, phân quyền, phiên và tài khoản bị khóa.
 - [x] Bài viết/câu hỏi, thẻ, tìm kiếm, phân trang, tạo/sửa và hồ sơ công khai.

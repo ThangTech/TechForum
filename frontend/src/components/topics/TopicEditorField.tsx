@@ -1,7 +1,6 @@
 import FroalaEditorComponent from 'react-froala-wysiwyg'
 import { useEffect, useMemo, useState } from 'react'
 import 'froala-editor/css/froala_editor.pkgd.min.css'
-import 'froala-editor/css/froala_style.min.css'
 import 'froala-editor/js/plugins.pkgd.min.js'
 import { getAntiforgeryToken } from '../../api/client'
 import { deleteUnusedMedia, parseUploadedMedia, type UploadedMedia } from '../../api/media'
