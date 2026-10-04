@@ -101,7 +101,6 @@ public sealed partial class AnswerService(
         {
             TopicId = topicId,
             ParentAnswerId = parentAnswer?.Id,
-            ParentAnswer = parentAnswer,
             AuthorId = authorId,
             BodyHtml = sanitizedBody,
             CreatedAtUtc = timeProvider.GetUtcNow()
@@ -119,7 +118,10 @@ public sealed partial class AnswerService(
                 topic.Title,
                 cancellationToken);
         }
-        return CreateAnswerResult.Success(MapAnswer(answer, topic.AcceptedAnswerId));
+        var replyingTo = parentAnswer is null
+            ? null
+            : new TopicAuthorDto(parentAnswer.Author.Id, parentAnswer.Author.DisplayName);
+        return CreateAnswerResult.Success(MapAnswer(answer, topic.AcceptedAnswerId, replyingTo));
     }
 
     public async Task<AcceptAnswerResult> AcceptAsync(
@@ -211,13 +213,16 @@ public sealed partial class AnswerService(
         return true;
     }
 
-    private static AnswerDto MapAnswer(Answer answer, int? acceptedAnswerId) => new(
+    private static AnswerDto MapAnswer(
+        Answer answer,
+        int? acceptedAnswerId,
+        TopicAuthorDto? replyingTo = null) => new(
         answer.Id,
         answer.TopicId,
         answer.ParentAnswerId,
-        answer.ParentAnswer is null
+        replyingTo ?? (answer.ParentAnswer is null
             ? null
-            : new TopicAuthorDto(answer.ParentAnswer.Author.Id, answer.ParentAnswer.Author.DisplayName),
+            : new TopicAuthorDto(answer.ParentAnswer.Author.Id, answer.ParentAnswer.Author.DisplayName)),
         answer.BodyHtml,
         new TopicAuthorDto(answer.Author.Id, answer.Author.DisplayName),
         answer.CreatedAtUtc,
