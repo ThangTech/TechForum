@@ -21,7 +21,7 @@ public sealed class ContentSanitizer : IContentSanitizer
         ]);
         AddAll(options.AllowedAttributes,
         [
-            "href", "title", "class", "src", "alt", "controls", "preload"
+            "href", "title", "class", "src", "alt", "controls", "preload", "playsinline"
         ]);
         AddAll(options.UriAttributes, ["href", "src"]);
         AddAll(options.AllowedSchemes, ["http", "https"]);

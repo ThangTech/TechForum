@@ -1,4 +1,3 @@
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
@@ -18,33 +17,30 @@ public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : IT
         if (topic is null) return null;
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        var view = new TopicView
+        var viewedOnUtc = DateOnly.FromDateTime(viewedAtUtc.UtcDateTime);
+        var insertedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO [TopicViews] ([TopicId], [VisitorKeyHash], [ViewedOnUtc], [FirstViewedAtUtc])
+            SELECT {topicId}, {visitorKeyHash}, {viewedOnUtc}, {viewedAtUtc}
+            WHERE NOT EXISTS
+            (
+                SELECT 1
+                FROM [TopicViews] WITH (UPDLOCK, HOLDLOCK)
+                WHERE [TopicId] = {topicId}
+                  AND [VisitorKeyHash] = {visitorKeyHash}
+                  AND [ViewedOnUtc] = {viewedOnUtc}
+            );
+            """, cancellationToken);
+
+        if (insertedRows > 0)
         {
-            TopicId = topicId,
-            VisitorKeyHash = visitorKeyHash,
-            ViewedOnUtc = DateOnly.FromDateTime(viewedAtUtc.UtcDateTime),
-            FirstViewedAtUtc = viewedAtUtc
-        };
-        dbContext.TopicViews.Add(view);
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
             await dbContext.Topics
                 .Where(item => item.Id == topicId)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(item => item.ViewCount, item => item.ViewCount + 1),
                     cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            dbContext.ChangeTracker.Clear();
-            var current = await dbContext.Topics.AsNoTracking().SingleAsync(item => item.Id == topicId, cancellationToken);
-            return new TopicEngagementDto(current.ViewCount, current.ShareCount);
         }
 
+        await transaction.CommitAsync(cancellationToken);
         dbContext.ChangeTracker.Clear();
         var updated = await dbContext.Topics.AsNoTracking().SingleAsync(item => item.Id == topicId, cancellationToken);
         return new TopicEngagementDto(updated.ViewCount, updated.ShareCount);
