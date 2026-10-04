@@ -48,10 +48,14 @@ public sealed class PublicProfileRepository(TechForumDbContext dbContext) : IPub
             .SelectMany(topic => topic.TopicTags)
             .Where(topicTag => topicTag.Tag.IsActive)
             .GroupBy(topicTag => new { topicTag.TagId, topicTag.Tag.Name, topicTag.Tag.Slug })
-            .Select(group => new ProfileSkillData(group.Key.TagId, group.Key.Name, group.Key.Slug, group.Count()))
-            .OrderByDescending(skill => skill.TopicCount)
-            .ThenBy(skill => skill.Name)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key.Name)
             .Take(12)
+            .Select(group => new ProfileSkillData(
+                group.Key.TagId,
+                group.Key.Name,
+                group.Key.Slug,
+                group.Count()))
             .ToListAsync(cancellationToken);
         var recentTopics = await topics
             .OrderByDescending(topic => topic.PublishedAtUtc)

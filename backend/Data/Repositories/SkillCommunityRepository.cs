@@ -22,19 +22,19 @@ public sealed class SkillCommunityRepository(TechForumDbContext dbContext) : ISk
             !item.Topic.IsDeleted &&
             !item.Topic.IsHiddenByModerator);
         var topicCount = await topics.CountAsync(cancellationToken);
-        var membersQuery = topics
-            .GroupBy(item => new { item.Topic.AuthorId, item.Topic.Author.DisplayName })
+        var memberGroups = topics
+            .GroupBy(item => new { item.Topic.AuthorId, item.Topic.Author.DisplayName });
+        var memberCount = await memberGroups.CountAsync(cancellationToken);
+        var members = await memberGroups
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key.DisplayName)
+            .ThenBy(group => group.Key.AuthorId)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(group => new SkillMemberData(
                 group.Key.AuthorId,
                 group.Key.DisplayName,
-                group.Count()));
-        var memberCount = await membersQuery.CountAsync(cancellationToken);
-        var members = await membersQuery
-            .OrderByDescending(item => item.TopicCount)
-            .ThenBy(item => item.DisplayName)
-            .ThenBy(item => item.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+                group.Count()))
             .ToListAsync(cancellationToken);
         return new SkillCommunityData(tag, topicCount, memberCount, members);
     }

@@ -19,12 +19,16 @@ public sealed class ActivityRepository(TechForumDbContext dbContext) : IActivity
                 topic.PublishedAtUtc != null &&
                 !topic.IsDeleted &&
                 !topic.IsHiddenByModerator)
-            .Select(topic => new ActivityData(
-                "topic-created",
+            .Select(topic => new
+            {
+                Type = "topic-created",
                 topic.Title,
-                topic.Type == TopicType.Question ? "Đã đặt một câu hỏi." : "Đã đăng một bài viết.",
-                "/topics/" + topic.Id,
-                topic.PublishedAtUtc!.Value));
+                Description = topic.Type == TopicType.Question
+                    ? "Đã đặt một câu hỏi."
+                    : "Đã đăng một bài viết.",
+                Link = "/topics/" + topic.Id,
+                OccurredAtUtc = topic.PublishedAtUtc!.Value
+            });
 
         var answers = dbContext.Answers
             .AsNoTracking()
@@ -36,21 +40,31 @@ public sealed class ActivityRepository(TechForumDbContext dbContext) : IActivity
                 answer.Topic.PublishedAtUtc != null &&
                 !answer.Topic.IsDeleted &&
                 !answer.Topic.IsHiddenByModerator)
-            .Select(answer => new ActivityData(
-                "answer-created",
+            .Select(answer => new
+            {
+                Type = "answer-created",
                 answer.Topic.Title,
-                "Đã trả lời một thảo luận.",
-                "/topics/" + answer.TopicId + "#answer-" + answer.Id,
-                answer.CreatedAtUtc));
+                Description = "Đã trả lời một thảo luận.",
+                Link = "/topics/" + answer.TopicId + "#answer-" + answer.Id,
+                OccurredAtUtc = answer.CreatedAtUtc
+            });
 
         var activity = topics.Concat(answers);
         var totalItems = await activity.CountAsync(cancellationToken);
-        var items = await activity
+        var activityRows = await activity
             .OrderByDescending(item => item.OccurredAtUtc)
             .ThenBy(item => item.Type)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
+        var items = activityRows
+            .Select(item => new ActivityData(
+                item.Type,
+                item.Title,
+                item.Description,
+                item.Link,
+                item.OccurredAtUtc))
+            .ToList();
         return new ActivityPage(items, totalItems);
     }
 }
