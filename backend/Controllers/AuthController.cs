@@ -12,6 +12,7 @@ namespace TechForum.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(
     IAuthService authService,
+    IAvatarService avatarService,
     IAntiforgery antiforgery) : ControllerBase
 {
     [AllowAnonymous]
@@ -121,6 +122,32 @@ public sealed class AuthController(
     {
         var result = await authService.ChangePasswordAsync(GetUserId(), request);
         return ToAccountUpdateResponse(result, "Không thể đổi mật khẩu");
+    }
+
+    [Authorize]
+    [HttpPost("avatar")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<CurrentUserDto>> UpdateAvatar(IFormFile file, CancellationToken cancellationToken)
+    {
+        var result = await avatarService.UpdateAsync(GetUserId(), file, cancellationToken);
+        return result.Succeeded
+            ? Ok(result.User)
+            : BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]> { ["file"] = [result.Error!] })
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Avatar chưa hợp lệ"
+            });
+    }
+
+    [Authorize]
+    [HttpDelete("avatar")]
+    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<CurrentUserDto>> DeleteAvatar(CancellationToken cancellationToken)
+    {
+        var result = await avatarService.DeleteAsync(GetUserId(), cancellationToken);
+        return result.Succeeded ? Ok(result.User) : Unauthorized();
     }
 
     [Authorize]

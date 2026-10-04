@@ -4,5 +4,6 @@ public sealed record CurrentUserDto(
     string Id,
     string DisplayName,
     string? Bio,
+    string? AvatarUrl,
     string Email,
     IReadOnlyList<string> Roles);

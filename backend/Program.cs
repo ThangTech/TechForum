@@ -86,6 +86,7 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IQuestionHighlightRepository, QuestionHighlightRepository>();

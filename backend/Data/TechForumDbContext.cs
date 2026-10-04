@@ -38,6 +38,9 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         modelBuilder.Entity<ApplicationUser>()
             .Property(user => user.Bio)
             .HasMaxLength(500);
+        modelBuilder.Entity<ApplicationUser>()
+            .Property(user => user.AvatarUrl)
+            .HasMaxLength(300);
 
         var category = modelBuilder.Entity<Category>();
 

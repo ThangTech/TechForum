@@ -23,6 +23,7 @@ public sealed class PublicProfileService(IPublicProfileRepository profileReposit
             profile.User.Id,
             profile.User.DisplayName,
             profile.User.Bio,
+            profile.User.AvatarUrl,
             profile.User.CreatedAtUtc,
             profile.PublishedTopicCount,
             profile.PublicAnswerCount,

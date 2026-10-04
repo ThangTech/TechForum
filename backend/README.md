@@ -165,7 +165,17 @@ phải gửi cookie bằng `credentials: include`. Mọi request ghi cần lấy
   500 ký tự, sau đó trả phiên người dùng mới.
 - `PUT /api/auth/password`: kiểm tra mật khẩu hiện tại, đổi mật khẩu và làm mới
   cookie của phiên đang dùng.
+- `POST /api/auth/avatar`: multipart field `file`, chấp nhận PNG/JPEG/WebP hợp
+  lệ tối đa 2 MB, lưu tên ngẫu nhiên dưới `/media/avatars` và trả
+  `CurrentUserDto` mới.
+- `DELETE /api/auth/avatar`: xóa file avatar hiện tại và trả người dùng với
+  `avatarUrl: null`; giao diện dùng chữ cái đầu làm fallback.
 - `POST /api/auth/logout`: kết thúc phiên hiện tại, trả HTTP 204.
+
+Giới hạn avatar cấu hình bằng `Media__MaxAvatarBytes`. File được kiểm tra chữ ký
+thực thay vì chỉ tin extension/MIME từ client; thay ảnh thành công mới xóa file
+cũ. URL avatar được trả trong hồ sơ riêng và hồ sơ công khai, không trả email ở
+endpoint công khai.
 
 Đăng ký luôn gán role `Member`; client không được gửi hoặc tự chọn role. Sau 5
 lần đăng nhập sai, tài khoản bị khóa 15 phút. Middleware kiểm tra trạng thái khóa

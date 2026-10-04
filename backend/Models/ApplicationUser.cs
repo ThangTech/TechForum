@@ -8,5 +8,7 @@ public sealed class ApplicationUser : IdentityUser
 
     public string? Bio { get; set; }
 
+    public string? AvatarUrl { get; set; }
+
     public DateTimeOffset CreatedAtUtc { get; set; }
 }

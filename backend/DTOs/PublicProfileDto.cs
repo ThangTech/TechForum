@@ -4,6 +4,7 @@ public sealed record PublicProfileDto(
     string Id,
     string DisplayName,
     string? Bio,
+    string? AvatarUrl,
     DateTimeOffset JoinedAtUtc,
     int PublishedTopicCount,
     int PublicAnswerCount,

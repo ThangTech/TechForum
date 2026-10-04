@@ -140,6 +140,7 @@ public sealed class AuthService(
             user.Id,
             user.DisplayName,
             user.Bio,
+            user.AvatarUrl,
             user.Email ?? string.Empty,
             roles);
     }
