@@ -10,7 +10,6 @@ import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicEditorField } from '../components/topics/TopicEditorField'
 import { TopicCreatedPanel } from '../components/topics/TopicCreatedPanel'
 import { TopicMetadataFields } from '../components/topics/TopicMetadataFields'
-import { hasFroalaKey } from '../config/froala'
 import { appRoutes } from '../appRoutes'
 
 export const WriteTopicPage = () => {
@@ -161,12 +160,6 @@ export const WriteTopicPage = () => {
         <p className="mt-3 text-sm leading-6 text-slate-600">
           Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
         </p>
-        {!hasFroalaKey && (
-          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Froala đang chạy ở chế độ đánh giá có attribution vì chưa cấu hình VITE_FROALA_KEY.
-          </p>
-        )}
-
         <div className="mt-6">
           <AsyncStatePanel
             error={optionsError}
