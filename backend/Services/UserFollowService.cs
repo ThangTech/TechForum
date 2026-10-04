@@ -37,4 +37,30 @@ public sealed class UserFollowService(
             false,
             await repository.GetFollowerCountAsync(followingId, cancellationToken));
     }
+
+    public async Task<PagedResultDto<FollowMemberDto>?> GetConnectionsAsync(
+        string userId,
+        bool followers,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var result = await repository.GetConnectionsAsync(
+            userId, followers, page, pageSize, cancellationToken);
+        if (result is null) return null;
+        var totalPages = result.TotalItems == 0
+            ? 0
+            : (int)Math.Ceiling(result.TotalItems / (double)pageSize);
+        return new PagedResultDto<FollowMemberDto>(
+            result.Items.Select(item => new FollowMemberDto(
+                item.Id,
+                item.DisplayName,
+                item.Bio,
+                item.PublishedTopicCount,
+                item.FollowedAtUtc)).ToList(),
+            page,
+            pageSize,
+            result.TotalItems,
+            totalPages);
+    }
 }

@@ -36,6 +36,22 @@ public sealed class ProfilesController(
         return Ok(profile);
     }
 
+    [HttpGet("{userId}/followers")]
+    public Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetFollowers(
+        string userId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default) =>
+        GetConnections(userId, true, page, pageSize, cancellationToken);
+
+    [HttpGet("{userId}/following")]
+    public Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetFollowing(
+        string userId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default) =>
+        GetConnections(userId, false, page, pageSize, cancellationToken);
+
     [Authorize]
     [HttpPut("{userId}/follow")]
     public async Task<ActionResult<FollowStatusDto>> Follow(
@@ -61,4 +77,27 @@ public sealed class ProfilesController(
 
     private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+
+    private async Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetConnections(
+        string userId,
+        bool followers,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        if (page < 1 || pageSize is < 1 or > 50)
+        {
+            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                [page < 1 ? "page" : "pageSize"] =
+                    [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số thành viên mỗi trang phải từ 1 đến 50."]
+            }));
+        }
+
+        var result = await followService.GetConnectionsAsync(
+            userId, followers, page, pageSize, cancellationToken);
+        return result is null
+            ? NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy thành viên" })
+            : Ok(result);
+    }
 }

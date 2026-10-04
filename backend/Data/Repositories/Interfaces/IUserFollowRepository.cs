@@ -8,4 +8,10 @@ public interface IUserFollowRepository
     Task<bool> AddIfMissingAsync(UserFollow follow, CancellationToken cancellationToken);
     Task RemoveAsync(string followerId, string followingId, CancellationToken cancellationToken);
     Task<int> GetFollowerCountAsync(string userId, CancellationToken cancellationToken);
+    Task<FollowMemberPage?> GetConnectionsAsync(
+        string userId,
+        bool followers,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken);
 }

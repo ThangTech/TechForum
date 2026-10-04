@@ -32,11 +32,33 @@ public sealed class UserFollowServiceTests
         Assert.Equal("member-b", repository.Added?.FollowingId);
     }
 
+    [Fact]
+    public async Task GetConnectionsAsync_MapsPublicMemberPage()
+    {
+        var repository = new FakeRepository
+        {
+            Connections = new FollowMemberPage(
+                [new FollowMemberData("member-b", "Thành viên B", "Backend", 4, DateTimeOffset.UtcNow)],
+                1)
+        };
+        var service = new UserFollowService(repository, TimeProvider.System);
+
+        var result = await service.GetConnectionsAsync(
+            "member-a", false, 1, 20, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Single(result.Items);
+        Assert.Equal("Thành viên B", result.Items[0].DisplayName);
+        Assert.Equal(4, result.Items[0].PublishedTopicCount);
+        Assert.Equal(1, result.TotalPages);
+    }
+
     private sealed class FakeRepository : IUserFollowRepository
     {
         public bool UserExists { get; init; }
         public int FollowerCount { get; init; }
         public UserFollow? Added { get; private set; }
+        public FollowMemberPage? Connections { get; init; }
 
         public Task<bool> UserExistsAsync(string userId, CancellationToken cancellationToken) =>
             Task.FromResult(UserExists);
@@ -52,5 +74,13 @@ public sealed class UserFollowServiceTests
 
         public Task<int> GetFollowerCountAsync(string userId, CancellationToken cancellationToken) =>
             Task.FromResult(FollowerCount);
+
+        public Task<FollowMemberPage?> GetConnectionsAsync(
+            string userId,
+            bool followers,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(Connections);
     }
 }
