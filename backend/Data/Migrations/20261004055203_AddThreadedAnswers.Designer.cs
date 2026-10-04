@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TechForum.Api.Data;
 
@@ -11,9 +12,11 @@ using TechForum.Api.Data;
 namespace TechForum.Api.Data.Migrations
 {
     [DbContext(typeof(TechForumDbContext))]
-    partial class TechForumDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261004055203_AddThreadedAnswers")]
+    partial class AddThreadedAnswers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -77,19 +77,42 @@ public sealed partial class AnswerService(
                 "bodyHtml");
         }
 
+        Answer? parentAnswer = null;
+        if (request.ParentAnswerId is not null)
+        {
+            parentAnswer = await answerRepository.GetVisibleByIdAsync(
+                topicId, request.ParentAnswerId.Value, cancellationToken);
+            if (parentAnswer is null)
+            {
+                return CreateAnswerResult.Failed(
+                    CreateAnswerFailure.Validation,
+                    "Phản hồi bạn đang trả lời không còn tồn tại.",
+                    "parentAnswerId");
+            }
+
+            if (parentAnswer.ParentAnswerId is not null)
+            {
+                parentAnswer = await answerRepository.GetVisibleByIdAsync(
+                    topicId, parentAnswer.ParentAnswerId.Value, cancellationToken);
+            }
+        }
+
         var answer = new Answer
         {
             TopicId = topicId,
+            ParentAnswerId = parentAnswer?.Id,
+            ParentAnswer = parentAnswer,
             AuthorId = authorId,
             BodyHtml = sanitizedBody,
             CreatedAtUtc = timeProvider.GetUtcNow()
         };
 
         await answerRepository.AddAsync(answer, cancellationToken);
-        if (topic.AuthorId != authorId)
+        var notificationRecipientId = parentAnswer?.AuthorId ?? topic.AuthorId;
+        if (notificationRecipientId != authorId)
         {
             await notificationService.AddNewAnswerAsync(
-                topic.AuthorId,
+                notificationRecipientId,
                 topic.Id,
                 answer.Id,
                 answer.Author.DisplayName,
@@ -124,6 +147,11 @@ public sealed partial class AnswerService(
             answerId,
             cancellationToken);
         if (answer is null)
+        {
+            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
+        }
+
+        if (answer.ParentAnswerId is not null)
         {
             return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
         }
@@ -186,6 +214,10 @@ public sealed partial class AnswerService(
     private static AnswerDto MapAnswer(Answer answer, int? acceptedAnswerId) => new(
         answer.Id,
         answer.TopicId,
+        answer.ParentAnswerId,
+        answer.ParentAnswer is null
+            ? null
+            : new TopicAuthorDto(answer.ParentAnswer.Author.Id, answer.ParentAnswer.Author.DisplayName),
         answer.BodyHtml,
         new TopicAuthorDto(answer.Author.Id, answer.Author.DisplayName),
         answer.CreatedAtUtc,

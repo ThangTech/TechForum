@@ -25,6 +25,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Include(answer => answer.Author)
+            .Include(answer => answer.ParentAnswer)
+                .ThenInclude(parent => parent!.Author)
             .ToListAsync(cancellationToken);
 
         return new AnswerPage(items, totalItems);
@@ -44,6 +46,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         dbContext.Answers
             .AsNoTracking()
             .Include(answer => answer.Author)
+            .Include(answer => answer.ParentAnswer)
+                .ThenInclude(parent => parent!.Author)
             .SingleOrDefaultAsync(answer =>
                 answer.Id == answerId &&
                 answer.TopicId == topicId &&
@@ -59,6 +63,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         dbContext.Answers
             .Include(answer => answer.Author)
             .Include(answer => answer.Topic)
+            .Include(answer => answer.ParentAnswer)
+                .ThenInclude(parent => parent!.Author)
             .SingleOrDefaultAsync(answer =>
                 answer.Id == answerId &&
                 answer.TopicId == topicId &&

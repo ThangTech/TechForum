@@ -130,6 +130,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
             item.IsHiddenByModerator,
             item.CreatedAtUtc
         });
+        answer.HasIndex(item => new { item.TopicId, item.ParentAnswerId, item.CreatedAtUtc });
         answer.HasOne(item => item.Topic)
             .WithMany(item => item.Answers)
             .HasForeignKey(item => item.TopicId)
@@ -137,6 +138,10 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         answer.HasOne(item => item.Author)
             .WithMany()
             .HasForeignKey(item => item.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+        answer.HasOne(item => item.ParentAnswer)
+            .WithMany()
+            .HasForeignKey(item => item.ParentAnswerId)
             .OnDelete(DeleteBehavior.Restrict);
 
         topic.HasIndex(item => item.AcceptedAnswerId).IsUnique();
