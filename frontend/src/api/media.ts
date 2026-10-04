@@ -38,8 +38,28 @@ export const toStoredMediaHtml = (html: string, mediaItems: UploadedMedia[]): st
     html,
   )
 
-export const toDisplayMediaHtml = (html: string): string =>
-  html.replace(/(\bsrc=["'])\/media\//gi, `$1${apiBaseUrl}/media/`)
+const hasVideoAttribute = (attributes: string, name: string): boolean =>
+  new RegExp(`(?:^|\\s)${name}(?:\\s|=|$)`, 'i').test(attributes)
+
+const addVideoPlaybackAttributes = (html: string): string =>
+  html.replace(/<video\b([^>]*)>/gi, (_videoTag, rawAttributes: string) => {
+    const attributes = rawAttributes.trim()
+    const playbackAttributes = [
+      !hasVideoAttribute(attributes, 'controls') ? 'controls' : '',
+      !hasVideoAttribute(attributes, 'preload') ? 'preload="metadata"' : '',
+      !hasVideoAttribute(attributes, 'playsinline') ? 'playsinline' : '',
+    ].filter(Boolean)
+    const normalizedAttributes = [attributes, ...playbackAttributes].filter(Boolean).join(' ')
+    return `<video${normalizedAttributes ? ` ${normalizedAttributes}` : ''}>`
+  })
+
+export const toDisplayMediaHtml = (html: string): string => {
+  const absoluteMediaHtml = html.replace(
+    /(\bsrc=["'])\/media\//gi,
+    `$1${apiBaseUrl}/media/`,
+  )
+  return addVideoPlaybackAttributes(absoluteMediaHtml)
+}
 
 export const toEditableMedia = (
   media: { id: string; path: string }[],
