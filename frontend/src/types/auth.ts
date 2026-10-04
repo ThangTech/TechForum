@@ -16,3 +16,12 @@ export interface RegisterInput {
   email: string
   password: string
 }
+
+export interface UpdateProfileInput {
+  displayName: string
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string
+  newPassword: string
+}

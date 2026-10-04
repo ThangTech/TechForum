@@ -1,6 +1,6 @@
 # Tiến độ phát triển TechForum
 
-Cập nhật: 2026-10-03
+Cập nhật: 2026-10-04
 
 Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng chứng build, kiểm thử tự
 động hoặc kiểm thử tích hợp phù hợp. Số phần trăm không được suy ra từ số màn hình.
@@ -20,7 +20,7 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### Chưa có
 
-- [x] Backend có 25 test service; frontend chưa có test tự động.
+- [x] Backend có 29 test service; frontend chưa có test tự động.
 - [x] Xác thực, phân quyền, phiên và tài khoản bị khóa.
 - [x] Bài viết/câu hỏi, thẻ, tìm kiếm, phân trang, tạo/sửa và hồ sơ công khai.
 - [x] Soạn thảo, upload media và làm sạch HTML.
@@ -128,6 +128,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 - [x] Trang tài khoản hiển thị phiên thật; lịch sử hoạt động phân trang các nội
   dung/câu trả lời còn công khai; nội dung đã lưu hoạt động.
+- [x] Thành viên cập nhật tên hiển thị và đổi mật khẩu qua Identity; phiên hiện
+  tại được làm mới sau thay đổi thành công.
 - [x] Tùy chỉnh có thao tác chạy lại tour thật.
 - [x] Thông báo “câu trả lời được chấp nhận” có bản ghi backend chống trùng,
   danh sách riêng tư, đánh dấu đã đọc và số chưa đọc thật trên header.
@@ -144,6 +146,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   người dùng thẻ theo đóng góp giảm dần.
 - [ ] Kiểm thử tổng hợp Khách, Thành viên A/B và Quản trị viên trên SQL Server
   local sau các migration mới vẫn cần thực hiện.
+  Lần chạy gần nhất trong môi trường Codex dừng ở `Failed to generate SSPI
+  context`; cần chạy bằng tài khoản Windows của máy phát triển.
 
 ## Quyết định còn cần xác nhận khi đến phase phụ thuộc
 

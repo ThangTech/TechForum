@@ -107,8 +107,8 @@ lý; chính sách cho phép tác giả xóa khi đã có phản hồi vẫn cầ
 
 Backend làm sạch HTML trước khi lưu. Chủ đề không công khai trả 404; chủ đề đã
 khóa thảo luận trả 409; dữ liệu rỗng hoặc quá 20.000 ký tự trả Validation Problem
-HTTP 400. P4 chưa triển khai sửa/xóa phản hồi vì chính sách này chưa được chốt.
-Trường `isAccepted` trong DTO câu trả
+HTTP 400. Thành viên có thể sửa/xóa phản hồi của mình; xóa câu trả lời đang được
+chấp nhận đồng thời bỏ liên kết accepted answer. Trường `isAccepted` trong DTO câu trả
 lời cho biết lựa chọn hiện tại; chỉ câu hỏi công khai và câu trả lời thuộc đúng
 chủ đề mới được chấp nhận.
 
@@ -156,6 +156,9 @@ phải gửi cookie bằng `credentials: include`. Mọi request ghi cần lấy
 - `POST /api/auth/login`: đăng nhập, trả HTTP 200; sai thông tin là 401; tài
   khoản bị khóa là 423.
 - `GET /api/auth/me`: thông tin của chính tài khoản đang đăng nhập.
+- `PUT /api/auth/profile`: cập nhật tên hiển thị và trả phiên người dùng mới.
+- `PUT /api/auth/password`: kiểm tra mật khẩu hiện tại, đổi mật khẩu và làm mới
+  cookie của phiên đang dùng.
 - `POST /api/auth/logout`: kết thúc phiên hiện tại, trả HTTP 204.
 
 Đăng ký luôn gán role `Member`; client không được gửi hoặc tự chọn role. Sau 5

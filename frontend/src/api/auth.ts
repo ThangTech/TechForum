@@ -1,4 +1,10 @@
-import type { CurrentUser, LoginInput, RegisterInput } from '../types/auth'
+import type {
+  ChangePasswordInput,
+  CurrentUser,
+  LoginInput,
+  RegisterInput,
+  UpdateProfileInput,
+} from '../types/auth'
 import { ApiError, apiRequest } from './client'
 
 const isCurrentUser = (value: unknown): value is CurrentUser => {
@@ -46,4 +52,18 @@ export const register = (input: RegisterInput) => {
 
 export const logout = () => {
   return apiRequest<void>('/api/auth/logout', { method: 'POST' })
+}
+
+export const updateProfile = (input: UpdateProfileInput) => {
+  return requestUser('/api/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+}
+
+export const changePassword = (input: ChangePasswordInput) => {
+  return requestUser('/api/auth/password', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
 }
