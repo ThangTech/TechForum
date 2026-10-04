@@ -14,16 +14,20 @@ public sealed class PublicProfileServiceTests
         var user = CreateUser();
         var repository = new FakePublicProfileRepository
         {
-            Profile = new PublicProfileData(user, 3, [CreateTopic(user)])
+            Profile = new PublicProfileData(user, 3, 5, 7, 2, 1, true,
+                [new ProfileSkillData(1, "React", "react", 3)], [CreateTopic(user)])
         };
         var service = new PublicProfileService(repository);
 
-        var result = await service.GetByUserIdAsync(user.Id, CancellationToken.None);
+        var result = await service.GetByUserIdAsync(user.Id, "viewer", CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.Equal(user.Id, result.Id);
         Assert.Equal("Thành viên kiểm thử", result.DisplayName);
         Assert.Equal(3, result.PublishedTopicCount);
+        Assert.Equal(3, result.Badges.Count);
+        Assert.True(result.IsFollowedByViewer);
+        Assert.Single(result.Skills);
         Assert.Single(result.RecentTopics);
         Assert.Equal("article", result.RecentTopics[0].Type);
         Assert.DoesNotContain("email", System.Text.Json.JsonSerializer.Serialize(result).ToLowerInvariant());
@@ -34,7 +38,7 @@ public sealed class PublicProfileServiceTests
     {
         var service = new PublicProfileService(new FakePublicProfileRepository());
 
-        var result = await service.GetByUserIdAsync("missing", CancellationToken.None);
+        var result = await service.GetByUserIdAsync("missing", null, CancellationToken.None);
 
         Assert.Null(result);
     }
@@ -75,6 +79,7 @@ public sealed class PublicProfileServiceTests
 
         public Task<PublicProfileData?> GetByUserIdAsync(
             string userId,
+            string? viewerId,
             CancellationToken cancellationToken) => Task.FromResult(Profile);
     }
 }

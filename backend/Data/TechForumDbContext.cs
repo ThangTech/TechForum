@@ -29,6 +29,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
     public DbSet<TopicView> TopicViews => Set<TopicView>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<UserFollow> UserFollows => Set<UserFollow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -226,6 +227,17 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         notification.HasIndex(item => new { item.UserId, item.SourceKey }).IsUnique();
         notification.HasIndex(item => new { item.UserId, item.ReadAtUtc, item.CreatedAtUtc });
         notification.HasOne(item => item.User).WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Restrict);
+
+        var userFollow = modelBuilder.Entity<UserFollow>();
+        userFollow.ToTable("UserFollows", table => table.HasCheckConstraint(
+            "CK_UserFollows_NotSelf",
+            "[FollowerId] <> [FollowingId]"));
+        userFollow.HasKey(item => new { item.FollowerId, item.FollowingId });
+        userFollow.Property(item => item.FollowerId).HasMaxLength(450).IsRequired();
+        userFollow.Property(item => item.FollowingId).HasMaxLength(450).IsRequired();
+        userFollow.HasIndex(item => new { item.FollowingId, item.CreatedAtUtc });
+        userFollow.HasOne(item => item.Follower).WithMany().HasForeignKey(item => item.FollowerId).OnDelete(DeleteBehavior.Restrict);
+        userFollow.HasOne(item => item.Following).WithMany().HasForeignKey(item => item.FollowingId).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {

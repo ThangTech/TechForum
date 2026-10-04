@@ -4,5 +4,5 @@ namespace TechForum.Api.Services;
 
 public interface IPublicProfileService
 {
-    Task<PublicProfileDto?> GetByUserIdAsync(string userId, CancellationToken cancellationToken);
+    Task<PublicProfileDto?> GetByUserIdAsync(string userId, string? viewerId, CancellationToken cancellationToken);
 }

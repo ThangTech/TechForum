@@ -8,6 +8,7 @@ public sealed class PublicProfileRepository(TechForumDbContext dbContext) : IPub
 {
     public async Task<PublicProfileData?> GetByUserIdAsync(
         string userId,
+        string? viewerId,
         CancellationToken cancellationToken)
     {
         var user = await dbContext.Users
@@ -29,6 +30,29 @@ public sealed class PublicProfileRepository(TechForumDbContext dbContext) : IPub
                 !topic.IsHiddenByModerator);
 
         var publishedTopicCount = await topics.CountAsync(cancellationToken);
+        var publicAnswerCount = await dbContext.Answers.AsNoTracking().CountAsync(answer =>
+            answer.AuthorId == userId && !answer.IsDeleted && !answer.IsHiddenByModerator &&
+            answer.Topic.Status == TopicStatus.Published && answer.Topic.PublishedAtUtc != null &&
+            !answer.Topic.IsDeleted && !answer.Topic.IsHiddenByModerator, cancellationToken);
+        var receivedStarCount = await dbContext.TopicStars.AsNoTracking().CountAsync(star =>
+            star.Topic.AuthorId == userId && star.Topic.Status == TopicStatus.Published &&
+            star.Topic.PublishedAtUtc != null && !star.Topic.IsDeleted && !star.Topic.IsHiddenByModerator,
+            cancellationToken);
+        var followerCount = await dbContext.UserFollows.AsNoTracking()
+            .CountAsync(follow => follow.FollowingId == userId, cancellationToken);
+        var followingCount = await dbContext.UserFollows.AsNoTracking()
+            .CountAsync(follow => follow.FollowerId == userId, cancellationToken);
+        var isFollowedByViewer = viewerId is not null && await dbContext.UserFollows.AsNoTracking()
+            .AnyAsync(follow => follow.FollowerId == viewerId && follow.FollowingId == userId, cancellationToken);
+        var skills = await topics
+            .SelectMany(topic => topic.TopicTags)
+            .Where(topicTag => topicTag.Tag.IsActive)
+            .GroupBy(topicTag => new { topicTag.TagId, topicTag.Tag.Name, topicTag.Tag.Slug })
+            .Select(group => new ProfileSkillData(group.Key.TagId, group.Key.Name, group.Key.Slug, group.Count()))
+            .OrderByDescending(skill => skill.TopicCount)
+            .ThenBy(skill => skill.Name)
+            .Take(12)
+            .ToListAsync(cancellationToken);
         var recentTopics = await topics
             .OrderByDescending(topic => topic.PublishedAtUtc)
             .ThenByDescending(topic => topic.Id)
@@ -40,6 +64,15 @@ public sealed class PublicProfileRepository(TechForumDbContext dbContext) : IPub
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
-        return new PublicProfileData(user, publishedTopicCount, recentTopics);
+        return new PublicProfileData(
+            user,
+            publishedTopicCount,
+            publicAnswerCount,
+            receivedStarCount,
+            followerCount,
+            followingCount,
+            isFollowedByViewer,
+            skills,
+            recentTopics);
     }
 }
