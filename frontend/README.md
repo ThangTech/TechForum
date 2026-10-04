@@ -43,9 +43,11 @@ Các route chính:
 
 Khu vực thảo luận gọi API thật tại `/api/topics/{topicId}/answers`. Khách đọc
 được câu trả lời và được yêu cầu đăng nhập khi muốn phản hồi; thành viên có thể
-gửi văn bản, còn chủ đề bị khóa không hiển thị form gửi.
+gửi văn bản, còn chủ đề bị khóa không hiển thị form gửi. Phản hồi hiển thị tối
+đa hai cấp; thao tác trả lời một phản hồi vẫn được backend gắn vào câu trả lời
+gốc để tránh cây hội thoại quá sâu trên thiết bị di động.
 Tác giả của Câu hỏi có thể chọn hoặc thay đổi câu trả lời được chấp nhận ngay
-trong danh sách; Bài viết không hiển thị thao tác này.
+trong danh sách; Bài viết và phản hồi cấp hai không hiển thị thao tác này.
 Chi tiết nội dung hiển thị số Sao hữu ích từ API. Thành viên có thể thêm/bỏ một
 sao; khách bấm thao tác này sẽ nhận modal yêu cầu đăng nhập dùng chung.
 Lưu bài dùng trạng thái riêng với Sao hữu ích; số lượt lưu hiển thị trên chi tiết

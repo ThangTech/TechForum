@@ -115,7 +115,7 @@ export const MyTopicsPage = () => {
       </div>
       <ConfirmDialog
         confirmLabel="Xóa nội dung"
-        description="Nội dung sẽ không còn xuất hiện công khai hoặc trong danh sách của bạn. Hành động này chưa thể hoàn tác trên giao diện."
+        description="Nội dung chưa có câu trả lời sẽ được xóa mềm và không còn xuất hiện công khai. Nội dung đã có đóng góp cộng đồng không thể tự xóa; bạn cần liên hệ quản trị viên khi cần xử lý."
         isBusy={isDeleting}
         isOpen={deletingId !== null}
         onCancel={() => setDeletingId(null)}

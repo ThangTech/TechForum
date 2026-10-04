@@ -20,7 +20,7 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### Chưa có
 
-- [x] Backend có 32 test service; frontend có 10 test Vitest cho `returnUrl`,
+- [x] Backend có 35 test service; frontend có 10 test Vitest cho `returnUrl`,
   CSRF/API client và Problem Details.
 - [x] Xác thực, phân quyền, phiên và tài khoản bị khóa.
 - [x] Bài viết/câu hỏi, thẻ, tìm kiếm, phân trang, tạo/sửa và hồ sơ công khai.
@@ -107,8 +107,9 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### P4 — Thảo luận và tương tác
 
-- [x] Trả lời cấp một, sửa/xóa phản hồi của mình, khóa thảo luận và accepted
-  answer đúng quyền; xóa accepted answer tự bỏ liên kết.
+- [x] Trả lời và phản hồi tối đa hai cấp, sửa/xóa phản hồi của mình, khóa thảo
+  luận và accepted answer đúng quyền; chỉ câu trả lời cấp một được chấp nhận,
+  xóa accepted answer tự bỏ liên kết.
 - [x] Một sao hữu ích và một bookmark hiện hành cho mỗi tài khoản/chủ đề.
 - [x] Chia sẻ chỉ tăng sau Web Share/copy thành công và yêu cầu đăng nhập; lượt
   xem chống đếm lặp theo khách/tài khoản trong một ngày UTC.
@@ -154,11 +155,18 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   Lần chạy gần nhất trong môi trường Codex dừng ở `Failed to generate SSPI
   context`; cần chạy bằng tài khoản Windows của máy phát triển.
 
-## Quyết định còn cần xác nhận khi đến phase phụ thuộc
+## Quyết định nghiệp vụ đã áp dụng
 
-- Chính sách xóa nội dung khi đã có phản hồi.
-- Số tầng phản hồi và giới hạn phản hồi.
-- Admin có được dùng đầy đủ chức năng thành viên hay chỉ quản trị.
+- Tác giả chỉ xóa mềm chủ đề chưa có câu trả lời công khai; nội dung đã có đóng
+  góp cộng đồng dùng luồng kiểm duyệt riêng của quản trị viên.
+- Hội thoại hiển thị tối đa hai cấp; trả lời cấp hai được gắn về câu trả lời gốc.
+- Quản trị viên được dùng chức năng thành viên; backend vẫn kiểm tra quyền sở
+  hữu và quyền quản trị theo từng endpoint.
+- Avatar là ảnh tùy chọn; giao diện tiếp tục dùng chữ cái khi tài khoản chưa tải
+  ảnh hoặc ảnh không còn khả dụng.
+
+## Quyết định/cấu hình còn cần xác nhận
+
 - Chu kỳ “câu hỏi nhiều câu trả lời” đang dùng giả định đơn giản 30 ngày và hiển
   thị rõ trên giao diện; có thể đổi qua query/config nếu nghiệp vụ chốt khác.
 - License/key Froala và điều kiện license Intro.js.

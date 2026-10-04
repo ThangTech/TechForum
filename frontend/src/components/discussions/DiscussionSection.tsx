@@ -1,6 +1,6 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState } from 'react'
-import { acceptAnswer, getAnswers, type AnswerPage } from '../../api/answers'
+import { acceptAnswer, getAnswers, type Answer, type AnswerPage } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { AuthRequiredDialog } from '../AuthRequiredDialog'
@@ -59,10 +59,10 @@ export const DiscussionSection = ({
     return () => controller.abort()
   }, [page, requestVersion, topicId])
 
-  const handleCreated = () => {
+  const handleCreated = (answer: Answer) => {
     const nextTotalItems = (data?.totalItems ?? 0) + 1
     const lastPage = Math.max(1, Math.ceil(nextTotalItems / PAGE_SIZE))
-    setSuccessMessage('Câu trả lời đã được đăng.')
+    setSuccessMessage(answer.parentAnswerId ? 'Phản hồi đã được đăng.' : 'Câu trả lời đã được đăng.')
     setPage(lastPage)
     setRequestVersion((version) => version + 1)
   }
@@ -157,7 +157,9 @@ export const DiscussionSection = ({
               setData((current) => current ? { ...current, items: current.items.filter((answer) => answer.id !== answerId), totalItems: Math.max(0, current.totalItems - 1) } : current)
               setSuccessMessage('Đã xóa câu trả lời.')
             }}
+            onLoginRequired={() => setIsAuthDialogOpen(true)}
             onPageChange={setPage}
+            onReplyCreated={handleCreated}
             onUpdated={(updated) => {
               setData((current) => current ? { ...current, items: current.items.map((answer) => answer.id === updated.id ? updated : answer) } : current)
               setSuccessMessage('Đã cập nhật câu trả lời.')

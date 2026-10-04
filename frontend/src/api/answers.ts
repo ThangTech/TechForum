@@ -4,6 +4,8 @@ import type { TopicAuthor } from './topics'
 export interface Answer {
   id: number
   topicId: number
+  parentAnswerId: number | null
+  replyingTo: TopicAuthor | null
   bodyHtml: string
   author: TopicAuthor
   createdAtUtc: string
@@ -26,6 +28,9 @@ const isAnswer = (value: unknown): value is Answer =>
   isRecord(value) &&
   typeof value.id === 'number' &&
   typeof value.topicId === 'number' &&
+  (value.parentAnswerId === null || typeof value.parentAnswerId === 'number') &&
+  (value.replyingTo === null || (isRecord(value.replyingTo) &&
+    typeof value.replyingTo.id === 'string' && typeof value.replyingTo.displayName === 'string')) &&
   typeof value.bodyHtml === 'string' &&
   isRecord(value.author) &&
   typeof value.author.id === 'string' &&
@@ -68,10 +73,10 @@ export const getAnswers = async (
   return data as unknown as AnswerPage
 }
 
-export const createAnswer = async (topicId: number, bodyHtml: string): Promise<Answer> =>
+export const createAnswer = async (topicId: number, bodyHtml: string, parentAnswerId?: number): Promise<Answer> =>
   parseAnswer(await apiRequest(`/api/topics/${topicId}/answers`, {
     method: 'POST',
-    body: JSON.stringify({ bodyHtml }),
+    body: JSON.stringify({ bodyHtml, parentAnswerId }),
   }))
 
 export const acceptAnswer = async (topicId: number, answerId: number): Promise<Answer> =>
