@@ -4,6 +4,7 @@ import { ApiError } from '../api/client'
 import { followMember, getPublicProfile, unfollowMember, type PublicProfile } from '../api/profiles'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicSummaryItem } from '../components/topics/TopicSummaryItem'
+import { UserAvatar } from '../components/account/UserAvatar'
 import { Button } from '@astryxdesign/core/Button'
 import { useAuth } from '../auth/authState'
 import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
@@ -86,9 +87,7 @@ export const PublicProfilePage = () => {
           <div className="mt-6 space-y-6">
             <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8" aria-labelledby="profile-title">
               <div className="flex items-center gap-4">
-                <span className="grid size-16 shrink-0 place-items-center rounded-full bg-blue-100 text-2xl font-extrabold text-blue-700" aria-hidden="true">
-                  {profile.displayName.slice(0, 1).toLocaleUpperCase('vi-VN')}
-                </span>
+                <UserAvatar avatarUrl={profile.avatarUrl} displayName={profile.displayName} size="lg" />
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Hồ sơ công khai</p>
                   <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl" id="profile-title">

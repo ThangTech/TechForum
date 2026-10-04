@@ -5,9 +5,10 @@ import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
 import { PasswordForm } from '../components/account/PasswordForm'
 import { ProfileForm } from '../components/account/ProfileForm'
+import { AvatarForm } from '../components/account/AvatarForm'
 
 export const AccountPage = () => {
-  const { user, updateProfile, changePassword, logout } = useAuth()
+  const { user, updateProfile, changePassword, updateAvatar, deleteAvatar, logout } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -45,6 +46,7 @@ export const AccountPage = () => {
         </section>
 
         <div className="grid gap-6 lg:grid-cols-2">
+          <AvatarForm avatarUrl={user.avatarUrl} displayName={user.displayName} onDelete={deleteAvatar} onUpload={updateAvatar} />
           <ProfileForm
             bio={user.bio}
             displayName={user.displayName}

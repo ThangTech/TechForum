@@ -25,8 +25,8 @@ Các route chính:
 
 - `/login`: đăng nhập, hỗ trợ `returnUrl` nội bộ.
 - `/register`: đăng ký thành viên và tự tạo phiên.
-- `/account`: route riêng tư, cập nhật tên hiển thị/giới thiệu công khai, đổi
-  mật khẩu và đăng xuất.
+- `/account`: route riêng tư, cập nhật avatar tùy chọn, tên hiển thị/giới thiệu
+  công khai, đổi mật khẩu và đăng xuất. Avatar lỗi/không có ảnh dùng chữ cái đầu.
 - `/settings`: tùy chỉnh cá nhân, hiện cho phép chạy lại tour hướng dẫn trang Bài viết.
 - `/notifications`: thông báo riêng của tài khoản, hiển thị số chưa đọc thật trên header.
 - `/activity`: lịch sử nội dung và câu trả lời công khai của tài khoản hiện tại.

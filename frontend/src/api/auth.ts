@@ -17,6 +17,7 @@ const isCurrentUser = (value: unknown): value is CurrentUser => {
     typeof user.id === 'string' &&
     typeof user.displayName === 'string' &&
     (user.bio === null || typeof user.bio === 'string') &&
+    (user.avatarUrl === null || typeof user.avatarUrl === 'string') &&
     typeof user.email === 'string' &&
     Array.isArray(user.roles) &&
     user.roles.every((role) => typeof role === 'string')
@@ -68,3 +69,11 @@ export const changePassword = (input: ChangePasswordInput) => {
     body: JSON.stringify(input),
   })
 }
+
+export const updateAvatar = (file: File) => {
+  const body = new FormData()
+  body.append('file', file)
+  return requestUser('/api/auth/avatar', { method: 'POST', body })
+}
+
+export const deleteAvatar = () => requestUser('/api/auth/avatar', { method: 'DELETE' })

@@ -12,6 +12,8 @@ import {
   logout as logoutRequest,
   register as registerRequest,
   updateProfile as updateProfileRequest,
+  updateAvatar as updateAvatarRequest,
+  deleteAvatar as deleteAvatarRequest,
 } from '../api/auth'
 import { ApiError } from '../api/client'
 import type {
@@ -79,9 +81,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return currentUser
   }, [])
 
+  const updateAvatar = useCallback(async (file: File) => {
+    const currentUser = await updateAvatarRequest(file)
+    setUser(currentUser)
+    return currentUser
+  }, [])
+
+  const deleteAvatar = useCallback(async () => {
+    const currentUser = await deleteAvatarRequest()
+    setUser(currentUser)
+    return currentUser
+  }, [])
+
   const value = useMemo(
-    () => ({ user, isLoading, login, register, updateProfile, changePassword, logout }),
-    [user, isLoading, login, register, updateProfile, changePassword, logout],
+    () => ({ user, isLoading, login, register, updateProfile, changePassword, updateAvatar, deleteAvatar, logout }),
+    [user, isLoading, login, register, updateProfile, changePassword, updateAvatar, deleteAvatar, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

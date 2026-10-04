@@ -5,6 +5,7 @@ export interface PublicProfile {
   id: string
   displayName: string
   bio: string | null
+  avatarUrl: string | null
   joinedAtUtc: string
   publishedTopicCount: number
   publicAnswerCount: number
@@ -36,6 +37,7 @@ export const getPublicProfile = async (
     typeof data.id !== 'string' ||
     typeof data.displayName !== 'string' ||
     (data.bio !== null && typeof data.bio !== 'string') ||
+    (data.avatarUrl !== null && typeof data.avatarUrl !== 'string') ||
     typeof data.joinedAtUtc !== 'string' ||
     typeof data.publishedTopicCount !== 'number' ||
     typeof data.publicAnswerCount !== 'number' ||

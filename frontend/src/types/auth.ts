@@ -2,6 +2,7 @@ export interface CurrentUser {
   id: string
   displayName: string
   bio: string | null
+  avatarUrl: string | null
   email: string
   roles: string[]
 }

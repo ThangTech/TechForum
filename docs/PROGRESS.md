@@ -134,6 +134,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
   tại được làm mới sau thay đổi thành công.
 - [x] Thành viên có giới thiệu công khai dạng văn bản thuần tối đa 500 ký tự;
   hồ sơ công khai không trả email.
+- [x] Avatar tùy chọn dùng upload xác thực PNG/JPEG/WebP tối đa 2 MB; header và
+  hồ sơ công khai dùng ảnh thật, fallback về chữ cái khi chưa có ảnh.
 - [x] Tùy chỉnh có thao tác chạy lại tour thật.
 - [x] Thông báo “câu trả lời mới” và “câu trả lời được chấp nhận” có bản ghi
   backend chống trùng, danh sách riêng tư, đánh dấu đã đọc và số chưa đọc thật.

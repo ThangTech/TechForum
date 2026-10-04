@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { appRoutes } from '../../appRoutes'
+import { UserAvatar } from './UserAvatar'
 
 export const AccountMenu = () => {
   const { user, logout } = useAuth()
@@ -57,13 +58,16 @@ export const AccountMenu = () => {
 
   return (
     <div className="grid justify-items-end gap-1">
-      <DropdownMenu
-        alignment="end"
-        button={{ label: `${user.displayName.slice(0, 1).toLocaleUpperCase('vi-VN')} · ${user.displayName}` }}
-        items={items}
-        menuWidth={220}
-        placement="below"
-      />
+      <div className="flex items-center gap-2">
+        <UserAvatar avatarUrl={user.avatarUrl} displayName={user.displayName} />
+        <DropdownMenu
+          alignment="end"
+          button={{ label: user.displayName }}
+          items={items}
+          menuWidth={220}
+          placement="below"
+        />
+      </div>
       {error && <span className="max-w-56 text-right text-xs text-red-700" role="alert">{error}</span>}
     </div>
   )

@@ -14,6 +14,8 @@ export interface AuthContextValue {
   register: (input: RegisterInput) => Promise<CurrentUser>
   updateProfile: (input: UpdateProfileInput) => Promise<CurrentUser>
   changePassword: (input: ChangePasswordInput) => Promise<CurrentUser>
+  updateAvatar: (file: File) => Promise<CurrentUser>
+  deleteAvatar: () => Promise<CurrentUser>
   logout: () => Promise<void>
 }
 
