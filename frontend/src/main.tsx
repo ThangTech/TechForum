@@ -8,11 +8,14 @@ import 'froala-editor/css/froala_style.min.css'
 import './index.css'
 import './intro-overrides.css'
 import App from './App.tsx'
+import { AppErrorBoundary } from './components/common/AppErrorBoundary.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <InternationalizationProvider locale="vi-VN" messages={{ 'vi-VN': viVN }}>
     <Theme theme={neutralTheme} mode="light">
-      <App />
+      <AppErrorBoundary>
+        <App />
+      </AppErrorBoundary>
     </Theme>
   </InternationalizationProvider>,
 )
