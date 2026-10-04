@@ -170,6 +170,10 @@ tự đặc biệt. Không ghi mật khẩu thật hoặc cookie phiên vào sou
 
 ## Kiểm thử backend
 
+Thông báo được tạo khi người khác trả lời chủ đề và khi câu trả lời được chấp
+nhận. `SourceKey` có unique index theo người nhận để tránh tạo trùng; tác giả tự
+trả lời chủ đề của mình không nhận thông báo.
+
 ```powershell
 cd ..\backend.Tests
 dotnet test

@@ -20,7 +20,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 
 ### Chưa có
 
-- [x] Backend có 29 test service; frontend chưa có test tự động.
+- [x] Backend có 31 test service; frontend có 10 test Vitest cho `returnUrl`,
+  CSRF/API client và Problem Details.
 - [x] Xác thực, phân quyền, phiên và tài khoản bị khóa.
 - [x] Bài viết/câu hỏi, thẻ, tìm kiếm, phân trang, tạo/sửa và hồ sơ công khai.
 - [x] Soạn thảo, upload media và làm sạch HTML.
@@ -131,8 +132,8 @@ Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng c
 - [x] Thành viên cập nhật tên hiển thị và đổi mật khẩu qua Identity; phiên hiện
   tại được làm mới sau thay đổi thành công.
 - [x] Tùy chỉnh có thao tác chạy lại tour thật.
-- [x] Thông báo “câu trả lời được chấp nhận” có bản ghi backend chống trùng,
-  danh sách riêng tư, đánh dấu đã đọc và số chưa đọc thật trên header.
+- [x] Thông báo “câu trả lời mới” và “câu trả lời được chấp nhận” có bản ghi
+  backend chống trùng, danh sách riêng tư, đánh dấu đã đọc và số chưa đọc thật.
 - [x] Intro.js 8.6.0 build được với React/Vite; tour có bước phù hợp khách/thành
   viên, ghi trạng thái theo người dùng và có thể chạy lại. Package là AGPL-3.0,
   cần rà soát lại license nếu dự án chuyển sang mục đích thương mại.

@@ -55,8 +55,9 @@ AGPL-3.0; phù hợp với đồ án phi thương mại khi dự án tuân thủ
 phép. Nếu triển khai thương mại, cần rà soát và mua license phù hợp từ Intro.js.
 
 Thông báo hiện được tạo khi câu trả lời của thành viên được tác giả câu hỏi chấp
-nhận. Header tải `unreadCount` từ backend; mở một thông báo chưa đọc sẽ đánh dấu
-đã đọc rồi mới điều hướng đến đúng câu trả lời.
+nhận và khi người khác trả lời chủ đề của thành viên. Header tải `unreadCount`
+từ backend; mở một thông báo chưa đọc sẽ đánh dấu đã đọc rồi mới điều hướng đến
+đúng câu trả lời.
 
 Cột phải trang duyệt gọi `/api/question-highlights` để hiển thị câu hỏi mới và
 câu hỏi nhiều phản hồi trong 30 ngày; không dùng số liệu tĩnh.
@@ -79,4 +80,5 @@ API client tự lấy antiforgery token trước request ghi và luôn gửi coo
 ```powershell
 npm run lint
 npm run build
+npm test
 ```
