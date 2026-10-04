@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import 'froala-editor/css/froala_editor.pkgd.min.css'
 import 'froala-editor/js/plugins.pkgd.min.js'
 import { getAntiforgeryToken } from '../../api/client'
-import { deleteUnusedMedia, parseUploadedMedia, type UploadedMedia } from '../../api/media'
+import { parseUploadedMedia, type UploadedMedia } from '../../api/media'
 import { createFroalaConfig } from '../../config/froala'
 import { resolveModuleDefault } from '../../utils/moduleInterop'
 
@@ -86,15 +86,6 @@ export const TopicEditorField = ({
     ? createFroalaConfig({
         antiforgeryToken,
         onMediaInserted: syncInsertedMedia,
-        onMediaRemoved: (link) => {
-          const media = uploadedMedia.get(link)
-          if (!media) return
-          uploadedMedia.delete(link)
-          onMediaChange([...uploadedMedia.values()])
-          void deleteUnusedMedia(media.id).catch(() => {
-            setUploadError('Media đã bỏ khỏi bài sẽ được hệ thống tự dọn sau.')
-          })
-        },
         onMediaUploaded: (rawMedia) => {
           try {
             const media = parseUploadedMedia(rawMedia)
@@ -107,7 +98,7 @@ export const TopicEditorField = ({
         onUploadStarted: startUpload,
         onUploadError: handleUploadError,
       })
-    : null, [antiforgeryToken, handleUploadError, onMediaChange, startUpload, syncInsertedMedia, uploadedMedia])
+    : null, [antiforgeryToken, handleUploadError, startUpload, syncInsertedMedia, uploadedMedia])
 
   return (
     <div className="grid gap-2">

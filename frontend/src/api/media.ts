@@ -1,4 +1,4 @@
-import { ApiError, apiBaseUrl, apiRequest } from './client'
+import { ApiError, apiBaseUrl } from './client'
 
 export interface UploadedMedia {
   id: string
@@ -68,7 +68,3 @@ export const toEditableMedia = (
   link: `${apiBaseUrl}${item.path}`,
   path: item.path,
 }))
-
-export const deleteUnusedMedia = async (id: string): Promise<void> => {
-  await apiRequest(`/api/media/${encodeURIComponent(id)}`, { method: 'DELETE' })
-}

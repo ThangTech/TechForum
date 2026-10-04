@@ -9,7 +9,6 @@ describe('createFroalaConfig', () => {
     const config = createFroalaConfig({
       antiforgeryToken: 'csrf-token',
       onMediaInserted,
-      onMediaRemoved: vi.fn(),
       onMediaUploaded,
       onUploadStarted,
       onUploadError: vi.fn(),

@@ -6,7 +6,6 @@ export const hasFroalaKey = Boolean(import.meta.env.VITE_FROALA_KEY?.trim())
 interface FroalaConfigOptions {
   antiforgeryToken: string
   onMediaInserted: (mediaElement: unknown) => void
-  onMediaRemoved: (link: string) => void
   onMediaUploaded: (media: UploadedMedia) => void
   onUploadStarted: () => void
   onUploadError: (message: string) => void
@@ -15,7 +14,6 @@ interface FroalaConfigOptions {
 export const createFroalaConfig = ({
   antiforgeryToken,
   onMediaInserted,
-  onMediaRemoved,
   onMediaUploaded,
   onUploadStarted,
   onUploadError,
@@ -55,10 +53,6 @@ export const createFroalaConfig = ({
       }
     },
     'image.inserted': onMediaInserted,
-    'image.removed': (image: unknown) => {
-      const link = getMediaSource(image)
-      if (link) onMediaRemoved(link)
-    },
     'video.beforeUpload': onUploadStarted,
     'video.uploaded': (response: unknown) => {
       try {
@@ -70,25 +64,7 @@ export const createFroalaConfig = ({
       }
     },
     'video.inserted': onMediaInserted,
-    'video.removed': (video: unknown) => {
-      const link = getMediaSource(video)
-      if (link) onMediaRemoved(link)
-    },
     'image.error': () => onUploadError('Không thể tải ảnh lên. Hãy kiểm tra định dạng và dung lượng tệp.'),
     'video.error': () => onUploadError('Không thể tải video lên. Hãy kiểm tra định dạng và dung lượng tệp.'),
   },
 })
-
-interface FroalaMediaElement {
-  attr?: (name: string) => unknown
-  find?: (selector: string) => FroalaMediaElement
-}
-
-const getMediaSource = (value: unknown): string | null => {
-  if (typeof value !== 'object' || value === null) return null
-  const element = value as FroalaMediaElement
-  const directSource = element.attr?.('src')
-  if (typeof directSource === 'string') return directSource
-  const nestedSource = element.find?.('img,video,source').attr?.('src')
-  return typeof nestedSource === 'string' ? nestedSource : null
-}
