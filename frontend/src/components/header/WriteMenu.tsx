@@ -1,6 +1,9 @@
 import { DropdownMenu, type DropdownMenuOption } from '@astryxdesign/core/DropdownMenu'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { appRoutes } from '../../appRoutes'
+import { useAuth } from '../../auth/authState'
+import { AuthRequiredDialog } from '../AuthRequiredDialog'
 
 const PenIcon = () => (
   <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
@@ -11,9 +14,18 @@ const PenIcon = () => (
 
 export const WriteMenu = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const write = (type: 'article' | 'question') => {
+    if (!user) {
+      setIsAuthOpen(true)
+      return
+    }
+    navigate(`${appRoutes.write}?type=${type}`)
+  }
   const items: DropdownMenuOption[] = [
-    { id: 'article', label: 'Viết bài', onClick: () => navigate(`${appRoutes.write}?type=article`) },
-    { id: 'question', label: 'Đặt câu hỏi', onClick: () => navigate(`${appRoutes.write}?type=question`) },
+    { id: 'article', label: 'Viết bài', onClick: () => write('article') },
+    { id: 'question', label: 'Đặt câu hỏi', onClick: () => write('question') },
   ]
 
   return (
@@ -25,6 +37,7 @@ export const WriteMenu = () => {
         menuWidth={180}
         placement="below"
       />
+      <AuthRequiredDialog isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </span>
   )
 }

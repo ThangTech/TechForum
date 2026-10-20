@@ -72,7 +72,7 @@ export const AnswerList = ({
       {actionError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{actionError}</p>}
       <div className="grid gap-4">
         {data.items.map((answer) => (
-          <article className={`scroll-mt-32 rounded-xl border bg-white p-5 sm:p-6 ${answer.parentAnswerId ? 'ml-5 border-blue-200 sm:ml-10' : 'border-slate-200'}`} id={`answer-${answer.id}`} key={answer.id}>
+          <article className={`min-w-0 scroll-mt-32 rounded-xl border bg-white p-5 sm:p-6 ${answer.isAccepted ? 'border-green-400' : answer.parentAnswerId ? 'ml-3 border-blue-200 sm:ml-8' : 'border-slate-200'}`} id={`answer-${answer.id}`} key={answer.id}>
             <header className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
               <Link className="font-bold text-slate-800 hover:text-blue-700" to={appRoutes.member(answer.author.id)}>
                 {answer.author.displayName}
@@ -87,7 +87,7 @@ export const AnswerList = ({
               {answer.replyingTo && <span className="text-xs text-slate-500">đang trả lời {answer.replyingTo.displayName}</span>}
             </header>
             <div
-              className="fr-view mt-4 text-sm leading-7 text-slate-800 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100"
+              className="fr-view reading-content mt-4 text-sm leading-7 text-slate-800 [&_a]:text-blue-700 [&_a]:underline [&_p]:mb-3 [&_p:last-child]:mb-0"
               dangerouslySetInnerHTML={{ __html: answer.bodyHtml }}
             />
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
@@ -113,7 +113,7 @@ export const AnswerList = ({
       </div>
 
       {data.totalPages > 1 && (
-        <nav className="mt-5 flex items-center justify-between gap-4" aria-label="Phân trang câu trả lời">
+        <nav className="mt-5 flex flex-wrap items-center justify-between gap-4" aria-label="Phân trang câu trả lời">
           <Button
             isDisabled={data.page <= 1}
             label="Trang trước"

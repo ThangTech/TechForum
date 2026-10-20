@@ -102,12 +102,12 @@ export const DiscussionSection = ({
   }
 
   return (
-    <section className="mt-8" aria-labelledby="discussion-title">
+    <section className="mt-8 scroll-mt-6" aria-labelledby="discussion-title">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Thảo luận</p>
           <h2 className="mt-1 text-2xl font-extrabold text-slate-950" id="discussion-title">
-            {data ? `${data.totalItems} câu trả lời` : 'Câu trả lời'}
+            {data ? `${data.totalItems} ${topicType === 'question' ? 'câu trả lời và phản hồi' : 'phản hồi'}` : 'Trao đổi'}
           </h2>
         </div>
         {isLocked && (
@@ -153,8 +153,10 @@ export const DiscussionSection = ({
             data={data}
             isLocked={isLocked}
             onAccept={(answerId) => void handleAccept(answerId)}
-            onDeleted={(answerId) => {
-              setData((current) => current ? { ...current, items: current.items.filter((answer) => answer.id !== answerId), totalItems: Math.max(0, current.totalItems - 1) } : current)
+            onDeleted={() => {
+              const lastPage = Math.max(1, Math.ceil((data.totalItems - 1) / PAGE_SIZE))
+              setPage(Math.min(page, lastPage))
+              setRequestVersion((version) => version + 1)
               setSuccessMessage('Đã xóa câu trả lời.')
             }}
             onLoginRequired={() => setIsAuthDialogOpen(true)}

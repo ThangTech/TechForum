@@ -11,6 +11,7 @@ import { UsefulStarButton } from '../components/interactions/UsefulStarButton'
 import { BookmarkButton } from '../components/interactions/BookmarkButton'
 import { ReportAction } from '../components/reports/ReportAction'
 import { TopicEngagementBar } from '../components/interactions/TopicEngagementBar'
+import { useAuth } from '../auth/authState'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -20,6 +21,7 @@ const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 export const TopicDetailPage = () => {
   const { id } = useParams()
   const topicId = Number(id)
+  const { user } = useAuth()
   const [topic, setTopic] = useState<TopicDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,7 +60,7 @@ export const TopicDetailPage = () => {
   return (
     <main className="main-area" id="main-content">
       <div className="mx-auto w-[min(820px,calc(100%-40px))] py-10 sm:py-14">
-        <Link className="text-sm font-semibold text-blue-700 hover:underline" to="/">
+        <Link className="text-sm font-semibold text-blue-700 hover:underline" to={topic?.type === 'question' ? appRoutes.questions : appRoutes.articles}>
           ← Quay lại danh sách
         </Link>
 
@@ -78,6 +80,7 @@ export const TopicDetailPage = () => {
                 <TopicTypeBadge type={topic.type} />
                 {topic.isPinned && <span className="font-semibold text-blue-700">Đã ghim</span>}
                 {topic.isDiscussionLocked && <span className="font-semibold text-slate-500">Đã khóa thảo luận</span>}
+                {user?.id === topic.author.id && <Link className="ml-auto font-semibold text-blue-700 hover:underline" to={appRoutes.editTopic(topic.id)}>Chỉnh sửa nội dung</Link>}
               </div>
               <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-4xl">
                 {topic.title}
@@ -90,21 +93,21 @@ export const TopicDetailPage = () => {
                 <span aria-hidden="true">·</span>
                 <span>{formatDateTime(topic.publishedAtUtc)}</span>
                 <span aria-hidden="true">·</span>
-                <span>{topic.category.name}</span>
+                <Link className="hover:text-blue-700" to={`${topic.type === 'question' ? appRoutes.questions : appRoutes.articles}?categoryId=${topic.category.id}`}>{topic.category.name}</Link>
               </div>
               {topic.tags.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {topic.tags.map((tag) => (
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600" key={tag.id}>
+                    <Link className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-blue-700" key={tag.id} to={`${appRoutes.search}?tagId=${tag.id}`}>
                       #{tag.name}
-                    </span>
+                    </Link>
                   ))}
                 </div>
               )}
             </header>
 
             <div
-              className="fr-view p-6 text-base leading-8 text-slate-800 sm:p-8 [&_a]:text-blue-700 [&_a]:underline [&_code]:rounded [&_code]:bg-slate-100 [&_code]:px-1.5 [&_img]:h-auto [&_img]:max-w-full [&_p]:mb-5 [&_pre]:mb-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-950 [&_pre]:p-4 [&_pre]:text-slate-100 [&_video]:block [&_video]:max-h-[70vh] [&_video]:w-full [&_video]:rounded-lg [&_video]:bg-black"
+              className="fr-view reading-content p-6 text-base leading-8 text-slate-800 sm:p-8 [&_a]:text-blue-700 [&_a]:underline [&_p]:mb-5"
               dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(topic.bodyHtml) }}
             />
             <footer className="border-t border-slate-200 bg-slate-50 px-6 py-5 sm:px-8">

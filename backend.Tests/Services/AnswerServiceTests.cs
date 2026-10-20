@@ -10,6 +10,70 @@ namespace TechForum.Api.Tests.Services;
 public sealed class AnswerServiceTests
 {
     [Fact]
+    public async Task AcceptAsync_RejectsAnotherMemberWithoutChangingSolution()
+    {
+        var topic = CreateTopic();
+        topic.AcceptedAnswerId = 9;
+        var service = new AnswerService(new FakeAnswerRepository(CreateAnswer(10, "member-a")),
+            new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.AcceptAsync(1, 10, "another-member", CancellationToken.None);
+
+        Assert.Equal(AcceptAnswerFailure.NotFound, result.Failure);
+        Assert.Equal(9, topic.AcceptedAnswerId);
+    }
+
+    [Fact]
+    public async Task AcceptAsync_OwnerCanReplaceSolution()
+    {
+        var topic = CreateTopic();
+        topic.AcceptedAnswerId = 9;
+        var service = new AnswerService(new FakeAnswerRepository(CreateAnswer(10, "member-a")),
+            new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.AcceptAsync(1, 10, topic.AuthorId, CancellationToken.None);
+
+        Assert.Equal(AcceptAnswerFailure.None, result.Failure);
+        Assert.Equal(10, topic.AcceptedAnswerId);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task AcceptAsync_RejectsDraftOrHiddenQuestion(bool draft, bool hidden)
+    {
+        var topic = CreateTopic();
+        topic.Status = draft ? TopicStatus.Draft : TopicStatus.Published;
+        topic.IsHiddenByModerator = hidden;
+        var service = new AnswerService(new FakeAnswerRepository(CreateAnswer(10, "member-a")),
+            new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.AcceptAsync(1, 10, topic.AuthorId, CancellationToken.None);
+
+        Assert.Equal(AcceptAnswerFailure.NotFound, result.Failure);
+        Assert.Null(topic.AcceptedAnswerId);
+    }
+
+    [Fact]
+    public async Task AcceptAsync_RejectsNestedReply()
+    {
+        var topic = CreateTopic();
+        var reply = CreateAnswer(11, "member-a");
+        reply.ParentAnswerId = 10;
+        var service = new AnswerService(new FakeAnswerRepository(reply),
+            new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.AcceptAsync(1, 11, topic.AuthorId, CancellationToken.None);
+
+        Assert.Equal(AcceptAnswerFailure.NotFound, result.Failure);
+        Assert.Null(topic.AcceptedAnswerId);
+    }
+
+    [Fact]
     public async Task CreateAsync_WhenReplyingToReply_NormalizesToRootAnswer()
     {
         var root = CreateAnswer(10, "member-root");
@@ -104,7 +168,8 @@ public sealed class AnswerServiceTests
     private sealed class FakeTopicRepository(Topic topic) : ITopicRepository
     {
         public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<Topic?>(topic);
-        public Task<Topic?> GetOwnedByIdAsync(int id, string authorId, CancellationToken cancellationToken) => Task.FromResult<Topic?>(null);
+        public Task<Topic?> GetOwnedByIdAsync(int id, string authorId, CancellationToken cancellationToken) =>
+            Task.FromResult(id == topic.Id && authorId == topic.AuthorId && !topic.IsDeleted ? topic : null);
         public Task<TopicPage> GetPublicPageAsync(TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
         public Task<TopicPage> GetOwnedPageAsync(string authorId, TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
         public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<Category?>(null);
