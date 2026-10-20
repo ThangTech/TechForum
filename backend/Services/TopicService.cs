@@ -25,7 +25,10 @@ public sealed partial class TopicService(
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
 
         return new PagedResultDto<TopicSummaryDto>(
-            page.Items.Select(MapSummary).ToList(),
+            page.Items.Select(topic => MapSummary(topic) with
+            {
+                Discussion = page.Discussions?.GetValueOrDefault(topic.Id)
+            }).ToList(),
             query.Page,
             query.PageSize,
             page.TotalItems,

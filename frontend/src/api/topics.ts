@@ -6,6 +6,13 @@ export interface TopicCategory { id: number; name: string; slug: string }
 export interface TopicAuthor { id: string; displayName: string }
 export interface TopicTag { id: number; name: string; slug: string }
 export interface TopicMedia { id: string; path: string; contentType: string }
+export interface TopicDiscussion {
+  answerCount: number
+  hasAcceptedAnswer: boolean
+  lastActivityAtUtc: string | null
+  starCount: number
+  bookmarkCount: number
+}
 
 export interface TopicSummary {
   id: number
@@ -21,6 +28,7 @@ export interface TopicSummary {
   isDiscussionLocked: boolean
   viewCount: number
   shareCount: number
+  discussion?: TopicDiscussion | null
 }
 
 export interface TopicDetail extends TopicSummary {
@@ -124,7 +132,15 @@ export const isTopicSummary = (value: unknown): value is TopicSummary => {
     typeof value.isPinned === 'boolean' &&
     typeof value.isDiscussionLocked === 'boolean' &&
     typeof value.viewCount === 'number' &&
-    typeof value.shareCount === 'number'
+    typeof value.shareCount === 'number' &&
+    (value.discussion == null || (
+      isRecord(value.discussion) &&
+      Number.isInteger(value.discussion.answerCount) && Number(value.discussion.answerCount) >= 0 &&
+      typeof value.discussion.hasAcceptedAnswer === 'boolean' &&
+      (value.discussion.lastActivityAtUtc === null || typeof value.discussion.lastActivityAtUtc === 'string') &&
+      Number.isInteger(value.discussion.starCount) && Number(value.discussion.starCount) >= 0 &&
+      Number.isInteger(value.discussion.bookmarkCount) && Number(value.discussion.bookmarkCount) >= 0
+    ))
   )
 }
 

@@ -3,6 +3,12 @@ namespace TechForum.Api.Dtos;
 public sealed record TopicCategoryDto(int Id, string Name, string Slug);
 public sealed record TopicAuthorDto(string Id, string DisplayName);
 public sealed record TopicTagDto(int Id, string Name, string Slug);
+public sealed record TopicDiscussionDto(
+    int AnswerCount,
+    bool HasAcceptedAnswer,
+    DateTimeOffset? LastActivityAtUtc,
+    int StarCount,
+    int BookmarkCount);
 
 public sealed record TopicSummaryDto(
     int Id,
@@ -17,7 +23,8 @@ public sealed record TopicSummaryDto(
     bool IsPinned,
     bool IsDiscussionLocked,
     int ViewCount,
-    int ShareCount);
+    int ShareCount,
+    TopicDiscussionDto? Discussion = null);
 
 public sealed record TopicDetailDto(
     int Id,

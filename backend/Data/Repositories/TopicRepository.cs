@@ -60,7 +60,27 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
-        return new TopicPage(items, totalItems);
+        var topicIds = items.Select(topic => topic.Id).ToArray();
+        // Chỉ tổng hợp cho trang hiện tại, không tải toàn bộ nội dung câu trả lời.
+        var discussions = await PublicTopics()
+            .Where(topic => topicIds.Contains(topic.Id))
+            .Select(topic => new
+            {
+                topic.Id,
+                Summary = new TopicDiscussionDto(
+                    topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator),
+                    topic.Type == TopicType.Question && topic.Answers.Any(answer =>
+                        answer.Id == topic.AcceptedAnswerId &&
+                        !answer.IsDeleted && !answer.IsHiddenByModerator),
+                    topic.Answers
+                        .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator)
+                        .Max(answer => (DateTimeOffset?)(answer.UpdatedAtUtc ?? answer.CreatedAtUtc)),
+                    topic.Stars.Count,
+                    topic.Bookmarks.Count)
+            })
+            .ToDictionaryAsync(item => item.Id, item => item.Summary, cancellationToken);
+
+        return new TopicPage(items, totalItems, discussions);
     }
 
     public async Task<TopicPage> GetOwnedPageAsync(

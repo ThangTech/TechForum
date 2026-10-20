@@ -7,6 +7,7 @@ interface TopicSummaryItemProps {
   topic: TopicSummary
   showAuthor?: boolean
   onFilter?: (key: 'categoryId' | 'tagId', value: number) => void
+  isDiscussion?: boolean
 }
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
@@ -17,17 +18,19 @@ export const TopicSummaryItem = ({
   topic,
   showAuthor = true,
   onFilter,
+  isDiscussion = false,
 }: TopicSummaryItemProps) => (
   <article>
     <div className="flex flex-wrap items-center gap-2">
       <TopicTypeBadge type={topic.type} />
       {topic.isPinned && <span className="text-xs font-semibold text-blue-700">Đã ghim</span>}
       {topic.isDiscussionLocked && <span className="text-xs font-semibold text-slate-500">Đã khóa thảo luận</span>}
+      {topic.type === 'question' && topic.discussion?.hasAcceptedAnswer && <span className="rounded bg-green-50 px-2 py-1 text-xs font-semibold text-green-800">✓ Đã có lời giải</span>}
     </div>
     <Link className="mt-3 block text-lg font-bold leading-7 text-slate-950 hover:text-blue-700" to={appRoutes.topic(topic.id)}>
       {topic.title}
     </Link>
-    <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p>
+    {!isDiscussion && <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{topic.summary}</p>}
     <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-500">
       {showAuthor && (
         <>
@@ -46,6 +49,19 @@ export const TopicSummaryItem = ({
       ) : (
         <span>{topic.category.name}</span>
       )}
+    </div>
+    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600">
+      <span>{topic.viewCount} lượt xem</span>
+      {topic.discussion && <>
+        <Link className="font-semibold text-blue-700 hover:underline" to={`${appRoutes.topic(topic.id)}#discussion-title`}>
+          {topic.discussion.answerCount} {topic.type === 'question' ? 'câu trả lời và phản hồi' : 'phản hồi'}
+        </Link>
+        <span>{topic.discussion.starCount} sao hữu ích</span>
+        <span>{topic.discussion.bookmarkCount} lượt lưu</span>
+        {isDiscussion && topic.discussion.lastActivityAtUtc && <time dateTime={topic.discussion.lastActivityAtUtc}>
+          Trao đổi gần nhất: {new Date(topic.discussion.lastActivityAtUtc).toLocaleString('vi-VN')}
+        </time>}
+      </>}
     </div>
     {topic.tags.length > 0 && (
       <div className="mt-3 flex flex-wrap gap-2">

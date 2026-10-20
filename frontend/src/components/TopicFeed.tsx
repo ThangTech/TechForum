@@ -69,7 +69,7 @@ export const TopicFeed = ({
         <ul className="divide-y divide-slate-200">
           {data.items.map((topic) => (
             <li className="p-5 sm:p-6" key={topic.id}>
-              <TopicSummaryItem onFilter={onFilter} topic={topic} />
+              <TopicSummaryItem onFilter={onFilter} topic={topic} isDiscussion={isDiscussion} />
             </li>
           ))}
         </ul>

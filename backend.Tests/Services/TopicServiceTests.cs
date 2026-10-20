@@ -14,7 +14,10 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Page = new TopicPage([CreateTopic()], 11)
+            Page = new TopicPage([CreateTopic()], 11, new Dictionary<int, TopicDiscussionDto>
+            {
+                [10] = new(3, true, DateTimeOffset.Parse("2026-10-01T10:00:00Z"), 2, 1)
+            })
         };
         var service = CreateService(repository);
         var query = new TopicQuery { Page = 2, PageSize = 5, Type = TopicType.Question };
@@ -30,6 +33,9 @@ public sealed class TopicServiceTests
         Assert.Equal("ASP.NET Core", item.Tags[0].Name);
         Assert.Equal("TypeScript", item.Tags[1].Name);
         Assert.Same(query, repository.LastQuery);
+        Assert.Equal(3, item.Discussion?.AnswerCount);
+        Assert.True(item.Discussion?.HasAcceptedAnswer);
+        Assert.Equal(2, item.Discussion?.StarCount);
     }
 
     [Fact]
