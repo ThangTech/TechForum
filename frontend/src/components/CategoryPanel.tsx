@@ -6,6 +6,8 @@ interface CategoryPanelProps {
   error: string | null
   isLoading: boolean
   onRetry: () => void
+  selectedId?: number
+  onSelect: (id?: number) => void
 }
 
 const getCategoryMark = (name: string) => {
@@ -17,13 +19,14 @@ export const CategoryPanel = ({
   error,
   isLoading,
   onRetry,
+  selectedId,
+  onSelect,
 }: CategoryPanelProps) => {
   return (
     <section className="panel" id="categories" aria-labelledby="categories-title">
       <div className="panel__heading">
         <div>
-          <h2 id="categories-title">Chuyên mục công nghệ</h2>
-          <p>Duyệt các lĩnh vực đang có trên TechForum.</p>
+          <h2 id="categories-title">Chuyên mục</h2>
         </div>
         {!isLoading && !error && (
           <span className="panel__count">{categories.length} chuyên mục</span>
@@ -36,7 +39,7 @@ export const CategoryPanel = ({
         {!isLoading && error && (
           <div className="status-box" role="alert">
             <h3>Chưa tải được chuyên mục</h3>
-            <p>{error} Kiểm tra API đang chạy rồi thử lại.</p>
+            <p>{error}</p>
             <div className="retry-action">
               <Button label="Thử lại" variant="primary" onClick={onRetry} />
             </div>
@@ -52,15 +55,19 @@ export const CategoryPanel = ({
 
         {!isLoading && !error && categories.length > 0 && (
           <ul className="category-list">
+            <li>
+              <button className="category-filter" aria-pressed={!selectedId} onClick={() => onSelect()} type="button">
+                Tất cả chuyên mục
+              </button>
+            </li>
             {categories.map((category) => (
-              <li className="category-item" key={category.id}>
+              <li key={category.id}>
+                <button className="category-filter" aria-pressed={selectedId === category.id} onClick={() => onSelect(category.id)} type="button" title={category.description || undefined}>
                 <span className="category-item__mark" aria-hidden="true">
                   {getCategoryMark(category.name)}
                 </span>
-                <div>
-                  <h3>{category.name}</h3>
-                  <p>{category.description || 'Chưa có mô tả cho chuyên mục này.'}</p>
-                </div>
+                <span>{category.name}</span>
+                </button>
               </li>
             ))}
           </ul>

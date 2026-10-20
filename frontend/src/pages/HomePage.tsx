@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { getTags, type Tag } from '../api/tags'
@@ -35,6 +35,8 @@ export const HomePage = ({
   const categoryId = readPositiveInteger(searchParams.get('categoryId'))
   const tagId = readPositiveInteger(searchParams.get('tagId'))
   const keyword = searchParams.get('keyword')?.trim() ?? ''
+  const typeParam = searchParams.get('type')
+  const selectedType = fixedType ?? (typeParam === 'Article' || typeParam === 'Question' ? typeParam : undefined)
 
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -48,7 +50,6 @@ export const HomePage = ({
   const [areTopicsLoading, setAreTopicsLoading] = useState(true)
   const [topicError, setTopicError] = useState<string | null>(null)
   const [topicRequestVersion, setTopicRequestVersion] = useState(0)
-  const [searchKeyword, setSearchKeyword] = useState(keyword)
   const [questionHighlights, setQuestionHighlights] = useState<QuestionHighlights | null>(null)
   const [areHighlightsLoading, setAreHighlightsLoading] = useState(true)
   const [highlightsError, setHighlightsError] = useState<string | null>(null)
@@ -117,7 +118,7 @@ export const HomePage = ({
           page,
           pageSize: 10,
           keyword: keyword || undefined,
-          type: fixedType,
+          type: selectedType,
           categoryId,
           tagId,
           sort,
@@ -132,7 +133,7 @@ export const HomePage = ({
 
     void loadTopics()
     return () => controller.abort()
-  }, [page, keyword, fixedType, categoryId, tagId, sort, topicRequestVersion])
+  }, [page, keyword, selectedType, categoryId, tagId, sort, topicRequestVersion])
 
   const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams)
@@ -143,9 +144,8 @@ export const HomePage = ({
     setSearchParams(next)
   }
 
-  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    updateSearchParams({ keyword: searchKeyword.trim() || undefined, page: undefined })
+  const handleSearch = (value: string) => {
+    updateSearchParams({ keyword: value.trim() || undefined, page: undefined })
   }
 
   const handleFilter = (key: 'categoryId' | 'tagId', value: number) => {
@@ -163,33 +163,57 @@ export const HomePage = ({
         </section>
 
         <div className="content-grid">
+          <aside className="browse-filters" aria-label="Lọc nội dung">
+            <details open>
+              <summary>Chuyên mục và thẻ</summary>
+              <div className="grid gap-4">
+                <CategoryPanel categories={categories} error={error} isLoading={isLoading}
+                  onRetry={() => setRequestVersion((version) => version + 1)}
+                  selectedId={categoryId}
+                  onSelect={(id) => updateSearchParams({ categoryId: id, page: undefined })} />
+                <TagPanel tags={tags} error={tagError} isLoading={areTagsLoading}
+                  onRetry={() => setTagRequestVersion((version) => version + 1)}
+                  selectedId={tagId}
+                  onSelect={(id) => updateSearchParams({ tagId: id === tagId ? undefined : id, page: undefined })} />
+              </div>
+            </details>
+          </aside>
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <span>{sort === 'discussion' ? 'Theo phản hồi mới nhất (gồm chỉnh sửa)' : 'Bài ghim trước, sau đó mới nhất'}</span>
+              {!fixedType && <label className="flex items-center gap-2">
+                Loại nội dung
+                <select className="rounded border border-slate-300 bg-white p-2" value={selectedType ?? ''} onChange={(event) => updateSearchParams({ type: event.target.value, page: undefined })}>
+                  <option value="">Tất cả</option>
+                  <option value="Article">Bài viết</option>
+                  <option value="Question">Câu hỏi</option>
+                </select>
+              </label>}
+            </div>
+            {(categoryId || tagId || keyword) && <div className="mb-3 flex flex-wrap items-center gap-2 text-sm" aria-label="Bộ lọc đang áp dụng">
+              {keyword && <span>Từ khóa: “{keyword}”</span>}
+              {categoryId && <button className="tag-filter" onClick={() => updateSearchParams({ categoryId: undefined, page: undefined })} type="button">Bỏ chuyên mục: {categories.find((item) => item.id === categoryId)?.name ?? categoryId} ×</button>}
+              {tagId && <button className="tag-filter" onClick={() => updateSearchParams({ tagId: undefined, page: undefined })} type="button">Bỏ thẻ: {tags.find((item) => item.id === tagId)?.name ?? tagId} ×</button>}
+              <button className="font-semibold text-blue-700 underline" onClick={() => {
+                updateSearchParams({ keyword: undefined, categoryId: undefined, tagId: undefined, page: undefined })
+              }} type="button">Xóa bộ lọc</button>
+            </div>}
           <TopicFeed
             key={keyword}
             data={topics}
             error={topicError}
             isLoading={areTopicsLoading}
-            keyword={searchKeyword}
+            keyword={keyword}
             onFilter={handleFilter}
-            onKeywordChange={setSearchKeyword}
             onPageChange={(nextPage) => updateSearchParams({ page: nextPage <= 1 ? undefined : nextPage })}
             onRetry={() => setTopicRequestVersion((version) => version + 1)}
             onSearch={handleSearch}
-            selectedType={fixedType?.toLowerCase() as TopicType | undefined}
+            selectedType={selectedType?.toLowerCase() as TopicType | undefined}
+            isDiscussion={sort === 'discussion'}
           />
+          </div>
 
-          <aside className="grid gap-6">
-            <CategoryPanel
-              categories={categories}
-              error={error}
-              isLoading={isLoading}
-              onRetry={() => setRequestVersion((version) => version + 1)}
-            />
-            <TagPanel
-              tags={tags}
-              error={tagError}
-              isLoading={areTagsLoading}
-              onRetry={() => setTagRequestVersion((version) => version + 1)}
-            />
+          <aside className="browse-questions" aria-label="Câu hỏi cộng đồng">
             <QuestionHighlightsPanel
               data={questionHighlights}
               error={highlightsError}

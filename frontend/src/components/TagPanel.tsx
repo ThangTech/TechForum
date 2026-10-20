@@ -8,9 +8,11 @@ interface TagPanelProps {
   isLoading: boolean
   error: string | null
   onRetry: () => void
+  selectedId?: number
+  onSelect?: (id: number) => void
 }
 
-export const TagPanel = ({ tags, isLoading, error, onRetry }: TagPanelProps) => {
+export const TagPanel = ({ tags, isLoading, error, onRetry, selectedId, onSelect }: TagPanelProps) => {
   return (
     <section className="rounded-xl border border-slate-200 bg-white" aria-labelledby="tag-title">
       <div className="border-b border-slate-200 p-5">
@@ -38,9 +40,11 @@ export const TagPanel = ({ tags, isLoading, error, onRetry }: TagPanelProps) => 
         <ul className="flex list-none flex-wrap gap-2 p-5">
           {tags.map((tag) => (
             <li key={tag.id}>
-              <Link className="block rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-blue-700 hover:border-blue-400 hover:bg-blue-100" to={appRoutes.skill(tag.id)}>
+              {onSelect ? <button className="tag-filter" aria-pressed={selectedId === tag.id} onClick={() => onSelect(tag.id)} type="button">
                 #{tag.name}
-              </Link>
+              </button> : <Link className="block rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-blue-700 hover:border-blue-400 hover:bg-blue-100" to={appRoutes.skill(tag.id)}>
+                #{tag.name}
+              </Link>}
             </li>
           ))}
         </ul>

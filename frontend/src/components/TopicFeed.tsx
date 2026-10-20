@@ -1,5 +1,5 @@
 import { Button } from '@astryxdesign/core/Button'
-import type { FormEvent } from 'react'
+import { useState } from 'react'
 import type { TopicPage, TopicType } from '../api/topics'
 import { TopicSummaryItem } from './topics/TopicSummaryItem'
 
@@ -8,12 +8,12 @@ interface TopicFeedProps {
   error: string | null
   isLoading: boolean
   keyword: string
-  onKeywordChange: (value: string) => void
-  onSearch: (event: FormEvent<HTMLFormElement>) => void
+  onSearch: (keyword: string) => void
   onPageChange: (page: number) => void
   onRetry: () => void
   onFilter: (key: 'categoryId' | 'tagId', value: number) => void
   selectedType?: TopicType
+  isDiscussion?: boolean
 }
 
 export const TopicFeed = ({
@@ -21,27 +21,34 @@ export const TopicFeed = ({
   error,
   isLoading,
   keyword,
-  onKeywordChange,
   onSearch,
   onPageChange,
   onRetry,
   onFilter,
   selectedType,
-}: TopicFeedProps) => (
+  isDiscussion,
+}: TopicFeedProps) => {
+  const [draftKeyword, setDraftKeyword] = useState(keyword)
+  return (
   <section aria-labelledby="topic-feed-title" className="overflow-hidden rounded-xl border border-slate-200 bg-white" data-tour="content-feed">
     <div className="border-b border-slate-200 p-5 sm:p-6">
-      <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Nội dung mới</p>
+      <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{isDiscussion ? 'Đang có trao đổi' : 'Khám phá nội dung'}</p>
       <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950" id="topic-feed-title">
         {selectedType === 'article' ? 'Bài viết' : selectedType === 'question' ? 'Câu hỏi' : 'Bài viết và câu hỏi'}
       </h2>
-      <form className="mt-4 flex gap-2" onSubmit={onSearch}>
+      <form className="mt-4 flex gap-2" onSubmit={(event) => {
+        event.preventDefault()
+        onSearch(draftKeyword)
+      }}>
         <label className="sr-only" htmlFor="topic-search">Tìm kiếm nội dung</label>
         <input
           className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           id="topic-search"
-          onChange={(event) => onKeywordChange(event.target.value)}
+          onChange={(event) => {
+            setDraftKeyword(event.target.value)
+          }}
           placeholder="Tìm theo tiêu đề hoặc tóm tắt"
-          value={keyword}
+          value={draftKeyword}
         />
         <Button label="Tìm kiếm" type="submit" variant="primary" />
       </form>
@@ -66,14 +73,15 @@ export const TopicFeed = ({
             </li>
           ))}
         </ul>
-        <div className="flex items-center justify-between border-t border-slate-200 p-4 text-sm text-slate-600">
+        <nav aria-label="Phân trang nội dung" className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 p-4 text-sm text-slate-600">
           <span>Trang {data.page} / {Math.max(data.totalPages, 1)} · {data.totalItems} nội dung</span>
           <div className="flex gap-2">
             <Button isDisabled={data.page <= 1} label="Trang trước" onClick={() => onPageChange(data.page - 1)} variant="secondary" />
             <Button isDisabled={data.page >= data.totalPages} label="Trang sau" onClick={() => onPageChange(data.page + 1)} variant="secondary" />
           </div>
-        </div>
+        </nav>
       </>
     )}
   </section>
 )
+}
