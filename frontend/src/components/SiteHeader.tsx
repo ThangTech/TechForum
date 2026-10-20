@@ -1,8 +1,9 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
 import { appRoutes } from '../appRoutes'
 import { NotificationLink } from './notifications/NotificationLink'
+import { createAuthUrl } from '../auth/returnUrl'
 
 const AccountMenu = lazy(() => import('./account/AccountMenu').then((module) => ({
   default: module.AccountMenu,
@@ -14,6 +15,8 @@ const WriteMenu = lazy(() => import('./header/WriteMenu').then((module) => ({
 export const SiteHeader = () => {
   const { user, isLoading } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnUrl = `${location.pathname}${location.search}${location.hash}`
   const [keyword, setKeyword] = useState('')
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
@@ -25,13 +28,14 @@ export const SiteHeader = () => {
 
   return (
     <header className="site-header">
+      <a className="skip-link" href="#main-content">Đến nội dung chính</a>
       <div className="header-bar">
         <NavLink className="brand" to={appRoutes.home} aria-label="TechForum - danh sách bài viết">
           Tech<span>Forum</span>
         </NavLink>
 
         <nav className="primary-nav" aria-label="Điều hướng chính" data-tour="content-types">
-          <NavLink to={appRoutes.home} end>Bài viết</NavLink>
+          <NavLink to={appRoutes.articles} className={() => location.pathname === '/' || location.pathname === appRoutes.articles ? 'active' : undefined}>Bài viết</NavLink>
           <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
           <NavLink to={appRoutes.discussions}>Thảo luận</NavLink>
         </nav>
@@ -60,8 +64,8 @@ export const SiteHeader = () => {
             </>
           ) : (
             <>
-              <NavLink className="header-link" to={appRoutes.login}>Đăng nhập</NavLink>
-              <NavLink className="header-register" to={appRoutes.register}>Đăng ký</NavLink>
+              <NavLink className="header-link" to={createAuthUrl(appRoutes.login, returnUrl)}>Đăng nhập</NavLink>
+              <NavLink className="header-register" to={createAuthUrl(appRoutes.register, returnUrl)}>Đăng ký</NavLink>
             </>
           )}
         </div>

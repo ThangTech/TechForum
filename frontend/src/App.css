@@ -32,16 +32,16 @@
 .header-bar,
 .page-content,
 .site-footer__inner {
-  width: min(1120px, calc(100% - 40px));
+  width: min(1240px, calc(100% - 40px));
   margin: 0 auto;
 }
 
 .header-bar {
   min-height: 68px;
   display: grid;
-  grid-template-columns: auto auto minmax(220px, 1fr) auto;
+  grid-template-columns: auto auto minmax(160px, 1fr) auto;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
 }
 
 .brand {
@@ -79,6 +79,25 @@
   color: var(--color-text);
   background: transparent;
   font: inherit;
+}
+
+.search-unavailable:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  top: -80px;
+  left: 16px;
+  z-index: 100;
+  padding: 12px 16px;
+  color: white;
+  background: var(--color-primary-dark);
+}
+
+.skip-link:focus {
+  top: 8px;
 }
 
 .search-unavailable input::placeholder {
@@ -184,18 +203,25 @@
   color: var(--color-primary);
 }
 
+.primary-nav a.active {
+  text-decoration: underline;
+  text-underline-offset: 8px;
+}
+
 .main-area {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: var(--color-page);
 }
 
 .page-content {
-  padding-block: 48px 64px;
+  padding-block: 28px 48px;
 }
 
 .intro {
   max-width: 720px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .eyebrow {
@@ -210,15 +236,15 @@
 .intro h1 {
   margin: 0;
   color: var(--color-heading);
-  font-size: clamp(2rem, 4vw, 3.25rem);
-  line-height: 1.12;
-  letter-spacing: -0.045em;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.35;
+  letter-spacing: -0.025em;
 }
 
 .intro__description {
-  margin: 16px 0 0;
+  margin: 8px 0 0;
   color: var(--color-muted);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   line-height: 1.7;
 }
 
@@ -339,8 +365,8 @@
   margin-top: 18px;
 }
 
-a:focus-visible {
-  outline: 3px solid var(--color-focus);
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-primary);
   outline-offset: 3px;
 }
 
@@ -604,6 +630,19 @@ a:focus-visible {
   overflow-wrap: anywhere;
 }
 
+@media (max-width: 1080px) {
+  .header-bar {
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    padding-block: 12px;
+  }
+
+  .primary-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
 @media (max-width: 760px) {
   .header-bar,
   .page-content,
@@ -612,18 +651,28 @@ a:focus-visible {
   }
 
   .header-bar {
-    grid-template-columns: 1fr auto;
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
   }
 
   .search-unavailable {
-    display: none;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .account-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 8px;
+    min-width: 0;
   }
 
   .primary-nav {
     grid-column: 1 / -1;
     grid-row: 2;
-    padding-bottom: 12px;
+    padding-block: 4px;
   }
 
   .account-state > span:last-child {
@@ -635,7 +684,7 @@ a:focus-visible {
   }
 
   .page-content {
-    padding-block: 32px 44px;
+    padding-block: 24px 40px;
   }
 
   .panel__heading,

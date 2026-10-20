@@ -20,7 +20,7 @@ export const WriteMenu = () => {
     <span data-tour="write" title="Viết nội dung">
       <DropdownMenu
         alignment="end"
-        button={{ icon: <PenIcon />, isIconOnly: true, label: 'Viết nội dung', variant: 'secondary' }}
+        button={{ icon: <PenIcon />, label: 'Viết', variant: 'primary' }}
         items={items}
         menuWidth={180}
         placement="below"
