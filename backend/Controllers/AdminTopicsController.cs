@@ -23,6 +23,15 @@ public sealed class AdminTopicsController(IAdminTopicService topicService) : Con
             : Ok(result);
     }
 
+    [HttpGet("{topicId:int}")]
+    public async Task<ActionResult<AdminTopicDetailDto>> GetById(int topicId, CancellationToken cancellationToken)
+    {
+        var result = await topicService.GetByIdAsync(topicId, cancellationToken);
+        return result is null
+            ? NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy nội dung" })
+            : Ok(result);
+    }
+
     [HttpPut("{topicId:int}/moderation")]
     public async Task<ActionResult<AdminTopicDto>> Moderate(
         int topicId,

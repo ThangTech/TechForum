@@ -14,6 +14,8 @@ public sealed record AdminTopicDto(
     bool IsDiscussionLocked,
     bool IsPinned);
 
+public sealed record AdminTopicDetailDto(AdminTopicDto Topic, string BodyHtml);
+
 public sealed class AdminTopicQuery
 {
     public int Page { get; init; } = 1;

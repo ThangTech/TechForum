@@ -12,5 +12,5 @@ public interface IAdminTopicRepository
         CancellationToken cancellationToken);
     Task<Topic?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken);
     Task<Category?> GetActiveCategoryAsync(int id, CancellationToken cancellationToken);
-    Task SaveWithAuditAsync(AdminAuditLog auditLog, CancellationToken cancellationToken);
+    Task<bool> SaveWithAuditAsync(AdminAuditLog auditLog, Notification? notification, CancellationToken cancellationToken);
 }

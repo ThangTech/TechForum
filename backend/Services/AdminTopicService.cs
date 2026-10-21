@@ -7,10 +7,17 @@ namespace TechForum.Api.Services;
 
 public sealed class AdminTopicService(
     IAdminTopicRepository topicRepository,
+    IContentSanitizer contentSanitizer,
     TimeProvider timeProvider) : IAdminTopicService
 {
     private static readonly HashSet<string> Actions = new(StringComparer.OrdinalIgnoreCase)
     { "hide", "restore", "lock", "unlock", "pin", "unpin", "move" };
+
+    public async Task<AdminTopicDetailDto?> GetByIdAsync(int topicId, CancellationToken cancellationToken)
+    {
+        var topic = await topicRepository.GetTrackedByIdAsync(topicId, cancellationToken);
+        return topic is null ? null : new AdminTopicDetailDto(Map(topic), contentSanitizer.Sanitize(topic.BodyHtml));
+    }
 
     public async Task<PagedResultDto<AdminTopicDto>?> GetPageAsync(
         AdminTopicQuery query,
@@ -27,7 +34,7 @@ public sealed class AdminTopicService(
         };
         if (!string.IsNullOrWhiteSpace(query.Type) && !type.HasValue) return null;
         var visibility = query.Visibility?.Trim().ToLowerInvariant();
-        if (visibility is not (null or "" or "visible" or "hidden" or "deleted")) return null;
+        if (visibility is not (null or "" or "visible" or "draft" or "hidden" or "deleted")) return null;
 
         var page = await topicRepository.GetPageAsync(query, type, cancellationToken);
         return new PagedResultDto<AdminTopicDto>(
@@ -72,8 +79,28 @@ public sealed class AdminTopicService(
                 break;
         }
 
-        topic.UpdatedAtUtc = timeProvider.GetUtcNow();
-        await topicRepository.SaveWithAuditAsync(new AdminAuditLog
+        if (previousValue == Describe(topic)) return AdminTopicWriteResult.Success(Map(topic));
+        var now = timeProvider.GetUtcNow();
+        topic.UpdatedAtUtc = now;
+        var actionDescription = action switch
+        {
+            "hide" => "bị ẩn",
+            "restore" => "được khôi phục",
+            "lock" => "bị khóa thảo luận",
+            "unlock" => "được mở thảo luận",
+            _ => null
+        };
+        Notification? notification = actionDescription is null ? null : new Notification
+        {
+            UserId = topic.AuthorId,
+            Type = "content-moderated",
+            Title = "Kết quả kiểm duyệt nội dung",
+            Message = $"Nội dung “{topic.Title}” đã {actionDescription}. Lý do: {reason}",
+            Link = "/notifications",
+            SourceKey = $"topic-moderated:{Guid.NewGuid():N}",
+            CreatedAtUtc = now
+        };
+        var saved = await topicRepository.SaveWithAuditAsync(new AdminAuditLog
         {
             AdministratorId = administratorId,
             Action = $"topic.{action}",
@@ -82,13 +109,16 @@ public sealed class AdminTopicService(
             PreviousValue = previousValue,
             NewValue = Describe(topic),
             Reason = reason,
-            CreatedAtUtc = timeProvider.GetUtcNow()
-        }, cancellationToken);
+            CreatedAtUtc = now
+        }, notification, cancellationToken);
+        if (!saved)
+            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Conflict,
+                "Nội dung vừa được cập nhật bởi người khác. Vui lòng tải lại trước khi kiểm duyệt.");
         return AdminTopicWriteResult.Success(Map(topic));
     }
 
     private static string Describe(Topic topic) =>
-        $"hidden={topic.IsHiddenByModerator};locked={topic.IsDiscussionLocked};pinned={topic.IsPinned};categoryId={topic.CategoryId}";
+        $"hidden={topic.IsHiddenByModerator};locked={topic.IsDiscussionLocked};pinned={topic.IsPinned};categoryId={topic.CategoryId};deleted={topic.IsDeleted}";
 
     private static AdminTopicDto Map(Topic topic) => new(
         topic.Id, topic.Title, topic.Type == TopicType.Article ? "article" : "question",
