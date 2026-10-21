@@ -269,6 +269,25 @@ public sealed class TopicServiceTests
         Assert.False(repository.SavedChanges);
     }
 
+    [Theory]
+    [InlineData("article", null)]
+    [InlineData("question", 42)]
+    public async Task UpdateAsync_KeepsAcceptedAnswerOnlyForQuestions(string type, int? expectedAnswerId)
+    {
+        var existing = CreateTopic();
+        existing.AcceptedAnswerId = 42;
+        var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category };
+        var request = new UpdateTopicRequest(
+            "Tiêu đề kiểm tra loại nội dung",
+            "Tóm tắt hợp lệ cho kiểm thử chuyển loại nội dung.",
+            "<p>Nội dung kiểm tra.</p>", type, existing.CategoryId, [], [], true);
+
+        var result = await CreateService(repository).UpdateAsync(existing.Id, existing.AuthorId, request, CancellationToken.None);
+
+        Assert.True(result?.Succeeded);
+        Assert.Equal(expectedAnswerId, existing.AcceptedAnswerId);
+    }
+
     [Fact]
     public async Task SoftDeleteAsync_WithPublicAnswers_ReturnsConflictWithoutDeleting()
     {

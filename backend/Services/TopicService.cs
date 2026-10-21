@@ -266,6 +266,8 @@ public sealed partial class TopicService(
         topic.Summary = summary;
         topic.BodyHtml = sanitizedBody;
         topic.Type = type;
+        if (type == TopicType.Article)
+            topic.AcceptedAnswerId = null;
         topic.CategoryId = category.Id;
         topic.Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft;
         topic.PublishedAtUtc = request.Publish ? topic.PublishedAtUtc ?? timeProvider.GetUtcNow() : null;
