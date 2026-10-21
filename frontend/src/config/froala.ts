@@ -20,6 +20,7 @@ export const createFroalaConfig = ({
 }: FroalaConfigOptions) => ({
   ...(hasFroalaKey ? { key: import.meta.env.VITE_FROALA_KEY.trim() } : {}),
   attribution: true,
+  language: 'vi',
   charCounterMax: 100000,
   heightMin: 280,
   imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif', 'webp'],
@@ -42,6 +43,11 @@ export const createFroalaConfig = ({
   videoUploadParam: 'file',
   videoUploadURL: `${apiBaseUrl}/api/media/videos`,
   events: {
+    initialized: function (this: { el: HTMLElement }) {
+      this.el.setAttribute('role', 'textbox')
+      this.el.setAttribute('aria-label', 'Nội dung')
+      this.el.setAttribute('aria-multiline', 'true')
+    },
     'image.beforeUpload': onUploadStarted,
     'image.uploaded': (response: unknown) => {
       try {
