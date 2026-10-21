@@ -83,7 +83,7 @@ export const apiRequest = async <T>(path: string, init: RequestInit = {}): Promi
       throw error
     }
 
-    throw new ApiError(0, 'Không thể kết nối tới TechForum API.')
+    throw new ApiError(0, 'Không thể kết nối tới TechForum. Vui lòng thử lại.')
   }
 
   if (!response.ok) {

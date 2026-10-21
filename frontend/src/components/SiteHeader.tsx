@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, type FormEvent } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
 import { appRoutes } from '../appRoutes'
 import { NotificationLink } from './notifications/NotificationLink'
@@ -17,6 +17,7 @@ export const SiteHeader = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const returnUrl = `${location.pathname}${location.search}${location.hash}`
+  const isArticlePage = location.pathname === '/' || location.pathname === appRoutes.articles
   const [keyword, setKeyword] = useState('')
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
@@ -35,7 +36,7 @@ export const SiteHeader = () => {
         </NavLink>
 
         <nav className="primary-nav" aria-label="Điều hướng chính" data-tour="content-types">
-          <NavLink to={appRoutes.articles} className={() => location.pathname === '/' || location.pathname === appRoutes.articles ? 'active' : undefined}>Bài viết</NavLink>
+          <Link to={appRoutes.articles} className={isArticlePage ? 'active' : undefined} aria-current={isArticlePage ? 'page' : undefined}>Bài viết</Link>
           <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
           <NavLink to={appRoutes.discussions}>Thảo luận</NavLink>
         </nav>
