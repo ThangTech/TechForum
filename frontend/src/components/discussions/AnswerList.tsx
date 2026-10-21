@@ -1,7 +1,7 @@
 import { Button } from '@astryxdesign/core/Button'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
-import { deleteAnswer, type Answer, type AnswerPage } from '../../api/answers'
+import { deleteAnswer, setAnswerHelpful, type Answer, type AnswerHelpfulState, type AnswerPage } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { appRoutes } from '../../appRoutes'
@@ -18,6 +18,7 @@ interface AnswerListProps {
   onAccept: (answerId: number) => void
   onDeleted: (answerId: number) => void
   onLoginRequired: () => void
+  onHelpfulChanged: (answerId: number, helpful: AnswerHelpfulState) => void
   onPageChange: (page: number) => void
   onReplyCreated: (answer: Answer) => void
   onUpdated: (answer: Answer) => void
@@ -42,6 +43,7 @@ export const AnswerList = ({
   onAccept,
   onDeleted,
   onLoginRequired,
+  onHelpfulChanged,
   onPageChange,
   onReplyCreated,
   onUpdated,
@@ -52,6 +54,23 @@ export const AnswerList = ({
   const [isDeleting, setIsDeleting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<Answer | null>(null)
+  const [votingAnswerId, setVotingAnswerId] = useState<number | null>(null)
+
+  const toggleHelpful = async (answer: Answer) => {
+    if (!user) { onLoginRequired(); return }
+    if (votingAnswerId !== null || user.id === answer.author.id) return
+    setVotingAnswerId(answer.id)
+    setActionError(null)
+    try {
+      const helpful = await setAnswerHelpful(answer.topicId, answer.id, !answer.isHelpful)
+      onHelpfulChanged(answer.id, helpful)
+    } catch (requestError) {
+      if (requestError instanceof ApiError && requestError.status === 401) onLoginRequired()
+      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật đánh giá hữu ích.')
+    } finally {
+      setVotingAnswerId(null)
+    }
+  }
 
   const confirmDelete = async () => {
     if (!deleting || isDeleting) return
@@ -85,6 +104,7 @@ export const AnswerList = ({
               </Link>
               <span aria-hidden="true">·</span>
               <time dateTime={answer.createdAtUtc}>{formatDateTime(answer.createdAtUtc)}</time>
+              {answer.updatedAtUtc && <span className="text-xs" title={formatDateTime(answer.updatedAtUtc)}>· Đã chỉnh sửa</span>}
               {answer.isAccepted && (
                 <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
                   Câu trả lời được chấp nhận
@@ -97,6 +117,18 @@ export const AnswerList = ({
               dangerouslySetInnerHTML={{ __html: answer.bodyHtml }}
             />
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+              <button
+                aria-label={`${answer.isHelpful ? 'Bỏ đánh giá hữu ích' : 'Đánh giá hữu ích'}: ${answer.helpfulCount} lượt`}
+                aria-pressed={answer.isHelpful}
+                className={`inline-flex min-h-10 items-center gap-2 border px-3 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-60 ${answer.isHelpful ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-700'}`}
+                disabled={votingAnswerId !== null || user?.id === answer.author.id}
+                onClick={() => void toggleHelpful(answer)}
+                title={user?.id === answer.author.id ? 'Bạn không thể tự đánh giá câu trả lời của mình.' : undefined}
+                type="button"
+              >
+                <svg aria-hidden="true" fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="16"><path d="M7 10v11H3V10h4Zm0 0 5-7c1.8 0 2.5 1.2 2 3l-1 4h5a3 3 0 0 1 3 3l-1 6a2 2 0 0 1-2 2H7" /></svg>
+                {votingAnswerId === answer.id ? 'Đang lưu…' : `Hữu ích · ${answer.helpfulCount}`}
+              </button>
               {canAcceptAnswers && answer.parentAnswerId === null && !answer.isAccepted && (
                 <Button
                   isDisabled={acceptingAnswerId !== null}

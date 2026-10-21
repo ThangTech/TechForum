@@ -1,7 +1,7 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { acceptAnswer, getAnswers, type Answer, type AnswerPage } from '../../api/answers'
+import { acceptAnswer, getAnswers, type Answer, type AnswerPage, type AnswerSort } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { AuthRequiredDialog } from '../AuthRequiredDialog'
@@ -33,6 +33,7 @@ export const DiscussionSection = ({
   const location = useLocation()
   const navigate = useNavigate()
   const page = readPositiveInteger(new URLSearchParams(location.search).get('answerPage')) ?? 1
+  const sort: AnswerSort = new URLSearchParams(location.search).get('answerSort') === 'helpful' ? 'helpful' : 'oldest'
   const answerHash = /^#answer-(\d+)$/.exec(location.hash)
   const aroundAnswerId = readPositiveInteger(answerHash?.[1] ?? null)
   const [data, setData] = useState<AnswerPage | null>(null)
@@ -54,13 +55,19 @@ export const DiscussionSection = ({
       setError(null)
       setIsTargetUnavailable(false)
       try {
-        const result = await getAnswers(topicId, page, PAGE_SIZE, controller.signal, aroundAnswerId)
+        const result = await getAnswers(topicId, page, PAGE_SIZE, controller.signal, aroundAnswerId, sort)
         if (controller.signal.aborted) return
         setData(result)
+        if (!aroundAnswerId && result.totalPages > 0 && result.page > result.totalPages) {
+          const search = new URLSearchParams(location.search)
+          search.set('answerPage', String(result.totalPages))
+          void navigate({ pathname: location.pathname, search: `?${search}` }, { replace: true })
+          return
+        }
         if (result.page !== page) {
           const search = new URLSearchParams(location.search)
           search.set('answerPage', String(result.page))
-          void navigate({ pathname: location.pathname, search: `?${search}`, hash: location.hash }, { replace: true })
+          void navigate({ pathname: location.pathname, search: `?${search}`, hash: aroundAnswerId ? `#answer-${aroundAnswerId}` : undefined }, { replace: true })
         }
       } catch (requestError) {
         if (controller.signal.aborted) return
@@ -77,7 +84,7 @@ export const DiscussionSection = ({
 
     void loadAnswers()
     return () => controller.abort()
-  }, [aroundAnswerId, location.hash, location.pathname, location.search, navigate, page, requestVersion, topicId])
+  }, [aroundAnswerId, location.pathname, location.search, navigate, page, requestVersion, sort, topicId, user?.id])
 
   useEffect(() => {
     if (isLoading || error || !aroundAnswerId || !data?.items.some((answer) => answer.id === aroundAnswerId)) return
@@ -100,6 +107,14 @@ export const DiscussionSection = ({
     setSuccessMessage(answer.parentAnswerId ? 'Phản hồi đã được đăng.' : 'Câu trả lời đã được đăng.')
     changePage(lastPage, answer.id)
     setRequestVersion((version) => version + 1)
+  }
+
+  const changeSort = (nextSort: AnswerSort) => {
+    const search = new URLSearchParams(location.search)
+    search.delete('answerPage')
+    if (nextSort === 'oldest') search.delete('answerSort')
+    else search.set('answerSort', nextSort)
+    void navigate({ pathname: location.pathname, search: search.toString(), hash: answerHash ? '' : location.hash })
   }
 
   const handleAccept = async (answerId: number) => {
@@ -145,6 +160,17 @@ export const DiscussionSection = ({
             {data ? `${data.totalItems} ${topicType === 'question' ? 'câu trả lời và phản hồi' : 'phản hồi'}` : 'Trao đổi'}
           </h2>
         </div>
+        <label className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+          Sắp xếp phản hồi
+          <select
+            className="min-h-10 border border-slate-300 bg-white px-3 py-2 text-slate-800"
+            onChange={(event) => changeSort(event.target.value === 'helpful' ? 'helpful' : 'oldest')}
+            value={sort}
+          >
+            <option value="oldest">Cũ nhất trước</option>
+            <option value="helpful">Hữu ích nhất</option>
+          </select>
+        </label>
         {isLocked && (
           <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
             Đã khóa thảo luận
@@ -200,6 +226,14 @@ export const DiscussionSection = ({
               setSuccessMessage('Đã xóa câu trả lời.')
             }}
             onLoginRequired={() => setIsAuthDialogOpen(true)}
+            onHelpfulChanged={(answerId, helpful) => {
+              setData((current) => current ? {
+                ...current,
+                items: current.items.map((answer) => answer.id === answerId ? { ...answer, ...helpful } : answer),
+              } : current)
+              setSuccessMessage(helpful.isHelpful ? 'Đã đánh giá câu trả lời hữu ích.' : 'Đã bỏ đánh giá hữu ích.')
+              if (sort === 'helpful') setRequestVersion((version) => version + 1)
+            }}
             onPageChange={changePage}
             onReplyCreated={handleCreated}
             onUpdated={(updated) => {

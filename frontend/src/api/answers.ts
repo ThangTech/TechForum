@@ -11,6 +11,15 @@ export interface Answer {
   createdAtUtc: string
   updatedAtUtc: string | null
   isAccepted: boolean
+  helpfulCount: number
+  isHelpful: boolean
+}
+
+export type AnswerSort = 'oldest' | 'helpful'
+
+export interface AnswerHelpfulState {
+  helpfulCount: number
+  isHelpful: boolean
 }
 
 export interface AnswerPage {
@@ -37,7 +46,9 @@ const isAnswer = (value: unknown): value is Answer =>
   typeof value.author.displayName === 'string' &&
   typeof value.createdAtUtc === 'string' &&
   (value.updatedAtUtc === null || typeof value.updatedAtUtc === 'string') &&
-  typeof value.isAccepted === 'boolean'
+  typeof value.isAccepted === 'boolean' &&
+  typeof value.helpfulCount === 'number' &&
+  typeof value.isHelpful === 'boolean'
 
 const parseAnswer = (data: unknown): Answer => {
   if (!isAnswer(data)) {
@@ -53,8 +64,9 @@ export const getAnswers = async (
   pageSize: number,
   signal?: AbortSignal,
   aroundAnswerId?: number,
+  sort: AnswerSort = 'oldest',
 ): Promise<AnswerPage> => {
-  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), sort })
   if (aroundAnswerId !== undefined) query.set('aroundAnswerId', String(aroundAnswerId))
   const data: unknown = await apiRequest(
     `/api/topics/${topicId}/answers?${query}`,
@@ -95,3 +107,17 @@ export const updateAnswer = async (topicId: number, answerId: number, bodyHtml: 
 
 export const deleteAnswer = async (topicId: number, answerId: number): Promise<void> =>
   apiRequest(`/api/topics/${topicId}/answers/${answerId}`, { method: 'DELETE' })
+
+export const setAnswerHelpful = async (
+  topicId: number,
+  answerId: number,
+  isHelpful: boolean,
+): Promise<AnswerHelpfulState> => {
+  const data: unknown = await apiRequest(`/api/topics/${topicId}/answers/${answerId}/helpful`, {
+    method: isHelpful ? 'PUT' : 'DELETE',
+  })
+  if (!isRecord(data) || typeof data.helpfulCount !== 'number' || typeof data.isHelpful !== 'boolean') {
+    throw new ApiError(500, 'Dữ liệu đánh giá hữu ích từ API không đúng định dạng.')
+  }
+  return { helpfulCount: data.helpfulCount, isHelpful: data.isHelpful }
+}
