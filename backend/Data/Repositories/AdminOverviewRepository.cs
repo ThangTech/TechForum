@@ -126,6 +126,10 @@ public sealed class AdminOverviewRepository(TechForumDbContext dbContext) : IAdm
 
     private IQueryable<Answer> PublicAnswers() => dbContext.Answers.AsNoTracking().Where(answer =>
         !answer.IsDeleted && !answer.IsHiddenByModerator &&
+        (answer.ParentAnswerId == null ||
+            (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == answer.TopicId &&
+             answer.ParentAnswer.ParentAnswerId == null &&
+             !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)) &&
         answer.Topic.Status == TopicStatus.Published && answer.Topic.PublishedAtUtc != null &&
         !answer.Topic.IsDeleted && !answer.Topic.IsHiddenByModerator);
 }

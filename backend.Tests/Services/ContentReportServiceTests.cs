@@ -51,6 +51,75 @@ public sealed class ContentReportServiceTests
         Assert.Null(Assert.Single(result.Items).TargetTitle);
     }
 
+    [Theory]
+    [InlineData("hidden")]
+    [InlineData("deleted")]
+    [InlineData("different-topic")]
+    [InlineData("nested")]
+    [InlineData("missing")]
+    public async Task Mine_HidesChildLinkForInvalidParentButKeepsReportOutcome(string parentState)
+    {
+        var report = CreateAnswerReport();
+        var answer = report.Answer!;
+        var parent = answer.ParentAnswer!;
+        if (parentState == "hidden") parent.IsHiddenByModerator = true;
+        if (parentState == "deleted") parent.IsDeleted = true;
+        if (parentState == "different-topic") parent.TopicId = 99;
+        if (parentState == "nested") parent.ParentAnswerId = 7;
+        if (parentState == "missing") answer.ParentAnswer = null;
+        report.Status = ReportStatus.Accepted;
+        report.ResolutionNote = "Đã kiểm tra và xử lý nội dung.";
+
+        var result = await Service(new FakeReports { Report = report }).GetMineAsync("reporter", null, 1, 10, default);
+
+        var item = Assert.Single(Assert.IsType<PagedResultDto<MyReportDto>>(result).Items);
+        Assert.Null(item.TopicId);
+        Assert.Null(item.TargetTitle);
+        Assert.Equal(9, item.TargetId);
+        Assert.Equal("accepted", item.Status);
+        Assert.Equal(report.ResolutionNote, item.ResolutionNote);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Mine_KeepsLinksForVisibleRootAndValidChild(bool isChild)
+    {
+        var report = CreateAnswerReport();
+        if (!isChild)
+        {
+            report.Answer!.ParentAnswerId = null;
+            report.Answer.ParentAnswer = null;
+        }
+
+        var result = await Service(new FakeReports { Report = report }).GetMineAsync("reporter", null, 1, 10, default);
+
+        var item = Assert.Single(Assert.IsType<PagedResultDto<MyReportDto>>(result).Items);
+        Assert.Equal(5, item.TopicId);
+        Assert.Equal("Nội dung bí mật", item.TargetTitle);
+        Assert.Equal("answer", item.TargetType);
+        Assert.Equal(9, item.TargetId);
+    }
+
+    private static ContentReport CreateAnswerReport()
+    {
+        var report = CreateReport();
+        var topic = report.Topic!;
+        report.TopicId = null;
+        report.Topic = null;
+        report.AnswerId = 9;
+        report.Answer = new Answer
+        {
+            Id = 9, TopicId = topic.Id, Topic = topic, AuthorId = "author", BodyHtml = "Phản hồi con",
+            ParentAnswerId = 8,
+            ParentAnswer = new Answer
+            {
+                Id = 8, TopicId = topic.Id, Topic = topic, AuthorId = "other", BodyHtml = "Trả lời gốc"
+            }
+        };
+        return report;
+    }
+
     [Fact]
     public async Task Resolve_PersistsNotificationAndAuditOnceWithDecision()
     {

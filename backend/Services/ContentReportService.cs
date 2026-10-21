@@ -168,10 +168,15 @@ public sealed class ContentReportService(
         var items = result.Items.Select(report =>
         {
             var topic = report.Topic ?? report.Answer?.Topic;
+            var answer = report.Answer;
+            var isAnswerPublic = report.AnswerId is null ||
+                (answer is { IsDeleted: false, IsHiddenByModerator: false } &&
+                 (answer.ParentAnswerId is null ||
+                    (answer.ParentAnswer is { ParentAnswerId: null, IsDeleted: false, IsHiddenByModerator: false } parent &&
+                     parent.TopicId == answer.TopicId)));
             // Chỉ liên kết lại tài nguyên còn công khai; không lộ bản nháp hoặc nội dung đã bị ẩn.
             var isPublic = topic is { Status: TopicStatus.Published, PublishedAtUtc: not null,
-                IsDeleted: false, IsHiddenByModerator: false } &&
-                (report.AnswerId is null || report.Answer is { IsDeleted: false, IsHiddenByModerator: false });
+                IsDeleted: false, IsHiddenByModerator: false } && isAnswerPublic;
             return new MyReportDto(report.Id, report.TopicId.HasValue ? "topic" : "answer",
                 report.TopicId ?? report.AnswerId!.Value, isPublic ? topic!.Id : null,
                 isPublic ? topic!.Title : null, report.Reason, report.Details,

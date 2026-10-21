@@ -32,6 +32,10 @@ public sealed class PublicProfileRepository(TechForumDbContext dbContext) : IPub
         var publishedTopicCount = await topics.CountAsync(cancellationToken);
         var publicAnswerCount = await dbContext.Answers.AsNoTracking().CountAsync(answer =>
             answer.AuthorId == userId && !answer.IsDeleted && !answer.IsHiddenByModerator &&
+            (answer.ParentAnswerId == null ||
+                (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == answer.TopicId &&
+                 answer.ParentAnswer.ParentAnswerId == null &&
+                 !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)) &&
             answer.Topic.Status == TopicStatus.Published && answer.Topic.PublishedAtUtc != null &&
             !answer.Topic.IsDeleted && !answer.Topic.IsHiddenByModerator, cancellationToken);
         var receivedStarCount = await dbContext.TopicStars.AsNoTracking().CountAsync(star =>

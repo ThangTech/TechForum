@@ -21,6 +21,10 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
             item.Id == answerId &&
             !item.IsDeleted &&
             !item.IsHiddenByModerator &&
+            (item.ParentAnswerId == null ||
+                (item.ParentAnswer != null && item.ParentAnswer.TopicId == item.TopicId &&
+                 item.ParentAnswer.ParentAnswerId == null &&
+                 !item.ParentAnswer.IsDeleted && !item.ParentAnswer.IsHiddenByModerator)) &&
             item.Topic.Status == TopicStatus.Published &&
             item.Topic.PublishedAtUtc != null &&
             !item.Topic.IsDeleted &&
@@ -91,6 +95,7 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Include(item => item.Topic)
             .Include(item => item.Answer).ThenInclude(answer => answer!.Topic)
+            .Include(item => item.Answer).ThenInclude(answer => answer!.ParentAnswer)
             .ToListAsync(cancellationToken);
         return new ContentReportPage(items, total);
     }

@@ -36,6 +36,10 @@ public sealed class ActivityRepository(TechForumDbContext dbContext) : IActivity
                 answer.AuthorId == userId &&
                 !answer.IsDeleted &&
                 !answer.IsHiddenByModerator &&
+                (answer.ParentAnswerId == null ||
+                    (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == answer.TopicId &&
+                     answer.ParentAnswer.ParentAnswerId == null &&
+                     !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)) &&
                 answer.Topic.Status == TopicStatus.Published &&
                 answer.Topic.PublishedAtUtc != null &&
                 !answer.Topic.IsDeleted &&
