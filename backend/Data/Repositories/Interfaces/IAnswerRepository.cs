@@ -9,7 +9,17 @@ public interface IAnswerRepository
         int page,
         int pageSize,
         int? aroundAnswerId,
+        string sort,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
+        IReadOnlyCollection<int> answerIds,
+        string? viewerId,
+        CancellationToken cancellationToken);
+
+    Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken);
+
+    Task RemoveHelpfulAsync(int answerId, string userId, CancellationToken cancellationToken);
 
     Task AddAsync(Answer answer, CancellationToken cancellationToken);
 

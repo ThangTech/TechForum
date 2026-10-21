@@ -272,6 +272,25 @@ namespace TechForum.Api.Data.Migrations
                     b.ToTable("Answers", (string)null);
                 });
 
+            modelBuilder.Entity("TechForum.Api.Models.AnswerHelpfulVote", b =>
+                {
+                    b.Property<int>("AnswerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("AnswerId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AnswerHelpfulVotes", (string)null);
+                });
+
             modelBuilder.Entity("TechForum.Api.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -884,6 +903,25 @@ namespace TechForum.Api.Data.Migrations
                     b.Navigation("Topic");
                 });
 
+            modelBuilder.Entity("TechForum.Api.Models.AnswerHelpfulVote", b =>
+                {
+                    b.HasOne("TechForum.Api.Models.Answer", "Answer")
+                        .WithMany("HelpfulVotes")
+                        .HasForeignKey("AnswerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TechForum.Api.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Answer");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TechForum.Api.Models.ContentReport", b =>
                 {
                     b.HasOne("TechForum.Api.Models.Answer", "Answer")
@@ -1056,6 +1094,11 @@ namespace TechForum.Api.Data.Migrations
                     b.Navigation("Follower");
 
                     b.Navigation("Following");
+                });
+
+            modelBuilder.Entity("TechForum.Api.Models.Answer", b =>
+                {
+                    b.Navigation("HelpfulVotes");
                 });
 
             modelBuilder.Entity("TechForum.Api.Models.Topic", b =>

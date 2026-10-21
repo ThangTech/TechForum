@@ -17,7 +17,8 @@ public sealed partial class AnswerService(
     public async Task<PagedResultDto<AnswerDto>?> GetPublicPageAsync(
         int topicId,
         AnswerQuery query,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? viewerId = null)
     {
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
         if (topic is null) return null;
@@ -27,18 +28,58 @@ public sealed partial class AnswerService(
             query.Page,
             query.PageSize,
             query.AroundAnswerId,
+            query.Sort,
             cancellationToken);
         if (page is null) return null;
+        var helpfulStates = page.Items.Count == 0
+            ? new Dictionary<int, AnswerHelpfulState>()
+            : (await answerRepository.GetHelpfulStatesAsync(
+                page.Items.Select(answer => answer.Id).ToArray(), viewerId, cancellationToken))
+                .ToDictionary(state => state.AnswerId);
         var totalPages = page.TotalItems == 0
             ? 0
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
 
         return new PagedResultDto<AnswerDto>(
-            page.Items.Select(answer => MapAnswer(answer, AcceptedAnswerIdFor(topic))).ToList(),
+            page.Items.Select(answer => MapAnswer(
+                answer, AcceptedAnswerIdFor(topic), helpfulState: helpfulStates.GetValueOrDefault(answer.Id))).ToList(),
             page.Page,
             query.PageSize,
             page.TotalItems,
             totalPages);
+    }
+
+    public async Task<AnswerHelpfulResult> SetHelpfulAsync(
+        int topicId,
+        int answerId,
+        string userId,
+        bool isHelpful,
+        CancellationToken cancellationToken)
+    {
+        var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
+        if (topic is null) return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.NotFound);
+
+        var answer = await answerRepository.GetVisibleByIdAsync(topicId, answerId, cancellationToken);
+        if (answer is null) return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.NotFound);
+        if (isHelpful && answer.AuthorId == userId)
+            return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.OwnAnswer);
+
+        if (isHelpful)
+        {
+            await answerRepository.AddHelpfulIfMissingAsync(new AnswerHelpfulVote
+            {
+                AnswerId = answer.Id,
+                UserId = userId,
+                CreatedAtUtc = timeProvider.GetUtcNow()
+            }, cancellationToken);
+        }
+        else
+        {
+            await answerRepository.RemoveHelpfulAsync(answer.Id, userId, cancellationToken);
+        }
+
+        var state = await GetHelpfulStateAsync(answer.Id, userId, cancellationToken);
+        return AnswerHelpfulResult.Success(new AnswerHelpfulDto(state.HelpfulCount, state.IsHelpful));
     }
 
     public async Task<CreateAnswerResult> CreateAsync(
@@ -172,7 +213,8 @@ public sealed partial class AnswerService(
         }
         await topicRepository.SaveChangesAsync(cancellationToken);
 
-        return AcceptAnswerResult.Success(MapAnswer(answer, answer.Id));
+        var helpfulState = await GetHelpfulStateAsync(answer.Id, authorId, cancellationToken);
+        return AcceptAnswerResult.Success(MapAnswer(answer, answer.Id, helpfulState: helpfulState));
     }
 
     public async Task<UpdateAnswerResult> UpdateAsync(
@@ -196,7 +238,9 @@ public sealed partial class AnswerService(
         answer.BodyHtml = sanitizedBody;
         answer.UpdatedAtUtc = timeProvider.GetUtcNow();
         await answerRepository.SaveChangesAsync(cancellationToken);
-        return UpdateAnswerResult.Success(MapAnswer(answer, AcceptedAnswerIdFor(answer.Topic)));
+        var helpfulState = await GetHelpfulStateAsync(answer.Id, authorId, cancellationToken);
+        return UpdateAnswerResult.Success(MapAnswer(
+            answer, AcceptedAnswerIdFor(answer.Topic), helpfulState: helpfulState));
     }
 
     public async Task<bool> DeleteAsync(
@@ -218,10 +262,20 @@ public sealed partial class AnswerService(
     private static int? AcceptedAnswerIdFor(Topic topic) =>
         topic.Type == TopicType.Question ? topic.AcceptedAnswerId : null;
 
+    private async Task<AnswerHelpfulState> GetHelpfulStateAsync(
+        int answerId,
+        string viewerId,
+        CancellationToken cancellationToken)
+    {
+        var states = await answerRepository.GetHelpfulStatesAsync([answerId], viewerId, cancellationToken);
+        return states.FirstOrDefault() ?? new AnswerHelpfulState(answerId, 0, false);
+    }
+
     private static AnswerDto MapAnswer(
         Answer answer,
         int? acceptedAnswerId,
-        TopicAuthorDto? replyingTo = null) => new(
+        TopicAuthorDto? replyingTo = null,
+        AnswerHelpfulState? helpfulState = null) => new(
         answer.Id,
         answer.TopicId,
         answer.ParentAnswerId,
@@ -232,7 +286,9 @@ public sealed partial class AnswerService(
         new TopicAuthorDto(answer.Author.Id, answer.Author.DisplayName),
         answer.CreatedAtUtc,
         answer.UpdatedAtUtc,
-        answer.Id == acceptedAnswerId);
+        answer.Id == acceptedAnswerId,
+        helpfulState?.HelpfulCount ?? 0,
+        helpfulState?.IsHelpful ?? false);
 
     private static bool HasMeaningfulContent(string html)
     {

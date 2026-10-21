@@ -14,4 +14,5 @@ public sealed class Answer
     public DateTimeOffset? UpdatedAtUtc { get; set; }
     public bool IsDeleted { get; set; }
     public bool IsHiddenByModerator { get; set; }
+    public ICollection<AnswerHelpfulVote> HelpfulVotes { get; set; } = new List<AnswerHelpfulVote>();
 }

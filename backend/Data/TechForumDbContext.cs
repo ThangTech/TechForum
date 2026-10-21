@@ -21,6 +21,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<Answer> Answers => Set<Answer>();
 
+    public DbSet<AnswerHelpfulVote> AnswerHelpfulVotes => Set<AnswerHelpfulVote>();
+
     public DbSet<TopicStar> TopicStars => Set<TopicStar>();
 
     public DbSet<TopicBookmark> TopicBookmarks => Set<TopicBookmark>();
@@ -145,6 +147,19 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         answer.HasOne(item => item.ParentAnswer)
             .WithMany()
             .HasForeignKey(item => item.ParentAnswerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var helpfulVote = modelBuilder.Entity<AnswerHelpfulVote>();
+        helpfulVote.ToTable("AnswerHelpfulVotes");
+        helpfulVote.HasKey(item => new { item.AnswerId, item.UserId });
+        helpfulVote.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        helpfulVote.HasOne(item => item.Answer)
+            .WithMany(item => item.HelpfulVotes)
+            .HasForeignKey(item => item.AnswerId)
+            .OnDelete(DeleteBehavior.Restrict);
+        helpfulVote.HasOne(item => item.User)
+            .WithMany()
+            .HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         topic.HasIndex(item => item.AcceptedAnswerId).IsUnique();

@@ -22,7 +22,10 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         var validationProblem = Validate(query);
         if (validationProblem is not null) return BadRequest(validationProblem);
 
-        var page = await answerService.GetPublicPageAsync(topicId, query, cancellationToken);
+        var viewerId = User.Identity?.IsAuthenticated == true
+            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            : null;
+        var page = await answerService.GetPublicPageAsync(topicId, query, cancellationToken, viewerId);
         if (page is not null) return Ok(page);
         if (!query.AroundAnswerId.HasValue) return NotFound(CreateTopicNotFoundProblem());
 
@@ -33,6 +36,50 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
             Detail = "Chủ đề hoặc câu trả lời trong liên kết không tồn tại hoặc không còn công khai."
         });
     }
+
+    [Authorize]
+    [HttpPut("{answerId:int}/helpful")]
+    [ProducesResponseType<AnswerHelpfulDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<AnswerHelpfulDto>> AddHelpful(
+        int topicId,
+        int answerId,
+        CancellationToken cancellationToken) =>
+        ToHelpfulResponse(await answerService.SetHelpfulAsync(
+            topicId, answerId, GetUserId(), true, cancellationToken));
+
+    [Authorize]
+    [HttpDelete("{answerId:int}/helpful")]
+    [ProducesResponseType<AnswerHelpfulDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AnswerHelpfulDto>> RemoveHelpful(
+        int topicId,
+        int answerId,
+        CancellationToken cancellationToken) =>
+        ToHelpfulResponse(await answerService.SetHelpfulAsync(
+            topicId, answerId, GetUserId(), false, cancellationToken));
+
+    private ActionResult<AnswerHelpfulDto> ToHelpfulResponse(AnswerHelpfulResult result) =>
+        result.Failure switch
+        {
+            AnswerHelpfulFailure.None => Ok(result.Status),
+            AnswerHelpfulFailure.NotFound => NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Không tìm thấy câu trả lời",
+                Detail = "Chủ đề hoặc câu trả lời không tồn tại hoặc không còn công khai."
+            }),
+            AnswerHelpfulFailure.OwnAnswer => Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Không thể tự bình chọn",
+                Detail = "Bạn không thể đánh dấu hữu ích cho câu trả lời của chính mình."
+            }),
+            _ => throw new InvalidOperationException("Trạng thái bình chọn câu trả lời không được hỗ trợ.")
+        };
 
     [Authorize]
     [HttpPost]
@@ -170,6 +217,8 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
             errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
         if (query.AroundAnswerId is <= 0)
             errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
+        if (query.Sort is not ("oldest" or "helpful"))
+            errors["sort"] = ["Cách sắp xếp phải là oldest hoặc helpful."];
 
         return errors.Count == 0
             ? null

@@ -179,6 +179,155 @@ public sealed class AnswerServiceTests
         Assert.Equal("member-root", notificationService.RecipientId);
     }
 
+    [Fact]
+    public async Task GetPublicPageAsync_HelpfulSortAndViewer_AreForwardedWithoutChangingLinkedPage()
+    {
+        var answer = CreateAnswer(12, "answer-author");
+        var repository = new FakeAnswerRepository(answer)
+        {
+            PageResult = new AnswerPage([answer], 21, 2)
+        };
+        repository.Votes.Add((12, "viewer"));
+        repository.Votes.Add((12, "other-member"));
+        var service = CreateService(repository);
+
+        var page = await service.GetPublicPageAsync(1,
+            new AnswerQuery { Sort = "helpful", AroundAnswerId = 12 }, CancellationToken.None, "viewer");
+
+        Assert.NotNull(page);
+        Assert.Equal("helpful", repository.LastSort);
+        Assert.Equal(12, repository.LastAroundAnswerId);
+        Assert.Equal(2, page.Page);
+        var result = Assert.Single(page.Items);
+        Assert.Equal(2, result.HelpfulCount);
+        Assert.True(result.IsHelpful);
+    }
+
+    [Fact]
+    public async Task GetPublicPageAsync_GuestAndOtherMember_DoNotReceiveAnotherMembersVoteState()
+    {
+        var answer = CreateAnswer(12, "answer-author");
+        var repository = new FakeAnswerRepository(answer) { PageResult = new AnswerPage([answer], 1, 1) };
+        repository.Votes.Add((12, "voter"));
+        var service = CreateService(repository);
+
+        var guestPage = await service.GetPublicPageAsync(1, new AnswerQuery(), CancellationToken.None);
+        var memberPage = await service.GetPublicPageAsync(1, new AnswerQuery(), CancellationToken.None, "another-member");
+
+        Assert.Equal(1, Assert.Single(guestPage!.Items).HelpfulCount);
+        Assert.False(Assert.Single(guestPage.Items).IsHelpful);
+        Assert.False(Assert.Single(memberPage!.Items).IsHelpful);
+    }
+
+    [Fact]
+    public async Task SetHelpfulAsync_PutAndDeleteAreIdempotent_AndDoNotAcceptTheAnswer()
+    {
+        var topic = CreateTopic();
+        var repository = new FakeAnswerRepository(CreateAnswer(12, "answer-author"));
+        var service = CreateService(repository, topic);
+
+        var first = await service.SetHelpfulAsync(1, 12, "voter", true, CancellationToken.None);
+        var repeated = await service.SetHelpfulAsync(1, 12, "voter", true, CancellationToken.None);
+        var another = await service.SetHelpfulAsync(1, 12, "another-voter", true, CancellationToken.None);
+        var removed = await service.SetHelpfulAsync(1, 12, "voter", false, CancellationToken.None);
+        var repeatedRemoval = await service.SetHelpfulAsync(1, 12, "voter", false, CancellationToken.None);
+
+        Assert.Equal(new AnswerHelpfulDto(1, true), first.Status);
+        Assert.Equal(first.Status, repeated.Status);
+        Assert.Equal(new AnswerHelpfulDto(2, true), another.Status);
+        Assert.Equal(new AnswerHelpfulDto(1, false), removed.Status);
+        Assert.Equal(removed.Status, repeatedRemoval.Status);
+        Assert.Single(repository.Votes);
+        Assert.Null(topic.AcceptedAnswerId);
+    }
+
+    [Fact]
+    public async Task SetHelpfulAsync_RejectsOwnAnswer_WithoutChangingVotes()
+    {
+        var repository = new FakeAnswerRepository(CreateAnswer(12, "answer-author"));
+
+        var result = await CreateService(repository).SetHelpfulAsync(
+            1, 12, "answer-author", true, CancellationToken.None);
+
+        Assert.Equal(AnswerHelpfulFailure.OwnAnswer, result.Failure);
+        Assert.Empty(repository.Votes);
+        Assert.Equal(0, repository.HelpfulMutations);
+    }
+
+    [Theory]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, true)]
+    public async Task SetHelpfulAsync_NonPublicTopic_CannotBeVoted(bool draft, bool hidden, bool deleted)
+    {
+        var topic = CreateTopic();
+        topic.Status = draft ? TopicStatus.Draft : TopicStatus.Published;
+        topic.IsHiddenByModerator = hidden;
+        topic.IsDeleted = deleted;
+        var repository = new FakeAnswerRepository(CreateAnswer(12, "answer-author"));
+
+        var result = await CreateService(repository, topic).SetHelpfulAsync(
+            1, 12, "voter", true, CancellationToken.None);
+
+        Assert.Equal(AnswerHelpfulFailure.NotFound, result.Failure);
+        Assert.Equal(0, repository.HelpfulMutations);
+        Assert.Equal(0, repository.VisibleCallCount);
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task SetHelpfulAsync_NonPublicAnswer_CannotBeVoted(bool hidden, bool deleted)
+    {
+        var answer = CreateAnswer(12, "answer-author");
+        answer.IsHiddenByModerator = hidden;
+        answer.IsDeleted = deleted;
+        var repository = new FakeAnswerRepository(answer);
+
+        var result = await CreateService(repository).SetHelpfulAsync(
+            1, 12, "voter", true, CancellationToken.None);
+
+        Assert.Equal(AnswerHelpfulFailure.NotFound, result.Failure);
+        Assert.Equal(0, repository.HelpfulMutations);
+    }
+
+    [Fact]
+    public async Task AcceptAsync_ReturnsExistingHelpfulCountAndOwnersVote()
+    {
+        var topic = CreateTopic();
+        var repository = new FakeAnswerRepository(CreateAnswer(12, "answer-author"));
+        repository.Votes.Add((12, topic.AuthorId));
+
+        var result = await CreateService(repository, topic).AcceptAsync(
+            1, 12, topic.AuthorId, CancellationToken.None);
+
+        Assert.True(result.Answer!.IsAccepted);
+        Assert.True(result.Answer.IsHelpful);
+        Assert.Equal(1, result.Answer.HelpfulCount);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PreservesVotesWhileEditingAnswer()
+    {
+        var topic = CreateTopic();
+        var answer = CreateAnswer(12, "answer-author");
+        answer.Topic = topic;
+        var repository = new FakeAnswerRepository(answer);
+        repository.Votes.Add((12, "voter"));
+
+        var result = await CreateService(repository, topic).UpdateAsync(
+            1, 12, "answer-author", new CreateAnswerRequest("<p>Đã sửa</p>"), CancellationToken.None);
+
+        Assert.Equal(UpdateAnswerFailure.None, result.Failure);
+        Assert.Equal(1, result.Answer!.HelpfulCount);
+        Assert.False(result.Answer.IsHelpful);
+        Assert.Equal("<p>Đã sửa</p>", result.Answer.BodyHtml);
+    }
+
+    private static AnswerService CreateService(FakeAnswerRepository repository, Topic? topic = null) =>
+        new(repository, new FakeTopicRepository(topic ?? CreateTopic()), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
     private static Topic CreateTopic()
     {
         var author = CreateUser("topic-author");
@@ -229,9 +378,18 @@ public sealed class AnswerServiceTests
         public AnswerPage? PageResult { get; init; } = new([], 0, 1);
         public int? LastAroundAnswerId { get; private set; }
         public int PageCallCount { get; private set; }
+        public string? LastSort { get; private set; }
+        public int VisibleCallCount { get; private set; }
+        public int HelpfulMutations { get; private set; }
+        public HashSet<(int AnswerId, string UserId)> Votes { get; } = [];
 
-        public Task<Answer?> GetVisibleByIdAsync(int topicId, int answerId, CancellationToken cancellationToken) =>
-            Task.FromResult(items.GetValueOrDefault(answerId));
+        public Task<Answer?> GetVisibleByIdAsync(int topicId, int answerId, CancellationToken cancellationToken)
+        {
+            VisibleCallCount++;
+            var answer = items.GetValueOrDefault(answerId);
+            return Task.FromResult(answer is { IsDeleted: false, IsHiddenByModerator: false } && answer.TopicId == topicId
+                ? answer : null);
+        }
 
         public Task AddAsync(Answer answer, CancellationToken cancellationToken)
         {
@@ -240,13 +398,34 @@ public sealed class AnswerServiceTests
             return Task.CompletedTask;
         }
 
-        public Task<AnswerPage?> GetPublicPageAsync(int topicId, int page, int pageSize, int? aroundAnswerId, CancellationToken cancellationToken)
+        public Task<AnswerPage?> GetPublicPageAsync(int topicId, int page, int pageSize, int? aroundAnswerId, string sort, CancellationToken cancellationToken)
         {
             PageCallCount++;
             LastAroundAnswerId = aroundAnswerId;
+            LastSort = sort;
             return Task.FromResult(PageResult);
         }
-        public Task<Answer?> GetOwnedByIdAsync(int topicId, int answerId, string authorId, CancellationToken cancellationToken) => Task.FromResult<Answer?>(null);
+        public Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(IReadOnlyCollection<int> answerIds, string? viewerId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<AnswerHelpfulState>>(answerIds.Select(answerId => new AnswerHelpfulState(
+                answerId, Votes.Count(vote => vote.AnswerId == answerId),
+                viewerId != null && Votes.Contains((answerId, viewerId)))).ToList());
+        public Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken)
+        {
+            HelpfulMutations++;
+            Votes.Add((vote.AnswerId, vote.UserId));
+            return Task.CompletedTask;
+        }
+        public Task RemoveHelpfulAsync(int answerId, string userId, CancellationToken cancellationToken)
+        {
+            HelpfulMutations++;
+            Votes.Remove((answerId, userId));
+            return Task.CompletedTask;
+        }
+        public Task<Answer?> GetOwnedByIdAsync(int topicId, int answerId, string authorId, CancellationToken cancellationToken)
+        {
+            var answer = items.GetValueOrDefault(answerId);
+            return Task.FromResult(answer?.TopicId == topicId && answer.AuthorId == authorId && !answer.IsDeleted ? answer : null);
+        }
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
@@ -258,6 +437,7 @@ public sealed class AnswerServiceTests
         public Task<Topic?> GetOwnedByIdAsync(int id, string authorId, CancellationToken cancellationToken) =>
             Task.FromResult(id == topic.Id && authorId == topic.AuthorId && !topic.IsDeleted ? topic : null);
         public Task<TopicPage> GetPublicPageAsync(TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
+        public Task<TopicPage> GetFollowingPageAsync(string followerId, TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
         public Task<TopicPage> GetOwnedPageAsync(string authorId, TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
         public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<Category?>(null);
         public Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(IReadOnlyCollection<int> ids, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<Tag>>([]);

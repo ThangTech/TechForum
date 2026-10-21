@@ -7,6 +7,14 @@ public interface IAnswerService
     Task<PagedResultDto<AnswerDto>?> GetPublicPageAsync(
         int topicId,
         AnswerQuery query,
+        CancellationToken cancellationToken,
+        string? viewerId = null);
+
+    Task<AnswerHelpfulResult> SetHelpfulAsync(
+        int topicId,
+        int answerId,
+        string userId,
+        bool isHelpful,
         CancellationToken cancellationToken);
 
     Task<CreateAnswerResult> CreateAsync(
