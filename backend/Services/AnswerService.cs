@@ -34,7 +34,7 @@ public sealed partial class AnswerService(
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
 
         return new PagedResultDto<AnswerDto>(
-            page.Items.Select(answer => MapAnswer(answer, topic.AcceptedAnswerId)).ToList(),
+            page.Items.Select(answer => MapAnswer(answer, AcceptedAnswerIdFor(topic))).ToList(),
             page.Page,
             query.PageSize,
             page.TotalItems,
@@ -123,7 +123,7 @@ public sealed partial class AnswerService(
         var replyingTo = parentAnswer is null
             ? null
             : new TopicAuthorDto(parentAnswer.Author.Id, parentAnswer.Author.DisplayName);
-        return CreateAnswerResult.Success(MapAnswer(answer, topic.AcceptedAnswerId, replyingTo));
+        return CreateAnswerResult.Success(MapAnswer(answer, AcceptedAnswerIdFor(topic), replyingTo));
     }
 
     public async Task<AcceptAnswerResult> AcceptAsync(
@@ -196,7 +196,7 @@ public sealed partial class AnswerService(
         answer.BodyHtml = sanitizedBody;
         answer.UpdatedAtUtc = timeProvider.GetUtcNow();
         await answerRepository.SaveChangesAsync(cancellationToken);
-        return UpdateAnswerResult.Success(MapAnswer(answer, answer.Topic.AcceptedAnswerId));
+        return UpdateAnswerResult.Success(MapAnswer(answer, AcceptedAnswerIdFor(answer.Topic)));
     }
 
     public async Task<bool> DeleteAsync(
@@ -214,6 +214,9 @@ public sealed partial class AnswerService(
         await answerRepository.SaveChangesAsync(cancellationToken);
         return true;
     }
+
+    private static int? AcceptedAnswerIdFor(Topic topic) =>
+        topic.Type == TopicType.Question ? topic.AcceptedAnswerId : null;
 
     private static AnswerDto MapAnswer(
         Answer answer,

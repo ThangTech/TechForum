@@ -10,6 +10,26 @@ namespace TechForum.Api.Tests.Services;
 public sealed class AnswerServiceTests
 {
     [Fact]
+    public async Task GetPublicPageAsync_ArticleWithLegacySolution_DoesNotMarkReplyAccepted()
+    {
+        var topic = CreateTopic();
+        topic.Type = TopicType.Article;
+        topic.AcceptedAnswerId = 10;
+        var answerRepository = new FakeAnswerRepository
+        {
+            PageResult = new AnswerPage([CreateAnswer(10, "member-a")], 1, 1)
+        };
+        var service = new AnswerService(answerRepository,
+            new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.GetPublicPageAsync(1, new AnswerQuery(), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(Assert.Single(result.Items).IsAccepted);
+    }
+
+    [Fact]
     public async Task GetPublicPageAsync_UsesPageContainingLinkedAnswer()
     {
         var answerRepository = new FakeAnswerRepository
