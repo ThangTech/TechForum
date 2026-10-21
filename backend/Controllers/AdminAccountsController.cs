@@ -15,6 +15,8 @@ public sealed class AdminAccountsController(IAdminAccountService accountService)
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<AdminAccountDto>>> GetPage(
         [FromQuery] string? keyword = null,
+        [FromQuery] string? status = null,
+        [FromQuery] string? role = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)
@@ -24,7 +26,14 @@ public sealed class AdminAccountsController(IAdminAccountService accountService)
             {
                 ["keyword"] = ["Từ khóa không được vượt quá 100 ký tự."]
             }));
-        return Ok(await accountService.GetPageAsync(keyword, page, pageSize, cancellationToken));
+        status = status?.Trim().ToLowerInvariant();
+        role = role?.Trim().ToLowerInvariant();
+        if (status is not (null or "" or "locked" or "unlocked") || role is not (null or "" or "administrator" or "member"))
+            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                ["filters"] = ["Trạng thái phải là locked/unlocked, vai trò phải là administrator/member."]
+            }));
+        return Ok(await accountService.GetPageAsync(keyword, status, role, page, pageSize, cancellationToken));
     }
 
     [HttpPut("{userId}/lock")]
@@ -35,10 +44,14 @@ public sealed class AdminAccountsController(IAdminAccountService accountService)
     {
         var administratorId = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new InvalidOperationException("Phiên quản trị thiếu định danh tài khoản.");
-        var result = await accountService.SetLockedAsync(userId, administratorId, request.IsLocked, cancellationToken);
+        var result = await accountService.SetLockedAsync(userId, administratorId, request, cancellationToken);
         return result.Failure switch
         {
             AdminAccountWriteFailure.None => Ok(result.Account),
+            AdminAccountWriteFailure.Validation => BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                [result.Field ?? "account"] = [result.Message ?? "Thông tin khóa tài khoản chưa hợp lệ."]
+            })),
             AdminAccountWriteFailure.NotFound => NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy tài khoản", Detail = result.Message }),
             AdminAccountWriteFailure.SelfLock or AdminAccountWriteFailure.AdministratorProtected => Conflict(new ProblemDetails { Status = 409, Title = "Không thể khóa tài khoản", Detail = result.Message }),
             AdminAccountWriteFailure.UpdateFailed => StatusCode(500, new ProblemDetails { Status = 500, Title = "Không thể cập nhật tài khoản", Detail = result.Message }),

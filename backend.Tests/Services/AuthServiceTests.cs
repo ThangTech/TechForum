@@ -184,6 +184,21 @@ public sealed class AuthServiceTests
         Assert.Equal("MatKhauMoi!2026", repository.LastNewPassword);
     }
 
+    [Theory]
+    [InlineData(-1, true)]
+    [InlineData(1, false)]
+    public async Task LoginAsync_ClearsOnlyExpiredModerationReason(int hoursFromNow, bool shouldClear)
+    {
+        var user = CreateUser();
+        user.LockReason = "Vi phạm nội quy";
+        user.LockoutEnd = CurrentTime.AddHours(hoursFromNow);
+        var repository = new FakeAccountRepository();
+        repository.UsersByEmail[user.Email!] = user;
+        await CreateService(repository).LoginAsync(new LoginRequest { Email = user.Email!, Password = "TechForum!2026" });
+        Assert.Equal(shouldClear, user.LockReason is null);
+        Assert.Equal(shouldClear ? 1 : 0, repository.UpdateCount);
+    }
+
     private static AuthService CreateService(FakeAccountRepository repository) =>
         new(repository, new FixedTimeProvider(CurrentTime));
 
@@ -223,6 +238,7 @@ public sealed class AuthServiceTests
         public string? LastCurrentPassword { get; private set; }
 
         public string? LastNewPassword { get; private set; }
+        public int UpdateCount { get; private set; }
 
         public Task<ApplicationUser?> FindByEmailAsync(string email)
         {
@@ -256,8 +272,11 @@ public sealed class AuthServiceTests
         public Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user) =>
             Task.FromResult<IReadOnlyList<string>>([RoleNames.Member]);
 
-        public Task<IdentityResult> UpdateAsync(ApplicationUser user) =>
-            Task.FromResult(UpdateResult);
+        public Task<IdentityResult> UpdateAsync(ApplicationUser user)
+        {
+            UpdateCount++;
+            return Task.FromResult(UpdateResult);
+        }
 
         public Task<IdentityResult> ChangePasswordAsync(
             ApplicationUser user,

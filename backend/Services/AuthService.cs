@@ -47,6 +47,15 @@ public sealed class AuthService(
             return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
         }
 
+        // Khóa quản trị hết hạn không được mang lý do cũ sang lần khóa do nhập sai mật khẩu.
+        if (user.LockReason is not null && user.LockoutEnd.HasValue &&
+            user.LockoutEnd.Value <= timeProvider.GetUtcNow())
+        {
+            user.LockReason = null;
+            if (!(await accountRepository.UpdateAsync(user)).Succeeded)
+                return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+        }
+
         var signInResult = await accountRepository.PasswordSignInAsync(
             user,
             request.Password,
