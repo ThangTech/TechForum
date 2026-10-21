@@ -58,16 +58,20 @@ export const AccountMenu = () => {
 
   return (
     <div className="grid justify-items-end gap-1">
-      <div className="flex items-center gap-2">
-        <UserAvatar avatarUrl={user.avatarUrl} displayName={user.displayName} />
-        <DropdownMenu
-          alignment="end"
-          button={{ label: user.displayName }}
-          items={items}
-          menuWidth={220}
-          placement="below"
-        />
-      </div>
+      <DropdownMenu
+        alignment="end"
+        button={{
+          label: `Tài khoản của ${user.displayName}`,
+          icon: <UserAvatar avatarUrl={user.avatarUrl} displayName={user.displayName} />,
+          isIconOnly: true,
+          variant: 'ghost',
+          size: 'lg',
+        }}
+        hasChevron={false}
+        items={items}
+        menuWidth={220}
+        placement="below"
+      />
       {error && <span className="max-w-56 text-right text-xs text-red-700" role="alert">{error}</span>}
     </div>
   )

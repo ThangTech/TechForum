@@ -25,25 +25,30 @@ export const NotificationsPage = () => {
 
   useEffect(() => {
     const controller = new AbortController()
-    getNotifications(page, 10, controller.signal)
-      .then(setData)
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+
+    const loadNotifications = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const result = await getNotifications(page, 10, controller.signal)
+        if (!controller.signal.aborted) setData(result)
+      } catch (requestError) {
+        if (controller.signal.aborted) return
         setError(requestError instanceof Error ? requestError.message : 'Không thể tải thông báo.')
-      })
-      .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    }
+
+    void loadNotifications()
     return () => controller.abort()
   }, [page, requestVersion])
 
   const changePage = (nextPage: number) => {
-    setIsLoading(true)
-    setError(null)
     setSearchParams(nextPage <= 1 ? {} : { page: String(nextPage) })
   }
 
   const retry = () => {
-    setIsLoading(true)
-    setError(null)
     setRequestVersion((value) => value + 1)
   }
 

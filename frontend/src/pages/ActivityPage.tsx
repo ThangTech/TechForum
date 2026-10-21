@@ -19,18 +19,25 @@ export const ActivityPage = () => {
 
   useEffect(() => {
     const controller = new AbortController()
-    getMyActivity(page, 20, controller.signal)
-      .then(setData)
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+    const loadActivity = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const result = await getMyActivity(page, 20, controller.signal)
+        if (!controller.signal.aborted) setData(result)
+      } catch (requestError) {
+        if (controller.signal.aborted) return
         setError(requestError instanceof Error ? requestError.message : 'Không thể tải lịch sử hoạt động.')
-      })
-      .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    }
+    void loadActivity()
     return () => controller.abort()
   }, [page, requestVersion])
 
-  const reload = () => { setIsLoading(true); setError(null); setRequestVersion((value) => value + 1) }
-  const changePage = (next: number) => { setIsLoading(true); setError(null); setSearchParams(next <= 1 ? {} : { page: String(next) }) }
+  const reload = () => setRequestVersion((value) => value + 1)
+  const changePage = (next: number) => setSearchParams(next <= 1 ? {} : { page: String(next) })
 
   return (
     <main className="main-area" id="main-content">

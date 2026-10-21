@@ -54,7 +54,7 @@ export const LoginPage = () => {
         <div>
           <p className="eyebrow">Đăng nhập</p>
           <h1>Tiếp tục với tài khoản của bạn</h1>
-          <p className="auth-form__lead">Thông tin đăng nhập được gửi trực tiếp tới TechForum API.</p>
+          <p className="auth-form__lead">Đăng nhập để viết bài, đặt câu hỏi và lưu nội dung bạn quan tâm.</p>
         </div>
 
         {error && <div className="form-alert" role="alert">{error}</div>}

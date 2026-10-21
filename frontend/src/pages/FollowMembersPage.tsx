@@ -26,26 +26,29 @@ export const FollowMembersPage = ({ kind }: FollowMembersPageProps) => {
 
   useEffect(() => {
     const controller = new AbortController()
-    getFollowMembers(userId, kind, page, controller.signal)
-      .then(setData)
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+    const loadMembers = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const result = await getFollowMembers(userId, kind, page, controller.signal)
+        if (!controller.signal.aborted) setData(result)
+      } catch (requestError) {
+        if (controller.signal.aborted) return
         setError(requestError instanceof ApiError && requestError.status === 404
           ? 'Không tìm thấy hồ sơ thành viên này.'
           : requestError instanceof Error ? requestError.message : 'Không thể tải danh sách theo dõi.')
-      })
-      .finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    }
+    void loadMembers()
     return () => controller.abort()
   }, [kind, page, userId, version])
 
   const changePage = (next: number) => {
-    setIsLoading(true)
-    setError(null)
     setSearchParams(next <= 1 ? {} : { page: String(next) })
   }
   const retry = () => {
-    setIsLoading(true)
-    setError(null)
     setVersion((value) => value + 1)
   }
   const title = kind === 'followers' ? 'Người theo dõi' : 'Đang theo dõi'

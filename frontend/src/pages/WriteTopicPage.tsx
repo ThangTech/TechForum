@@ -13,10 +13,20 @@ import { TopicMetadataFields } from '../components/topics/TopicMetadataFields'
 import { appRoutes } from '../appRoutes'
 
 export const WriteTopicPage = () => {
-  const navigate = useNavigate()
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const requestedType = searchParams.get('type') === 'question' ? 'question' : 'article'
+
+  return <WriteTopicForm id={id} key={id ? `edit-${id}` : `create-${requestedType}`} requestedType={requestedType} />
+}
+
+interface WriteTopicFormProps {
+  id?: string
+  requestedType: TopicType
+}
+
+const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
+  const navigate = useNavigate()
   const editingId = id ? Number(id) : null
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
@@ -54,6 +64,7 @@ export const WriteTopicPage = () => {
             ? getMyTopic(editingId, controller.signal)
             : Promise.resolve(null),
         ])
+        if (controller.signal.aborted) return
         setCategories(categoryResult)
         setTags(tagResult)
         if (topicResult) {
@@ -135,7 +146,7 @@ export const WriteTopicPage = () => {
     setTitle('')
     setSummary('')
     setBodyHtml('')
-    setType('article')
+    setType(requestedType)
     setCategoryId(categories[0] ? String(categories[0].id) : '')
     setTagIds([])
     setMedia([])
@@ -156,7 +167,7 @@ export const WriteTopicPage = () => {
   return (
     <main className="main-area" id="main-content">
       <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">P3 · {editingId ? 'Chỉnh sửa' : 'Soạn nội dung'}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{editingId ? 'Chỉnh sửa' : 'Soạn nội dung'}</p>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
           {editingId ? 'Chỉnh sửa nội dung' : 'Viết cho cộng đồng'}
         </h1>
@@ -209,14 +220,14 @@ export const WriteTopicPage = () => {
               />
               {isPreviewOpen && (
                 <div
-                  className="fr-view mt-4 rounded-lg border border-slate-200 bg-white p-5 text-base leading-8 text-slate-800 [&_img]:h-auto [&_img]:max-w-full [&_video]:block [&_video]:max-h-[70vh] [&_video]:w-full [&_video]:rounded-lg [&_video]:bg-black"
+                  className="fr-view reading-content mt-4 rounded-lg border border-slate-200 bg-white p-5"
                   dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(bodyHtml) }}
                 />
               )}
             </div>
             <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-5">
-              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải media…' : isSubmitting ? 'Đang lưu…' : 'Lưu bản nháp'} type="submit" variant="secondary" />
-              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải media…' : isSubmitting ? 'Đang xuất bản…' : 'Xuất bản'} onClick={() => void submit(true)} type="button" variant="primary" />
+              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải tệp…' : isSubmitting ? 'Đang lưu…' : 'Lưu bản nháp'} type="submit" variant="secondary" />
+              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải tệp…' : isSubmitting ? 'Đang xuất bản…' : 'Xuất bản'} onClick={() => void submit(true)} type="button" variant="primary" />
             </div>
           </form>
         )}
