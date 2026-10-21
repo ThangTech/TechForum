@@ -11,4 +11,5 @@ public sealed class TopicQuery
     public int? CategoryId { get; init; }
     public int? TagId { get; init; }
     public string? Sort { get; init; }
+    public string? QuestionStatus { get; init; }
 }

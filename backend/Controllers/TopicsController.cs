@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Enums;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -220,6 +221,18 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
             !string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
         {
             errors["sort"] = ["Kiểu sắp xếp chỉ hỗ trợ giá trị 'discussion'."];
+        }
+
+        if (query.QuestionStatus is not null)
+        {
+            if (query.QuestionStatus is not ("unanswered" or "unsolved" or "solved"))
+            {
+                errors["questionStatus"] = ["Trạng thái câu hỏi không hợp lệ."];
+            }
+            if (query.Type == TopicType.Article)
+            {
+                errors["questionStatus"] = ["Bộ lọc trạng thái chỉ dùng cho câu hỏi."];
+            }
         }
 
         return errors;

@@ -11,7 +11,7 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
         TopicQuery query,
         CancellationToken cancellationToken)
     {
-        var topics = PublicTopics();
+        var topics = ApplyQuestionStatus(PublicTopics(), query.QuestionStatus);
         var keyword = query.Keyword?.Trim();
 
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -88,9 +88,9 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
         TopicQuery query,
         CancellationToken cancellationToken)
     {
-        var topics = dbContext.Topics
+        var topics = ApplyQuestionStatus(dbContext.Topics
             .AsNoTracking()
-            .Where(topic => topic.AuthorId == authorId && !topic.IsDeleted);
+            .Where(topic => topic.AuthorId == authorId && !topic.IsDeleted), query.QuestionStatus);
         var keyword = query.Keyword?.Trim();
 
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -189,6 +189,30 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
 
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         dbContext.SaveChangesAsync(cancellationToken);
+
+    private static IQueryable<Topic> ApplyQuestionStatus(IQueryable<Topic> topics, string? status)
+    {
+        if (status is null) return topics;
+
+        topics = topics.Where(topic => topic.Type == TopicType.Question);
+        if (status == "unanswered")
+        {
+            return topics.Where(topic => !topic.Answers.Any(answer =>
+                answer.ParentAnswerId == null && !answer.IsDeleted && !answer.IsHiddenByModerator));
+        }
+
+        if (status == "solved")
+        {
+            return topics.Where(topic => topic.Answers.Any(answer =>
+                answer.Id == topic.AcceptedAnswerId && answer.ParentAnswerId == null &&
+                !answer.IsDeleted && !answer.IsHiddenByModerator));
+        }
+
+        return topics.Where(topic => topic.Answers.Any(answer =>
+                answer.ParentAnswerId == null && !answer.IsDeleted && !answer.IsHiddenByModerator) &&
+            !topic.Answers.Any(answer => answer.Id == topic.AcceptedAnswerId &&
+                answer.ParentAnswerId == null && !answer.IsDeleted && !answer.IsHiddenByModerator));
+    }
 
     private IQueryable<Topic> PublicTopics() => dbContext.Topics
         .AsNoTracking()

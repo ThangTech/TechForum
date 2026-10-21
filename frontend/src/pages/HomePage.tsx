@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { getTags, type Tag } from '../api/tags'
-import { getTopics, type TopicPage, type TopicType } from '../api/topics'
+import { getTopics, type TopicPage, type TopicType, type QuestionStatus } from '../api/topics'
 import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../components/TopicFeed'
@@ -37,6 +37,9 @@ export const HomePage = ({
   const keyword = searchParams.get('keyword')?.trim() ?? ''
   const typeParam = searchParams.get('type')
   const selectedType = fixedType ?? (typeParam === 'Article' || typeParam === 'Question' ? typeParam : undefined)
+  const statusParam = searchParams.get('questionStatus')
+  const questionStatus: QuestionStatus | undefined = selectedType !== 'Article' &&
+    (statusParam === 'unanswered' || statusParam === 'unsolved' || statusParam === 'solved') ? statusParam : undefined
 
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -123,6 +126,7 @@ export const HomePage = ({
           categoryId,
           tagId,
           sort,
+          questionStatus,
         }, controller.signal))
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return
@@ -134,7 +138,7 @@ export const HomePage = ({
 
     void loadTopics()
     return () => controller.abort()
-  }, [page, keyword, selectedType, categoryId, tagId, sort, topicRequestVersion])
+  }, [page, keyword, selectedType, categoryId, tagId, sort, questionStatus, topicRequestVersion])
 
   const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams)
@@ -184,19 +188,29 @@ export const HomePage = ({
               <span>{sort === 'discussion' ? 'Theo phản hồi mới nhất (gồm chỉnh sửa)' : 'Bài ghim trước, sau đó mới nhất'}</span>
               {!fixedType && <label className="flex items-center gap-2">
                 Loại nội dung
-                <select className="rounded border border-slate-300 bg-white p-2" value={selectedType ?? ''} onChange={(event) => updateSearchParams({ type: event.target.value, page: undefined })}>
+                <select className="rounded border border-slate-300 bg-white p-2" value={selectedType ?? ''} onChange={(event) => updateSearchParams({ type: event.target.value, questionStatus: undefined, page: undefined })}>
                   <option value="">Tất cả</option>
                   <option value="Article">Bài viết</option>
                   <option value="Question">Câu hỏi</option>
                 </select>
               </label>}
+              {selectedType !== 'Article' && <label className="flex flex-wrap items-center gap-2">
+                Trạng thái hỏi đáp
+                <select className="max-w-full rounded border border-slate-300 bg-white p-2" value={questionStatus ?? ''} onChange={(event) => updateSearchParams({ questionStatus: event.target.value, page: undefined })}>
+                  <option value="">Tất cả</option>
+                  <option value="unanswered">Chưa có trả lời</option>
+                  <option value="unsolved">Có trả lời, chưa giải quyết</option>
+                  <option value="solved">Đã giải quyết</option>
+                </select>
+              </label>}
             </div>
-            {(categoryId || tagId || keyword) && <div className="mb-3 flex flex-wrap items-center gap-2 text-sm" aria-label="Bộ lọc đang áp dụng">
+            {(categoryId || tagId || keyword || questionStatus) && <div className="mb-3 flex flex-wrap items-center gap-2 text-sm" aria-label="Bộ lọc đang áp dụng">
               {keyword && <span>Từ khóa: “{keyword}”</span>}
               {categoryId && <button className="tag-filter" onClick={() => updateSearchParams({ categoryId: undefined, page: undefined })} type="button">Bỏ chuyên mục: {categories.find((item) => item.id === categoryId)?.name ?? categoryId} ×</button>}
               {tagId && <button className="tag-filter" onClick={() => updateSearchParams({ tagId: undefined, page: undefined })} type="button">Bỏ thẻ: {tags.find((item) => item.id === tagId)?.name ?? tagId} ×</button>}
+              {questionStatus && <button className="tag-filter" onClick={() => updateSearchParams({ questionStatus: undefined, page: undefined })} type="button">Bỏ trạng thái hỏi đáp ×</button>}
               <button className="font-semibold text-blue-700 underline" onClick={() => {
-                updateSearchParams({ keyword: undefined, categoryId: undefined, tagId: undefined, page: undefined })
+                updateSearchParams({ keyword: undefined, categoryId: undefined, tagId: undefined, questionStatus: undefined, page: undefined })
               }} type="button">Xóa bộ lọc</button>
             </div>}
           <TopicFeed

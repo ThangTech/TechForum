@@ -1,6 +1,7 @@
 import { ApiError, apiRequest } from './client'
 
 export type TopicType = 'article' | 'question'
+export type QuestionStatus = 'unanswered' | 'unsolved' | 'solved'
 
 export interface TopicCategory { id: number; name: string; slug: string }
 export interface TopicAuthor { id: string; displayName: string }
@@ -53,6 +54,7 @@ export interface TopicFilters {
   categoryId?: number
   tagId?: number
   sort?: 'discussion'
+  questionStatus?: QuestionStatus
 }
 
 export interface CreateTopicInput {
