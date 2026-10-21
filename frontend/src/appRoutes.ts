@@ -18,6 +18,7 @@ export const appRoutes = {
   adminAccounts: '/admin/accounts',
   adminTopics: '/admin/topics',
   adminOverview: '/admin',
+  myReports: '/reports',
   login: '/login',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',

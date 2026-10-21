@@ -12,6 +12,7 @@ import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
 import { MyTopicsPage } from './pages/MyTopicsPage'
 import { SavedTopicsPage } from './pages/SavedTopicsPage'
+import { MyReportsPage } from './pages/MyReportsPage'
 import { appRoutes } from './appRoutes'
 import { LegacyRouteRedirect } from './components/LegacyRouteRedirect'
 import { AdminReportsPage } from './pages/AdminReportsPage'
@@ -100,6 +101,7 @@ const App = () => {
             <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
+            <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
             <Route path="skills/:tagId" element={<SkillCommunityPage />} />
             <Route
               path="admin/reports"

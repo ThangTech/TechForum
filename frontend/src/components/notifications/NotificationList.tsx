@@ -30,9 +30,9 @@ export const NotificationList = ({ data, busyId, onOpen, onPageChange }: Notific
               type="button"
             >
               <span className="flex items-start justify-between gap-4">
-                <span>
+                <span className="min-w-0 flex-1">
                   <strong className="block text-sm text-slate-950">{item.title}</strong>
-                  <span className="mt-1 block text-sm leading-6 text-slate-600">{item.message}</span>
+                  <span className="mt-1 block whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">{item.message}</span>
                 </span>
                 {!item.readAtUtc && <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-600" aria-label="Chưa đọc" />}
               </span>
