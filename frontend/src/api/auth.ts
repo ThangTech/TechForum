@@ -77,3 +77,11 @@ export const updateAvatar = (file: File) => {
 }
 
 export const deleteAvatar = () => requestUser('/api/auth/avatar', { method: 'DELETE' })
+
+export const requestPasswordReset = (email: string) => apiRequest<{ message: string }>('/api/auth/forgot-password', {
+  method: 'POST', body: JSON.stringify({ email }),
+})
+
+export const resetPassword = (email: string, token: string, newPassword: string) => apiRequest<void>('/api/auth/reset-password', {
+  method: 'POST', body: JSON.stringify({ email, token, newPassword }),
+})

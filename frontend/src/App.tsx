@@ -7,6 +7,7 @@ import { AccountPage } from './pages/AccountPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ForgotPasswordPage, ResetPasswordPage } from './pages/PasswordRecoveryPage'
 import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
 import { MyTopicsPage } from './pages/MyTopicsPage'
@@ -146,6 +147,8 @@ const App = () => {
           </Route>
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route path="dang-nhap" element={<LegacyRouteRedirect to={appRoutes.login} />} />
           <Route path="dang-ky" element={<LegacyRouteRedirect to={appRoutes.register} />} />
         </Routes>

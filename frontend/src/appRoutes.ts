@@ -19,6 +19,8 @@ export const appRoutes = {
   adminTopics: '/admin/topics',
   adminOverview: '/admin',
   login: '/login',
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
   register: '/register',
   topic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}`,
   editTopic: (id: number | string) => `/topics/${encodeURIComponent(String(id))}/edit`,

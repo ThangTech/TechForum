@@ -85,6 +85,7 @@ export const LoginPage = () => {
           onChange={setRememberMe}
           value={rememberMe}
         />
+        <Link className="text-sm font-semibold text-blue-700 underline" to={appRoutes.forgotPassword}>Quên mật khẩu?</Link>
         <Button
           isLoading={isSubmitting}
           label="Đăng nhập"
