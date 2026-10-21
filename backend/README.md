@@ -1,5 +1,34 @@
 # TechForum API
 
+## Bảng tin, gợi ý và đánh giá câu trả lời — 2026-10-21
+
+- `GET /api/topics/following`: cùng bộ lọc/phân trang với `/api/topics`, nhưng
+  chỉ lấy nội dung công khai của tác giả đang được tài khoản hiện tại theo dõi.
+  Danh tính lấy từ cookie/claims; khách nhận 401.
+- `GET /api/topics?sort=weekly`: xếp hoạt động trong 7 ngày gần nhất, kể cả bài
+  đăng từ trước. Điểm = sao × 2 + lượt lưu × 2 + trả lời cấp một công khai × 3.
+  Không tính hoạt động của tác giả chủ đề, bản ghi tương lai hoặc phản hồi ẩn/xóa;
+  chỉ trả chủ đề có điểm. Thứ tự: điểm, ngày đăng, ID giảm dần; bài ghim không
+  thay đổi thứ hạng tuần. Bộ lọc chuyên mục/thẻ/loại/trạng thái vẫn áp dụng.
+  Đây là quy tắc xếp hạng cố định, không phải mô hình AI.
+- `GET /api/topics/{topicId}/related`: tối đa 4 preview công khai, loại chính
+  chủ đề nguồn; ưu tiên số thẻ chung, cùng chuyên mục, ngày đăng rồi ID giảm dần.
+  Chỉ chọn ứng viên chung thẻ hoặc chuyên mục. Nguồn không công khai trả 404.
+- `GET /api/topics/{topicId}/answers?sort=oldest|helpful`: mặc định `oldest`;
+  `helpful` xếp số bình chọn giảm dần, rồi thời điểm tạo/ID tăng dần.
+  `aroundAnswerId` tìm đúng trang trong cả hai thứ tự. DTO thêm `helpfulCount`
+  và `isHelpful` của người đang xem; khách luôn nhận `isHelpful=false`.
+- `PUT`/`DELETE /api/topics/{topicId}/answers/{answerId}/helpful`: trả
+  `{ helpfulCount, isHelpful }`, yêu cầu cookie và CSRF. Khóa chính kép
+  `(AnswerId, UserId)` chống bình chọn trùng, kể cả hai request đồng thời.
+  PUT tự bình chọn trả 409; tài nguyên không công khai/sai chủ đề trả 404.
+  Thêm/bỏ lặp lại idempotent và không thay đổi đáp án được chấp nhận.
+
+Migration `20261021022005_AddAnswerHelpfulVotes` chỉ thêm bảng và chỉ mục;
+đã áp dụng trên SQL Server local. Phản hồi con chỉ công khai khi cha còn tồn tại,
+cùng chủ đề, là trả lời gốc và chưa bị ẩn/xóa. Quy tắc này được áp dụng đồng bộ
+cho danh sách, số đếm, hoạt động, hồ sơ, dashboard và liên kết báo cáo cá nhân.
+
 ## Quản trị và báo cáo — cập nhật 2026-10-21
 
 - `GET /api/admin/dashboard?startDate=2026-10-01&endDate=2026-10-21`:
@@ -160,8 +189,8 @@ luồng kiểm duyệt ẩn/khôi phục riêng và không thay đổi cờ xóa
 ## Câu trả lời P4
 
 - `GET /api/topics/{topicId}/answers?page=1&pageSize=20`: danh sách câu trả lời
-  công khai, phân trang tối đa 50 phần tử và sắp theo thời điểm tạo rồi `id` tăng
-  dần để giữ đúng thứ tự hội thoại.
+  công khai, phân trang tối đa 50 phần tử; mặc định sắp theo thời điểm tạo rồi
+  `id` tăng dần. Có thể chọn `sort=helpful` như contract ở đầu tài liệu.
 - `POST /api/topics/{topicId}/answers`: thành viên đã đăng nhập gửi câu trả lời
   cấp một bằng `{ "bodyHtml": "<p>Nội dung trả lời</p>" }`, hoặc phản hồi bằng
   `{ "bodyHtml": "<p>Nội dung phản hồi</p>", "parentAnswerId": 12 }`, trả HTTP

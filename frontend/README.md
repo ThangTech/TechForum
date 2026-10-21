@@ -2,6 +2,29 @@
 
 Giao diện React + TypeScript + Vite cho TechForum.
 
+## Bảng tin và trang đọc — 2026-10-21
+
+- Trang chủ, `/articles`, `/questions` có ba mục **Mới nhất**, **Đang theo dõi**,
+  **Nổi bật tuần**. `feed=following|weekly` được giữ cùng bộ lọc trên URL.
+  Theo dõi tác giả từ hồ sơ công khai để nhận bài trong bảng tin cá nhân.
+  Khách được dẫn đăng nhập và quay lại đúng bảng tin; tài khoản chưa theo dõi
+  ai có hướng dẫn riêng. Trang `/discussions` giữ thứ tự trao đổi gần nhất.
+- Trang đọc tự tạo mục lục từ H2/H3: sidebar trên desktop, danh sách thu gọn
+  trên mobile; đề mục trùng tên vẫn có ID riêng. Liên kết đề mục hoạt động khi
+  tải trang trực tiếp, không ảnh hưởng liên kết `#answer-{id}`.
+  Hiện thời gian đọc ước tính (220 từ/phút, thêm 12 giây/ảnh) và ngày cập nhật.
+- Cuối trang có **Đọc tiếp** từ API công khai; có trạng thái tải/rỗng/lỗi/thử lại.
+  Khung vuông/bo nhẹ, tiêu đề và danh sách trong bài có định dạng đọc rõ ràng.
+- Câu trả lời có **Hữu ích**, trạng thái đã bình chọn, nhãn đã chỉnh sửa và
+  lựa chọn **Cũ nhất trước / Hữu ích nhất**. Không tự bình chọn; khách dùng
+  hộp thoại đăng nhập chung. `answerSort=helpful` giữ trên URL; đổi thứ tự
+  bắt đầu từ trang đầu, liên kết câu trả lời vẫn tìm đúng trang.
+
+Kiểm thử thủ công: theo dõi tác giả rồi mở bảng tin; mở bài có H2/H3 và bấm
+mục lục; bình chọn câu trả lời của người khác rồi tải lại; đổi cách sắp xếp
+và mở liên kết tới câu trả lời ở trang sau. Đã kiểm tra trên bản production
+ở desktop, 390px và 320px, không có lỗi console hoặc tràn ngang toàn trang.
+
 ## Khu quản trị và luồng mới — 2026-10-21
 
 Khu `/admin` có bố cục riêng với sidebar desktop/menu mobile, breadcrumb và các
@@ -118,3 +141,8 @@ npm run lint
 npm run build
 npm test
 ```
+
+Đợt kiểm chứng ngày 2026-10-21 đạt lint và 23 test. Build production kiểm chứng
+bằng `npm run build -- --outDir dist/verify-member-ready`; thư mục riêng tránh
+lỗi quyền xóa file cũ trong `dist` đã ghi nhận ở đợt trước. Không thay đổi ACL.
+Cảnh báo bundle Froala lớn vẫn còn.

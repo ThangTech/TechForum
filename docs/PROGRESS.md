@@ -5,6 +5,50 @@ Cập nhật: 2026-10-21
 Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng chứng build, kiểm thử tự
 động hoặc kiểm thử tích hợp phù hợp. Số phần trăm không được suy ra từ số màn hình.
 
+## Bảng tin, trải nghiệm đọc và câu trả lời hữu ích — 2026-10-21
+
+- [x] Ba tab bảng tin: mới nhất, tác giả đang theo dõi và nổi bật tuần.
+  API theo dõi kiểm tra phiên; bộ lọc/URL/phân trang được giữ đồng bộ.
+  Xếp hạng tuần dùng tương tác thật 7 ngày, loại tự tương tác và dữ liệu tương lai.
+- [x] Mục lục H2/H3 có liên kết trực tiếp, tiêu đề trùng tên có ID riêng;
+  sidebar desktop và mục lục thu gọn mobile. Thêm thời gian đọc ước tính,
+  ngày cập nhật và kiểu chữ/khung vuông dễ đọc.
+- [x] Tối đa bốn nội dung liên quan từ SQL, ưu tiên thẻ chung/chuyên mục;
+  không lộ nguồn hoặc ứng viên là nháp, ẩn, xóa.
+- [x] Bình chọn hữu ích từng câu trả lời, mỗi người một lượt, không tự bình chọn;
+  PUT/DELETE idempotent, khóa duy nhất ở SQL. Trạng thái cá nhân không lẫn giữa
+  người xem; bình chọn độc lập với đáp án tác giả chấp nhận.
+- [x] Sắp xếp phản hồi cũ nhất/hữu ích nhất; liên kết `aroundAnswerId` tìm
+  đúng trang trong cả hai cách. Trạng thái bình chọn giữ sau tải lại.
+- [x] Đồng bộ quy tắc cha còn công khai cho phản hồi con: số đếm, hoạt động,
+  hồ sơ, dashboard và báo cáo cá nhân không dẫn tới phản hồi không thể xem.
+- [x] Migration `20261021022005_AddAnswerHelpfulVotes` đã áp dụng ở SQL Server
+  local; EF xác nhận không còn thay đổi model thiếu migration.
+
+Kiểm chứng: `dotnet test backend.Tests/TechForum.Api.Tests.csproj --no-restore`
+đạt **130 test**; frontend `npm test` đạt **23 test**, `npm run lint` đạt.
+`npm run build -- --outDir dist/verify-member-ready` đạt TypeScript + Vite.
+Dùng outDir riêng do lỗi quyền dọn `dist` cũ đã ghi nhận trước đó; cảnh báo
+bundle lớn vẫn còn, không thay đổi quyền file hoặc xóa cưỡng bức.
+
+CSDL kiểm thử riêng: 29 kiểm tra SQL chuyên biệt về bình chọn, thứ tự, liên kết,
+quyền và cạnh tranh hai DbContext đạt; 31 kiểm tra SQL tích hợp số đếm/ẩn/xóa
+cha, liên kết và tổng hợp đạt rồi rollback. 39 kiểm tra HTTP đạt với cookie
+thật: bảng tin theo dõi, bộ lọc, thứ hạng tuần, related, CSRF, bình chọn lặp,
+tự bình chọn, quyền riêng tư và đáp án được chấp nhận.
+
+Trình duyệt bản production đã xác nhận khách/hai tài khoản: đăng nhập giữ cả
+liên kết câu trả lời, theo dõi tác giả làm bảng tin có bài, bảng tin rỗng riêng,
+mục lục trùng tên/cuộn/focus/tải liên kết trực tiếp, bài không có đề mục,
+bấm nội dung liên quan, bình chọn rồi tải lại, đổi thứ tự và tự tìm trang sau.
+320px, 390px và desktop không tràn ngang; không có lỗi console trong phiên
+production. Ảnh kiểm thử đánh dấu dữ liệu `[QA]` được lưu ngoài repo.
+CSDL QA và tệp chứa thông tin đăng nhập đã xóa; đã đăng xuất phiên trình duyệt,
+đóng tab tạm và dừng frontend/backend kiểm thử.
+
+Series bài viết và bộ sưu tập lưu riêng vẫn là ý tưởng mở rộng, chưa triển khai
+trong đợt này. Các mục bên dưới giữ bằng chứng của những đợt trước.
+
 ## Nâng cấp quản trị và chiều sâu nghiệp vụ — 2026-10-21
 
 - [x] Bố cục quản trị riêng, sidebar 7 mục, menu mobile, breadcrumb, các bảng
