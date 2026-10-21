@@ -19,7 +19,10 @@ public sealed class ActiveAccountMiddleware(RequestDelegate next)
 
         var user = await userManager.GetUserAsync(context.User);
         var isLockedOut = user is not null && await userManager.IsLockedOutAsync(user);
-        if (user is not null && !isLockedOut)
+        var stampClaim = context.User.FindFirst(userManager.Options.ClaimsIdentity.SecurityStampClaimType)?.Value;
+        var isCurrentSession = user is not null && !string.IsNullOrWhiteSpace(stampClaim) &&
+            string.Equals(user.SecurityStamp, stampClaim, StringComparison.Ordinal);
+        if (isCurrentSession && !isLockedOut)
         {
             await next(context);
             return;
@@ -33,7 +36,7 @@ public sealed class ActiveAccountMiddleware(RequestDelegate next)
             Title = "Phiên đăng nhập không còn hiệu lực",
             Detail = isLockedOut
                 ? "Tài khoản đã bị khóa."
-                : "Không tìm thấy tài khoản của phiên đăng nhập."
+                : "Thông tin bảo mật đã thay đổi hoặc tài khoản không còn tồn tại. Vui lòng đăng nhập lại."
         });
     }
 }

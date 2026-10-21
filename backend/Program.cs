@@ -84,6 +84,7 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddPasswordRecovery(builder.Configuration);
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
@@ -186,6 +187,8 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseCors("Frontend");
 
 app.UseAuthentication();
+
+app.UseRateLimiter();
 
 app.UseMiddleware<ActiveAccountMiddleware>();
 
