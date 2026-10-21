@@ -2,6 +2,7 @@ import { ApiError, apiRequest } from './client'
 
 export type TopicType = 'article' | 'question'
 export type QuestionStatus = 'unanswered' | 'unsolved' | 'solved'
+export type TopicFeedMode = 'latest' | 'following' | 'weekly'
 
 export interface TopicCategory { id: number; name: string; slug: string }
 export interface TopicAuthor { id: string; displayName: string }
@@ -53,7 +54,7 @@ export interface TopicFilters {
   type?: 'Article' | 'Question'
   categoryId?: number
   tagId?: number
-  sort?: 'discussion'
+  sort?: 'discussion' | 'weekly'
   questionStatus?: QuestionStatus
 }
 
@@ -149,12 +150,23 @@ export const isTopicSummary = (value: unknown): value is TopicSummary => {
 export const getTopics = async (
   filters: TopicFilters,
   signal?: AbortSignal,
+): Promise<TopicPage> => getTopicPage('/api/topics', filters, signal)
+
+export const getFollowingTopics = async (
+  filters: TopicFilters,
+  signal?: AbortSignal,
+): Promise<TopicPage> => getTopicPage('/api/topics/following', filters, signal)
+
+const getTopicPage = async (
+  path: string,
+  filters: TopicFilters,
+  signal?: AbortSignal,
 ): Promise<TopicPage> => {
   const params = new URLSearchParams()
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== '') params.set(key, String(value))
   })
-  const data: unknown = await apiRequest(`/api/topics?${params.toString()}`, { signal })
+  const data: unknown = await apiRequest(`${path}?${params.toString()}`, { signal })
   if (
     !isRecord(data) ||
     !Array.isArray(data.items) ||

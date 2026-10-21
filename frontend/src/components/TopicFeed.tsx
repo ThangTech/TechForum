@@ -1,6 +1,7 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useState } from 'react'
-import type { TopicPage, TopicType } from '../api/topics'
+import { Link } from 'react-router-dom'
+import type { TopicFeedMode, TopicPage, TopicType } from '../api/topics'
 import { TopicSummaryItem } from './topics/TopicSummaryItem'
 
 interface TopicFeedProps {
@@ -14,6 +15,10 @@ interface TopicFeedProps {
   onFilter: (key: 'categoryId' | 'tagId', value: number) => void
   selectedType?: TopicType
   isDiscussion?: boolean
+  feed?: TopicFeedMode
+  requiresLogin?: boolean
+  loginUrl?: string
+  onShowLatest?: () => void
 }
 
 export const TopicFeed = ({
@@ -27,10 +32,14 @@ export const TopicFeed = ({
   onFilter,
   selectedType,
   isDiscussion,
+  feed = 'latest',
+  requiresLogin = false,
+  loginUrl = '/login',
+  onShowLatest,
 }: TopicFeedProps) => {
   const [draftKeyword, setDraftKeyword] = useState(keyword)
   return (
-  <section aria-labelledby="topic-feed-title" className="overflow-hidden rounded-xl border border-slate-200 bg-white" data-tour="content-feed">
+  <section aria-labelledby="topic-feed-title" className="overflow-hidden border border-slate-200 bg-white" data-tour="content-feed">
     <div className="border-b border-slate-200 p-5 sm:p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{isDiscussion ? 'Đang có trao đổi' : 'Khám phá nội dung'}</p>
       <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950" id="topic-feed-title">
@@ -55,16 +64,28 @@ export const TopicFeed = ({
     </div>
 
     {isLoading && <div className="p-8 text-center text-sm text-slate-500" role="status">Đang tải nội dung…</div>}
-    {!isLoading && error && (
+    {!isLoading && requiresLogin && <div className="space-y-3 p-6 text-center text-sm text-slate-600">
+      <p>Đăng nhập để xem nội dung từ những tác giả bạn đang theo dõi.</p>
+      <Link className="inline-block border border-blue-700 bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800" to={loginUrl}>Đăng nhập</Link>
+    </div>}
+    {!isLoading && !requiresLogin && error && (
       <div className="space-y-4 p-8 text-center" role="alert">
         <p className="text-sm text-red-700">{error}</p>
         <Button label="Thử lại" onClick={onRetry} variant="secondary" />
       </div>
     )}
-    {!isLoading && !error && data?.items.length === 0 && (
-      <div className="p-8 text-center text-sm text-slate-500">Không tìm thấy nội dung phù hợp.</div>
+    {!isLoading && !requiresLogin && !error && data?.items.length === 0 && (
+      <div className="space-y-3 p-6 text-center text-sm text-slate-600">
+        <p>{feed === 'following'
+          ? 'Chưa có nội dung phù hợp từ những người bạn đang theo dõi. Hãy theo dõi tác giả trên trang cá nhân hoặc thử bỏ bớt bộ lọc.'
+          : feed === 'weekly'
+            ? 'Chưa có nội dung phù hợp nhận tương tác trong 7 ngày qua.'
+            : 'Không tìm thấy nội dung phù hợp.'}</p>
+        {feed !== 'latest' && <button className="font-semibold text-blue-700 underline" onClick={onShowLatest} type="button">Xem Mới nhất</button>}
+        {data.totalItems > 0 && <button className="font-semibold text-blue-700 underline" onClick={() => onPageChange(Math.max(1, data.totalPages))} type="button">Về trang cuối có nội dung</button>}
+      </div>
     )}
-    {!isLoading && !error && data && data.items.length > 0 && (
+    {!isLoading && !requiresLogin && !error && data && data.items.length > 0 && (
       <>
         <ul className="divide-y divide-slate-200">
           {data.items.map((topic) => (

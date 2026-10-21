@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { getCategories, type Category } from '../api/categories'
 import { getTags, type Tag } from '../api/tags'
-import { getTopics, type TopicPage, type TopicType, type QuestionStatus } from '../api/topics'
+import { getFollowingTopics, getTopics, type TopicPage, type TopicType, type QuestionStatus, type TopicFeedMode } from '../api/topics'
+import { ApiError } from '../api/client'
+import { useAuth } from '../auth/authState'
+import { createAuthUrl } from '../auth/returnUrl'
 import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../components/TopicFeed'
@@ -31,6 +34,10 @@ export const HomePage = ({
   showTour = false,
 }: HomePageProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const { user, isLoading: isAuthLoading } = useAuth()
+  const feedParam = searchParams.get('feed')
+  const feed: TopicFeedMode = !sort && (feedParam === 'following' || feedParam === 'weekly') ? feedParam : 'latest'
   const page = readPositiveInteger(searchParams.get('page')) ?? 1
   const categoryId = readPositiveInteger(searchParams.get('categoryId'))
   const tagId = readPositiveInteger(searchParams.get('tagId'))
@@ -53,6 +60,7 @@ export const HomePage = ({
   const [areTopicsLoading, setAreTopicsLoading] = useState(true)
   const [topicError, setTopicError] = useState<string | null>(null)
   const [topicRequestVersion, setTopicRequestVersion] = useState(0)
+  const [followingUnauthorized, setFollowingUnauthorized] = useState(false)
   const [questionHighlights, setQuestionHighlights] = useState<QuestionHighlights | null>(null)
   const [areHighlightsLoading, setAreHighlightsLoading] = useState(true)
   const [highlightsError, setHighlightsError] = useState<string | null>(null)
@@ -117,19 +125,42 @@ export const HomePage = ({
     const loadTopics = async () => {
       setAreTopicsLoading(true)
       setTopicError(null)
+      setFollowingUnauthorized(false)
+      if (feed === 'following' && (isAuthLoading || !user)) {
+        setTopics(null)
+        setAreTopicsLoading(isAuthLoading)
+        return
+      }
       try {
-        setTopics(await getTopics({
+        const loadPage = feed === 'following' ? getFollowingTopics : getTopics
+        const result = await loadPage({
           page,
           pageSize: 10,
           keyword: keyword || undefined,
           type: selectedType,
           categoryId,
           tagId,
-          sort,
+          sort: feed === 'weekly' ? 'weekly' : sort,
           questionStatus,
-        }, controller.signal))
+        }, controller.signal)
+        if (controller.signal.aborted) return
+        const lastPage = Math.max(1, result.totalPages)
+        if (page > lastPage) {
+          setSearchParams((current) => {
+            const next = new URLSearchParams(current)
+            if (lastPage === 1) next.delete('page')
+            else next.set('page', String(lastPage))
+            return next
+          }, { replace: true })
+          return
+        }
+        setTopics(result)
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+        if (feed === 'following' && requestError instanceof ApiError && requestError.status === 401) {
+          setFollowingUnauthorized(true)
+          return
+        }
         setTopicError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
       } finally {
         if (!controller.signal.aborted) setAreTopicsLoading(false)
@@ -138,7 +169,7 @@ export const HomePage = ({
 
     void loadTopics()
     return () => controller.abort()
-  }, [page, keyword, selectedType, categoryId, tagId, sort, questionStatus, topicRequestVersion])
+  }, [page, keyword, selectedType, categoryId, tagId, sort, questionStatus, feed, user, isAuthLoading, topicRequestVersion, setSearchParams])
 
   const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams)
@@ -184,8 +215,29 @@ export const HomePage = ({
             </details>
           </aside>
           <div className="min-w-0">
+            {!sort && <nav aria-label="Bảng tin cộng đồng" className="mb-4 flex border-b border-slate-300">
+              {([
+                ['latest', 'Mới nhất'],
+                ['following', 'Đang theo dõi'],
+                ['weekly', 'Nổi bật tuần'],
+              ] as const).map(([value, label]) => (
+                <button
+                  aria-pressed={feed === value}
+                  className={`min-w-0 flex-1 border-b-2 px-2 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${feed === value ? 'border-blue-700 bg-blue-50 text-blue-800' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-blue-700'}`}
+                  key={value}
+                  onClick={() => updateSearchParams({ feed: value === 'latest' ? undefined : value, page: undefined })}
+                  type="button"
+                >{label}</button>
+              ))}
+            </nav>}
             <div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-              <span>{sort === 'discussion' ? 'Theo phản hồi mới nhất (gồm chỉnh sửa)' : 'Bài ghim trước, sau đó mới nhất'}</span>
+              <p>{sort === 'discussion'
+                ? 'Theo phản hồi mới nhất (gồm chỉnh sửa)'
+                : feed === 'weekly'
+                  ? 'Các bài được quan tâm qua lượt đánh giá, lưu và trả lời trong 7 ngày gần nhất. Số liệu trên bài là tổng tương tác.'
+                  : feed === 'following'
+                    ? 'Nội dung công khai từ tác giả bạn theo dõi; bài ghim trước, sau đó mới nhất.'
+                    : 'Bài ghim trước, sau đó mới nhất'}</p>
               {!fixedType && <label className="flex items-center gap-2">
                 Loại nội dung
                 <select className="rounded border border-slate-300 bg-white p-2" value={selectedType ?? ''} onChange={(event) => updateSearchParams({ type: event.target.value, questionStatus: undefined, page: undefined })}>
@@ -225,6 +277,10 @@ export const HomePage = ({
             onSearch={handleSearch}
             selectedType={selectedType?.toLowerCase() as TopicType | undefined}
             isDiscussion={sort === 'discussion'}
+            feed={feed}
+            requiresLogin={feed === 'following' && !isAuthLoading && (!user || followingUnauthorized)}
+            loginUrl={createAuthUrl('/login', `${location.pathname}${location.search}`)}
+            onShowLatest={() => updateSearchParams({ feed: undefined, page: undefined })}
           />
           </div>
 
