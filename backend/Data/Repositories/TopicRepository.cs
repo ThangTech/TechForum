@@ -5,14 +5,32 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicRepository
+public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider timeProvider) : ITopicRepository
 {
-    public async Task<TopicPage> GetPublicPageAsync(
+    public Task<TopicPage> GetPublicPageAsync(
         TopicQuery query,
+        CancellationToken cancellationToken) =>
+        GetFeedPageAsync(query, null, cancellationToken);
+
+    public Task<TopicPage> GetFollowingPageAsync(
+        string followerId,
+        TopicQuery query,
+        CancellationToken cancellationToken) =>
+        GetFeedPageAsync(query, followerId, cancellationToken);
+
+    private async Task<TopicPage> GetFeedPageAsync(
+        TopicQuery query,
+        string? followerId,
         CancellationToken cancellationToken)
     {
         var topics = ApplyQuestionStatus(PublicTopics(), query.QuestionStatus);
         var keyword = query.Keyword?.Trim();
+
+        if (followerId is not null)
+        {
+            topics = topics.Where(topic => dbContext.UserFollows.Any(follow =>
+                follow.FollowerId == followerId && follow.FollowingId == topic.AuthorId));
+        }
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -38,18 +56,55 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
         if (string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
         {
             topics = topics.Where(topic => topic.Answers.Any(answer =>
-                !answer.IsDeleted && !answer.IsHiddenByModerator));
+                !answer.IsDeleted && !answer.IsHiddenByModerator &&
+                (answer.ParentAnswerId == null ||
+                    (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
+                     answer.ParentAnswer.ParentAnswerId == null &&
+                     !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator))));
         }
 
-        var totalItems = await topics.CountAsync(cancellationToken);
-        var orderedTopics = string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase)
-            ? topics.OrderByDescending(topic => topic.Answers
-                    .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator)
+        IQueryable<Topic> orderedTopics;
+        if (string.Equals(query.Sort, "weekly", StringComparison.OrdinalIgnoreCase))
+        {
+            var now = timeProvider.GetUtcNow();
+            var since = now.AddDays(-7);
+            // Chỉ chấm hoạt động mới của người khác; sửa trả lời không làm tăng điểm tuần.
+            var ranked = topics.Select(topic => new
+            {
+                Topic = topic,
+                Score = topic.Stars.Count(star => star.UserId != topic.AuthorId &&
+                    star.CreatedAtUtc >= since && star.CreatedAtUtc <= now) * 2 +
+                    topic.Bookmarks.Count(bookmark => bookmark.UserId != topic.AuthorId &&
+                        bookmark.CreatedAtUtc >= since && bookmark.CreatedAtUtc <= now) * 2 +
+                    topic.Answers.Count(answer => answer.AuthorId != topic.AuthorId &&
+                        answer.ParentAnswerId == null && !answer.IsDeleted && !answer.IsHiddenByModerator &&
+                        answer.CreatedAtUtc >= since && answer.CreatedAtUtc <= now) * 3
+            });
+            topics = ranked.Where(item => item.Score > 0).Select(item => item.Topic);
+            orderedTopics = ranked.Where(item => item.Score > 0)
+                .OrderByDescending(item => item.Score)
+                .ThenByDescending(item => item.Topic.PublishedAtUtc)
+                .ThenByDescending(item => item.Topic.Id)
+                .Select(item => item.Topic);
+        }
+        else if (string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
+        {
+            orderedTopics = topics.OrderByDescending(topic => topic.Answers
+                    .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
+                        (answer.ParentAnswerId == null ||
+                            (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
+                             answer.ParentAnswer.ParentAnswerId == null &&
+                             !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)))
                     .Max(answer => answer.UpdatedAtUtc ?? answer.CreatedAtUtc))
-                .ThenByDescending(topic => topic.Id)
-            : topics.OrderByDescending(topic => topic.IsPinned)
+                .ThenByDescending(topic => topic.Id);
+        }
+        else
+        {
+            orderedTopics = topics.OrderByDescending(topic => topic.IsPinned)
                 .ThenByDescending(topic => topic.PublishedAtUtc)
                 .ThenByDescending(topic => topic.Id);
+        }
+        var totalItems = await topics.CountAsync(cancellationToken);
         var items = await orderedTopics
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
@@ -68,12 +123,20 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
             {
                 topic.Id,
                 Summary = new TopicDiscussionDto(
-                    topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator),
+                    topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
+                        (answer.ParentAnswerId == null ||
+                            (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
+                             answer.ParentAnswer.ParentAnswerId == null &&
+                             !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator))),
                     topic.Type == TopicType.Question && topic.Answers.Any(answer =>
-                        answer.Id == topic.AcceptedAnswerId &&
+                        answer.Id == topic.AcceptedAnswerId && answer.ParentAnswerId == null &&
                         !answer.IsDeleted && !answer.IsHiddenByModerator),
                     topic.Answers
-                        .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator)
+                        .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
+                            (answer.ParentAnswerId == null ||
+                                (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
+                                 answer.ParentAnswer.ParentAnswerId == null &&
+                                 !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)))
                         .Max(answer => (DateTimeOffset?)(answer.UpdatedAtUtc ?? answer.CreatedAtUtc)),
                     topic.Stars.Count,
                     topic.Bookmarks.Count)
@@ -178,7 +241,11 @@ public sealed class TopicRepository(TechForumDbContext dbContext) : ITopicReposi
         dbContext.Answers.AnyAsync(answer =>
             answer.TopicId == topicId &&
             !answer.IsDeleted &&
-            !answer.IsHiddenByModerator,
+            !answer.IsHiddenByModerator &&
+            (answer.ParentAnswerId == null ||
+                (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topicId &&
+                 answer.ParentAnswer.ParentAnswerId == null &&
+                 !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)),
             cancellationToken);
 
     public async Task AddAsync(Topic topic, CancellationToken cancellationToken)

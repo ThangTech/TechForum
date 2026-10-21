@@ -8,6 +8,11 @@ public interface ITopicService
         TopicQuery query,
         CancellationToken cancellationToken);
 
+    Task<PagedResultDto<TopicSummaryDto>> GetFollowingPageAsync(
+        string followerId,
+        TopicQuery query,
+        CancellationToken cancellationToken);
+
     Task<PagedResultDto<OwnTopicSummaryDto>> GetOwnedPageAsync(
         string authorId,
         TopicQuery query,

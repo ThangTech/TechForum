@@ -157,6 +157,7 @@ public sealed class ContentReportServiceTests
     private sealed class UnusedTopics : ITopicRepository
     {
         public Task<TopicPage> GetPublicPageAsync(TopicQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<TopicPage> GetFollowingPageAsync(string followerId, TopicQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<TopicPage> GetOwnedPageAsync(string authorId, TopicQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<Topic?> GetOwnedByIdAsync(int id, string authorId, CancellationToken cancellationToken) => throw new NotSupportedException();

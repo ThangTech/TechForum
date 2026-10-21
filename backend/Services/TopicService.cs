@@ -20,6 +20,21 @@ public sealed partial class TopicService(
         CancellationToken cancellationToken)
     {
         var page = await topicRepository.GetPublicPageAsync(query, cancellationToken);
+        return MapPublicPage(page, query);
+    }
+
+    public async Task<PagedResultDto<TopicSummaryDto>> GetFollowingPageAsync(
+        string followerId,
+        TopicQuery query,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(followerId);
+        var page = await topicRepository.GetFollowingPageAsync(followerId, query, cancellationToken);
+        return MapPublicPage(page, query);
+    }
+
+    private static PagedResultDto<TopicSummaryDto> MapPublicPage(TopicPage page, TopicQuery query)
+    {
         var totalPages = page.TotalItems == 0
             ? 0
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);

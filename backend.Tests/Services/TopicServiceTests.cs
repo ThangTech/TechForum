@@ -3,6 +3,10 @@ using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
 using TechForum.Api.Models;
 using TechForum.Api.Services;
+using TechForum.Api.Controllers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Xunit;
 
 namespace TechForum.Api.Tests.Services;
@@ -49,6 +53,92 @@ public sealed class TopicServiceTests
         Assert.Empty(result.Items);
         Assert.Equal(0, result.TotalItems);
         Assert.Equal(0, result.TotalPages);
+    }
+
+    [Fact]
+    public async Task GetFollowingPageAsync_UsesFollowerIdentityAndPreservesFiltersAndDiscussion()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Page = new TopicPage([CreateTopic()], 12, new Dictionary<int, TopicDiscussionDto>
+            {
+                [10] = new(3, true, null, 2, 1)
+            })
+        };
+        var query = new TopicQuery { Page = 2, PageSize = 5, CategoryId = 1, TagId = 2, Keyword = "kiểm thử", Sort = "weekly" };
+
+        var result = await CreateService(repository).GetFollowingPageAsync("member-b", query, default);
+
+        Assert.Equal("member-b", repository.LastFollowerId);
+        Assert.Same(query, repository.LastQuery);
+        Assert.Equal(3, result.TotalPages);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(2, Assert.Single(result.Items).Discussion?.StarCount);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task GetFollowingPageAsync_RejectsMissingIdentityBeforeRepository(string followerId)
+    {
+        var repository = new FakeTopicRepository();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            CreateService(repository).GetFollowingPageAsync(followerId, new TopicQuery(), default));
+        Assert.Null(repository.LastFollowerId);
+    }
+
+    [Fact]
+    public async Task FollowingController_WithNoIdentity_Returns401WithoutQuerying()
+    {
+        var repository = new FakeTopicRepository();
+        var controller = CreateController(repository);
+
+        var response = await controller.GetFollowing(new TopicQuery(), default);
+
+        Assert.IsType<UnauthorizedResult>(response.Result);
+        Assert.Null(repository.LastFollowerId);
+    }
+
+    [Fact]
+    public async Task FollowingController_UsesServerIdentityAndValidatesBeforeQuerying()
+    {
+        var repository = new FakeTopicRepository();
+        var controller = CreateController(repository, "signed-in-member");
+
+        var invalid = await controller.GetFollowing(new TopicQuery { PageSize = 51 }, default);
+        Assert.IsType<BadRequestObjectResult>(invalid.Result);
+        Assert.Null(repository.LastFollowerId);
+
+        var valid = await controller.GetFollowing(new TopicQuery { Sort = "weekly" }, default);
+        Assert.IsType<OkObjectResult>(valid.Result);
+        Assert.Equal("signed-in-member", repository.LastFollowerId);
+    }
+
+    [Theory]
+    [InlineData("popular", 400)]
+    [InlineData("weekly", 200)]
+    [InlineData("WEEKLY", 200)]
+    [InlineData("discussion", 200)]
+    public async Task PublicController_ValidatesFeedSort(string sort, int expectedStatus)
+    {
+        var result = await CreateController(new FakeTopicRepository()).GetAll(new TopicQuery { Sort = sort }, default);
+        var response = Assert.IsAssignableFrom<ObjectResult>(result.Result);
+        Assert.Equal(expectedStatus, response.StatusCode);
+    }
+
+    private static TopicsController CreateController(FakeTopicRepository repository, string? userId = null)
+    {
+        var claims = userId is null ? Array.Empty<Claim>() : [new Claim(ClaimTypes.NameIdentifier, userId)];
+        return new TopicsController(CreateService(repository))
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(claims, userId is null ? null : "test"))
+                }
+            }
+        };
     }
 
     [Fact]
@@ -329,6 +419,7 @@ public sealed class TopicServiceTests
         public TopicPage OwnedPage { get; init; } = new([], 0);
         public TopicQuery? LastQuery { get; private set; }
         public string? LastOwnedAuthorId { get; private set; }
+        public string? LastFollowerId { get; private set; }
         public Category? Category { get; init; }
         public IReadOnlyList<Tag> Tags { get; init; } = [];
         public Topic? AddedTopic { get; private set; }
@@ -340,6 +431,16 @@ public sealed class TopicServiceTests
             TopicQuery query,
             CancellationToken cancellationToken)
         {
+            LastQuery = query;
+            return Task.FromResult(Page);
+        }
+
+        public Task<TopicPage> GetFollowingPageAsync(
+            string followerId,
+            TopicQuery query,
+            CancellationToken cancellationToken)
+        {
+            LastFollowerId = followerId;
             LastQuery = query;
             return Task.FromResult(Page);
         }

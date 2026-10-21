@@ -32,6 +32,31 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     }
 
     [Authorize]
+    [HttpGet("following")]
+    [ProducesResponseType<PagedResultDto<TopicSummaryDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PagedResultDto<TopicSummaryDto>>> GetFollowing(
+        [FromQuery] TopicQuery query,
+        CancellationToken cancellationToken)
+    {
+        var followerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(followerId)) return Unauthorized();
+
+        var errors = Validate(query);
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ValidationProblemDetails(errors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bộ lọc chủ đề chưa hợp lệ"
+            });
+        }
+
+        return Ok(await topicService.GetFollowingPageAsync(followerId, query, cancellationToken));
+    }
+
+    [Authorize]
     [HttpGet("mine")]
     [ProducesResponseType<PagedResultDto<OwnTopicSummaryDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -218,9 +243,10 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         }
 
         if (query.Sort is not null &&
-            !string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
+            !string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(query.Sort, "weekly", StringComparison.OrdinalIgnoreCase))
         {
-            errors["sort"] = ["Kiểu sắp xếp chỉ hỗ trợ giá trị 'discussion'."];
+            errors["sort"] = ["Kiểu sắp xếp chỉ hỗ trợ 'discussion' hoặc 'weekly'."];
         }
 
         if (query.QuestionStatus is not null)

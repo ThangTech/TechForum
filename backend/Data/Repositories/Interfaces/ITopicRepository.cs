@@ -7,6 +7,11 @@ public interface ITopicRepository
 {
     Task<TopicPage> GetPublicPageAsync(TopicQuery query, CancellationToken cancellationToken);
 
+    Task<TopicPage> GetFollowingPageAsync(
+        string followerId,
+        TopicQuery query,
+        CancellationToken cancellationToken);
+
     Task<TopicPage> GetOwnedPageAsync(
         string authorId,
         TopicQuery query,
