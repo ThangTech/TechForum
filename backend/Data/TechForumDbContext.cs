@@ -233,7 +233,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         notification.Property(item => item.UserId).HasMaxLength(450).IsRequired();
         notification.Property(item => item.Type).HasMaxLength(40).IsRequired();
         notification.Property(item => item.Title).HasMaxLength(160).IsRequired();
-        notification.Property(item => item.Message).HasMaxLength(500).IsRequired();
+        notification.Property(item => item.Message).HasMaxLength(2000).IsRequired();
         notification.Property(item => item.Link).HasMaxLength(300).IsRequired();
         notification.Property(item => item.SourceKey).HasMaxLength(160).IsRequired();
         notification.HasIndex(item => new { item.UserId, item.SourceKey }).IsUnique();
