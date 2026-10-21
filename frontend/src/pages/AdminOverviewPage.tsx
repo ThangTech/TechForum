@@ -45,7 +45,7 @@ export const AdminOverviewPage = () => {
   return (
     <main className="main-area" id="main-content"><div className="page-content py-10 sm:py-14">
       <p className="eyebrow">Quản trị TechForum</p><h1 className="mt-2 text-3xl font-extrabold text-slate-950">Tổng quan</h1>
-      <p className="mt-2 text-slate-600">Số liệu được tính trực tiếp từ CSDL và nhật ký các thao tác kiểm duyệt.</p>
+      <p className="mt-2 text-slate-600">Theo dõi hoạt động diễn đàn và các thao tác kiểm duyệt gần đây.</p>
       <div className="mt-7"><AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải tổng quan…" onRetry={() => setRetry((value) => value + 1)} /></div>
       {!isLoading && !error && statistics && audit && <>
         <div className="mt-7"><AdminStatisticsGrid statistics={statistics} /></div>
