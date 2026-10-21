@@ -48,6 +48,24 @@ public sealed class ReportsController(IContentReportService reportService) : Con
             : Ok(result);
     }
 
+    [HttpGet("mine")]
+    public async Task<ActionResult<PagedResultDto<MyReportDto>>> GetMine(
+        [FromQuery] string? status = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+        var result = await reportService.GetMineAsync(userId, status, page, pageSize, cancellationToken);
+        return result is null
+            ? BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                ["status"] = ["Trạng thái phải là pending, accepted hoặc rejected."]
+            }))
+            : Ok(result);
+    }
+
     [HttpPut("admin/{reportId:int}/resolution")]
     [Authorize(Roles = RoleNames.Administrator)]
     public async Task<ActionResult<AdminReportDto>> Resolve(

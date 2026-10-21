@@ -14,11 +14,15 @@ public interface IContentReportRepository
         int pageSize,
         CancellationToken cancellationToken);
     Task<ContentReport?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<ContentReportPage> GetMineAsync(string reporterId, ReportStatus? status,
+        int page, int pageSize, CancellationToken cancellationToken);
     Task<bool> ResolvePendingAsync(
         int id,
         ReportStatus status,
         string administratorId,
         DateTimeOffset resolvedAtUtc,
         string resolutionNote,
+        Notification notification,
+        AdminAuditLog auditLog,
         CancellationToken cancellationToken);
 }

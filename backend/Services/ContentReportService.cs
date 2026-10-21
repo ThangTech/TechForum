@@ -8,6 +8,7 @@ namespace TechForum.Api.Services;
 public sealed class ContentReportService(
     IContentReportRepository reportRepository,
     ITopicRepository topicRepository,
+    IContentSanitizer contentSanitizer,
     TimeProvider timeProvider) : IContentReportService
 {
     private static readonly HashSet<string> Reasons = new(StringComparer.OrdinalIgnoreCase)
@@ -112,12 +113,34 @@ public sealed class ContentReportService(
         if (existing.Status != ReportStatus.Pending)
             return ResolveReportResult.Failed(ResolveReportFailure.AlreadyResolved, "Báo cáo này đã được xử lý trước đó.");
 
+        var now = timeProvider.GetUtcNow();
         var resolved = await reportRepository.ResolvePendingAsync(
             reportId,
             status.Value,
             administratorId,
-            timeProvider.GetUtcNow(),
+            now,
             note,
+            new Notification
+            {
+                UserId = existing.ReporterId,
+                Type = "report-resolved",
+                Title = "Báo cáo đã được xử lý",
+                Message = $"Báo cáo #{existing.Id}: {(status == ReportStatus.Accepted ? "Được chấp nhận" : "Không chấp nhận")}. Lý do: {note}",
+                Link = "/reports",
+                SourceKey = $"report-resolved:{existing.Id}",
+                CreatedAtUtc = now
+            },
+            new AdminAuditLog
+            {
+                AdministratorId = administratorId,
+                Action = "report.resolved",
+                TargetType = "report",
+                TargetId = existing.Id.ToString(),
+                PreviousValue = "pending",
+                NewValue = status.Value.ToString().ToLowerInvariant(),
+                Reason = note,
+                CreatedAtUtc = now
+            },
             cancellationToken);
         if (!resolved)
             return ResolveReportResult.Failed(ResolveReportFailure.AlreadyResolved, "Báo cáo này vừa được quản trị viên khác xử lý.");
@@ -127,7 +150,39 @@ public sealed class ContentReportService(
         return ResolveReportResult.Success(MapAdminReport(updated));
     }
 
-    private static AdminReportDto MapAdminReport(ContentReport report)
+    public async Task<PagedResultDto<MyReportDto>?> GetMineAsync(
+        string reporterId, string? status, int page, int pageSize, CancellationToken cancellationToken)
+    {
+        ReportStatus? parsedStatus = status?.Trim().ToLowerInvariant() switch
+        {
+            null or "" => null,
+            "pending" => ReportStatus.Pending,
+            "accepted" => ReportStatus.Accepted,
+            "rejected" => ReportStatus.Rejected,
+            _ => null
+        };
+        if (!string.IsNullOrWhiteSpace(status) && !parsedStatus.HasValue) return null;
+        page = Math.Max(page, 1);
+        pageSize = Math.Clamp(pageSize, 1, 50);
+        var result = await reportRepository.GetMineAsync(reporterId, parsedStatus, page, pageSize, cancellationToken);
+        var items = result.Items.Select(report =>
+        {
+            var topic = report.Topic ?? report.Answer?.Topic;
+            // Chỉ liên kết lại tài nguyên còn công khai; không lộ bản nháp hoặc nội dung đã bị ẩn.
+            var isPublic = topic is { Status: TopicStatus.Published, PublishedAtUtc: not null,
+                IsDeleted: false, IsHiddenByModerator: false } &&
+                (report.AnswerId is null || report.Answer is { IsDeleted: false, IsHiddenByModerator: false });
+            return new MyReportDto(report.Id, report.TopicId.HasValue ? "topic" : "answer",
+                report.TopicId ?? report.AnswerId!.Value, isPublic ? topic!.Id : null,
+                isPublic ? topic!.Title : null, report.Reason, report.Details,
+                report.Status.ToString().ToLowerInvariant(), report.CreatedAtUtc,
+                report.ResolvedAtUtc, report.ResolutionNote);
+        }).ToList();
+        return new PagedResultDto<MyReportDto>(items, page, pageSize, result.TotalItems,
+            (int)Math.Ceiling(result.TotalItems / (double)pageSize));
+    }
+
+    private AdminReportDto MapAdminReport(ContentReport report)
     {
         var topic = report.Topic ?? report.Answer?.Topic
             ?? throw new InvalidOperationException("Báo cáo thiếu nội dung đích.");
@@ -135,12 +190,14 @@ public sealed class ContentReportService(
         var targetId = report.TopicId ?? report.AnswerId!.Value;
         var bodyHtml = report.Topic?.BodyHtml ?? report.Answer?.BodyHtml
             ?? throw new InvalidOperationException("Báo cáo thiếu nội dung hiển thị.");
+        var author = report.Topic?.Author ?? report.Answer?.Author
+            ?? throw new InvalidOperationException("Báo cáo thiếu tác giả nội dung.");
         return new AdminReportDto(
             report.Id,
             targetType,
             targetId,
             topic.Title,
-            bodyHtml,
+            contentSanitizer.Sanitize(bodyHtml),
             new ReportUserDto(report.Reporter.Id, report.Reporter.DisplayName),
             report.Reason,
             report.Details,
@@ -148,6 +205,11 @@ public sealed class ContentReportService(
             report.CreatedAtUtc,
             report.ResolvedBy is null ? null : new ReportUserDto(report.ResolvedBy.Id, report.ResolvedBy.DisplayName),
             report.ResolvedAtUtc,
-            report.ResolutionNote);
+            report.ResolutionNote,
+            topic.Id,
+            new ReportUserDto(author.Id, author.DisplayName),
+            topic.IsHiddenByModerator || report.Answer?.IsHiddenByModerator == true,
+            topic.IsDeleted || report.Answer?.IsDeleted == true,
+            report.Answer?.ParentAnswer is null ? null : contentSanitizer.Sanitize(report.Answer.ParentAnswer.BodyHtml));
     }
 }

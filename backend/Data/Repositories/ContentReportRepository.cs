@@ -9,8 +9,10 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
 {
     private IQueryable<ContentReport> DetailedQuery() =>
         dbContext.ContentReports
-            .Include(item => item.Topic)
+            .Include(item => item.Topic).ThenInclude(topic => topic!.Author)
             .Include(item => item.Answer).ThenInclude(answer => answer!.Topic)
+            .Include(item => item.Answer).ThenInclude(answer => answer!.Author)
+            .Include(item => item.Answer).ThenInclude(answer => answer!.ParentAnswer)
             .Include(item => item.Reporter)
             .Include(item => item.ResolvedBy);
 
@@ -79,14 +81,31 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
     public Task<ContentReport?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
         DetailedQuery().AsNoTracking().SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
 
+    public async Task<ContentReportPage> GetMineAsync(string reporterId, ReportStatus? status,
+        int page, int pageSize, CancellationToken cancellationToken)
+    {
+        var query = dbContext.ContentReports.AsNoTracking().Where(item => item.ReporterId == reporterId);
+        if (status.HasValue) query = query.Where(item => item.Status == status.Value);
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query.OrderByDescending(item => item.CreatedAtUtc).ThenByDescending(item => item.Id)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Include(item => item.Topic)
+            .Include(item => item.Answer).ThenInclude(answer => answer!.Topic)
+            .ToListAsync(cancellationToken);
+        return new ContentReportPage(items, total);
+    }
+
     public async Task<bool> ResolvePendingAsync(
         int id,
         ReportStatus status,
         string administratorId,
         DateTimeOffset resolvedAtUtc,
         string resolutionNote,
+        Notification notification,
+        AdminAuditLog auditLog,
         CancellationToken cancellationToken)
     {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var affectedRows = await dbContext.ContentReports
             .Where(item => item.Id == id && item.Status == ReportStatus.Pending)
             .ExecuteUpdateAsync(setters => setters
@@ -95,6 +114,11 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
                 .SetProperty(item => item.ResolvedAtUtc, resolvedAtUtc)
                 .SetProperty(item => item.ResolutionNote, resolutionNote),
                 cancellationToken);
-        return affectedRows == 1;
+        if (affectedRows != 1) return false;
+        dbContext.Notifications.Add(notification);
+        dbContext.AdminAuditLogs.Add(auditLog);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
     }
 }
