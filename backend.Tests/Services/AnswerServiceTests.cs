@@ -10,6 +10,64 @@ namespace TechForum.Api.Tests.Services;
 public sealed class AnswerServiceTests
 {
     [Fact]
+    public async Task GetPublicPageAsync_UsesPageContainingLinkedAnswer()
+    {
+        var answerRepository = new FakeAnswerRepository
+        {
+            PageResult = new AnswerPage([CreateAnswer(41, "member-a")], 41, 3)
+        };
+        var service = new AnswerService(answerRepository,
+            new FakeTopicRepository(CreateTopic()), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.GetPublicPageAsync(1,
+            new AnswerQuery { Page = 1, PageSize = 20, AroundAnswerId = 41 }, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(41, answerRepository.LastAroundAnswerId);
+        Assert.Equal(3, result.Page);
+        Assert.Equal(3, result.TotalPages);
+        Assert.Equal(41, Assert.Single(result.Items).Id);
+    }
+
+    [Fact]
+    public async Task GetPublicPageAsync_WhenLinkedAnswerUnavailable_ReturnsNotFound()
+    {
+        var answerRepository = new FakeAnswerRepository { PageResult = null };
+        var service = new AnswerService(answerRepository,
+            new FakeTopicRepository(CreateTopic()), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.GetPublicPageAsync(1,
+            new AnswerQuery { AroundAnswerId = 41 }, CancellationToken.None);
+
+        Assert.Null(result);
+        Assert.Equal(1, answerRepository.PageCallCount);
+    }
+
+    [Theory]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, true)]
+    public async Task GetPublicPageAsync_WhenTopicNotPublic_DoesNotLocateAnswer(bool draft, bool hidden, bool deleted)
+    {
+        var topic = CreateTopic();
+        topic.Status = draft ? TopicStatus.Draft : TopicStatus.Published;
+        topic.IsHiddenByModerator = hidden;
+        topic.IsDeleted = deleted;
+        var answerRepository = new FakeAnswerRepository();
+        var service = new AnswerService(answerRepository,
+            new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.GetPublicPageAsync(1,
+            new AnswerQuery { AroundAnswerId = 41 }, CancellationToken.None);
+
+        Assert.Null(result);
+        Assert.Equal(0, answerRepository.PageCallCount);
+    }
+
+    [Fact]
     public async Task AcceptAsync_RejectsAnotherMemberWithoutChangingSolution()
     {
         var topic = CreateTopic();
@@ -148,6 +206,9 @@ public sealed class AnswerServiceTests
     private sealed class FakeAnswerRepository(params Answer[] answers) : IAnswerRepository
     {
         private readonly Dictionary<int, Answer> items = answers.ToDictionary(answer => answer.Id);
+        public AnswerPage? PageResult { get; init; } = new([], 0, 1);
+        public int? LastAroundAnswerId { get; private set; }
+        public int PageCallCount { get; private set; }
 
         public Task<Answer?> GetVisibleByIdAsync(int topicId, int answerId, CancellationToken cancellationToken) =>
             Task.FromResult(items.GetValueOrDefault(answerId));
@@ -159,15 +220,21 @@ public sealed class AnswerServiceTests
             return Task.CompletedTask;
         }
 
-        public Task<AnswerPage> GetPublicPageAsync(int topicId, int page, int pageSize, CancellationToken cancellationToken) =>
-            Task.FromResult(new AnswerPage([], 0));
+        public Task<AnswerPage?> GetPublicPageAsync(int topicId, int page, int pageSize, int? aroundAnswerId, CancellationToken cancellationToken)
+        {
+            PageCallCount++;
+            LastAroundAnswerId = aroundAnswerId;
+            return Task.FromResult(PageResult);
+        }
         public Task<Answer?> GetOwnedByIdAsync(int topicId, int answerId, string authorId, CancellationToken cancellationToken) => Task.FromResult<Answer?>(null);
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class FakeTopicRepository(Topic topic) : ITopicRepository
     {
-        public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<Topic?>(topic);
+        public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) =>
+            Task.FromResult(id == topic.Id && topic.Status == TopicStatus.Published &&
+                topic.PublishedAtUtc is not null && !topic.IsDeleted && !topic.IsHiddenByModerator ? topic : null);
         public Task<Topic?> GetOwnedByIdAsync(int id, string authorId, CancellationToken cancellationToken) =>
             Task.FromResult(id == topic.Id && authorId == topic.AuthorId && !topic.IsDeleted ? topic : null);
         public Task<TopicPage> GetPublicPageAsync(TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));

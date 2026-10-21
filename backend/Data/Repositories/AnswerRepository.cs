@@ -5,10 +5,11 @@ namespace TechForum.Api.Data.Repositories;
 
 public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepository
 {
-    public async Task<AnswerPage> GetPublicPageAsync(
+    public async Task<AnswerPage?> GetPublicPageAsync(
         int topicId,
         int page,
         int pageSize,
+        int? aroundAnswerId,
         CancellationToken cancellationToken)
     {
         var answers = dbContext.Answers
@@ -17,6 +18,22 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
                 answer.TopicId == topicId &&
                 !answer.IsDeleted &&
                 !answer.IsHiddenByModerator);
+
+        if (aroundAnswerId.HasValue)
+        {
+            var target = await answers
+                .Where(answer => answer.Id == aroundAnswerId.Value)
+                .Select(answer => new { answer.Id, answer.CreatedAtUtc })
+                .SingleOrDefaultAsync(cancellationToken);
+            if (target is null) return null;
+
+            // Dùng đúng thứ tự của danh sách để tìm trang, không tải các trang trước đó.
+            var precedingCount = await answers.CountAsync(answer =>
+                answer.CreatedAtUtc < target.CreatedAtUtc ||
+                (answer.CreatedAtUtc == target.CreatedAtUtc && answer.Id < target.Id),
+                cancellationToken);
+            page = precedingCount / pageSize + 1;
+        }
 
         var totalItems = await answers.CountAsync(cancellationToken);
         var items = await answers
@@ -29,7 +46,7 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
                 .ThenInclude(parent => parent!.Author)
             .ToListAsync(cancellationToken);
 
-        return new AnswerPage(items, totalItems);
+        return new AnswerPage(items, totalItems, page);
     }
 
     public async Task AddAsync(Answer answer, CancellationToken cancellationToken)

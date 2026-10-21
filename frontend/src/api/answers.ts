@@ -52,9 +52,12 @@ export const getAnswers = async (
   page: number,
   pageSize: number,
   signal?: AbortSignal,
+  aroundAnswerId?: number,
 ): Promise<AnswerPage> => {
+  const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  if (aroundAnswerId !== undefined) query.set('aroundAnswerId', String(aroundAnswerId))
   const data: unknown = await apiRequest(
-    `/api/topics/${topicId}/answers?page=${page}&pageSize=${pageSize}`,
+    `/api/topics/${topicId}/answers?${query}`,
     { signal },
   )
 

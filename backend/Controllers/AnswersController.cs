@@ -23,7 +23,15 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         if (validationProblem is not null) return BadRequest(validationProblem);
 
         var page = await answerService.GetPublicPageAsync(topicId, query, cancellationToken);
-        return page is null ? NotFound(CreateTopicNotFoundProblem()) : Ok(page);
+        if (page is not null) return Ok(page);
+        if (!query.AroundAnswerId.HasValue) return NotFound(CreateTopicNotFoundProblem());
+
+        return NotFound(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Không tìm thấy câu trả lời",
+            Detail = "Chủ đề hoặc câu trả lời trong liên kết không tồn tại hoặc không còn công khai."
+        });
     }
 
     [Authorize]
@@ -160,6 +168,8 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         if (query.Page < 1) errors["page"] = ["Trang phải lớn hơn hoặc bằng 1."];
         if (query.PageSize is < 1 or > 50)
             errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
+        if (query.AroundAnswerId is <= 0)
+            errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
 
         return errors.Count == 0
             ? null

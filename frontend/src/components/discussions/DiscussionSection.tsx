@@ -1,5 +1,6 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { acceptAnswer, getAnswers, type Answer, type AnswerPage } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
@@ -17,6 +18,11 @@ interface DiscussionSectionProps {
 
 const PAGE_SIZE = 20
 
+const readPositiveInteger = (value: string | null) => {
+  const number = Number(value)
+  return Number.isInteger(number) && number > 0 && number <= 2147483647 ? number : undefined
+}
+
 export const DiscussionSection = ({
   isLocked,
   topicAuthorId,
@@ -24,10 +30,15 @@ export const DiscussionSection = ({
   topicType,
 }: DiscussionSectionProps) => {
   const { user } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const page = readPositiveInteger(new URLSearchParams(location.search).get('answerPage')) ?? 1
+  const answerHash = /^#answer-(\d+)$/.exec(location.hash)
+  const aroundAnswerId = readPositiveInteger(answerHash?.[1] ?? null)
   const [data, setData] = useState<AnswerPage | null>(null)
-  const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isTargetUnavailable, setIsTargetUnavailable] = useState(false)
   const [requestVersion, setRequestVersion] = useState(0)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -41,10 +52,19 @@ export const DiscussionSection = ({
     const loadAnswers = async () => {
       setIsLoading(true)
       setError(null)
+      setIsTargetUnavailable(false)
       try {
-        setData(await getAnswers(topicId, page, PAGE_SIZE, controller.signal))
+        const result = await getAnswers(topicId, page, PAGE_SIZE, controller.signal, aroundAnswerId)
+        if (controller.signal.aborted) return
+        setData(result)
+        if (result.page !== page) {
+          const search = new URLSearchParams(location.search)
+          search.set('answerPage', String(result.page))
+          void navigate({ pathname: location.pathname, search: `?${search}`, hash: location.hash }, { replace: true })
+        }
       } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+        if (controller.signal.aborted) return
+        setIsTargetUnavailable(aroundAnswerId !== undefined && requestError instanceof ApiError && requestError.status === 404)
         setError(
           requestError instanceof ApiError
             ? requestError.message
@@ -57,13 +77,28 @@ export const DiscussionSection = ({
 
     void loadAnswers()
     return () => controller.abort()
-  }, [page, requestVersion, topicId])
+  }, [aroundAnswerId, location.hash, location.pathname, location.search, navigate, page, requestVersion, topicId])
+
+  useEffect(() => {
+    if (isLoading || error || !aroundAnswerId || !data?.items.some((answer) => answer.id === aroundAnswerId)) return
+    document.getElementById(`answer-${aroundAnswerId}`)?.scrollIntoView({ block: 'start' })
+  }, [aroundAnswerId, data, error, isLoading])
+
+  const changePage = (nextPage: number, answerId?: number) => {
+    const search = new URLSearchParams(location.search)
+    if (nextPage === 1) search.delete('answerPage')
+    else search.set('answerPage', String(nextPage))
+    let hash = location.hash
+    if (answerId !== undefined) hash = `#answer-${answerId}`
+    else if (answerHash) hash = ''
+    void navigate({ pathname: location.pathname, search: search.toString(), hash })
+  }
 
   const handleCreated = (answer: Answer) => {
     const nextTotalItems = (data?.totalItems ?? 0) + 1
     const lastPage = Math.max(1, Math.ceil(nextTotalItems / PAGE_SIZE))
     setSuccessMessage(answer.parentAnswerId ? 'Phản hồi đã được đăng.' : 'Câu trả lời đã được đăng.')
-    setPage(lastPage)
+    changePage(lastPage, answer.id)
     setRequestVersion((version) => version + 1)
   }
 
@@ -146,6 +181,11 @@ export const DiscussionSection = ({
           loadingText="Đang tải câu trả lời…"
           onRetry={() => setRequestVersion((version) => version + 1)}
         />
+        {!isLoading && isTargetUnavailable && (
+          <div className="mt-3">
+            <Button label="Xem các câu trả lời" onClick={() => changePage(1)} variant="secondary" />
+          </div>
+        )}
         {!isLoading && !error && data && (
           <AnswerList
             acceptingAnswerId={acceptingAnswerId}
@@ -155,12 +195,12 @@ export const DiscussionSection = ({
             onAccept={(answerId) => void handleAccept(answerId)}
             onDeleted={() => {
               const lastPage = Math.max(1, Math.ceil((data.totalItems - 1) / PAGE_SIZE))
-              setPage(Math.min(page, lastPage))
+              changePage(Math.min(data.page, lastPage))
               setRequestVersion((version) => version + 1)
               setSuccessMessage('Đã xóa câu trả lời.')
             }}
             onLoginRequired={() => setIsAuthDialogOpen(true)}
-            onPageChange={setPage}
+            onPageChange={changePage}
             onReplyCreated={handleCreated}
             onUpdated={(updated) => {
               setData((current) => current ? { ...current, items: current.items.map((answer) => answer.id === updated.id ? updated : answer) } : current)

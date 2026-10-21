@@ -4,10 +4,11 @@ namespace TechForum.Api.Data.Repositories;
 
 public interface IAnswerRepository
 {
-    Task<AnswerPage> GetPublicPageAsync(
+    Task<AnswerPage?> GetPublicPageAsync(
         int topicId,
         int page,
         int pageSize,
+        int? aroundAnswerId,
         CancellationToken cancellationToken);
 
     Task AddAsync(Answer answer, CancellationToken cancellationToken);

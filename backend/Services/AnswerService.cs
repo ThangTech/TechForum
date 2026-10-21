@@ -26,14 +26,16 @@ public sealed partial class AnswerService(
             topicId,
             query.Page,
             query.PageSize,
+            query.AroundAnswerId,
             cancellationToken);
+        if (page is null) return null;
         var totalPages = page.TotalItems == 0
             ? 0
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
 
         return new PagedResultDto<AnswerDto>(
             page.Items.Select(answer => MapAnswer(answer, topic.AcceptedAnswerId)).ToList(),
-            query.Page,
+            page.Page,
             query.PageSize,
             page.TotalItems,
             totalPages);
