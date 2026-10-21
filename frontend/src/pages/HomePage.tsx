@@ -54,6 +54,7 @@ export const HomePage = ({
   const [areHighlightsLoading, setAreHighlightsLoading] = useState(true)
   const [highlightsError, setHighlightsError] = useState<string | null>(null)
   const [highlightsVersion, setHighlightsVersion] = useState(0)
+  const [areFiltersOpen, setAreFiltersOpen] = useState(() => window.matchMedia('(min-width: 761px)').matches)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -164,7 +165,7 @@ export const HomePage = ({
 
         <div className="content-grid">
           <aside className="browse-filters" aria-label="Lọc nội dung">
-            <details open>
+            <details open={areFiltersOpen} onToggle={(event) => setAreFiltersOpen(event.currentTarget.open)}>
               <summary>Chuyên mục và thẻ</summary>
               <div className="grid gap-4">
                 <CategoryPanel categories={categories} error={error} isLoading={isLoading}

@@ -37,6 +37,13 @@
   --color-loading: #edf0f4;
 }
 
+[data-astryx-theme="neutral"] {
+  --radius-inner: 3px;
+  --radius-element: 4px;
+  --radius-container: 4px;
+  --radius-page: 0px;
+}
+
 * {
   box-sizing: border-box;
 }

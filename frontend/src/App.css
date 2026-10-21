@@ -65,7 +65,7 @@
   gap: 10px;
   padding: 0 14px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 4px;
   color: var(--color-muted);
   background: var(--color-subtle);
   font-size: 0.88rem;
@@ -172,7 +172,7 @@
 
 .header-register {
   padding: 8px 13px;
-  border-radius: 7px;
+  border-radius: 4px;
   color: #fff;
   background: var(--color-primary);
 }
@@ -362,7 +362,7 @@
 
 .panel {
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--color-surface);
 }
 
@@ -703,7 +703,7 @@
   margin: 0 auto;
   padding: 32px;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--color-surface);
 }
 
