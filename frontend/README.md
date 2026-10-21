@@ -2,6 +2,32 @@
 
 Giao diện React + TypeScript + Vite cho TechForum.
 
+## Khu quản trị và luồng mới — 2026-10-21
+
+Khu `/admin` có bố cục riêng với sidebar desktop/menu mobile, breadcrumb và các
+bảng dữ liệu. Khung vuông, nền trung tính và màu nhấn xanh; mỗi trang xử lý trạng
+thái tải/rỗng/lỗi, bộ lọc và phân trang. API vẫn kiểm tra quyền quản trị ở server.
+
+- `/admin`: số liệu thật, chọn 7/30 ngày hoặc khoảng ngày tùy chọn, biểu đồ SVG
+  kèm bảng số liệu truy cập được bằng bàn phím, tình hình hỏi đáp, đóng góp theo
+  chuyên mục, báo cáo chờ và nhật ký gần đây. Tổng hiện tại và đóng góp trong kỳ
+  được ghi nhãn riêng; ngày tính theo Việt Nam.
+- `/admin/topics`: bảng nội dung, lọc loại/trạng thái/chuyên mục, xem trước HTML
+  từ API quản trị và kiểm duyệt có lý do. Bản nháp có nhãn riêng.
+- `/admin/reports`: xem ngữ cảnh nội dung/câu trả lời trước khi lưu quyết định.
+- `/admin/accounts`: lọc vai trò/trạng thái, khóa có lý do/thời hạn, mở khóa.
+- `/admin/categories`, `/admin/tags`: bảng quản lý phân loại cùng tìm kiếm và
+  trạng thái sử dụng, giữ nguyên form và quy tắc tham chiếu hiện có.
+- `/admin/audit-logs`: lọc nhật ký theo người thực hiện, hành động, từ khóa và ngày.
+- `/reports`: báo cáo riêng của thành viên và kết quả xử lý; có mục trong menu
+  tài khoản. Thông báo kiểm duyệt có phần đọc lý do ngay tại `/notifications`.
+- `/questions?questionStatus=solved`: lọc câu hỏi theo trạng thái giải quyết;
+  hỗ trợ thêm `unanswered` và `unsolved`, giữ bộ lọc khi phân trang/tìm kiếm.
+- `/forgot-password`, `/reset-password`: yêu cầu email và đặt lại mật khẩu từ
+  liên kết có token trong fragment. Có lỗi rõ khi thiếu token, SMTP chưa cấu
+  hình hoặc vượt giới hạn. Backend README có cấu hình SMTP; giao diện không
+  tự giả lập gửi email thành công.
+
 ## Chạy môi trường phát triển
 
 API mặc định được gọi tại `http://localhost:5045`. Có thể đổi địa chỉ bằng cách

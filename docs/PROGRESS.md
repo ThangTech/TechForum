@@ -1,9 +1,45 @@
 # Tiến độ phát triển TechForum
 
-Cập nhật: 2026-10-04
+Cập nhật: 2026-10-21
 
 Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng chứng build, kiểm thử tự
 động hoặc kiểm thử tích hợp phù hợp. Số phần trăm không được suy ra từ số màn hình.
+
+## Nâng cấp quản trị và chiều sâu nghiệp vụ — 2026-10-21
+
+- [x] Bố cục quản trị riêng, sidebar 7 mục, menu mobile, breadcrumb, các bảng
+  nội dung/báo cáo/tài khoản/chuyên mục/thẻ và nhật ký riêng. Khung vuông/bo nhẹ.
+- [x] Dashboard dùng SQL thật, chọn khoảng ngày theo Việt Nam, chuỗi ngày có
+  giá trị 0, phân bố chuyên mục và ba trạng thái hỏi đáp không trùng nhau.
+  Tổng hiện tại, đóng góp trong kỳ và hàng đợi báo cáo được phân biệt rõ.
+- [x] Xem trước nội dung quản trị được sanitize; bộ lọc công khai tách bản nháp.
+  Nhật ký lọc theo quản trị viên, thao tác, từ khóa và thời gian.
+- [x] Khóa tài khoản có lý do/thời hạn, bộ lọc vai trò/trạng thái, bảo vệ tài
+  khoản quản trị; không để lý do khóa hết hạn lẫn sang khóa do đăng nhập sai.
+- [x] Báo cáo của tôi, phản hồi kết quả cho người báo cáo và giải thích kiểm
+  duyệt cho tác giả. Quyết định/nhật ký/thông báo lưu nguyên tử; chống thao tác lặp.
+- [x] Bộ lọc câu hỏi chưa trả lời/có trả lời chưa giải quyết/đã giải quyết.
+- [x] Khôi phục mật khẩu bằng Identity + MailKit: token 30 phút, một lần dùng,
+  vô hiệu cookie cũ, giữ khóa kiểm duyệt, URL tin cậy, CSRF và giới hạn riêng
+  cho gửi thư/đặt mật khẩu. Không trả token trong response hoặc log.
+
+Kiểm chứng đợt này: backend 98 test đạt; frontend 15 test và lint đạt; build
+production đạt ở thư mục kiểm chứng riêng. 36 kiểm tra SQL dashboard/bộ lọc
+được rollback và xác nhận sạch; 19 kiểm tra SQL kiểm duyệt trên CSDL QA riêng
+đạt; 23 kiểm tra HTTP + SMTP local đạt cùng kiểm tra giới hạn yêu cầu độc lập.
+Trình duyệt đã kiểm tra khách, hai thành viên và quản trị viên: dashboard,
+khoảng ngày rỗng, preview/ẩn bài, kết quả báo cáo, thông báo tác giả, hạn khóa,
+tạo chuyên mục, lọc nhật ký, hỏi đáp và lỗi khôi phục. Kiểm tra quản trị tại
+320px, 390px và desktop không có tràn ngang toàn trang.
+Đã tải thành công dữ liệu của cả 7 trang quản trị từ bản build production,
+không có thông báo lỗi trên trang hoặc lỗi console. CSDL QA, thông tin đăng
+nhập và token kiểm thử đã được xóa; frontend/backend/SMTP thử đã dừng.
+
+Gửi email tới hộp thư bên ngoài chưa kiểm chứng vì chưa có cấu hình SMTP thật.
+Build mặc định hiện gặp lỗi quyền xóa file cũ trong `dist`; không sửa ACL hoặc
+xóa cưỡng bức dữ liệu. Cảnh báo bundle Froala lớn vẫn còn. Lịch sử phiên bản
+nội dung là phần mở rộng sau, chưa nằm trong đợt triển khai này. Các ghi chú
+kiểm chứng cũ bên dưới được giữ để tra cứu lịch sử.
 
 ## P0 — Audit hiện trạng
 

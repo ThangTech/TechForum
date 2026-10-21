@@ -1,5 +1,66 @@
 # TechForum API
 
+## Quản trị và báo cáo — cập nhật 2026-10-21
+
+- `GET /api/admin/dashboard?startDate=2026-10-01&endDate=2026-10-21`:
+  khoảng ngày bao gồm hai đầu, theo giờ Việt Nam, mặc định 30 ngày và tối đa
+  366 ngày. `totals` là tổng hiện tại; `period`, `activitySeries`, `categories`
+  và `questions` áp dụng khoảng ngày. Chuỗi ngày có cả những ngày bằng 0.
+  Bài/câu hỏi tính theo ngày xuất bản; câu trả lời và thành viên theo ngày tạo.
+  Chỉ số nội dung chỉ tính bản ghi còn công khai, không tính nháp, ẩn hoặc xóa.
+  Báo cáo chờ và nhật ký gần đây thể hiện công việc hiện tại, không giới hạn theo kỳ.
+- `GET /api/admin/audit-logs`: phân trang cùng `keyword`, `administratorId`,
+  `action`, `from`, `to`; ngày lọc theo giờ Việt Nam.
+- `GET /api/admin/topics/{id}`: xem trước HTML được làm sạch, chỉ quản trị viên.
+  Danh sách nội dung thêm `visibility=draft`; `visible` chỉ gồm nội dung công khai.
+- `PUT /api/admin/accounts/{id}/lock`: `{ isLocked, reason, lockoutEndUtc }`.
+  Khóa phải có lý do; thời hạn phải ở tương lai hoặc `null` để khóa vô thời hạn.
+  Danh sách hỗ trợ `status=locked|unlocked`, `role=administrator|member`.
+  Không cho tự khóa hoặc khóa tài khoản quản trị. Thay đổi và nhật ký cùng transaction.
+- `GET /api/reports/mine`: chỉ báo cáo của tài khoản hiện tại, phân trang và lọc
+  `status=pending|accepted|rejected`. Không trả tiêu đề/liên kết nội dung đã mất
+  tính công khai. Xử lý báo cáo lưu kết quả, thông báo và nhật ký cùng transaction;
+  xử lý lặp trả 409. Chấp nhận báo cáo ghi nhận kết quả xem xét; thao tác ẩn/khóa
+  chủ đề được thực hiện riêng trong quản lý nội dung.
+- Tác giả nhận thông báo kèm lý do khi nội dung bị ẩn/khôi phục hoặc khóa/mở
+  thảo luận. Thông báo có thể đọc ngay cả khi nội dung không còn công khai.
+- `GET /api/topics?questionStatus=unanswered|unsolved|solved`: ba nhóm câu hỏi
+  lần lượt là chưa có trả lời cấp một công khai, có trả lời nhưng chưa có đáp án
+  hợp lệ được chấp nhận, và có đáp án cấp một công khai được chấp nhận.
+  Không kết hợp bộ lọc này với loại Bài viết.
+
+## Khôi phục mật khẩu qua email
+
+`POST /api/auth/forgot-password` nhận `{ email }`, trả 202 với thông báo giống
+nhau cho tài khoản tồn tại hoặc không tồn tại. Khi chưa cấu hình email/URL tin
+cậy, API trả 503 cho mọi email. Lỗi SMTP được ghi bằng thông báo chung, không
+ghi địa chỉ hay token vào log. Không bật ghi nội dung request cho hai endpoint này.
+
+`POST /api/auth/reset-password` nhận `{ email, token, newPassword }`, trả 204
+khi thành công hoặc 400 khi token/mật khẩu không hợp lệ. Liên kết có hiệu lực
+30 phút, token nằm trong fragment URL và không dùng lại được. Sau reset, các
+cookie cũ mất hiệu lực ở request tiếp theo; khóa kiểm duyệt vẫn được giữ nguyên.
+Giới hạn theo IP: 5 yêu cầu gửi email và 20 lần đặt lại mật khẩu mỗi 15 phút,
+hai ngân sách độc lập. Hai endpoint vẫn yêu cầu cookie/token CSRF.
+
+Cấu hình bằng biến môi trường của tiến trình backend, không commit thông tin SMTP:
+
+```powershell
+$env:RecoveryEmail__Host = 'smtp.example.com'
+$env:RecoveryEmail__Port = '587'
+$env:RecoveryEmail__UseTls = 'true'
+$env:RecoveryEmail__Username = '<tai-khoan-SMTP>'
+$env:RecoveryEmail__Password = '<mat-khau-SMTP>'
+$env:RecoveryEmail__FromAddress = 'forum@example.com'
+$env:RecoveryEmail__FrontendUrl = 'http://localhost:5173'
+```
+
+Máy triển khai phải dùng `FrontendUrl` HTTPS. Cổng 587 dùng STARTTLS, cổng 465
+dùng TLS ngay khi kết nối; MailKit xác minh chứng thư mặc định. Chỉ môi trường
+Development mới cho SMTP không TLS trên loopback để kiểm thử bằng máy nhận thư
+local. Kiểm thử hiện đã đi qua SMTP local; gửi tới hộp thư ngoài cần cấu hình
+nhà cung cấp thật.
+
 ## Chạy môi trường phát triển
 
 API dùng .NET 9, EF Core và SQL Server. Cấu hình mặc định trong
