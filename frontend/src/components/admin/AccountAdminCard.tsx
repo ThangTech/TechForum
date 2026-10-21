@@ -1,33 +1,55 @@
-import { Button } from '@astryxdesign/core/Button'
+import { Link } from 'react-router-dom'
 import type { AdminAccount } from '../../api/adminAccounts'
+import { appRoutes } from '../../appRoutes'
 
-interface AccountAdminCardProps {
+export const AccountAdminCard = ({
+  account,
+  busyId,
+  onToggleLock,
+}: {
   account: AdminAccount
   busyId: string | null
   onToggleLock: (account: AdminAccount) => void
-}
-
-export const AccountAdminCard = ({ account, busyId, onToggleLock }: AccountAdminCardProps) => (
-  <article className="rounded-xl border border-slate-200 bg-white p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
-    <div>
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-lg font-extrabold text-slate-950">{account.displayName}</h2>
-        {account.isAdministrator && <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">Quản trị viên</span>}
-        <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${account.isLocked ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-          {account.isLocked ? 'Đang bị khóa' : 'Đang hoạt động'}
-        </span>
+}) => (
+  <tr>
+    <td>
+      <Link className="admin-table-primary" to={appRoutes.member(account.id)}>
+        {account.displayName}
+      </Link>
+      <span className="admin-table-secondary">{account.email}</span>
+    </td>
+    <td>
+      <span className={`admin-badge ${account.isAdministrator ? 'admin-badge-blue' : ''}`}>
+        {account.isAdministrator ? 'Quản trị viên' : 'Thành viên'}
+      </span>
+    </td>
+    <td>
+      <span className={`admin-badge ${account.isLocked ? 'admin-badge-red' : 'admin-badge-green'}`}>
+        {account.isLocked ? 'Đang bị khóa' : 'Đang hoạt động'}
+      </span>
+      {account.isLocked && (
+        <>
+          <span className="admin-table-secondary">
+            {account.lockoutEndUtc
+              ? `Đến ${new Date(account.lockoutEndUtc).toLocaleString('vi-VN')}`
+              : 'Vô thời hạn'}
+          </span>
+          {account.lockReason && <p className="mt-1 max-w-64 break-words text-xs">{account.lockReason}</p>}
+        </>
+      )}
+    </td>
+    <td className="whitespace-nowrap">{new Date(account.createdAtUtc).toLocaleDateString('vi-VN')}</td>
+    <td>
+      <div className="admin-table-actions">
+        <button
+          disabled={busyId !== null || account.isAdministrator}
+          onClick={() => onToggleLock(account)}
+          type="button"
+        >
+          {busyId === account.id ? 'Đang xử lý…' : account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}
+        </button>
       </div>
-      <p className="mt-1 text-sm text-slate-600">{account.email}</p>
-      <p className="mt-1 text-xs text-slate-500">Tham gia {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(account.createdAtUtc))}</p>
-    </div>
-    <div className="mt-4 sm:mt-0 sm:shrink-0">
-      <Button
-        isDisabled={busyId !== null || account.isAdministrator}
-        isLoading={busyId === account.id}
-        label={account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}
-        onClick={() => onToggleLock(account)}
-        variant={account.isLocked ? 'primary' : 'secondary'}
-      />
-    </div>
-  </article>
+      {account.isAdministrator && <span className="admin-table-secondary">Bảo vệ tài khoản quản trị</span>}
+    </td>
+  </tr>
 )

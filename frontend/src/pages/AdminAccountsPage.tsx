@@ -1,28 +1,34 @@
 import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getAdminAccounts, setAccountLocked, type AdminAccount, type AdminAccountPage } from '../api/adminAccounts'
+import {
+  getAdminAccounts,
+  setAccountLocked,
+  type AdminAccount,
+  type AdminAccountPage,
+} from '../api/adminAccounts'
 import { ApiError } from '../api/client'
 import { AccountAdminCard } from '../components/admin/AccountAdminCard'
+import { AccountLockDialog } from '../components/admin/AccountLockDialog'
+import { AdminPagination } from '../components/admin/AdminPagination'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
-import { ConfirmDialog } from '../components/feedback/ConfirmDialog'
-
-const PAGE_SIZE = 15
-const readPage = (value: string | null) => {
-  const page = Number(value)
-  return Number.isInteger(page) && page > 0 ? page : 1
-}
 
 export const AdminAccountsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const keyword = searchParams.get('keyword')?.trim() ?? ''
-  const page = readPage(searchParams.get('page'))
-  const [searchText, setSearchText] = useState(keyword)
+  const [params, setParams] = useSearchParams()
+  const keyword = params.get('keyword')?.trim() ?? ''
+  const status = ['locked', 'unlocked'].includes(params.get('status') ?? '')
+    ? (params.get('status') ?? '')
+    : ''
+  const role = ['administrator', 'member'].includes(params.get('role') ?? '')
+    ? (params.get('role') ?? '')
+    : ''
+  const pageValue = Number(params.get('page'))
+  const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
   const [data, setData] = useState<AdminAccountPage | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [selected, setSelected] = useState<AdminAccount | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
@@ -33,100 +39,156 @@ export const AdminAccountsPage = () => {
       setIsLoading(true)
       setError(null)
       try {
-        setData(await getAdminAccounts(keyword, page, PAGE_SIZE, controller.signal))
+        setData(await getAdminAccounts(keyword, page, 15, controller.signal, status, role))
       } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError ? requestError.message : 'Không thể tải danh sách tài khoản.')
+        if (!controller.signal.aborted)
+          setError(
+            requestError instanceof ApiError ? requestError.message : 'Không thể tải danh sách tài khoản.',
+          )
       } finally {
         if (!controller.signal.aborted) setIsLoading(false)
       }
     }
     void load()
     return () => controller.abort()
-  }, [keyword, page, retry])
-
-  const search = (event: FormEvent) => {
+  }, [keyword, status, role, page, retry])
+  const filter = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const fields = new FormData(event.currentTarget)
     const next = new URLSearchParams()
-    if (searchText.trim()) next.set('keyword', searchText.trim())
-    setSearchParams(next)
+    for (const key of ['keyword', 'status', 'role']) {
+      const value = String(fields.get(key) ?? '').trim()
+      if (value) next.set(key, value)
+    }
+    setParams(next)
   }
-
   const changePage = (nextPage: number) => {
-    const next = new URLSearchParams(searchParams)
-    if (nextPage <= 1) next.delete('page')
-    else next.set('page', String(nextPage))
-    setSearchParams(next)
+    const next = new URLSearchParams(params)
+    if (nextPage > 1) next.set('page', String(nextPage))
+    else next.delete('page')
+    setParams(next)
   }
-
-  const toggleLock = async () => {
+  const toggleLock = async (reason: string | null, lockoutEndUtc: string | null) => {
     if (!selected || busyId) return
     setBusyId(selected.id)
     setActionError(null)
-    setSuccessMessage(null)
+    setSuccess(null)
     try {
-      const updated = await setAccountLocked(selected.id, !selected.isLocked)
-      setData((current) => current ? {
-        ...current,
-        items: current.items.map((item) => item.id === updated.id ? updated : item),
-      } : current)
-      setSuccessMessage(updated.isLocked ? 'Đã khóa tài khoản.' : 'Đã mở khóa tài khoản.')
+      const updated = await setAccountLocked(selected.id, !selected.isLocked, reason, lockoutEndUtc)
+      setSuccess(updated.isLocked ? 'Đã khóa tài khoản và lưu lý do xử lý.' : 'Đã mở khóa tài khoản.')
       setSelected(null)
+      setRetry((value) => value + 1)
     } catch (requestError) {
-      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật tài khoản.')
-      setSelected(null)
+      setActionError(
+        requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật tài khoản.',
+      )
     } finally {
       setBusyId(null)
     }
   }
-
   return (
-    <main className="main-area" id="main-content">
-      <div className="page-content py-10 sm:py-14">
-        <p className="eyebrow">Quản trị thành viên</p>
-        <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Tài khoản</h1>
-        <p className="mt-2 text-slate-600">Tìm theo tên hoặc email và quản lý trạng thái truy cập của thành viên.</p>
-
-        <form className="mt-6 flex max-w-2xl gap-3" onSubmit={search} role="search">
-          <label className="sr-only" htmlFor="account-search">Tìm tài khoản</label>
-          <input className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200" id="account-search" maxLength={100} onChange={(event) => setSearchText(event.target.value)} placeholder="Tên hoặc email" value={searchText} />
-          <Button label="Tìm kiếm" type="submit" variant="primary" />
-        </form>
-
-        {actionError && <p className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{actionError}</p>}
-        {successMessage && <p className="mt-5 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800" role="status">{successMessage}</p>}
-
-        <div className="mt-6">
-          <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải tài khoản…" onRetry={() => setRetry((value) => value + 1)} />
-          {!isLoading && !error && data?.items.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">Không tìm thấy tài khoản phù hợp.</div>}
-          {!isLoading && !error && data && data.items.length > 0 && (
-            <>
-              <div className="grid gap-4">
-                {data.items.map((account) => <AccountAdminCard account={account} busyId={busyId} key={account.id} onToggleLock={setSelected} />)}
-              </div>
-              {data.totalPages > 1 && (
-                <nav className="mt-6 flex items-center justify-between" aria-label="Phân trang tài khoản">
-                  <Button isDisabled={page <= 1} label="Trang trước" onClick={() => changePage(page - 1)} variant="secondary" />
-                  <span className="text-sm text-slate-600">Trang {page}/{data.totalPages}</span>
-                  <Button isDisabled={page >= data.totalPages} label="Trang sau" onClick={() => changePage(page + 1)} variant="secondary" />
-                </nav>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      <ConfirmDialog
-        confirmLabel={selected?.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}
-        description={selected?.isLocked
-          ? `Mở lại quyền truy cập cho ${selected.displayName}?`
-          : `Khóa ${selected?.displayName ?? 'tài khoản này'}? Phiên đăng nhập hiện tại của thành viên sẽ mất hiệu lực ở request tiếp theo.`}
-        isBusy={busyId !== null}
-        isOpen={selected !== null}
-        onCancel={() => setSelected(null)}
-        onConfirm={() => void toggleLock()}
-        title={selected?.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+    <section className="admin-page">
+      <p className="eyebrow">Quản trị thành viên</p>
+      <h1 className="font-extrabold">Tài khoản</h1>
+      <p className="admin-page-description">
+        Tra cứu thành viên, vai trò và trạng thái truy cập. Tài khoản quản trị được bảo vệ khỏi thao tác khóa.
+      </p>
+      <form className="admin-toolbar" key={`${keyword}-${status}-${role}`} onSubmit={filter} role="search">
+        <label className="admin-field admin-search-field">
+          Tìm tài khoản
+          <input
+            defaultValue={keyword}
+            maxLength={100}
+            name="keyword"
+            placeholder="Tên hoặc email thành viên"
+          />
+        </label>
+        <label className="admin-field">
+          Trạng thái
+          <select defaultValue={status} name="status">
+            <option value="">Tất cả trạng thái</option>
+            <option value="unlocked">Đang hoạt động</option>
+            <option value="locked">Đang bị khóa</option>
+          </select>
+        </label>
+        <label className="admin-field">
+          Vai trò
+          <select defaultValue={role} name="role">
+            <option value="">Tất cả vai trò</option>
+            <option value="member">Thành viên</option>
+            <option value="administrator">Quản trị viên</option>
+          </select>
+        </label>
+        <Button label="Tìm kiếm" type="submit" variant="primary" />
+        <button className="admin-text-button min-h-10" onClick={() => setParams({})} type="button">
+          Xóa lọc
+        </button>
+      </form>
+      {actionError && !selected && (
+        <p className="admin-message admin-message-error" role="alert">
+          {actionError}
+        </p>
+      )}
+      {success && (
+        <p className="admin-message admin-message-success" role="status">
+          {success}
+        </p>
+      )}
+      <AsyncStatePanel
+        error={error}
+        isLoading={isLoading}
+        loadingText="Đang tải tài khoản…"
+        onRetry={() => setRetry((value) => value + 1)}
       />
-    </main>
+      {!isLoading && !error && data && (
+        <>
+          {data.items.length ? (
+            <div className="admin-table-scroll">
+              <table className="admin-table">
+                <caption className="sr-only">Danh sách tài khoản TechForum</caption>
+                <thead>
+                  <tr>
+                    <th>Thành viên</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tham gia</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.items.map((account) => (
+                    <AccountAdminCard
+                      account={account}
+                      busyId={busyId}
+                      key={account.id}
+                      onToggleLock={(item) => {
+                        setActionError(null)
+                        setSelected(item)
+                      }}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="admin-empty">Không tìm thấy tài khoản phù hợp.</p>
+          )}
+          <AdminPagination {...data} onChange={changePage} />
+        </>
+      )}
+      {selected && (
+        <AccountLockDialog
+          account={selected}
+          isBusy={busyId !== null}
+          key={selected.id}
+          onClose={() => {
+            setActionError(null)
+            setSelected(null)
+          }}
+          onConfirm={(reason, until) => void toggleLock(reason, until)}
+          requestError={actionError}
+        />
+      )}
+    </section>
   )
 }

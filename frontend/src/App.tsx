@@ -7,12 +7,10 @@ import { AccountPage } from './pages/AccountPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
-import { ForgotPasswordPage, ResetPasswordPage } from './pages/PasswordRecoveryPage'
 import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
 import { MyTopicsPage } from './pages/MyTopicsPage'
 import { SavedTopicsPage } from './pages/SavedTopicsPage'
-import { MyReportsPage } from './pages/MyReportsPage'
 import { appRoutes } from './appRoutes'
 import { LegacyRouteRedirect } from './components/LegacyRouteRedirect'
 import { AdminReportsPage } from './pages/AdminReportsPage'
@@ -26,6 +24,10 @@ import { NotificationsPage } from './pages/NotificationsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SkillCommunityPage } from './pages/SkillCommunityPage'
 import { FollowMembersPage } from './pages/FollowMembersPage'
+import { AdminLayout } from './components/admin/AdminLayout'
+import { AdminAuditPage } from './pages/AdminAuditPage'
+import { MyReportsPage } from './pages/MyReportsPage'
+import { ForgotPasswordPage, ResetPasswordPage } from './pages/PasswordRecoveryPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
@@ -103,40 +105,6 @@ const App = () => {
             <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
             <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
             <Route path="skills/:tagId" element={<SkillCommunityPage />} />
-            <Route
-              path="admin/reports"
-              element={
-                <ProtectedRoute requiredRole="Administrator">
-                  <AdminReportsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="admin/categories"
-              element={
-                <ProtectedRoute requiredRole="Administrator">
-                  <AdminCategoriesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="admin/tags"
-              element={
-                <ProtectedRoute requiredRole="Administrator">
-                  <AdminTagsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="admin/accounts"
-              element={
-                <ProtectedRoute requiredRole="Administrator">
-                  <AdminAccountsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="admin/topics" element={<ProtectedRoute requiredRole="Administrator"><AdminTopicsPage /></ProtectedRoute>} />
-            <Route path="admin" element={<ProtectedRoute requiredRole="Administrator"><AdminOverviewPage /></ProtectedRoute>} />
             <Route path="bai-viet" element={<LegacyRouteRedirect to={appRoutes.articles} />} />
             <Route path="hoi-dap" element={<LegacyRouteRedirect to={appRoutes.questions} />} />
             <Route path="noi-dung/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.topic(params.id ?? '')} />} />
@@ -146,6 +114,15 @@ const App = () => {
             <Route path="noi-dung-cua-toi" element={<LegacyRouteRedirect to={appRoutes.myTopics} />} />
             <Route path="tai-khoan" element={<LegacyRouteRedirect to={appRoutes.account} />} />
             <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
+          </Route>
+          <Route path="admin" element={<ProtectedRoute requiredRole="Administrator"><AdminLayout /></ProtectedRoute>}>
+            <Route index element={<AdminOverviewPage />} />
+            <Route path="topics" element={<AdminTopicsPage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="categories" element={<AdminCategoriesPage />} />
+            <Route path="tags" element={<AdminTagsPage />} />
+            <Route path="accounts" element={<AdminAccountsPage />} />
+            <Route path="audit-logs" element={<AdminAuditPage />} />
           </Route>
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />

@@ -1,19 +1,11 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { appRoutes } from '../appRoutes'
-import { useAuth } from '../auth/authState'
-import { AdminNavigation } from './admin/AdminNavigation'
 import { SiteHeader } from './SiteHeader'
 
 export const SiteLayout = () => {
-  const { user, isLoading } = useAuth()
-  const { pathname } = useLocation()
-  const isAdminRoute = pathname === appRoutes.adminOverview || pathname.startsWith(`${appRoutes.adminOverview}/`)
-  const showAdminNavigation = !isLoading && user?.roles.includes('Administrator') && isAdminRoute
-
   return (
     <div className="site-shell">
       <SiteHeader />
-      {showAdminNavigation && <AdminNavigation />}
       <Outlet />
       <footer className="site-footer">
         <div className="site-footer__inner">

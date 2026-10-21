@@ -1,9 +1,16 @@
-import { Button } from '@astryxdesign/core/Button'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getAdminReports, resolveReport, type AdminReport, type AdminReportPage, type ReportStatus } from '../api/reports'
+import {
+  getAdminReports,
+  resolveReport,
+  type AdminReport,
+  type AdminReportPage,
+  type ReportStatus,
+} from '../api/reports'
 import { ApiError } from '../api/client'
 import { ReportResolutionDialog } from '../components/admin/ReportResolutionDialog'
+import { AdminPagination } from '../components/admin/AdminPagination'
+import { ReportPreviewDialog } from '../components/admin/ReportPreviewDialog'
 import { ReportReviewCard } from '../components/admin/ReportReviewCard'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 
@@ -31,9 +38,12 @@ export const AdminReportsPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [selected, setSelected] = useState<{ report: AdminReport; decision: 'accepted' | 'rejected' } | null>(null)
+  const [selected, setSelected] = useState<{ report: AdminReport; decision: 'accepted' | 'rejected' } | null>(
+    null,
+  )
   const [isResolving, setIsResolving] = useState(false)
   const [retry, setRetry] = useState(0)
+  const [preview, setPreview] = useState<AdminReport | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -82,28 +92,53 @@ export const AdminReportsPage = () => {
   }
 
   return (
-    <main className="main-area" id="main-content">
-      <div className="page-content py-10 sm:py-14">
+    <section className="admin-page">
+      <div>
         <p className="eyebrow">Quản trị nội dung</p>
         <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Báo cáo cộng đồng</h1>
-        <p className="mt-2 text-slate-600">Xem nội dung bị báo cáo và lưu quyết định xử lý có lý do rõ ràng.</p>
+        <p className="mt-2 text-slate-600">
+          Xem nội dung bị báo cáo và lưu quyết định xử lý có lý do rõ ràng.
+        </p>
 
-        <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="Lọc trạng thái báo cáo">
+        <div className="admin-toolbar" role="group" aria-label="Lọc trạng thái báo cáo">
+          <span className="text-xs font-semibold text-slate-500 mr-2">Trạng thái:</span>
           {statuses.map((item) => (
-            <Button
+            <button
+              aria-pressed={status === item.value}
+              className={`admin-text-button ${status === item.value ? '!bg-blue-50 !border-blue-300 !text-blue-800' : ''}`}
               key={item.value}
-              label={item.label}
               onClick={() => updateFilters(item.value)}
-              variant={status === item.value ? 'primary' : 'secondary'}
-            />
+              type="button"
+            >
+              {item.label}
+            </button>
           ))}
         </div>
 
-        {actionError && <p className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{actionError}</p>}
-        {successMessage && <p className="mt-5 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800" role="status">{successMessage}</p>}
+        {actionError && (
+          <p
+            className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            role="alert"
+          >
+            {actionError}
+          </p>
+        )}
+        {successMessage && (
+          <p
+            className="mt-5 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
+            role="status"
+          >
+            {successMessage}
+          </p>
+        )}
 
-        <div className="mt-6">
-          <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải báo cáo…" onRetry={() => setRetry((value) => value + 1)} />
+        <div>
+          <AsyncStatePanel
+            error={error}
+            isLoading={isLoading}
+            loadingText="Đang tải báo cáo…"
+            onRetry={() => setRetry((value) => value + 1)}
+          />
           {!isLoading && !error && data?.items.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">
               Không có báo cáo ở trạng thái này.
@@ -111,34 +146,65 @@ export const AdminReportsPage = () => {
           )}
           {!isLoading && !error && data && data.items.length > 0 && (
             <>
-              <div className="grid gap-5">
-                {data.items.map((report) => (
-                  <ReportReviewCard
-                    key={report.id}
-                    onResolve={(item, decision) => { setActionError(null); setSuccessMessage(null); setSelected({ report: item, decision }) }}
-                    report={report}
-                  />
-                ))}
+              <div className="admin-table-scroll">
+                <table className="admin-table">
+                  <caption className="sr-only">Danh sách báo cáo cộng đồng</caption>
+                  <thead>
+                    <tr>
+                      <th>Nội dung</th>
+                      <th>Lý do</th>
+                      <th>Người báo cáo</th>
+                      <th>Trạng thái</th>
+                      <th>Thời điểm gửi</th>
+                      <th>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.items.map((report) => (
+                      <ReportReviewCard
+                        key={report.id}
+                        onPreview={setPreview}
+                        onResolve={(item, decision) => {
+                          setActionError(null)
+                          setSuccessMessage(null)
+                          setSelected({ report: item, decision })
+                        }}
+                        report={report}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              {data.totalPages > 1 && (
-                <nav className="mt-6 flex items-center justify-between" aria-label="Phân trang báo cáo">
-                  <Button isDisabled={page <= 1} label="Trang trước" onClick={() => updateFilters(status, page - 1)} variant="secondary" />
-                  <span className="text-sm text-slate-600">Trang {page}/{data.totalPages}</span>
-                  <Button isDisabled={page >= data.totalPages} label="Trang sau" onClick={() => updateFilters(status, page + 1)} variant="secondary" />
-                </nav>
-              )}
             </>
+          )}
+          {!isLoading && !error && data && (
+            <AdminPagination {...data} onChange={(nextPage) => updateFilters(status, nextPage)} />
           )}
         </div>
       </div>
 
+      {preview && (
+        <ReportPreviewDialog
+          onClose={() => setPreview(null)}
+          onResolve={(report, decision) => {
+            setPreview(null)
+            setActionError(null)
+            setSelected({ report, decision })
+          }}
+          report={preview}
+        />
+      )}
       <ReportResolutionDialog
+        key={`${selected?.report.id ?? 'none'}-${selected?.decision ?? 'none'}`}
         decision={selected?.decision ?? null}
         isBusy={isResolving}
-        onClose={() => { setActionError(null); setSelected(null) }}
+        onClose={() => {
+          setActionError(null)
+          setSelected(null)
+        }}
         onConfirm={(note) => void handleResolution(note)}
         requestError={actionError}
       />
-    </main>
+    </section>
   )
 }

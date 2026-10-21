@@ -1,31 +1,69 @@
 import type { AdminAuditLog } from '../../api/adminOverview'
 
-const actionLabels: Record<string, string> = {
-  'topic.hide': 'Ẩn nội dung', 'topic.restore': 'Khôi phục nội dung',
-  'topic.lock': 'Khóa thảo luận', 'topic.unlock': 'Mở thảo luận',
-  'topic.pin': 'Ghim nội dung', 'topic.unpin': 'Bỏ ghim', 'topic.move': 'Chuyển chuyên mục',
-}
+import { auditActionLabels } from './auditActionLabels'
 
 export const AuditLogList = ({ items }: { items: AdminAuditLog[] }) => (
-  <div className="grid gap-3">
-    {items.map((item) => (
-      <article className="rounded-xl border border-slate-200 bg-white p-5" key={item.id}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-extrabold text-slate-950">{actionLabels[item.action] ?? item.action}</h3>
-          <time className="text-xs text-slate-500" dateTime={item.createdAtUtc}>
-            {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.createdAtUtc))}
-          </time>
-        </div>
-        <p className="mt-2 text-sm text-slate-600">{item.administrator.displayName} · {item.targetType} #{item.targetId}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-800"><strong>Lý do:</strong> {item.reason}</p>
-        {(item.previousValue || item.newValue) && (
-          <details className="mt-3 text-xs text-slate-500">
-            <summary className="cursor-pointer font-bold">Xem trạng thái trước/sau</summary>
-            <p className="mt-2 break-words">Trước: {item.previousValue ?? '—'}</p>
-            <p className="mt-1 break-words">Sau: {item.newValue ?? '—'}</p>
-          </details>
-        )}
-      </article>
-    ))}
+  <div className="admin-table-scroll">
+    <table className="admin-table">
+      <caption className="sr-only">Nhật ký thao tác quản trị</caption>
+      <thead>
+        <tr>
+          <th>Thời điểm</th>
+          <th>Quản trị viên</th>
+          <th>Thao tác</th>
+          <th>Đối tượng</th>
+          <th>Lý do / Thay đổi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item) => (
+          <tr key={item.id}>
+            <td className="whitespace-nowrap">
+              <time dateTime={item.createdAtUtc}>
+                {new Date(item.createdAtUtc).toLocaleString('vi-VN', {
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })}
+              </time>
+            </td>
+            <td>
+              <span className="admin-table-primary">{item.administrator.displayName}</span>
+            </td>
+            <td>
+              <span className="admin-badge admin-badge-blue">
+                {auditActionLabels[item.action] ?? item.action}
+              </span>
+            </td>
+            <td>
+              {(
+                {
+                  topic: 'Chủ đề',
+                  answer: 'Câu trả lời',
+                  account: 'Tài khoản',
+                  report: 'Báo cáo',
+                  category: 'Chuyên mục',
+                  tag: 'Thẻ',
+                } as Record<string, string>
+              )[item.targetType.toLowerCase()] ?? item.targetType}
+              <span className="admin-table-secondary max-w-48">#{item.targetId}</span>
+            </td>
+            <td>
+              <p className="min-w-40 max-w-80 break-words">{item.reason}</p>
+              {(item.previousValue || item.newValue) && (
+                <details className="admin-audit-values mt-2">
+                  <summary>Trạng thái trước / sau</summary>
+                  <p className="mt-2">
+                    <strong>Trước:</strong> {item.previousValue ?? '—'}
+                  </p>
+                  <p className="mt-1">
+                    <strong>Sau:</strong> {item.newValue ?? '—'}
+                  </p>
+                </details>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </div>
 )
