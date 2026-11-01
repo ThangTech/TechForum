@@ -1,5 +1,5 @@
-import { Button } from '@astryxdesign/core/Button'
-import { Dialog } from '@astryxdesign/core/Dialog'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
 import { useState } from 'react'
 import { updateAnswer, type Answer } from '../../api/answers'
 import { ApiError } from '../../api/client'
@@ -21,12 +21,12 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
     finally { setIsSaving(false) }
   }
   return (
-    <Dialog aria-label="Sửa câu trả lời" isOpen onOpenChange={(open) => !open && !isSaving && onClose()} padding={0} purpose="required" width={560}>
+    <Dialog open onClose={() => !isSaving && onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': "Sửa câu trả lời", sx: { width: 560, maxWidth: 'calc(100% - 32px)' } } }}>
       <div className="p-6"><h2 className="text-xl font-extrabold text-slate-950">Sửa câu trả lời</h2>
         <textarea className="mt-5 min-h-44 w-full resize-y rounded-lg border border-slate-300 px-4 py-3 text-sm leading-6 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200" disabled={isSaving} maxLength={20000} onChange={(event) => setContent(event.target.value)} value={content} />
         <p className="mt-2 text-right text-xs text-slate-500">{content.length.toLocaleString('vi-VN')}/20.000</p>
         {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}
-        <div className="mt-6 flex justify-end gap-3"><Button isDisabled={isSaving} label="Hủy" onClick={onClose} variant="secondary" /><Button isDisabled={isSaving} isLoading={isSaving} label={isSaving ? 'Đang lưu…' : 'Lưu thay đổi'} onClick={() => void save()} variant="primary" /></div>
+        <div className="mt-6 flex justify-end gap-3"><Button disabled={isSaving} onClick={onClose} variant="outlined">Hủy</Button><Button disabled={isSaving} loading={isSaving} onClick={() => void save()} variant="contained">{isSaving ? 'Đang lưu…' : 'Lưu thay đổi'}</Button></div>
       </div>
     </Dialog>
   )

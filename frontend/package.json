@@ -3,9 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "astryx": {
-    "theme": "@astryxdesign/theme-neutral"
-  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -14,17 +11,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@astryxdesign/core": "^0.6.5",
-    "@astryxdesign/theme-neutral": "^0.6.5",
-    "@stylexjs/stylex": "^0.19.1",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^9.5.0",
+    "@mui/x-charts": "^9.17.0",
     "intro.js": "^8.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-froala-wysiwyg": "^5.4.0",
+    "react-hook-form": "^7.91.0",
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
-    "@astryxdesign/cli": "^0.6.5",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",

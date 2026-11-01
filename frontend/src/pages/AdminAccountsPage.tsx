@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -12,6 +12,12 @@ import { AccountAdminCard } from '../components/admin/AccountAdminCard'
 import { AccountLockDialog } from '../components/admin/AccountLockDialog'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import TextField from '@mui/material/TextField'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
 
 export const AdminAccountsPage = () => {
   const [params, setParams] = useSearchParams()
@@ -94,35 +100,19 @@ export const AdminAccountsPage = () => {
         Tra cứu thành viên, vai trò và trạng thái truy cập. Tài khoản quản trị được bảo vệ khỏi thao tác khóa.
       </p>
       <form className="admin-toolbar" key={`${keyword}-${status}-${role}`} onSubmit={filter} role="search">
-        <label className="admin-field admin-search-field">
-          Tìm tài khoản
-          <input
-            defaultValue={keyword}
-            maxLength={100}
-            name="keyword"
-            placeholder="Tên hoặc email thành viên"
-          />
-        </label>
-        <label className="admin-field">
-          Trạng thái
-          <select defaultValue={status} name="status">
+        <TextField size="small" label="Tìm tài khoản" defaultValue={keyword} name="keyword" placeholder="Tên hoặc email thành viên" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
+        <TextField size="small" label="Trạng thái" defaultValue={status} name="status" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
             <option value="">Tất cả trạng thái</option>
             <option value="unlocked">Đang hoạt động</option>
             <option value="locked">Đang bị khóa</option>
-          </select>
-        </label>
-        <label className="admin-field">
-          Vai trò
-          <select defaultValue={role} name="role">
+          </TextField>
+        <TextField size="small" label="Vai trò" defaultValue={role} name="role" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
             <option value="">Tất cả vai trò</option>
             <option value="member">Thành viên</option>
             <option value="administrator">Quản trị viên</option>
-          </select>
-        </label>
-        <Button label="Tìm kiếm" type="submit" variant="primary" />
-        <button className="admin-text-button min-h-10" onClick={() => setParams({})} type="button">
-          Xóa lọc
-        </button>
+          </TextField>
+        <Button type="submit" variant="contained">Tìm kiếm</Button>
+        <Button onClick={() => setParams({})} variant="text">Xóa lọc</Button>
       </form>
       {actionError && !selected && (
         <p className="admin-message admin-message-error" role="alert">
@@ -144,18 +134,18 @@ export const AdminAccountsPage = () => {
         <>
           {data.items.length ? (
             <div className="admin-table-scroll">
-              <table className="admin-table">
+              <Table className="admin-table" size="small">
                 <caption className="sr-only">Danh sách tài khoản TechForum</caption>
-                <thead>
-                  <tr>
-                    <th>Thành viên</th>
-                    <th>Vai trò</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày tham gia</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Thành viên</TableCell>
+                    <TableCell>Vai trò</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>Ngày tham gia</TableCell>
+                    <TableCell>Thao tác</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {data.items.map((account) => (
                     <AccountAdminCard
                       account={account}
@@ -167,8 +157,8 @@ export const AdminAccountsPage = () => {
                       }}
                     />
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           ) : (
             <p className="admin-empty">Không tìm thấy tài khoản phù hợp.</p>

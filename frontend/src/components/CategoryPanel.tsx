@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import type { Category } from '../api/categories'
 
 interface CategoryPanelProps {
@@ -41,7 +41,7 @@ export const CategoryPanel = ({
             <h3>Chưa tải được chuyên mục</h3>
             <p>{error}</p>
             <div className="retry-action">
-              <Button label="Thử lại" variant="primary" onClick={onRetry} />
+              <Button variant="contained" onClick={onRetry}>Thử lại</Button>
             </div>
           </div>
         )}

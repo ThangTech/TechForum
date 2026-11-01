@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -60,7 +60,7 @@ export const AccountPage = () => {
           <p className="mt-2 text-sm text-slate-600">Đăng xuất khỏi phiên hiện tại trên thiết bị này.</p>
           {error && <div className="form-alert mt-4" role="alert">{error}</div>}
           <div className="mt-5">
-            <Button isLoading={isSubmitting} label="Đăng xuất" onClick={handleLogout} variant="secondary" />
+            <Button loading={isSubmitting} onClick={handleLogout} variant="outlined">Đăng xuất</Button>
           </div>
         </section>
       </div>

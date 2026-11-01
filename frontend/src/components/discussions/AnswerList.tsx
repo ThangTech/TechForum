@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { deleteAnswer, setAnswerHelpful, type Answer, type AnswerHelpfulState, type AnswerPage } from '../../api/answers'
@@ -130,19 +130,13 @@ export const AnswerList = ({
                 {votingAnswerId === answer.id ? 'Đang lưu…' : `Hữu ích · ${answer.helpfulCount}`}
               </button>
               {canAcceptAnswers && answer.parentAnswerId === null && !answer.isAccepted && (
-                <Button
-                  isDisabled={acceptingAnswerId !== null}
-                  isLoading={acceptingAnswerId === answer.id}
-                  label="Chấp nhận câu trả lời"
-                  onClick={() => onAccept(answer.id)}
-                  variant="secondary"
-                />
+                <Button disabled={acceptingAnswerId !== null} loading={acceptingAnswerId === answer.id} onClick={() => onAccept(answer.id)} variant="outlined">Chấp nhận câu trả lời</Button>
               )}
-              {!isLocked && <Button label="Phản hồi" onClick={() => user ? setReplyingTo(answer) : onLoginRequired()} variant="ghost" />}
+              {!isLocked && <Button onClick={() => user ? setReplyingTo(answer) : onLoginRequired()} variant="text">Phản hồi</Button>}
               <ReportAction targetId={answer.id} targetType="answer" />
               {user?.id === answer.author.id && <>
-                <Button label="Sửa" onClick={() => setEditing(answer)} variant="ghost" />
-                <Button label="Xóa" onClick={() => setDeleting(answer)} variant="ghost" />
+                <Button onClick={() => setEditing(answer)} variant="text">Sửa</Button>
+                <Button onClick={() => setDeleting(answer)} variant="text">Xóa</Button>
               </>}
             </div>
             {replyingTo?.id === answer.id && <div className="mt-4"><AnswerForm parentAnswer={answer} topicId={answer.topicId} onCancel={() => setReplyingTo(null)} onCreated={(created) => { setReplyingTo(null); onReplyCreated(created) }} /></div>}
@@ -152,19 +146,9 @@ export const AnswerList = ({
 
       {data.totalPages > 1 && (
         <nav className="mt-5 flex flex-wrap items-center justify-between gap-4" aria-label="Phân trang câu trả lời">
-          <Button
-            isDisabled={data.page <= 1}
-            label="Trang trước"
-            onClick={() => onPageChange(data.page - 1)}
-            variant="secondary"
-          />
+          <Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button>
           <span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span>
-          <Button
-            isDisabled={data.page >= data.totalPages}
-            label="Trang sau"
-            onClick={() => onPageChange(data.page + 1)}
-            variant="secondary"
-          />
+          <Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button>
         </nav>
       )}
       {editing && <AnswerEditDialog answer={editing} onClose={() => setEditing(null)} onUpdated={(answer) => { onUpdated(answer); setEditing(null) }} />}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Button } from '@astryxdesign/core'
+import Button from '@mui/material/Button'
 import { getRelatedTopics, type RelatedTopic } from '../../api/relatedTopics'
 import { appRoutes } from '../../appRoutes'
 import { TopicTypeBadge } from './TopicTypeBadge'
@@ -42,7 +42,7 @@ export const RelatedTopics = ({ topicId }: Props) => {
       {!isLoading && error && (
         <div className="related-topics__state">
           <p role="alert">{error}</p>
-          <Button label="Thử lại" onClick={() => setRequestVersion((value) => value + 1)} variant="secondary" />
+          <Button onClick={() => setRequestVersion((value) => value + 1)} variant="outlined">Thử lại</Button>
         </div>
       )}
       {!isLoading && !error && items.length === 0 && (

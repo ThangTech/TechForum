@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { acceptAnswer, getAnswers, type Answer, type AnswerPage, type AnswerSort } from '../../api/answers'
@@ -184,7 +184,7 @@ export const DiscussionSection = ({
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
           <p className="text-sm leading-6 text-slate-700">Đăng nhập để đóng góp câu trả lời cho chủ đề này.</p>
           <div className="mt-4 sm:mt-0">
-            <Button label="Viết câu trả lời" onClick={() => setIsAuthDialogOpen(true)} variant="primary" />
+            <Button onClick={() => setIsAuthDialogOpen(true)} variant="contained">Viết câu trả lời</Button>
           </div>
         </div>
       )}
@@ -209,7 +209,7 @@ export const DiscussionSection = ({
         />
         {!isLoading && isTargetUnavailable && (
           <div className="mt-3">
-            <Button label="Xem các câu trả lời" onClick={() => changePage(1)} variant="secondary" />
+            <Button onClick={() => changePage(1)} variant="outlined">Xem các câu trả lời</Button>
           </div>
         )}
         {!isLoading && !error && data && (

@@ -10,7 +10,7 @@
 .admin-shell input:focus-visible,
 .admin-shell select:focus-visible,
 .admin-shell summary:focus-visible {
-  outline: 2px solid #1d4ed8;
+  outline: 2px solid var(--color-primary);
   outline-offset: 3px;
 }
 .admin-sidebar {
@@ -34,7 +34,7 @@
   border-bottom: 1px solid #edf0f4;
 }
 .admin-brand > span {
-  color: #2459bb;
+  color: var(--color-primary);
 }
 .admin-brand > small {
   display: block;
@@ -53,39 +53,7 @@
   font-weight: 700;
 }
 .admin-navigation {
-  display: grid;
-  gap: 5px;
   padding: 0 13px;
-}
-.admin-nav-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 43px;
-  padding: 10px 14px;
-  border-left: 3px solid transparent;
-  color: #5b687a;
-  font-weight: 650;
-}
-.admin-nav-link:before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border: 1px solid #8290a3;
-  flex-shrink: 0;
-}
-.admin-nav-link:hover {
-  background: #f4f6fa;
-  color: #1e3a64;
-}
-.admin-nav-link.is-active {
-  background: #edf3fe;
-  border-left-color: #2563bb;
-  color: #174c9f;
-}
-.admin-nav-link.is-active:before {
-  background: #2563bb;
-  border-color: #2563bb;
 }
 .admin-sidebar-footer {
   margin-top: auto;
@@ -137,7 +105,7 @@
 }
 .admin-forum-link {
   font-size: 12px;
-  color: #2459bb;
+  color: var(--color-primary);
   font-weight: 650;
   white-space: nowrap;
 }
@@ -185,8 +153,10 @@
 .admin-panel {
   border: 1px solid #dce2ea;
   background: #fff;
-  border-radius: 0;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   min-width: 0;
+  overflow: hidden;
 }
 .admin-panel-heading {
   padding: 19px 21px;
@@ -210,7 +180,7 @@
 .admin-panel-heading a {
   font-size: 12px;
   font-weight: 650;
-  color: #2459bb;
+  color: var(--color-primary);
 }
 .admin-toolbar {
   display: flex;
@@ -222,6 +192,10 @@
   border: 1px solid #dce2ea;
   border-bottom: 0;
   margin-top: 24px;
+}
+.admin-toolbar .MuiFormControl-root,
+.admin-date-toolbar .MuiFormControl-root {
+  width: auto;
 }
 .admin-field {
   display: grid;
@@ -405,9 +379,16 @@
 }
 .admin-stat {
   border: 1px solid #dce2ea;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   background: #fff;
-  padding: 19px 20px;
+  padding: 19px 20px 12px;
   min-width: 0;
+  overflow: hidden;
+}
+.admin-stat-trend {
+  margin: 10px -8px -6px;
+  height: 44px;
 }
 .admin-stat-label {
   font-size: 11px;
@@ -437,30 +418,7 @@
   margin-top: 20px;
 }
 .admin-chart-body {
-  padding: 20px;
-}
-.admin-chart {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.admin-chart text {
-  font-size: 10px;
-  fill: #8290a4;
-}
-.admin-chart-legend {
-  display: flex;
-  gap: 17px;
-  flex-wrap: wrap;
-  font-size: 11px;
-  color: #718097;
-  margin-top: 10px;
-}
-.admin-chart-legend i {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  margin-right: 6px;
+  padding: 12px 16px 8px;
 }
 .admin-date-toolbar {
   display: flex;
@@ -474,25 +432,6 @@
   gap: 20px;
   align-items: end;
   flex-wrap: wrap;
-}
-.admin-range-buttons {
-  display: flex;
-  gap: 5px;
-}
-.admin-range-buttons button {
-  border: 1px solid #d1dae5;
-  background: #fff;
-  color: #69788c;
-  padding: 9px 11px;
-  font-size: 11px;
-  min-height: 38px;
-  border-radius: 3px;
-}
-.admin-range-buttons button[aria-pressed='true'] {
-  background: #eaf1fe;
-  border-color: #98b6e8;
-  color: #2056a7;
-  font-weight: 700;
 }
 .admin-question-grid {
   padding: 20px;
@@ -510,32 +449,6 @@
   font-size: 18px;
   color: #2d405d;
 }
-.admin-progress {
-  height: 6px;
-  background: #edf1f6;
-  margin-top: 9px;
-  overflow: hidden;
-}
-.admin-progress span {
-  display: block;
-  height: 100%;
-  background: #3970bd;
-}
-.admin-category-list {
-  padding: 19px 21px;
-  display: grid;
-  gap: 18px;
-}
-.admin-category-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 12px;
-  color: #5a6c86;
-}
-.admin-category-head strong {
-  color: #334e73;
-}
 .admin-preview {
   max-height: 380px;
   overflow: auto;
@@ -552,7 +465,7 @@
 }
 .admin-audit-values summary {
   cursor: pointer;
-  color: #2459bb;
+  color: var(--color-primary);
   font-weight: 650;
 }
 .admin-page input,
@@ -698,16 +611,6 @@
   }
   .admin-date-toolbar {
     width: 100%;
-  }
-  .admin-date-toolbar .admin-field {
-    flex: 1;
-    min-width: 120px;
-  }
-  .admin-range-buttons {
-    width: 100%;
-  }
-  .admin-range-buttons button {
-    flex: 1;
   }
   .admin-panel-heading {
     padding: 16px;

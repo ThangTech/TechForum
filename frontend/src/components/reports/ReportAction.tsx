@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useState } from 'react'
 import type { ReportTargetType } from '../../api/reports'
 import { useAuth } from '../../auth/authState'
@@ -26,7 +26,7 @@ export const ReportAction = ({ targetId, targetType }: ReportActionProps) => {
 
   return (
     <>
-      <Button label="Báo cáo" onClick={open} variant="ghost" />
+      <Button onClick={open} variant="text">Báo cáo</Button>
       <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
       <ReportDialog
         isOpen={isReportDialogOpen}

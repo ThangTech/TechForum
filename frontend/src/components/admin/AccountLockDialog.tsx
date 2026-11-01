@@ -1,7 +1,8 @@
-import { Button } from '@astryxdesign/core/Button'
-import { Dialog } from '@astryxdesign/core/Dialog'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
 import { useState, type FormEvent } from 'react'
 import type { AdminAccount } from '../../api/adminAccounts'
+import TextField from '@mui/material/TextField'
 
 export const AccountLockDialog = ({
   account,
@@ -42,14 +43,7 @@ export const AccountLockDialog = ({
     )
   }
   return (
-    <Dialog
-      aria-label={account.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
-      isOpen
-      onOpenChange={(open) => !open && !isBusy && onClose()}
-      padding={0}
-      purpose="required"
-      width={500}
-    >
+    <Dialog open onClose={() => !isBusy && onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': account.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản', sx: { width: 500, maxWidth: 'calc(100% - 32px)' } } }}>
       <form className="p-6" onSubmit={submit}>
         <h2 className="text-xl font-extrabold text-slate-950">
           {account.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
@@ -61,28 +55,27 @@ export const AccountLockDialog = ({
         </p>
         {!account.isLocked && (
           <>
-            <label className="mt-5 grid gap-2 text-sm font-semibold" htmlFor="account-lock-reason">
-              Lý do khóa
-              <textarea
-                className="min-h-28 rounded border border-slate-300 px-3 py-2 font-normal"
+            <div className="mt-5 grid gap-4">
+              <TextField
                 disabled={isBusy}
                 id="account-lock-reason"
-                maxLength={1000}
+                label="Lý do khóa"
+                minRows={4}
+                multiline
                 onChange={(event) => setReason(event.target.value)}
                 required
+                slotProps={{ htmlInput: { maxLength: 1000 } }}
                 value={reason}
               />
-            </label>
-            <label className="mt-4 grid gap-2 text-sm font-semibold" htmlFor="account-lock-until">
-              Khóa đến thời điểm
-              <input
-                className="rounded border border-slate-300 px-3 py-2 font-normal"
+              <TextField
                 disabled={isBusy}
                 id="account-lock-until"
+                label="Khóa đến thời điểm"
                 name="lockoutEnd"
+                slotProps={{ inputLabel: { shrink: true } }}
                 type="datetime-local"
               />
-            </label>
+            </div>
             <p className="mt-2 text-xs text-slate-500">
               Để trống nếu khóa vô thời hạn. Thời điểm theo giờ trên thiết bị của bạn.
             </p>
@@ -94,14 +87,8 @@ export const AccountLockDialog = ({
           </p>
         )}
         <div className="mt-6 flex justify-end gap-3">
-          <Button isDisabled={isBusy} label="Hủy" onClick={onClose} variant="secondary" />
-          <Button
-            isDisabled={isBusy}
-            isLoading={isBusy}
-            label={account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}
-            type="submit"
-            variant="primary"
-          />
+          <Button disabled={isBusy} onClick={onClose} variant="outlined">Hủy</Button>
+          <Button disabled={isBusy} loading={isBusy} type="submit" variant="contained">{account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}</Button>
         </div>
       </form>
     </Dialog>

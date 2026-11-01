@@ -1,23 +1,40 @@
-import { Button } from '@astryxdesign/core/Button'
-import { TextInput } from '@astryxdesign/core/TextInput'
-import { useState, type FormEvent } from 'react'
+import Button from '@mui/material/Button'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, useLocation } from 'react-router-dom'
 import { requestPasswordReset, resetPassword } from '../api/auth'
 import { ApiError } from '../api/client'
 import { appRoutes } from '../appRoutes'
 import background from '../assets/background.png'
 import { AuthPageLayout } from './LoginPage'
+import { FormTextField } from '../components/common/FormTextField'
+
+interface ForgotPasswordFormValues {
+  email: string
+}
+
+interface ResetPasswordFormValues {
+  password: string
+  confirmation: string
+}
+
+// Quy tắc mật khẩu giống backend: 8–100 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
+const isStrongPassword = (password: string) =>
+  password.length >= 8 &&
+  password.length <= 100 &&
+  /[A-Z]/.test(password) &&
+  /[a-z]/.test(password) &&
+  /[0-9]/.test(password) &&
+  /[^a-zA-Z0-9]/.test(password)
 
 export const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { control, handleSubmit, formState: { isSubmitting } } = useForm<ForgotPasswordFormValues>({
+    defaultValues: { email: '' },
+  })
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (isSubmitting) return
-    setIsSubmitting(true)
+  const submit = async ({ email }: ForgotPasswordFormValues) => {
     setError(null)
     setMessage(null)
     try {
@@ -27,8 +44,6 @@ export const ForgotPasswordPage = () => {
       setError(
         requestError instanceof ApiError ? requestError.message : 'Không thể gửi yêu cầu. Vui lòng thử lại.',
       )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -38,7 +53,7 @@ export const ForgotPasswordPage = () => {
       title="Lấy lại quyền truy cập"
       description="Khôi phục mật khẩu bằng email của tài khoản TechForum."
     >
-      <form className="auth-form" onSubmit={submit}>
+      <form className="auth-form" onSubmit={handleSubmit(submit)}>
         <div>
           <p className="eyebrow">Khôi phục tài khoản</p>
           <h1>Quên mật khẩu</h1>
@@ -56,23 +71,16 @@ export const ForgotPasswordPage = () => {
             {message}
           </div>
         )}
-        <TextInput
+        <FormTextField
           autoComplete="email"
-          isRequired
+          control={control}
           label="Email"
-          htmlName="email"
-          onChange={setEmail}
+          name="email"
+          required
+          rules={{ required: 'Vui lòng nhập email.' }}
           type="email"
-          value={email}
-          width="100%"
         />
-        <Button
-          isLoading={isSubmitting}
-          label="Gửi liên kết khôi phục"
-          type="submit"
-          variant="primary"
-          width="100%"
-        />
+        <Button loading={isSubmitting} type="submit" variant="contained" fullWidth>Gửi liên kết khôi phục</Button>
         <p className="auth-form__switch">
           <Link to={appRoutes.login}>Quay lại đăng nhập</Link>
         </p>
@@ -86,45 +94,24 @@ export const ResetPasswordPage = () => {
   const parameters = new URLSearchParams(location.hash.slice(1))
   const email = parameters.get('email') ?? ''
   const token = parameters.get('token') ?? ''
-  const [password, setPassword] = useState('')
-  const [confirmation, setConfirmation] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
+  const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<ResetPasswordFormValues>({
+    defaultValues: { password: '', confirmation: '' },
+  })
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (isSubmitting) return
-    if (password !== confirmation) {
-      setError('Hai mật khẩu chưa khớp nhau.')
-      return
-    }
-    if (
-      password.length < 8 ||
-      password.length > 100 ||
-      !/[A-Z]/.test(password) ||
-      !/[a-z]/.test(password) ||
-      !/[0-9]/.test(password) ||
-      !/[^a-zA-Z0-9]/.test(password)
-    ) {
-      setError('Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.')
-      return
-    }
-    setIsSubmitting(true)
+  const submit = async ({ password }: ResetPasswordFormValues) => {
     setError(null)
     try {
       await resetPassword(email, token, password)
       setIsComplete(true)
-      setPassword('')
-      setConfirmation('')
+      reset()
     } catch (requestError) {
       setError(
         requestError instanceof ApiError
           ? requestError.message
           : 'Không thể đặt lại mật khẩu. Vui lòng thử lại.',
       )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -158,7 +145,7 @@ export const ResetPasswordPage = () => {
             </Link>
           </div>
         ) : (
-          <form className="grid gap-5" onSubmit={submit}>
+          <form className="grid gap-5" onSubmit={handleSubmit(submit)} noValidate>
             <p className="break-all text-sm text-slate-600">Tài khoản: {email}</p>
             <p className="text-sm text-slate-600">
               Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
@@ -168,33 +155,31 @@ export const ResetPasswordPage = () => {
                 {error}
               </div>
             )}
-            <TextInput
+            <FormTextField
               autoComplete="new-password"
-              isRequired
+              control={control}
               label="Mật khẩu mới"
-              htmlName="newPassword"
-              onChange={setPassword}
+              name="password"
+              required
+              rules={{
+                required: 'Vui lòng nhập mật khẩu mới.',
+                validate: (value) => isStrongPassword(value) || 'Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.',
+              }}
               type="password"
-              value={password}
-              width="100%"
             />
-            <TextInput
+            <FormTextField
               autoComplete="new-password"
-              isRequired
+              control={control}
               label="Nhập lại mật khẩu"
-              htmlName="confirmPassword"
-              onChange={setConfirmation}
+              name="confirmation"
+              required
+              rules={{
+                required: 'Vui lòng nhập lại mật khẩu.',
+                validate: (value, values) => value === values.password || 'Hai mật khẩu chưa khớp nhau.',
+              }}
               type="password"
-              value={confirmation}
-              width="100%"
             />
-            <Button
-              isLoading={isSubmitting}
-              label="Lưu mật khẩu mới"
-              type="submit"
-              variant="primary"
-              width="100%"
-            />
+            <Button loading={isSubmitting} type="submit" variant="contained" fullWidth>Lưu mật khẩu mới</Button>
             <Link className="text-sm font-semibold text-blue-700 underline" to={appRoutes.forgotPassword}>
               Yêu cầu liên kết mới
             </Link>

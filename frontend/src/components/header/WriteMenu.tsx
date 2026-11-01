@@ -1,4 +1,4 @@
-import { DropdownMenu, type DropdownMenuOption } from '@astryxdesign/core/DropdownMenu'
+import { ActionMenu, type ActionMenuItem } from '../common/ActionMenu'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { appRoutes } from '../../appRoutes'
@@ -23,20 +23,14 @@ export const WriteMenu = () => {
     }
     navigate(`${appRoutes.write}?type=${type}`)
   }
-  const items: DropdownMenuOption[] = [
+  const items: ActionMenuItem[] = [
     { id: 'article', label: 'Viết bài', onClick: () => write('article') },
     { id: 'question', label: 'Đặt câu hỏi', onClick: () => write('question') },
   ]
 
   return (
     <span data-tour="write" title="Viết nội dung">
-      <DropdownMenu
-        alignment="end"
-        button={{ icon: <PenIcon />, label: 'Viết', variant: 'primary' }}
-        items={items}
-        menuWidth={180}
-        placement="below"
-      />
+      <ActionMenu icon={<PenIcon />} items={items} label="Viết" menuWidth={180} />
       <AuthRequiredDialog isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </span>
   )

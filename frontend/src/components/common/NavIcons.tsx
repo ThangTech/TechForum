@@ -11,6 +11,10 @@ const iconProps = {
   width: 18,
 } as const
 
+export const SearchIcon = () => (
+  <svg {...iconProps}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+)
+
 export const ArticleIcon = () => (
   <svg {...iconProps}><path d="M6 3h9l4 4v14H6z" /><path d="M14 3v5h5M9 13h7M9 17h7" /></svg>
 )
@@ -37,4 +41,24 @@ export const ActivityIcon = () => (
 
 export const MyTopicsIcon = () => (
   <svg {...iconProps}><path d="M4 20h4l11-11-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></svg>
+)
+
+export const DashboardIcon = () => (
+  <svg {...iconProps}><rect height="7" rx="1.5" width="7" x="3" y="3" /><rect height="7" rx="1.5" width="7" x="14" y="3" /><rect height="7" rx="1.5" width="7" x="3" y="14" /><rect height="7" rx="1.5" width="7" x="14" y="14" /></svg>
+)
+
+export const FlagIcon = () => (
+  <svg {...iconProps}><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>
+)
+
+export const FolderIcon = () => (
+  <svg {...iconProps}><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+)
+
+export const TagIcon = () => (
+  <svg {...iconProps}><path d="M3 12V4h8l10 10-8 8z" /><circle cx="7.5" cy="8.5" r="1" /></svg>
+)
+
+export const ClipboardIcon = () => (
+  <svg {...iconProps}><rect height="18" rx="2" width="14" x="5" y="3" /><path d="M9 3v2h6V3M9 11h6M9 15h6" /></svg>
 )

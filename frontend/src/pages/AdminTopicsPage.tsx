@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -16,6 +16,12 @@ import { TopicModerationCard } from '../components/admin/TopicModerationCard'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { TopicPreviewDialog } from '../components/admin/TopicPreviewDialog'
 import { TopicModerationDialog } from '../components/admin/TopicModerationDialog'
+import TextField from '@mui/material/TextField'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
 
 const PAGE_SIZE = 10
 const readPage = (value: string | null) => {
@@ -123,31 +129,20 @@ export const AdminTopicsPage = () => {
           key={`${keyword}-${type}-${visibility}-${categoryId ?? ''}`}
           onSubmit={submitSearch}
         >
-          <label className="admin-field admin-search-field">
-            Tìm nội dung
-            <input defaultValue={keyword} maxLength={100} name="keyword" placeholder="Tìm theo tiêu đề" />
-          </label>
-          <label className="admin-field">
-            Loại nội dung
-            <select defaultValue={type} name="type">
+          <TextField size="small" label="Tìm nội dung" defaultValue={keyword} name="keyword" placeholder="Tìm theo tiêu đề" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
+          <TextField size="small" label="Loại nội dung" defaultValue={type} name="type" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
               <option value="">Tất cả loại</option>
               <option value="article">Bài viết</option>
               <option value="question">Câu hỏi</option>
-            </select>
-          </label>
-          <label className="admin-field">
-            Trạng thái
-            <select defaultValue={visibility} name="visibility">
+            </TextField>
+          <TextField size="small" label="Trạng thái" defaultValue={visibility} name="visibility" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
               <option value="">Tất cả trạng thái</option>
               <option value="visible">Công khai</option>
               <option value="draft">Bản nháp</option>
               <option value="hidden">Bị kiểm duyệt ẩn</option>
               <option value="deleted">Tác giả đã xóa</option>
-            </select>
-          </label>
-          <label className="admin-field">
-            Chuyên mục
-            <select defaultValue={categoryId ?? ''} name="categoryId">
+            </TextField>
+          <TextField size="small" label="Chuyên mục" defaultValue={categoryId ?? ''} name="categoryId" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
               <option value="">Tất cả chuyên mục</option>
               {categoryId && !categories.some((category) => category.id === categoryId) && (
                 <option value={categoryId}>Chuyên mục #{categoryId}</option>
@@ -157,12 +152,9 @@ export const AdminTopicsPage = () => {
                   {category.name}
                 </option>
               ))}
-            </select>
-          </label>
-          <Button label="Lọc nội dung" type="submit" variant="primary" />
-          <button className="admin-text-button min-h-10" onClick={() => setParams({})} type="button">
-            Xóa lọc
-          </button>
+            </TextField>
+          <Button type="submit" variant="contained">Lọc nội dung</Button>
+          <Button onClick={() => setParams({})} variant="text">Xóa lọc</Button>
         </form>
         {actionError && !selected && (
           <p
@@ -194,19 +186,19 @@ export const AdminTopicsPage = () => {
           )}
           {!isLoading && !error && data && data.items.length > 0 && (
             <div className="admin-table-scroll">
-              <table className="admin-table">
+              <Table className="admin-table" size="small">
                 <caption className="sr-only">Danh sách nội dung kiểm duyệt</caption>
-                <thead>
-                  <tr>
-                    <th>Nội dung / Chuyên mục</th>
-                    <th>Loại</th>
-                    <th>Tác giả</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày đăng</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Nội dung / Chuyên mục</TableCell>
+                    <TableCell>Loại</TableCell>
+                    <TableCell>Tác giả</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>Ngày đăng</TableCell>
+                    <TableCell>Thao tác</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {data.items.map((topic) => (
                     <TopicModerationCard
                       key={topic.id}
@@ -218,8 +210,8 @@ export const AdminTopicsPage = () => {
                       topic={topic}
                     />
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
           {!isLoading && !error && data && (

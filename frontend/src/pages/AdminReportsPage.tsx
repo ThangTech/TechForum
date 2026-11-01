@@ -13,6 +13,13 @@ import { AdminPagination } from '../components/admin/AdminPagination'
 import { ReportPreviewDialog } from '../components/admin/ReportPreviewDialog'
 import { ReportReviewCard } from '../components/admin/ReportReviewCard'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
 const PAGE_SIZE = 10
 const statuses: { label: string; value: ReportStatus }[] = [
@@ -102,17 +109,18 @@ export const AdminReportsPage = () => {
 
         <div className="admin-toolbar" role="group" aria-label="Lọc trạng thái báo cáo">
           <span className="text-xs font-semibold text-slate-500 mr-2">Trạng thái:</span>
-          {statuses.map((item) => (
-            <button
-              aria-pressed={status === item.value}
-              className={`admin-text-button ${status === item.value ? '!bg-blue-50 !border-blue-300 !text-blue-800' : ''}`}
-              key={item.value}
-              onClick={() => updateFilters(item.value)}
-              type="button"
-            >
-              {item.label}
-            </button>
-          ))}
+          <ToggleButtonGroup
+            exclusive
+            onChange={(_, value: typeof status | null) => value !== null && updateFilters(value)}
+            size="small"
+            value={status}
+          >
+            {statuses.map((item) => (
+              <ToggleButton key={item.value} value={item.value}>
+                {item.label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
         </div>
 
         {actionError && (
@@ -147,19 +155,19 @@ export const AdminReportsPage = () => {
           {!isLoading && !error && data && data.items.length > 0 && (
             <>
               <div className="admin-table-scroll">
-                <table className="admin-table">
+                <Table className="admin-table" size="small">
                   <caption className="sr-only">Danh sách báo cáo cộng đồng</caption>
-                  <thead>
-                    <tr>
-                      <th>Nội dung</th>
-                      <th>Lý do</th>
-                      <th>Người báo cáo</th>
-                      <th>Trạng thái</th>
-                      <th>Thời điểm gửi</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Nội dung</TableCell>
+                      <TableCell>Lý do</TableCell>
+                      <TableCell>Người báo cáo</TableCell>
+                      <TableCell>Trạng thái</TableCell>
+                      <TableCell>Thời điểm gửi</TableCell>
+                      <TableCell>Thao tác</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {data.items.map((report) => (
                       <ReportReviewCard
                         key={report.id}
@@ -172,8 +180,8 @@ export const AdminReportsPage = () => {
                         report={report}
                       />
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </>
           )}

@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getMyReports, type MyReportPage, type ReportReason, type ReportStatus } from '../api/reports'
@@ -154,24 +154,14 @@ export const MyReportsPage = () => {
                 ))}
               </ul>
             )}
-            {page > Math.max(1, data.totalPages) && <div className="mt-5"><Button label="Về trang có dữ liệu" onClick={() => changePage(Math.max(1, data.totalPages))} variant="secondary" /></div>}
+            {page > Math.max(1, data.totalPages) && <div className="mt-5"><Button onClick={() => changePage(Math.max(1, data.totalPages))} variant="outlined">Về trang có dữ liệu</Button></div>}
             {data.totalPages > 1 && page <= data.totalPages && (
               <nav aria-label="Phân trang báo cáo" className="mt-5 flex items-center justify-between gap-3">
-                <Button
-                  isDisabled={page <= 1}
-                  label="Trang trước"
-                  onClick={() => changePage(page - 1)}
-                  variant="secondary"
-                />
+                <Button disabled={page <= 1} onClick={() => changePage(page - 1)} variant="outlined">Trang trước</Button>
                 <span className="text-sm text-slate-600">
                   Trang {page}/{data.totalPages}
                 </span>
-                <Button
-                  isDisabled={page >= data.totalPages}
-                  label="Trang sau"
-                  onClick={() => changePage(page + 1)}
-                  variant="secondary"
-                />
+                <Button disabled={page >= data.totalPages} onClick={() => changePage(page + 1)} variant="outlined">Trang sau</Button>
               </nav>
             )}
           </>

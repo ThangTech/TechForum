@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 
 interface AsyncStatePanelProps {
   error: string | null
@@ -25,7 +25,7 @@ export const AsyncStatePanel = ({
     return (
       <div className="space-y-4 rounded-xl border border-red-200 bg-white p-10 text-center" role="alert">
         <p className="text-sm text-red-700">{error}</p>
-        <Button label="Thử lại" onClick={onRetry} variant="secondary" />
+        <Button onClick={onRetry} variant="outlined">Thử lại</Button>
       </div>
     )
   }

@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { Link } from 'react-router-dom'
 import type { QuestionHighlight, QuestionHighlights } from '../../api/questionHighlights'
 import { appRoutes } from '../../appRoutes'
@@ -18,7 +18,7 @@ export const QuestionHighlightsPanel = ({ data, error, isLoading, onRetry }: Que
   <section className="surface-card" aria-labelledby="question-highlights-title">
     <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-950" id="question-highlights-title">Câu hỏi cộng đồng</h2></div>
     {isLoading && <p className="px-5 py-8 text-center text-sm text-slate-500" role="status">Đang tải câu hỏi…</p>}
-    {!isLoading && error && <div className="px-5 py-6 text-center" role="alert"><p className="text-sm text-red-700">{error}</p><div className="mt-3"><Button label="Thử lại" onClick={onRetry} variant="secondary" /></div></div>}
+    {!isLoading && error && <div className="px-5 py-6 text-center" role="alert"><p className="text-sm text-red-700">{error}</p><div className="mt-3"><Button onClick={onRetry} variant="outlined">Thử lại</Button></div></div>}
     {!isLoading && !error && data && <><div className="bg-slate-50 px-5 py-2 text-xs font-bold uppercase tracking-wide text-slate-600">Mới nhất</div><QuestionList items={data.latest} /><div className="border-t border-slate-200 bg-slate-50 px-5 py-2 text-xs font-bold uppercase tracking-wide text-slate-600">Nhiều câu trả lời · {data.periodDays} ngày</div><QuestionList items={data.mostAnswered} /></>}
   </section>
 )

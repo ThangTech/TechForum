@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { addBookmark, getBookmarkStatus, removeBookmark, type BookmarkStatus } from '../../api/bookmarks'
 import { ApiError } from '../../api/client'
@@ -43,13 +43,7 @@ export const BookmarkButton = ({ topicId }: { topicId: number }) => {
 
   return (
     <div>
-      <Button
-        isDisabled={isLoading || !status || isSaving}
-        isLoading={isLoading || isSaving}
-        label={status?.hasBookmark ? `Bỏ lưu · ${status.count}` : `Lưu bài · ${status?.count ?? 0}`}
-        onClick={() => void toggle()}
-        variant={status?.hasBookmark ? 'primary' : 'secondary'}
-      />
+      <Button disabled={isLoading || !status || isSaving} loading={isLoading || isSaving} onClick={() => void toggle()} variant={status?.hasBookmark ? 'contained' : 'outlined'}>{status?.hasBookmark ? `Bỏ lưu · ${status.count}` : `Lưu bài · ${status?.count ?? 0}`}</Button>
       {error && <p className="mt-2 text-sm text-red-700" role="alert">{error} <button className="font-bold underline" onClick={() => setRetry((value) => value + 1)} type="button">Thử lại</button></p>}
       <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
     </div>

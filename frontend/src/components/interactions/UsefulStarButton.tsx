@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { addTopicStar, getTopicStar, removeTopicStar, type TopicStarStatus } from '../../api/stars'
 import { ApiError } from '../../api/client'
@@ -69,19 +69,13 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          isDisabled={isLoading || status === null || isSaving}
-          isLoading={isLoading || isSaving}
-          label={status?.hasStar ? `Bỏ Sao hữu ích · ${status.count}` : `Sao hữu ích · ${status?.count ?? 0}`}
-          onClick={() => void handleToggle()}
-          variant={status?.hasStar ? 'primary' : 'secondary'}
-        />
+        <Button disabled={isLoading || status === null || isSaving} loading={isLoading || isSaving} onClick={() => void handleToggle()} variant={status?.hasStar ? 'contained' : 'outlined'}>{status?.hasStar ? `Bỏ Sao hữu ích · ${status.count}` : `Sao hữu ích · ${status?.count ?? 0}`}</Button>
         <span className="text-xs text-slate-500">Mỗi thành viên có tối đa một sao cho chủ đề này.</span>
       </div>
       {error && (
         <div className="mt-3 flex flex-wrap items-center gap-3" role="alert">
           <span className="text-sm text-red-700">{error}</span>
-          <Button label="Thử lại" onClick={() => setRequestVersion((version) => version + 1)} variant="ghost" />
+          <Button onClick={() => setRequestVersion((version) => version + 1)} variant="text">Thử lại</Button>
         </div>
       )}
       <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />

@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getSavedTopics, type SavedTopicPage } from '../api/bookmarks'
@@ -70,9 +70,9 @@ export const SavedTopicsPage = () => {
               </div>
               {data.totalPages > 1 && (
                 <nav className="mt-6 flex items-center justify-between" aria-label="Phân trang nội dung đã lưu">
-                  <Button isDisabled={page <= 1} label="Trang trước" onClick={() => changePage(page - 1)} variant="secondary" />
+                  <Button disabled={page <= 1} onClick={() => changePage(page - 1)} variant="outlined">Trang trước</Button>
                   <span className="text-sm text-slate-600">Trang {page}/{data.totalPages}</span>
-                  <Button isDisabled={page >= data.totalPages} label="Trang sau" onClick={() => changePage(page + 1)} variant="secondary" />
+                  <Button disabled={page >= data.totalPages} onClick={() => changePage(page + 1)} variant="outlined">Trang sau</Button>
                 </nav>
               )}
             </>

@@ -182,10 +182,6 @@ export const HomePage = ({
     setSearchParams(next)
   }
 
-  const handleSearch = (value: string) => {
-    updateSearchParams({ keyword: value.trim() || undefined, page: undefined })
-  }
-
   const handleFilter = (key: 'categoryId' | 'tagId', value: number) => {
     updateSearchParams({ [key]: value, page: undefined })
   }
@@ -269,11 +265,9 @@ export const HomePage = ({
             data={topics}
             error={topicError}
             isLoading={areTopicsLoading}
-            keyword={keyword}
             onFilter={handleFilter}
             onPageChange={(nextPage) => updateSearchParams({ page: nextPage <= 1 ? undefined : nextPage })}
             onRetry={() => setTopicRequestVersion((version) => version + 1)}
-            onSearch={handleSearch}
             selectedType={selectedType?.toLowerCase() as TopicType | undefined}
             isDiscussion={sort === 'discussion'}
             feed={feed}

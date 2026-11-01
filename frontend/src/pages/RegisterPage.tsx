@@ -1,6 +1,6 @@
-import { Button } from '@astryxdesign/core/Button'
-import { TextInput } from '@astryxdesign/core/TextInput'
-import { useState, type FormEvent } from 'react'
+import Button from '@mui/material/Button'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
@@ -8,6 +8,14 @@ import { createAuthUrl, getSafeReturnUrl } from '../auth/returnUrl'
 import background from '../assets/background.png'
 import { AuthPageLayout } from './LoginPage'
 import { appRoutes } from '../appRoutes'
+import { FormTextField } from '../components/common/FormTextField'
+
+interface RegisterFormValues {
+  displayName: string
+  email: string
+  password: string
+  confirmPassword: string
+}
 
 const fieldError = (error: ApiError | null, name: string) => {
   if (!error) return undefined
@@ -22,30 +30,19 @@ export const RegisterPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'))
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [apiError, setApiError] = useState<ApiError | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { control, handleSubmit, formState: { isSubmitting } } = useForm<RegisterFormValues>({
+    defaultValues: { displayName: '', email: '', password: '', confirmPassword: '' },
+  })
 
   if (user) {
     return <Navigate to={returnUrl} replace />
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (isSubmitting) return
-
+  const submitRegister = async ({ displayName, email, password }: RegisterFormValues) => {
     setApiError(null)
     setClientError(null)
-    if (password !== confirmPassword) {
-      setClientError('Mật khẩu xác nhận chưa khớp.')
-      return
-    }
-
-    setIsSubmitting(true)
     try {
       await register({ displayName, email, password })
       navigate(returnUrl, { replace: true })
@@ -55,8 +52,6 @@ export const RegisterPage = () => {
       } else {
         setClientError('Không thể đăng ký lúc này. Vui lòng thử lại.')
       }
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -68,7 +63,7 @@ export const RegisterPage = () => {
       title="Tham gia cộng đồng công nghệ"
       description="Tạo hồ sơ TechForum để chia sẻ kinh nghiệm và tham gia thảo luận."
     >
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
+      <form className="auth-form" onSubmit={handleSubmit(submitRegister)} noValidate>
         <div>
           <p className="eyebrow">Đăng ký</p>
           <h1>Tạo tài khoản TechForum</h1>
@@ -77,56 +72,48 @@ export const RegisterPage = () => {
 
         {generalError && <div className="form-alert" role="alert">{generalError}</div>}
 
-        <TextInput
+        <FormTextField
           autoComplete="name"
-          isRequired
+          control={control}
           label="Tên hiển thị"
-          htmlName="displayName"
-          onChange={setDisplayName}
-          status={fieldError(apiError, 'displayName') ? { type: 'error', message: fieldError(apiError, 'displayName') } : undefined}
-          value={displayName}
-          width="100%"
+          name="displayName"
+          required
+          rules={{ required: 'Vui lòng nhập tên hiển thị.' }}
+          serverError={fieldError(apiError, 'displayName')}
         />
-        <TextInput
+        <FormTextField
           autoComplete="email"
-          isRequired
+          control={control}
           label="Email"
-          htmlName="email"
-          onChange={setEmail}
-          status={fieldError(apiError, 'email') ? { type: 'error', message: fieldError(apiError, 'email') } : undefined}
+          name="email"
+          required
+          rules={{ required: 'Vui lòng nhập email.' }}
+          serverError={fieldError(apiError, 'email')}
           type="email"
-          value={email}
-          width="100%"
         />
-        <TextInput
+        <FormTextField
           autoComplete="new-password"
-          isRequired
+          control={control}
           label="Mật khẩu"
-          htmlName="password"
-          onChange={setPassword}
-          status={fieldError(apiError, 'password') ? { type: 'error', message: fieldError(apiError, 'password') } : undefined}
+          name="password"
+          required
+          rules={{ required: 'Vui lòng nhập mật khẩu.' }}
+          serverError={fieldError(apiError, 'password')}
           type="password"
-          value={password}
-          width="100%"
         />
-        <TextInput
+        <FormTextField
           autoComplete="new-password"
-          isRequired
+          control={control}
           label="Xác nhận mật khẩu"
-          htmlName="confirmPassword"
-          onChange={setConfirmPassword}
-          status={clientError ? { type: 'error', message: clientError } : undefined}
+          name="confirmPassword"
+          required
+          rules={{
+            required: 'Vui lòng nhập lại mật khẩu.',
+            validate: (value, values) => value === values.password || 'Mật khẩu xác nhận chưa khớp.',
+          }}
           type="password"
-          value={confirmPassword}
-          width="100%"
         />
-        <Button
-          isLoading={isSubmitting}
-          label="Tạo tài khoản"
-          type="submit"
-          variant="primary"
-          width="100%"
-        />
+        <Button loading={isSubmitting} type="submit" variant="contained" fullWidth>Tạo tài khoản</Button>
 
         <p className="auth-form__switch">
           Đã có tài khoản?{' '}

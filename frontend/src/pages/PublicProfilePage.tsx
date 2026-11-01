@@ -5,7 +5,7 @@ import { followMember, getPublicProfile, unfollowMember, type PublicProfile } fr
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicSummaryItem } from '../components/topics/TopicSummaryItem'
 import { UserAvatar } from '../components/account/UserAvatar'
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useAuth } from '../auth/authState'
 import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
 import { appRoutes } from '../appRoutes'
@@ -102,7 +102,7 @@ export const PublicProfilePage = () => {
                     <Link className="rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800" to={appRoutes.myTopics}>Nội dung của tôi</Link>
                   </div>
                 ) : (
-                  <div className="w-full sm:ml-auto sm:w-auto"><Button isLoading={isFollowBusy} label={profile.isFollowedByViewer ? 'Đang theo dõi' : 'Theo dõi'} onClick={() => void toggleFollow()} variant={profile.isFollowedByViewer ? 'secondary' : 'primary'} /></div>
+                  <div className="w-full sm:ml-auto sm:w-auto"><Button loading={isFollowBusy} onClick={() => void toggleFollow()} variant={profile.isFollowedByViewer ? 'outlined' : 'contained'}>{profile.isFollowedByViewer ? 'Đang theo dõi' : 'Theo dõi'}</Button></div>
                 )}
               </div>
               {profile.bio && <p className="mt-5 max-w-2xl whitespace-pre-line text-sm leading-6 text-slate-700">{profile.bio}</p>}

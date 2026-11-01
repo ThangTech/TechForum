@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { createAnswer, type Answer } from '../../api/answers'
@@ -59,14 +59,8 @@ export const AnswerForm = ({ parentAnswer, topicId, onCreated, onCancel }: Answe
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-slate-500">{content.length.toLocaleString('vi-VN')}/20.000 ký tự</span>
         <div className="flex gap-2">
-          {onCancel && <Button isDisabled={isSubmitting} label="Hủy" onClick={onCancel} type="button" variant="ghost" />}
-          <Button
-            isDisabled={isSubmitting}
-            isLoading={isSubmitting}
-            label={parentAnswer ? 'Gửi phản hồi' : 'Gửi câu trả lời'}
-            type="submit"
-            variant="primary"
-          />
+          {onCancel && <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="text">Hủy</Button>}
+          <Button disabled={isSubmitting} loading={isSubmitting} type="submit" variant="contained">{parentAnswer ? 'Gửi phản hồi' : 'Gửi câu trả lời'}</Button>
         </div>
       </div>
       {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}

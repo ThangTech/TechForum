@@ -1,4 +1,4 @@
-import { DropdownMenu, type DropdownMenuOption } from '@astryxdesign/core/DropdownMenu'
+import { ActionMenu, type ActionMenuItem } from '../common/ActionMenu'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../api/client'
@@ -28,7 +28,7 @@ export const AccountMenu = () => {
     }
   }
 
-  const items: DropdownMenuOption[] = [
+  const items: ActionMenuItem[] = [
     { id: 'profile', label: 'Trang cá nhân', onClick: () => navigate(appRoutes.member(user.id)) },
     { id: 'account', label: 'Tài khoản', onClick: () => navigate(appRoutes.account) },
     { id: 'content', label: 'Nội dung của tôi', onClick: () => navigate(appRoutes.myTopics) },
@@ -59,19 +59,12 @@ export const AccountMenu = () => {
 
   return (
     <div className="grid justify-items-end gap-1">
-      <DropdownMenu
-        alignment="end"
-        button={{
-          label: `Tài khoản của ${user.displayName}`,
-          icon: <UserAvatar avatarUrl={user.avatarUrl} displayName={user.displayName} />,
-          isIconOnly: true,
-          variant: 'ghost',
-          size: 'lg',
-        }}
-        hasChevron={false}
+      <ActionMenu
+        icon={<UserAvatar avatarUrl={user.avatarUrl} displayName={user.displayName} />}
+        isIconOnly
         items={items}
+        label={`Tài khoản của ${user.displayName}`}
         menuWidth={220}
-        placement="below"
       />
       {error && <span className="max-w-56 text-right text-xs text-red-700" role="alert">{error}</span>}
     </div>

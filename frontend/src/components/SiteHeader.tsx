@@ -1,9 +1,10 @@
-import { lazy, Suspense, useState, type FormEvent } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/authState'
 import { appRoutes } from '../appRoutes'
 import { NotificationLink } from './notifications/NotificationLink'
 import { createAuthUrl } from '../auth/returnUrl'
+import { HeaderSearch } from './header/HeaderSearch'
 
 const AccountMenu = lazy(() => import('./account/AccountMenu').then((module) => ({
   default: module.AccountMenu,
@@ -14,18 +15,9 @@ const WriteMenu = lazy(() => import('./header/WriteMenu').then((module) => ({
 
 export const SiteHeader = () => {
   const { user, isLoading } = useAuth()
-  const navigate = useNavigate()
   const location = useLocation()
   const returnUrl = `${location.pathname}${location.search}${location.hash}`
   const isArticlePage = location.pathname === '/' || location.pathname === appRoutes.articles
-  const [keyword, setKeyword] = useState('')
-
-  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const params = new URLSearchParams()
-    if (keyword.trim()) params.set('keyword', keyword.trim())
-    navigate({ pathname: appRoutes.search, search: params.toString() })
-  }
 
   return (
     <header className="site-header">
@@ -42,16 +34,7 @@ export const SiteHeader = () => {
           <NavLink to={appRoutes.communities}>Cộng đồng</NavLink>
         </nav>
 
-        <form className="search-unavailable" data-tour="search" onSubmit={handleSearch} role="search">
-          <span className="search-unavailable__icon" aria-hidden="true" />
-          <label className="sr-only" htmlFor="header-search">Tìm bài viết và câu hỏi</label>
-          <input
-            id="header-search"
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Tìm bài viết và câu hỏi"
-            value={keyword}
-          />
-        </form>
+        <HeaderSearch />
 
         <div className="account-actions" data-tour="account">
           <Suspense fallback={<span className="account-loading">…</span>}><WriteMenu /></Suspense>

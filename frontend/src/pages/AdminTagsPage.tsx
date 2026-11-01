@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   createAdminTag,
@@ -14,6 +14,12 @@ import { ApiError } from '../api/client'
 import { TagAdminCard } from '../components/admin/TagAdminCard'
 import { TagFormDialog } from '../components/admin/TagFormDialog'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import TextField from '@mui/material/TextField'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
 
 export const AdminTagsPage = () => {
   const [params, setParams] = useSearchParams()
@@ -135,31 +141,18 @@ export const AdminTagsPage = () => {
             <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Thẻ công nghệ</h1>
             <p className="mt-2 text-slate-600">Thẻ ngừng sử dụng vẫn được giữ trên các chủ đề cũ.</p>
           </div>
-          <Button label="Tạo thẻ" onClick={() => openForm(null)} variant="primary" />
+          <Button onClick={() => openForm(null)} variant="contained">Tạo thẻ</Button>
         </div>
 
         <form className="admin-toolbar" key={`${keyword}-${status}`} onSubmit={filter} role="search">
-          <label className="admin-field admin-search-field">
-            Tìm kiếm
-            <input
-              defaultValue={keyword}
-              maxLength={100}
-              name="keyword"
-              placeholder="Tìm theo tên hoặc đường dẫn"
-            />
-          </label>
-          <label className="admin-field">
-            Trạng thái
-            <select defaultValue={status} name="status">
+          <TextField size="small" label="Tìm kiếm" defaultValue={keyword} name="keyword" placeholder="Tìm theo tên hoặc đường dẫn" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
+          <TextField size="small" label="Trạng thái" defaultValue={status} name="status" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
               <option value="">Tất cả trạng thái</option>
               <option value="active">Đang sử dụng</option>
               <option value="inactive">Đã ngừng sử dụng</option>
-            </select>
-          </label>
-          <Button label="Lọc danh sách" type="submit" variant="secondary" />
-          <button className="admin-text-button min-h-10" onClick={() => setParams({})} type="button">
-            Xóa lọc
-          </button>
+            </TextField>
+          <Button type="submit" variant="outlined">Lọc danh sách</Button>
+          <Button onClick={() => setParams({})} variant="text">Xóa lọc</Button>
         </form>
 
         {actionError && !isFormOpen && (
@@ -193,17 +186,17 @@ export const AdminTagsPage = () => {
           )}
           {!isLoading && !error && filtered.length > 0 && (
             <div className="admin-table-scroll">
-              <table className="admin-table">
+              <Table className="admin-table" size="small">
                 <caption className="sr-only">Danh sách thẻ công nghệ</caption>
-                <thead>
-                  <tr>
-                    <th>Thẻ công nghệ</th>
-                    <th>Chủ đề</th>
-                    <th>Trạng thái</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Thẻ công nghệ</TableCell>
+                    <TableCell>Chủ đề</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>Thao tác</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {displayed.map((tag) => (
                     <TagAdminCard
                       busyId={busyId}
@@ -213,8 +206,8 @@ export const AdminTagsPage = () => {
                       tag={tag}
                     />
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
           {!isLoading && !error && (

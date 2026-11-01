@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../appRoutes'
 
@@ -15,7 +15,7 @@ export const SettingsPage = () => {
             Xem lại hướng dẫn ngắn về tìm kiếm, duyệt nội dung, viết bài và quản lý tài khoản.
           </p>
           <div className="mt-6">
-            <Button label="Chạy lại hướng dẫn" onClick={() => navigate(`${appRoutes.home}?tour=1`)} variant="primary" />
+            <Button onClick={() => navigate(`${appRoutes.home}?tour=1`)} variant="contained">Chạy lại hướng dẫn</Button>
           </div>
         </section>
       </div>

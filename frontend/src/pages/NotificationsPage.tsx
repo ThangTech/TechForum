@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -91,11 +91,11 @@ export const NotificationsPage = () => {
           <section aria-labelledby="notification-detail-heading" className="mb-6 border border-blue-200 bg-blue-50 p-5" role="region">
             <h2 className="font-bold text-slate-950" id="notification-detail-heading">{openedNotification.title}</h2>
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{openedNotification.message}</p>
-            <div className="mt-4"><Button label="Đóng chi tiết" onClick={() => setOpenedId(null)} variant="secondary" /></div>
+            <div className="mt-4"><Button onClick={() => setOpenedId(null)} variant="outlined">Đóng chi tiết</Button></div>
           </section>
         )}
         {isLoading && <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">Đang tải thông báo…</div>}
-        {!isLoading && error && <div className="rounded-xl border border-red-200 bg-white p-8 text-center" role="alert"><p className="text-sm text-red-700">{error}</p><div className="mt-4"><Button label="Thử lại" onClick={retry} variant="secondary" /></div></div>}
+        {!isLoading && error && <div className="rounded-xl border border-red-200 bg-white p-8 text-center" role="alert"><p className="text-sm text-red-700">{error}</p><div className="mt-4"><Button onClick={retry} variant="outlined">Thử lại</Button></div></div>}
         {!isLoading && !error && data && <NotificationList busyId={busyId} data={data} onOpen={(id, link, isRead) => void openNotification(id, link, isRead)} onPageChange={changePage} />}
       </div>
     </main>

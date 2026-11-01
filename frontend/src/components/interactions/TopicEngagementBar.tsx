@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { recordTopicShare, recordTopicView, type TopicEngagement } from '../../api/engagements'
 import { ApiError } from '../../api/client'
@@ -55,7 +55,7 @@ export const TopicEngagementBar = ({ initial, title, topicId }: TopicEngagementB
       <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
         <span aria-label={`${engagement.viewCount} lượt xem`}>Lượt xem · {engagement.viewCount}</span>
         <span aria-label={`${engagement.shareCount} lượt chia sẻ`}>Chia sẻ · {engagement.shareCount}</span>
-        <Button isDisabled={isSharing} isLoading={isSharing} label="Chia sẻ" onClick={() => void share()} variant="ghost" />
+        <Button disabled={isSharing} loading={isSharing} onClick={() => void share()} variant="text">Chia sẻ</Button>
       </div>
       {success && <p className="mt-2 text-sm text-green-700" role="status">{success}</p>}
       {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}

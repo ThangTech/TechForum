@@ -1,21 +1,22 @@
 import { createRoot } from 'react-dom/client'
-import { Theme } from '@astryxdesign/core/theme'
-import { InternationalizationProvider } from '@astryxdesign/core/i18n'
-import viVN from '@astryxdesign/core/locales/vi-VN.generated.js'
-import { neutralTheme } from '@astryxdesign/theme-neutral/built'
+import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles'
+import GlobalStyles from '@mui/material/GlobalStyles'
 import 'intro.js/introjs.css'
 import 'froala-editor/css/froala_style.min.css'
 import './index.css'
 import './intro-overrides.css'
 import App from './App.tsx'
 import { AppErrorBoundary } from './components/common/AppErrorBoundary.tsx'
+import { theme } from './theme.ts'
 
 createRoot(document.getElementById('root')!).render(
-  <InternationalizationProvider locale="vi-VN" messages={{ 'vi-VN': viVN }}>
-    <Theme theme={neutralTheme} mode="light">
+  // enableCssLayer đặt CSS của MUI vào layer "mui": thấp hơn App.css và Tailwind utilities nên các class Tailwind vẫn ghi đè được.
+  <StyledEngineProvider enableCssLayer>
+    <GlobalStyles styles="@layer reset, theme, base, mui, components, utilities;" />
+    <ThemeProvider theme={theme}>
       <AppErrorBoundary>
         <App />
       </AppErrorBoundary>
-    </Theme>
-  </InternationalizationProvider>,
+    </ThemeProvider>
+  </StyledEngineProvider>,
 )

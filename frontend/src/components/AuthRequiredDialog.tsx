@@ -1,5 +1,5 @@
-import { Button } from '@astryxdesign/core/Button'
-import { Dialog } from '@astryxdesign/core/Dialog'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { createAuthUrl } from '../auth/returnUrl'
 import { appRoutes } from '../appRoutes'
@@ -19,14 +19,7 @@ export const AuthRequiredDialog = ({ isOpen, onClose }: AuthRequiredDialogProps)
   }
 
   return (
-    <Dialog
-      aria-label="Yêu cầu đăng nhập"
-      isOpen={isOpen}
-      onOpenChange={(open) => !open && onClose()}
-      purpose="info"
-      width={440}
-      padding={0}
-    >
+    <Dialog open={isOpen} onClose={() => onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': "Yêu cầu đăng nhập", sx: { width: 440, maxWidth: 'calc(100% - 32px)' } } }}>
       <div className="auth-dialog">
         <p className="eyebrow">Tài khoản TechForum</p>
         <h2>Bạn cần đăng nhập để trải nghiệm tính năng này.</h2>
@@ -35,9 +28,9 @@ export const AuthRequiredDialog = ({ isOpen, onClose }: AuthRequiredDialogProps)
           đang xem.
         </p>
         <div className="auth-dialog__actions">
-          <Button label="Đăng nhập" variant="primary" onClick={() => goTo(appRoutes.login)} />
-          <Button label="Đăng ký" variant="secondary" onClick={() => goTo(appRoutes.register)} />
-          <Button label="Để sau" variant="ghost" onClick={onClose} />
+          <Button variant="contained" onClick={() => goTo(appRoutes.login)}>Đăng nhập</Button>
+          <Button variant="outlined" onClick={() => goTo(appRoutes.register)}>Đăng ký</Button>
+          <Button variant="text" onClick={onClose}>Để sau</Button>
         </div>
       </div>
     </Dialog>

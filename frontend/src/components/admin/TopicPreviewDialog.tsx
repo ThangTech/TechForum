@@ -1,11 +1,12 @@
-import { Button } from '@astryxdesign/core/Button'
-import { Dialog } from '@astryxdesign/core/Dialog'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAdminTopicDetail, type AdminTopic } from '../../api/adminTopics'
 import { ApiError } from '../../api/client'
 import { appRoutes } from '../../appRoutes'
 import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
+import { StatusBadge } from './StatusBadge'
 
 export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onClose: () => void }) => {
   const [data, setData] = useState<{ topic: AdminTopic; bodyHtml: string } | null>(null)
@@ -32,13 +33,7 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
     return () => controller.abort()
   }, [topicId, retry])
   return (
-    <Dialog
-      aria-label="Xem trước nội dung"
-      isOpen
-      onOpenChange={(open) => !open && onClose()}
-      padding={0}
-      width={850}
-    >
+    <Dialog open onClose={() => onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': "Xem trước nội dung", sx: { width: 850, maxWidth: 'calc(100% - 32px)' } } }}>
       <div className="p-5 sm:p-7">
         <h2 className="text-xl font-extrabold">Xem trước nội dung #{topicId}</h2>
         <div className="mt-5">
@@ -57,10 +52,10 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
               {new Date(data.topic.createdAtUtc).toLocaleString('vi-VN')}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="admin-badge">{data.topic.type === 'article' ? 'Bài viết' : 'Câu hỏi'}</span>
-              {data.topic.isDeleted && <span className="admin-badge admin-badge-red">Tác giả đã xóa</span>}
+              <StatusBadge>{data.topic.type === 'article' ? 'Bài viết' : 'Câu hỏi'}</StatusBadge>
+              {data.topic.isDeleted && <StatusBadge tone="red">Tác giả đã xóa</StatusBadge>}
               {data.topic.isHiddenByModerator && (
-                <span className="admin-badge admin-badge-amber">Đang bị ẩn</span>
+                <StatusBadge tone="amber">Đang bị ẩn</StatusBadge>
               )}
             </div>
             <div
@@ -74,11 +69,11 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
             data.topic.status === 'published' &&
             !data.topic.isDeleted &&
             !data.topic.isHiddenByModerator && (
-              <Link className="admin-text-button" to={appRoutes.topic(topicId)}>
+              <Button component={Link} to={appRoutes.topic(topicId)} variant="text">
                 Mở trên diễn đàn ↗
-              </Link>
+              </Button>
             )}
-          <Button label="Đóng xem trước" onClick={onClose} variant="secondary" />
+          <Button onClick={onClose} variant="outlined">Đóng xem trước</Button>
         </div>
       </div>
     </Dialog>

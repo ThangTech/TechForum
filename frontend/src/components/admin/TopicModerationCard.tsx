@@ -1,4 +1,20 @@
 import type { AdminTopic, ModerationAction } from '../../api/adminTopics'
+import { StatusBadge, type BadgeTone } from './StatusBadge'
+import TableCell from '@mui/material/TableCell'
+import TableRow from '@mui/material/TableRow'
+
+const getTopicStatusLabel = (topic: AdminTopic) => {
+  if (topic.isDeleted) return 'Tác giả đã xóa'
+  if (topic.status === 'draft') return 'Bản nháp'
+  if (topic.isHiddenByModerator) return 'Đang bị ẩn'
+  return 'Công khai'
+}
+
+const getTopicStatusTone = (topic: AdminTopic): BadgeTone => {
+  if (topic.isDeleted) return 'red'
+  if (topic.status === 'draft' || topic.isHiddenByModerator) return 'amber'
+  return 'green'
+}
 
 export const TopicModerationCard = ({
   topic,
@@ -9,39 +25,31 @@ export const TopicModerationCard = ({
   onAction: (action: ModerationAction) => void
   onPreview: () => void
 }) => (
-  <tr>
-    <td>
+  <TableRow>
+    <TableCell>
       <button className="admin-table-primary text-left hover:text-blue-700" onClick={onPreview} type="button">
         {topic.title}
       </button>
       <span className="admin-table-secondary">
         #{topic.id} · {topic.category.name}
       </span>
-    </td>
-    <td>
-      <span className={`admin-badge ${topic.type === 'article' ? 'admin-badge-blue' : ''}`}>
+    </TableCell>
+    <TableCell>
+      <StatusBadge tone={topic.type === 'article' ? 'blue' : 'neutral'}>
         {topic.type === 'article' ? 'Bài viết' : 'Câu hỏi'}
-      </span>
-    </td>
-    <td className="whitespace-nowrap">{topic.author.displayName}</td>
-    <td>
+      </StatusBadge>
+    </TableCell>
+    <TableCell className="whitespace-nowrap">{topic.author.displayName}</TableCell>
+    <TableCell>
       <div className="flex flex-wrap gap-1 min-w-28">
-        <span
-          className={`admin-badge ${topic.isDeleted ? 'admin-badge-red' : topic.status === 'draft' || topic.isHiddenByModerator ? 'admin-badge-amber' : 'admin-badge-green'}`}
-        >
-          {topic.isDeleted
-            ? 'Tác giả đã xóa'
-            : topic.status === 'draft'
-              ? 'Bản nháp'
-              : topic.isHiddenByModerator
-                ? 'Đang bị ẩn'
-                : 'Công khai'}
-        </span>
-        {topic.isDiscussionLocked && <span className="admin-badge">Khóa thảo luận</span>}
-        {topic.isPinned && <span className="admin-badge admin-badge-blue">Đã ghim</span>}
+        <StatusBadge tone={getTopicStatusTone(topic)}>
+          {getTopicStatusLabel(topic)}
+        </StatusBadge>
+        {topic.isDiscussionLocked && <StatusBadge>Khóa thảo luận</StatusBadge>}
+        {topic.isPinned && <StatusBadge tone="blue">Đã ghim</StatusBadge>}
       </div>
-    </td>
-    <td className="whitespace-nowrap">
+    </TableCell>
+    <TableCell className="whitespace-nowrap">
       {topic.publishedAtUtc ? (
         new Date(topic.publishedAtUtc).toLocaleDateString('vi-VN')
       ) : (
@@ -52,8 +60,8 @@ export const TopicModerationCard = ({
           </span>
         </>
       )}
-    </td>
-    <td>
+    </TableCell>
+    <TableCell>
       <div className="admin-table-actions min-w-56">
         <button onClick={onPreview} type="button">
           Xem trước
@@ -77,6 +85,6 @@ export const TopicModerationCard = ({
           </>
         )}
       </div>
-    </td>
-  </tr>
+    </TableCell>
+  </TableRow>
 )

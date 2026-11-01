@@ -1,6 +1,32 @@
+import Autocomplete from '@mui/material/Autocomplete'
+import TextField from '@mui/material/TextField'
 import type { Category } from '../../api/categories'
 import type { Tag } from '../../api/tags'
-import type { TopicType } from '../../api/topics'
+
+const maxTagCount = 5
+
+interface TopicTitleFieldProps {
+  error?: string
+  title: string
+  onTitleChange: (value: string) => void
+}
+
+// Ô tiêu đề lớn, không viền như trang soạn bài của Juejin; người viết tập trung vào nội dung trước.
+export const TopicTitleField = ({ error, title, onTitleChange }: TopicTitleFieldProps) => (
+  <TextField
+    error={Boolean(error)}
+    fullWidth
+    helperText={error ?? `${title.length}/200`}
+    id="topic-title"
+    onChange={(event) => onTitleChange(event.target.value)}
+    placeholder="Nhập tiêu đề…"
+    slotProps={{
+      htmlInput: { 'aria-label': 'Tiêu đề', maxLength: 200, style: { fontSize: '1.6rem', fontWeight: 700, fontFamily: 'var(--font-heading)' } },
+    }}
+    value={title}
+    variant="standard"
+  />
+)
 
 interface TopicMetadataFieldsProps {
   categories: Category[]
@@ -9,15 +35,12 @@ interface TopicMetadataFieldsProps {
   summary: string
   tagIds: number[]
   tags: Tag[]
-  title: string
-  type: TopicType
   onCategoryChange: (value: string) => void
   onSummaryChange: (value: string) => void
-  onTagToggle: (id: number) => void
-  onTitleChange: (value: string) => void
-  onTypeChange: (value: TopicType) => void
+  onTagIdsChange: (ids: number[]) => void
 }
 
+// Cột cài đặt bên phải: chuyên mục, thẻ và tóm tắt.
 export const TopicMetadataFields = ({
   categories,
   categoryId,
@@ -25,54 +48,56 @@ export const TopicMetadataFields = ({
   summary,
   tagIds,
   tags,
-  title,
-  type,
   onCategoryChange,
   onSummaryChange,
-  onTagToggle,
-  onTitleChange,
-  onTypeChange,
+  onTagIdsChange,
 }: TopicMetadataFieldsProps) => {
   const firstError = (field: string) => errors[field]?.[0]
+  const selectedTags = tags.filter((tag) => tagIds.includes(tag.id))
 
   return (
-    <>
-      <div className="grid gap-2">
-        <label className="text-sm font-bold text-slate-800" htmlFor="topic-type">Loại nội dung</label>
-        <select className="rounded-lg border border-slate-300 px-3 py-2" id="topic-type" onChange={(event) => onTypeChange(event.target.value as TopicType)} value={type}>
-          <option value="article">Bài viết</option>
-          <option value="question">Câu hỏi</option>
-        </select>
-      </div>
-      <div className="grid gap-2">
-        <label className="text-sm font-bold text-slate-800" htmlFor="topic-title">Tiêu đề</label>
-        <input className="rounded-lg border border-slate-300 px-3 py-2" id="topic-title" maxLength={200} onChange={(event) => onTitleChange(event.target.value)} value={title} />
-        {firstError('title') && <p className="text-sm text-red-700">{firstError('title')}</p>}
-      </div>
-      <div className="grid gap-2">
-        <label className="text-sm font-bold text-slate-800" htmlFor="topic-summary">Tóm tắt</label>
-        <textarea className="min-h-24 rounded-lg border border-slate-300 px-3 py-2" id="topic-summary" maxLength={500} onChange={(event) => onSummaryChange(event.target.value)} value={summary} />
-        {firstError('summary') && <p className="text-sm text-red-700">{firstError('summary')}</p>}
-      </div>
-      <div className="grid gap-2">
-        <label className="text-sm font-bold text-slate-800" htmlFor="topic-category">Chuyên mục</label>
-        <select className="rounded-lg border border-slate-300 px-3 py-2" id="topic-category" onChange={(event) => onCategoryChange(event.target.value)} value={categoryId}>
-          {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-        </select>
-        {firstError('categoryId') && <p className="text-sm text-red-700">{firstError('categoryId')}</p>}
-      </div>
-      <fieldset>
-        <legend className="text-sm font-bold text-slate-800">Thẻ ({tagIds.length}/5)</legend>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <label className={tagIds.includes(tag.id) ? 'rounded-full bg-blue-100 px-3 py-1.5 text-sm font-semibold text-blue-800' : 'rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700'} key={tag.id}>
-              <input checked={tagIds.includes(tag.id)} className="sr-only" disabled={!tagIds.includes(tag.id) && tagIds.length >= 5} onChange={() => onTagToggle(tag.id)} type="checkbox" />
-              #{tag.name}
-            </label>
-          ))}
-        </div>
-        {firstError('tagIds') && <p className="mt-2 text-sm text-red-700">{firstError('tagIds')}</p>}
-      </fieldset>
-    </>
+    <div className="grid gap-5">
+      <TextField
+        error={Boolean(firstError('categoryId'))}
+        helperText={firstError('categoryId')}
+        id="topic-category"
+        label="Chuyên mục"
+        onChange={(event) => onCategoryChange(event.target.value)}
+        select
+        slotProps={{ select: { native: true } }}
+        value={categoryId}
+      >
+        {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+      </TextField>
+      <Autocomplete
+        getOptionDisabled={(option) => tagIds.length >= maxTagCount && !tagIds.includes(option.id)}
+        getOptionLabel={(option) => `#${option.name}`}
+        multiple
+        noOptionsText="Không có thẻ phù hợp"
+        onChange={(_, value) => onTagIdsChange(value.map((tag) => tag.id))}
+        options={tags}
+        renderInput={(parameters) => (
+          <TextField
+            {...parameters}
+            error={Boolean(firstError('tagIds'))}
+            helperText={firstError('tagIds') ?? `Chọn tối đa ${maxTagCount} thẻ (${tagIds.length}/${maxTagCount})`}
+            label="Thẻ"
+          />
+        )}
+        value={selectedTags}
+      />
+      <TextField
+        error={Boolean(firstError('summary'))}
+        helperText={firstError('summary') ?? `${summary.length}/500`}
+        id="topic-summary"
+        label="Tóm tắt"
+        minRows={4}
+        multiline
+        onChange={(event) => onSummaryChange(event.target.value)}
+        placeholder="Một hai câu để người đọc biết nội dung trước khi mở bài."
+        slotProps={{ htmlInput: { maxLength: 500 } }}
+        value={summary}
+      />
+    </div>
   )
 }

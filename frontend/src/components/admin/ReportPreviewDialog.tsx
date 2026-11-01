@@ -1,9 +1,10 @@
-import { Button } from '@astryxdesign/core/Button'
-import { Dialog } from '@astryxdesign/core/Dialog'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
 import { Link } from 'react-router-dom'
 import type { AdminReport } from '../../api/reports'
 import { appRoutes } from '../../appRoutes'
 import { reportReasonLabels, reportStatusLabels } from './reportLabels'
+import { StatusBadge } from './StatusBadge'
 
 export const ReportPreviewDialog = ({
   report,
@@ -14,17 +15,11 @@ export const ReportPreviewDialog = ({
   onClose: () => void
   onResolve: (report: AdminReport, decision: 'accepted' | 'rejected') => void
 }) => (
-  <Dialog
-    aria-label={`Chi tiết báo cáo #${report.id}`}
-    isOpen
-    onOpenChange={(open) => !open && onClose()}
-    padding={0}
-    width={850}
-  >
+  <Dialog open onClose={() => onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': `Chi tiết báo cáo #${report.id}`, sx: { width: 850, maxWidth: 'calc(100% - 32px)' } } }}>
     <div className="p-5 sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-extrabold">Chi tiết báo cáo #{report.id}</h2>
-        <span className="admin-badge admin-badge-blue">{reportStatusLabels[report.status]}</span>
+        <StatusBadge tone="blue">{reportStatusLabels[report.status]}</StatusBadge>
       </div>
       <h3 className="mt-5 text-lg font-bold">{report.targetTitle}</h3>
       <p className="mt-2 text-xs text-slate-500">
@@ -84,19 +79,11 @@ export const ReportPreviewDialog = ({
         )}
       </div>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
-        <Button label="Đóng" onClick={onClose} variant="secondary" />
+        <Button onClick={onClose} variant="outlined">Đóng</Button>
         {report.status === 'pending' && (
           <>
-            <Button
-              label="Bác bỏ báo cáo"
-              onClick={() => onResolve(report, 'rejected')}
-              variant="secondary"
-            />
-            <Button
-              label="Chấp nhận báo cáo"
-              onClick={() => onResolve(report, 'accepted')}
-              variant="primary"
-            />
+            <Button onClick={() => onResolve(report, 'rejected')} variant="outlined">Bác bỏ báo cáo</Button>
+            <Button onClick={() => onResolve(report, 'accepted')} variant="contained">Chấp nhận báo cáo</Button>
           </>
         )}
       </div>

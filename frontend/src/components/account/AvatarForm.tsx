@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useState, type ChangeEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { UserAvatar } from './UserAvatar'
@@ -43,7 +43,7 @@ export const AvatarForm = ({ avatarUrl, displayName, onDelete, onUpload }: Avata
           {isBusy ? 'Đang xử lý…' : 'Chọn ảnh'}
           <input accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={isBusy} onChange={(event) => void upload(event)} type="file" />
         </label>
-        {avatarUrl && <Button isDisabled={isBusy} label="Xóa ảnh" onClick={() => void remove()} variant="secondary" />}
+        {avatarUrl && <Button disabled={isBusy} onClick={() => void remove()} variant="outlined">Xóa ảnh</Button>}
       </div>
       <p className="mt-3 text-xs text-slate-500">PNG, JPEG hoặc WebP; tối đa 2 MB. Nếu không có ảnh, TechForum dùng chữ cái đầu tên.</p>
       {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}

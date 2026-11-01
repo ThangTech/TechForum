@@ -1,4 +1,6 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -9,7 +11,8 @@ import { createTopic, getMyTopic, updateTopic, type OwnTopic, type TopicType } f
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicEditorField } from '../components/topics/TopicEditorField'
 import { TopicCreatedPanel } from '../components/topics/TopicCreatedPanel'
-import { TopicMetadataFields } from '../components/topics/TopicMetadataFields'
+import { TopicMetadataFields, TopicTitleField } from '../components/topics/TopicMetadataFields'
+import { WritingTips } from '../components/topics/WritingTips'
 import { appRoutes } from '../appRoutes'
 
 export const WriteTopicPage = () => {
@@ -92,12 +95,6 @@ const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
     return () => controller.abort()
   }, [editingId, id, requestVersion, requestedType])
 
-  const toggleTag = (tagId: number) => {
-    setTagIds((current) => current.includes(tagId)
-      ? current.filter((id) => id !== tagId)
-      : current.length < 5 ? [...current, tagId] : current)
-  }
-
   const submit = async (publish: boolean) => {
     if (isSubmitting || isMediaUploading) return
     setIsSubmitting(true)
@@ -166,68 +163,83 @@ const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
 
   return (
     <main className="main-area" id="main-content">
-      <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{editingId ? 'Chỉnh sửa' : 'Soạn nội dung'}</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
-          {editingId ? 'Chỉnh sửa nội dung' : 'Viết cho cộng đồng'}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
-        </p>
-        <div className="mt-6">
-          <AsyncStatePanel
-            error={optionsError}
-            isLoading={isOptionsLoading}
-            loadingText="Đang tải biểu mẫu…"
-            onRetry={() => setRequestVersion((version) => version + 1)}
-          />
-        </div>
+      <div className="write-page">
+        <h1 className="sr-only">{editingId ? 'Chỉnh sửa nội dung' : 'Viết cho cộng đồng'}</h1>
+        <AsyncStatePanel
+          error={optionsError}
+          isLoading={isOptionsLoading}
+          loadingText="Đang tải biểu mẫu…"
+          onRetry={() => setRequestVersion((version) => version + 1)}
+        />
 
         {!isOptionsLoading && !optionsError && (
-          <form className="mt-6 space-y-6 rounded-xl border border-slate-200 bg-white p-6 sm:p-8" onSubmit={handleSubmit}>
-            {submitError && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{submitError}</p>}
-            <TopicMetadataFields
-              categories={categories}
-              categoryId={categoryId}
-              errors={fieldErrors}
-              onCategoryChange={setCategoryId}
-              onSummaryChange={setSummary}
-              onTagToggle={toggleTag}
-              onTitleChange={setTitle}
-              onTypeChange={setType}
-              summary={summary}
-              tagIds={tagIds}
-              tags={tags}
-              title={title}
-              type={type}
-            />
-            <TopicEditorField
-              error={fieldErrors.bodyHtml?.[0] || fieldErrors.mediaIds?.[0]}
-              initialMedia={media}
-              key={editingId ?? 'create'}
-              onChange={setBodyHtml}
-              onMediaChange={setMedia}
-              onUploadStateChange={setIsMediaUploading}
-              value={bodyHtml}
-            />
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <Button
-                isDisabled={isMediaUploading}
-                label={isPreviewOpen ? 'Đóng xem trước' : 'Xem trước nội dung'}
-                onClick={() => setIsPreviewOpen((current) => !current)}
-                type="button"
-                variant="secondary"
-              />
-              {isPreviewOpen && (
-                <div
-                  className="fr-view reading-content mt-4 rounded-lg border border-slate-200 bg-white p-5"
-                  dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(bodyHtml) }}
-                />
-              )}
+          <form onSubmit={handleSubmit}>
+            <div className="write-toolbar">
+              <ToggleButtonGroup
+                aria-label="Loại nội dung"
+                disabled={Boolean(editingId)}
+                exclusive
+                onChange={(_, value: TopicType | null) => value && setType(value)}
+                size="small"
+                value={type}
+              >
+                <ToggleButton value="article">Bài viết</ToggleButton>
+                <ToggleButton value="question">Câu hỏi</ToggleButton>
+              </ToggleButtonGroup>
+              <div className="write-toolbar__actions">
+                <Button disabled={isMediaUploading} onClick={() => setIsPreviewOpen((current) => !current)} type="button" variant="text">
+                  {isPreviewOpen ? 'Đóng xem trước' : 'Xem trước'}
+                </Button>
+                <Button disabled={isSubmitting || isMediaUploading} type="submit" variant="outlined">
+                  {isMediaUploading ? 'Đang tải tệp…' : 'Lưu bản nháp'}
+                </Button>
+                <Button disabled={isSubmitting || isMediaUploading} loading={isSubmitting} onClick={() => void submit(true)} type="button" variant="contained">
+                  Xuất bản
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-5">
-              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải tệp…' : isSubmitting ? 'Đang lưu…' : 'Lưu bản nháp'} type="submit" variant="secondary" />
-              <Button isDisabled={isSubmitting || isMediaUploading} label={isMediaUploading ? 'Đang tải tệp…' : isSubmitting ? 'Đang xuất bản…' : 'Xuất bản'} onClick={() => void submit(true)} type="button" variant="primary" />
+
+            {submitError && <p className="write-error" role="alert">{submitError}</p>}
+
+            <div className="write-layout">
+              <div className="write-main">
+                <TopicTitleField error={fieldErrors.title?.[0]} onTitleChange={setTitle} title={title} />
+                <TopicEditorField
+                  error={fieldErrors.bodyHtml?.[0] || fieldErrors.mediaIds?.[0]}
+                  initialMedia={media}
+                  key={editingId ?? 'create'}
+                  onChange={setBodyHtml}
+                  onMediaChange={setMedia}
+                  onUploadStateChange={setIsMediaUploading}
+                  value={bodyHtml}
+                />
+                <p className="write-note">
+                  Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
+                </p>
+                {isPreviewOpen && (
+                  <div
+                    className="fr-view reading-content write-preview"
+                    dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(bodyHtml) }}
+                  />
+                )}
+              </div>
+              <div className="write-side">
+                <section aria-label="Cài đặt nội dung" className="surface-card write-settings">
+                  <h2>Cài đặt</h2>
+                  <TopicMetadataFields
+                    categories={categories}
+                    categoryId={categoryId}
+                    errors={fieldErrors}
+                    onCategoryChange={setCategoryId}
+                    onSummaryChange={setSummary}
+                    onTagIdsChange={setTagIds}
+                    summary={summary}
+                    tagIds={tagIds}
+                    tags={tags}
+                  />
+                </section>
+                <WritingTips type={type} />
+              </div>
             </div>
           </form>
         )}

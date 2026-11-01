@@ -1,4 +1,7 @@
 import type { AdminTag } from '../../api/adminTags'
+import { StatusBadge } from './StatusBadge'
+import TableCell from '@mui/material/TableCell'
+import TableRow from '@mui/material/TableRow'
 
 export const TagAdminCard = ({
   busyId,
@@ -11,19 +14,19 @@ export const TagAdminCard = ({
   onEdit: (tag: AdminTag) => void
   onToggleActive: (tag: AdminTag) => void
 }) => (
-  <tr>
-    <td>
+  <TableRow>
+    <TableCell>
       <strong className="admin-table-primary">#{tag.name}</strong>
       <span className="admin-table-secondary">/{tag.slug}</span>
       {tag.description && <p className="mt-2 max-w-96 text-xs">{tag.description}</p>}
-    </td>
-    <td>{tag.topicCount}</td>
-    <td>
-      <span className={`admin-badge ${tag.isActive ? 'admin-badge-green' : ''}`}>
+    </TableCell>
+    <TableCell>{tag.topicCount}</TableCell>
+    <TableCell>
+      <StatusBadge tone={tag.isActive ? 'green' : 'neutral'}>
         {tag.isActive ? 'Đang sử dụng' : 'Đã ngừng'}
-      </span>
-    </td>
-    <td>
+      </StatusBadge>
+    </TableCell>
+    <TableCell>
       <div className="admin-table-actions">
         <button disabled={busyId !== null} onClick={() => onEdit(tag)} type="button">
           Sửa
@@ -32,6 +35,6 @@ export const TagAdminCard = ({
           {busyId === tag.id ? 'Đang xử lý…' : tag.isActive ? 'Ngừng sử dụng' : 'Sử dụng lại'}
         </button>
       </div>
-    </td>
-  </tr>
+    </TableCell>
+  </TableRow>
 )

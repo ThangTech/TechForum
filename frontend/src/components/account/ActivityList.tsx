@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { Link } from 'react-router-dom'
 import type { ActivityPage } from '../../api/activity'
 
@@ -25,7 +25,7 @@ export const ActivityList = ({ data, onPageChange }: { data: ActivityPage; onPag
           </li>
         ))}
       </ol>
-      {data.totalPages > 1 && <div className="mt-5 flex items-center justify-between gap-4"><Button isDisabled={data.page <= 1} label="Trang trước" onClick={() => onPageChange(data.page - 1)} variant="secondary" /><span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span><Button isDisabled={data.page >= data.totalPages} label="Trang sau" onClick={() => onPageChange(data.page + 1)} variant="secondary" /></div>}
+      {data.totalPages > 1 && <div className="mt-5 flex items-center justify-between gap-4"><Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button><span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span><Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button></div>}
     </>
   )
 }

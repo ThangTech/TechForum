@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { Link } from 'react-router-dom'
 import type { OwnTopicPage } from '../../api/topics'
 import { appRoutes } from '../../appRoutes'
@@ -66,7 +66,7 @@ export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps
               <Link className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700" to={appRoutes.editTopic(topic.id)}>
                 Chỉnh sửa
               </Link>
-              <Button label="Xóa" onClick={() => onDelete(topic.id)} variant="ghost" />
+              <Button onClick={() => onDelete(topic.id)} variant="text">Xóa</Button>
             </div>
           </li>
         ))}
@@ -74,8 +74,8 @@ export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps
       <div className="flex items-center justify-between border-t border-slate-200 p-4 text-sm text-slate-600">
         <span>Trang {data.page} / {Math.max(data.totalPages, 1)} · {data.totalItems} nội dung</span>
         <div className="flex gap-2">
-          <Button isDisabled={data.page <= 1} label="Trang trước" onClick={() => onPageChange(data.page - 1)} variant="secondary" />
-          <Button isDisabled={data.page >= data.totalPages} label="Trang sau" onClick={() => onPageChange(data.page + 1)} variant="secondary" />
+          <Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button>
+          <Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button>
         </div>
       </div>
     </section>

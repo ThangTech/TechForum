@@ -1,37 +1,40 @@
-import { Button } from '@astryxdesign/core/Button'
-import { CheckboxInput } from '@astryxdesign/core/CheckboxInput'
-import { TextInput } from '@astryxdesign/core/TextInput'
-import { useState, type FormEvent, type ReactNode } from 'react'
+import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import { useState, type ReactNode } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
 import { createAuthUrl, getSafeReturnUrl } from '../auth/returnUrl'
 import background from '../assets/background.png'
 import { appRoutes } from '../appRoutes'
+import { FormTextField } from '../components/common/FormTextField'
+
+interface LoginFormValues {
+  email: string
+  password: string
+  rememberMe: boolean
+}
 
 export const LoginPage = () => {
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'))
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { control, handleSubmit, formState: { isSubmitting } } = useForm<LoginFormValues>({
+    defaultValues: { email: '', password: '', rememberMe: false },
+  })
 
   if (user) {
     return <Navigate to={returnUrl} replace />
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (isSubmitting) return
-
+  const submitLogin = async (values: LoginFormValues) => {
     setError(null)
-    setIsSubmitting(true)
     try {
-      await login({ email, password, rememberMe })
+      await login(values)
       navigate(returnUrl, { replace: true })
     } catch (requestError) {
       setError(
@@ -39,8 +42,6 @@ export const LoginPage = () => {
           ? requestError.message
           : 'Không thể đăng nhập lúc này. Vui lòng thử lại.',
       )
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -50,7 +51,7 @@ export const LoginPage = () => {
       title="Chào mừng bạn trở lại"
       description="Đăng nhập để tiếp tục trao đổi kiến thức cùng cộng đồng TechForum."
     >
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
+      <form className="auth-form" onSubmit={handleSubmit(submitLogin)} noValidate>
         <div>
           <p className="eyebrow">Đăng nhập</p>
           <h1>Tiếp tục với tài khoản của bạn</h1>
@@ -59,40 +60,37 @@ export const LoginPage = () => {
 
         {error && <div className="form-alert" role="alert">{error}</div>}
 
-        <TextInput
+        <FormTextField
           autoComplete="email"
-          isRequired
+          control={control}
           label="Email"
-          htmlName="email"
-          onChange={setEmail}
+          name="email"
           placeholder="ban@example.com"
+          required
+          rules={{ required: 'Vui lòng nhập email.' }}
           type="email"
-          value={email}
-          width="100%"
         />
-        <TextInput
+        <FormTextField
           autoComplete="current-password"
-          isRequired
+          control={control}
           label="Mật khẩu"
-          htmlName="password"
-          onChange={setPassword}
+          name="password"
+          required
+          rules={{ required: 'Vui lòng nhập mật khẩu.' }}
           type="password"
-          value={password}
-          width="100%"
         />
-        <CheckboxInput
-          label="Duy trì đăng nhập trên thiết bị này"
-          onChange={setRememberMe}
-          value={rememberMe}
+        <Controller
+          control={control}
+          name="rememberMe"
+          render={({ field }) => (
+            <FormControlLabel
+              control={<Checkbox checked={field.value} onChange={field.onChange} />}
+              label="Duy trì đăng nhập trên thiết bị này"
+            />
+          )}
         />
         <Link className="text-sm font-semibold text-blue-700 underline" to={appRoutes.forgotPassword}>Quên mật khẩu?</Link>
-        <Button
-          isLoading={isSubmitting}
-          label="Đăng nhập"
-          type="submit"
-          variant="primary"
-          width="100%"
-        />
+        <Button loading={isSubmitting} type="submit" variant="contained" fullWidth>Đăng nhập</Button>
 
         <p className="auth-form__switch">
           Chưa có tài khoản?{' '}

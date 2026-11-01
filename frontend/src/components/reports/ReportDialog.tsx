@@ -1,5 +1,5 @@
-import { Button } from '@astryxdesign/core/Button'
-import { Dialog } from '@astryxdesign/core/Dialog'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
 import { useState } from 'react'
 import { createReport, type ReportReason, type ReportTargetType } from '../../api/reports'
 import { ApiError } from '../../api/client'
@@ -64,14 +64,7 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
   }
 
   return (
-    <Dialog
-      aria-label="Báo cáo nội dung"
-      isOpen={isOpen}
-      onOpenChange={(open) => !open && close()}
-      padding={0}
-      purpose="required"
-      width={480}
-    >
+    <Dialog open={isOpen} onClose={() => close()} maxWidth={false} slotProps={{ paper: { 'aria-label': "Báo cáo nội dung", sx: { width: 480, maxWidth: 'calc(100% - 32px)' } } }}>
       <div className="p-6">
         {isSubmitted ? (
           <>
@@ -80,7 +73,7 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
               Báo cáo đang chờ quản trị viên xem xét. Cảm ơn bạn đã giúp giữ cộng đồng an toàn.
             </p>
             <div className="mt-6 flex justify-end">
-              <Button label="Đóng" onClick={close} variant="primary" />
+              <Button onClick={close} variant="contained">Đóng</Button>
             </div>
           </>
         ) : (
@@ -128,14 +121,8 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
             )}
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <Button isDisabled={isSubmitting} label="Hủy" onClick={close} variant="secondary" />
-              <Button
-                isDisabled={isSubmitting}
-                isLoading={isSubmitting}
-                label={isSubmitting ? 'Đang gửi…' : 'Gửi báo cáo'}
-                onClick={() => void submit()}
-                variant="primary"
-              />
+              <Button disabled={isSubmitting} onClick={close} variant="outlined">Hủy</Button>
+              <Button disabled={isSubmitting} loading={isSubmitting} onClick={() => void submit()} variant="contained">{isSubmitting ? 'Đang gửi…' : 'Gửi báo cáo'}</Button>
             </div>
           </>
         )}

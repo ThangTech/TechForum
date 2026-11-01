@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import type { Tag } from '../api/tags'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../appRoutes'
@@ -33,7 +33,7 @@ export const TagPanel = ({ tags, isLoading, error, onRetry, selectedId, onSelect
       {!isLoading && error && (
         <div className="space-y-3 p-5 text-sm leading-6 text-slate-500" role="alert">
           <p className="m-0">{error}</p>
-          <Button label="Thử lại" variant="secondary" onClick={onRetry} />
+          <Button variant="outlined" onClick={onRetry}>Thử lại</Button>
         </div>
       )}
       {!isLoading && !error && tags.length === 0 && (

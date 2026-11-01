@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
@@ -37,11 +37,11 @@ export const SkillCommunityPage = () => {
 
   return <main className="main-area" id="main-content"><div className="page-content py-10">
     {visibleLoading && <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">Đang tải kỹ năng…</div>}
-    {!visibleLoading && visibleError && <div className="rounded-xl border border-red-200 bg-white p-8 text-center" role="alert"><p className="text-sm text-red-700">{visibleError}</p>{isValidId && <div className="mt-4"><Button label="Thử lại" onClick={retry} variant="secondary" /></div>}</div>}
+    {!visibleLoading && visibleError && <div className="rounded-xl border border-red-200 bg-white p-8 text-center" role="alert"><p className="text-sm text-red-700">{visibleError}</p>{isValidId && <div className="mt-4"><Button onClick={retry} variant="outlined">Thử lại</Button></div>}</div>}
     {!visibleLoading && !visibleError && data && <div className="space-y-6">
       <SkillSummary community={data} />
       <SkillMemberList members={data.members} />
-      {data.totalPages > 1 && <div className="flex items-center justify-between"><Button isDisabled={data.page <= 1} label="Trang trước" onClick={() => changePage(data.page - 1)} variant="secondary" /><span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span><Button isDisabled={data.page >= data.totalPages} label="Trang sau" onClick={() => changePage(data.page + 1)} variant="secondary" /></div>}
+      {data.totalPages > 1 && <div className="flex items-center justify-between"><Button disabled={data.page <= 1} onClick={() => changePage(data.page - 1)} variant="outlined">Trang trước</Button><span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span><Button disabled={data.page >= data.totalPages} onClick={() => changePage(data.page + 1)} variant="outlined">Trang sau</Button></div>}
     </div>}
   </div></main>
 }

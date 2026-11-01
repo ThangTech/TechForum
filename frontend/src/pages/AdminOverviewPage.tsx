@@ -1,12 +1,33 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import TextField from '@mui/material/TextField'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { BarChart } from '@mui/x-charts/BarChart'
+import { LineChart } from '@mui/x-charts/LineChart'
+import { PieChart } from '@mui/x-charts/PieChart'
+import { SparkLineChart } from '@mui/x-charts/SparkLineChart'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getAdminDashboard, type AdminDashboard } from '../api/adminOverview'
 import { ApiError } from '../api/client'
 import { appRoutes } from '../appRoutes'
-import { DashboardActivityChart } from '../components/admin/DashboardActivityChart'
 import { AuditLogList } from '../components/admin/AuditLogList'
+import { StatusBadge } from '../components/admin/StatusBadge'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+
+// Màu biểu đồ khớp với palette trong DESIGN.md: bài viết xanh dương, câu hỏi hổ phách, trả lời xanh lá.
+const chartColors = {
+  article: '#1463d6',
+  question: '#b45309',
+  answer: '#15803d',
+  member: '#7c3aed',
+  warning: '#b45309',
+}
 
 const today = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -23,6 +44,16 @@ const daysBefore = (date: string, count: number) => {
 const readDate = (value: string | null, fallback: string) =>
   value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime()) ? value : fallback
 const numberFormat = new Intl.NumberFormat('vi-VN')
+const shortDate = (date: string) => date.slice(5).split('-').reverse().join('/')
+
+interface StatCard {
+  label: string
+  value: number
+  period: number | null
+  suffix: string
+  color: string
+  trend: number[] | null
+}
 
 export const AdminOverviewPage = () => {
   const [params, setParams] = useSearchParams()
@@ -75,38 +106,64 @@ export const AdminOverviewPage = () => {
     setValidationError(null)
     setParams({ startDate: from, endDate: to })
   }
-  const stats = dashboard
+
+  const activeRange = (() => {
+    if (endDate !== today()) return null
+    if (startDate === daysBefore(endDate, 6)) return 7
+    if (startDate === daysBefore(endDate, 29)) return 30
+    return null
+  })()
+
+  const stats: StatCard[] = dashboard
     ? [
         {
           label: 'Tổng thành viên',
           value: dashboard.totals.accountCount,
           period: dashboard.period.newMemberCount,
           suffix: 'thành viên mới',
+          color: chartColors.member,
+          trend: dashboard.activitySeries.map((item) => item.newMemberCount),
         },
         {
           label: 'Bài viết công khai',
           value: dashboard.totals.publishedArticleCount,
           period: dashboard.period.articleCount,
           suffix: 'bài viết trong kỳ',
+          color: chartColors.article,
+          trend: dashboard.activitySeries.map((item) => item.articleCount),
         },
         {
           label: 'Câu hỏi công khai',
           value: dashboard.totals.publishedQuestionCount,
           period: dashboard.period.questionCount,
           suffix: 'câu hỏi trong kỳ',
+          color: chartColors.question,
+          trend: dashboard.activitySeries.map((item) => item.questionCount),
         },
         {
           label: 'Câu trả lời công khai',
           value: dashboard.totals.visibleAnswerCount,
           period: dashboard.period.answerCount,
           suffix: 'câu trả lời trong kỳ',
+          color: chartColors.answer,
+          trend: dashboard.activitySeries.map((item) => item.answerCount),
         },
         {
           label: 'Báo cáo chờ xử lý',
           value: dashboard.totals.pendingReportCount,
           period: null,
           suffix: 'Cần quản trị viên xem xét',
+          color: chartColors.warning,
+          trend: null,
         },
+      ]
+    : []
+
+  const questionSlices = dashboard
+    ? [
+        { id: 0, label: 'Chưa có câu trả lời', value: dashboard.questions.unansweredCount, color: '#cb8a36' },
+        { id: 1, label: 'Có trả lời, chưa giải quyết', value: dashboard.questions.unsolvedCount, color: '#4b79bc' },
+        { id: 2, label: 'Đã có đáp án được chấp nhận', value: dashboard.questions.solvedCount, color: '#4b9271' },
       ]
     : []
 
@@ -119,31 +176,35 @@ export const AdminOverviewPage = () => {
           <p className="admin-page-description">Theo dõi đóng góp của cộng đồng và công việc cần xử lý.</p>
         </div>
         <form className="admin-date-toolbar" key={`${startDate}-${endDate}`} onSubmit={applyRange}>
-          <div aria-label="Khoảng thời gian nhanh" className="admin-range-buttons">
-            <button
-              aria-pressed={endDate === today() && startDate === daysBefore(endDate, 6)}
-              onClick={() => setRange(7)}
-              type="button"
-            >
-              7 ngày
-            </button>
-            <button
-              aria-pressed={endDate === today() && startDate === daysBefore(endDate, 29)}
-              onClick={() => setRange(30)}
-              type="button"
-            >
-              30 ngày
-            </button>
-          </div>
-          <label className="admin-field">
-            Từ ngày
-            <input defaultValue={startDate} name="startDate" required type="date" />
-          </label>
-          <label className="admin-field">
-            Đến ngày
-            <input defaultValue={endDate} name="endDate" required type="date" />
-          </label>
-          <Button label="Áp dụng" type="submit" variant="secondary" />
+          <ToggleButtonGroup
+            aria-label="Khoảng thời gian nhanh"
+            exclusive
+            onChange={(_, days: number | null) => days && setRange(days)}
+            size="small"
+            value={activeRange}
+          >
+            <ToggleButton value={7}>7 ngày</ToggleButton>
+            <ToggleButton value={30}>30 ngày</ToggleButton>
+          </ToggleButtonGroup>
+          <TextField
+            defaultValue={startDate}
+            label="Từ ngày"
+            name="startDate"
+            required
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ width: 160 }}
+            type="date"
+          />
+          <TextField
+            defaultValue={endDate}
+            label="Đến ngày"
+            name="endDate"
+            required
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ width: 160 }}
+            type="date"
+          />
+          <Button type="submit" variant="outlined">Áp dụng</Button>
         </form>
       </div>
       {validationError && (
@@ -170,6 +231,17 @@ export const AdminOverviewPage = () => {
                   {item.period !== null && <strong>+{numberFormat.format(item.period)} </strong>}
                   {item.suffix}
                 </p>
+                {item.trend && (
+                  <div aria-hidden="true" className="admin-stat-trend">
+                    <SparkLineChart
+                      area
+                      color={item.color}
+                      curve="natural"
+                      data={item.trend}
+                      height={44}
+                    />
+                  </div>
+                )}
               </article>
             ))}
           </section>
@@ -185,9 +257,27 @@ export const AdminOverviewPage = () => {
                   <h2 id="activity-title">Hoạt động đóng góp</h2>
                   <p>Bài viết, câu hỏi và câu trả lời theo ngày</p>
                 </div>
-                <span className="admin-badge admin-badge-blue">Trong kỳ</span>
+                <StatusBadge tone="blue">Trong kỳ</StatusBadge>
               </div>
-              <DashboardActivityChart items={dashboard.activitySeries} />
+              <div className="admin-chart-body">
+                <LineChart
+                  height={290}
+                  margin={{ left: 8, right: 16, top: 16, bottom: 8 }}
+                  series={[
+                    { data: dashboard.activitySeries.map((item) => item.articleCount), label: 'Bài viết', color: chartColors.article, showMark: false, curve: 'monotoneX' },
+                    { data: dashboard.activitySeries.map((item) => item.questionCount), label: 'Câu hỏi', color: chartColors.question, showMark: false, curve: 'monotoneX' },
+                    { data: dashboard.activitySeries.map((item) => item.answerCount), label: 'Câu trả lời', color: chartColors.answer, showMark: false, curve: 'monotoneX' },
+                  ]}
+                  xAxis={[{
+                    scaleType: 'point',
+                    data: dashboard.activitySeries.map((item) => item.date),
+                    valueFormatter: (value: string) => shortDate(value),
+                    tickLabelInterval: (_value: string, index: number) =>
+                      index % Math.max(1, Math.ceil(dashboard.activitySeries.length / 8)) === 0,
+                  }]}
+                  yAxis={[{ min: 0 }]}
+                />
+              </div>
             </section>
             <section aria-labelledby="questions-title" className="admin-panel">
               <div className="admin-panel-heading">
@@ -198,36 +288,26 @@ export const AdminOverviewPage = () => {
                 <Link to={appRoutes.adminTopics + '?type=question'}>Quản lý →</Link>
               </div>
               <div className="admin-question-grid">
-                {[
-                  {
-                    label: 'Chưa có câu trả lời',
-                    value: dashboard.questions.unansweredCount,
-                    color: '#cb8a36',
-                  },
-                  {
-                    label: 'Có trả lời, chưa giải quyết',
-                    value: dashboard.questions.unsolvedCount,
-                    color: '#4b79bc',
-                  },
-                  {
-                    label: 'Đã có đáp án được chấp nhận',
-                    value: dashboard.questions.solvedCount,
-                    color: '#4b9271',
-                  },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <div className="admin-question-row">
-                      <span>{item.label}</span>
-                      <strong>{numberFormat.format(item.value)}</strong>
-                    </div>
-                    <div aria-hidden="true" className="admin-progress">
-                      <span
-                        style={{
-                          width: `${dashboard.questions.totalCount ? (item.value / dashboard.questions.totalCount) * 100 : 0}%`,
-                          background: item.color,
-                        }}
-                      />
-                    </div>
+                {dashboard.questions.totalCount > 0 && (
+                  <PieChart
+                    height={190}
+                    hideLegend
+                    series={[{
+                      data: questionSlices,
+                      innerRadius: 52,
+                      outerRadius: 86,
+                      paddingAngle: 2,
+                      cornerRadius: 4,
+                    }]}
+                  />
+                )}
+                {questionSlices.map((item) => (
+                  <div className="admin-question-row" key={item.id}>
+                    <span className="flex items-center gap-2">
+                      <span aria-hidden="true" className="inline-block size-2.5 rounded-sm" style={{ background: item.color }} />
+                      {item.label}
+                    </span>
+                    <strong>{numberFormat.format(item.value)}</strong>
                   </div>
                 ))}
                 <p className="text-[10px] leading-5 text-slate-500">
@@ -239,8 +319,7 @@ export const AdminOverviewPage = () => {
               <div className="admin-panel-heading">
                 <div>
                   <h2 id="reports-title">
-                    Báo cáo cần xử lý{' '}
-                    <span className="admin-badge admin-badge-amber">{dashboard.pendingReports.count}</span>
+                    Báo cáo cần xử lý <StatusBadge tone="amber">{dashboard.pendingReports.count}</StatusBadge>
                   </h2>
                   <p>Ưu tiên báo cáo được gửi sớm nhất</p>
                 </div>
@@ -250,19 +329,19 @@ export const AdminOverviewPage = () => {
                 <p className="admin-empty !border-0">Không có báo cáo đang chờ xử lý.</p>
               ) : (
                 <div className="admin-table-scroll">
-                  <table className="admin-table">
+                  <Table className="admin-table" size="small">
                     <caption className="sr-only">Báo cáo chờ xử lý lâu nhất</caption>
-                    <thead>
-                      <tr>
-                        <th>Nội dung</th>
-                        <th>Người báo cáo</th>
-                        <th>Đã gửi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Nội dung</TableCell>
+                        <TableCell>Người báo cáo</TableCell>
+                        <TableCell>Đã gửi</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {dashboard.pendingReports.oldest.map((report) => (
-                        <tr key={report.id}>
-                          <td>
+                        <TableRow key={report.id}>
+                          <TableCell>
                             <Link className="admin-table-primary" to={appRoutes.adminReports}>
                               {report.targetTitle}
                             </Link>
@@ -270,15 +349,15 @@ export const AdminOverviewPage = () => {
                               Báo cáo #{report.id} ·{' '}
                               {report.targetType === 'topic' ? 'Chủ đề' : 'Câu trả lời'}
                             </span>
-                          </td>
-                          <td>{report.reporter.displayName}</td>
-                          <td className="whitespace-nowrap">
+                          </TableCell>
+                          <TableCell>{report.reporter.displayName}</TableCell>
+                          <TableCell className="whitespace-nowrap">
                             {new Date(report.createdAtUtc).toLocaleDateString('vi-VN')}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </section>
@@ -292,25 +371,18 @@ export const AdminOverviewPage = () => {
               {dashboard.categories.length === 0 ? (
                 <p className="admin-empty !border-0">Chưa có đóng góp trong khoảng thời gian này.</p>
               ) : (
-                <div className="admin-category-list">
-                  {dashboard.categories.map((category) => (
-                    <div key={category.categoryId}>
-                      <div className="admin-category-head">
-                        <span>{category.categoryName}</span>
-                        <strong>{numberFormat.format(category.topicCount)}</strong>
-                      </div>
-                      <div aria-hidden="true" className="admin-progress">
-                        <span
-                          style={{
-                            width: `${(category.topicCount / Math.max(1, ...dashboard.categories.map((item) => item.topicCount))) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <p className="mt-1 text-[10px] text-slate-400">
-                        {category.articleCount} bài viết · {category.questionCount} câu hỏi
-                      </p>
-                    </div>
-                  ))}
+                <div className="admin-chart-body">
+                  <BarChart
+                    dataset={dashboard.categories}
+                    height={Math.max(180, 56 + dashboard.categories.length * 44)}
+                    layout="horizontal"
+                    margin={{ left: 8, right: 16, top: 16, bottom: 8 }}
+                    series={[
+                      { dataKey: 'articleCount', label: 'Bài viết', color: chartColors.article, stack: 'topics' },
+                      { dataKey: 'questionCount', label: 'Câu hỏi', color: chartColors.question, stack: 'topics' },
+                    ]}
+                    yAxis={[{ scaleType: 'band', dataKey: 'categoryName', width: 120 }]}
+                  />
                 </div>
               )}
             </section>

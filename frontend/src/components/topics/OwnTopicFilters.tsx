@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useState, type FormEvent } from 'react'
 import type { TopicType } from '../../api/topics'
 
@@ -37,7 +37,7 @@ export const OwnTopicFilters = ({
         <option value="article">Bài viết</option>
         <option value="question">Câu hỏi</option>
       </select>
-      <Button label="Lọc nội dung" type="submit" variant="primary" />
+      <Button type="submit" variant="contained">Lọc nội dung</Button>
     </form>
   )
 }

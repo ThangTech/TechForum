@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { getAdminAuditLogs, type AdminAuditPage as AuditPageData } from '../api/adminOverview'
@@ -8,6 +8,7 @@ import { AdminPagination } from '../components/admin/AdminPagination'
 import { AuditLogList } from '../components/admin/AuditLogList'
 import { auditActionLabels } from '../components/admin/auditActionLabels'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import TextField from '@mui/material/TextField'
 
 export const AdminAuditPage = () => {
   const [params, setParams] = useSearchParams()
@@ -107,18 +108,8 @@ export const AdminAuditPage = () => {
         key={`${keyword}-${action}-${administratorId}-${from}-${to}`}
         onSubmit={filter}
       >
-        <label className="admin-field admin-search-field">
-          Tìm kiếm
-          <input
-            defaultValue={keyword}
-            maxLength={100}
-            name="keyword"
-            placeholder="Tên quản trị viên, đối tượng hoặc lý do"
-          />
-        </label>
-        <label className="admin-field">
-          Quản trị viên
-          <select defaultValue={administratorId} name="administratorId">
+        <TextField size="small" label="Tìm kiếm" defaultValue={keyword} name="keyword" placeholder="Tên quản trị viên, đối tượng hoặc lý do" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
+        <TextField size="small" label="Quản trị viên" defaultValue={administratorId} name="administratorId" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
             <option value="">Tất cả quản trị viên</option>
             {administratorId && !administrators.some((item) => item.id === administratorId) && (
               <option value={administratorId}>Quản trị viên được chọn</option>
@@ -128,38 +119,27 @@ export const AdminAuditPage = () => {
                 {item.displayName}
               </option>
             ))}
-          </select>
-        </label>
-        <label className="admin-field">
-          Thao tác
-          <select defaultValue={action} name="action">
+          </TextField>
+        <TextField size="small" label="Thao tác" defaultValue={action} name="action" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
             <option value="">Tất cả thao tác</option>
             {Object.entries(auditActionLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
             ))}
-          </select>
-        </label>
-        <label className="admin-field">
-          Từ ngày
-          <input defaultValue={from} name="from" type="date" />
-        </label>
-        <label className="admin-field">
-          Đến ngày
-          <input defaultValue={to} name="to" type="date" />
-        </label>
-        <Button label="Lọc nhật ký" type="submit" variant="primary" />
-        <button
-          className="admin-text-button min-h-10"
+          </TextField>
+        <TextField size="small" label="Từ ngày" defaultValue={from} name="from" type="date" slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 150 }} />
+        <TextField size="small" label="Đến ngày" defaultValue={to} name="to" type="date" slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 150 }} />
+        <Button type="submit" variant="contained">Lọc nhật ký</Button>
+        <Button
           onClick={() => {
             setParams({})
             setValidationError(null)
           }}
-          type="button"
+          variant="text"
         >
           Xóa lọc
-        </button>
+        </Button>
       </form>
       {administratorError && (
         <p className="admin-message" role="status">

@@ -1,4 +1,5 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
+import Pagination from '@mui/material/Pagination'
 
 export const AdminPagination = ({
   page,
@@ -12,41 +13,25 @@ export const AdminPagination = ({
   totalItems: number
   totalPages: number
   onChange: (page: number) => void
-}) => (
-  <nav aria-label="Phân trang bảng dữ liệu" className="admin-pagination">
-    <p>
-      {totalItems === 0
-        ? '0 kết quả'
-        : page > totalPages
-          ? `Trang này không có dữ liệu · ${totalItems} kết quả`
-          : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, totalItems)} / ${totalItems} kết quả`}
-    </p>
-    <div>
-      {page > Math.max(1, totalPages) ? (
-        <Button
-          label="Về trang có dữ liệu"
-          onClick={() => onChange(Math.max(1, totalPages))}
-          variant="secondary"
-        />
-      ) : (
-        <>
-          <Button
-            isDisabled={page <= 1}
-            label="Trước"
-            onClick={() => onChange(page - 1)}
-            variant="secondary"
-          />
-          <span>
-            Trang {page} / {Math.max(1, totalPages)}
-          </span>
-          <Button
-            isDisabled={page >= totalPages}
-            label="Sau"
-            onClick={() => onChange(page + 1)}
-            variant="secondary"
-          />
-        </>
-      )}
-    </div>
-  </nav>
-)
+}) => {
+  const lastPage = Math.max(1, totalPages)
+
+  const getSummary = () => {
+    if (totalItems === 0) return '0 kết quả'
+    if (page > totalPages) return `Trang này không có dữ liệu · ${totalItems} kết quả`
+    return `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, totalItems)} / ${totalItems} kết quả`
+  }
+
+  return (
+    <nav aria-label="Phân trang bảng dữ liệu" className="admin-pagination">
+      <p>{getSummary()}</p>
+      <div>
+        {page > lastPage ? (
+          <Button onClick={() => onChange(lastPage)} variant="outlined">Về trang có dữ liệu</Button>
+        ) : (
+          <Pagination color="primary" count={lastPage} onChange={(_, value) => onChange(value)} page={page} shape="rounded" />
+        )}
+      </div>
+    </nav>
+  )
+}

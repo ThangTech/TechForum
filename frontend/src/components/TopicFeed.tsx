@@ -1,5 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
-import { useState } from 'react'
+import Button from '@mui/material/Button'
 import { Link } from 'react-router-dom'
 import type { TopicFeedMode, TopicPage, TopicType } from '../api/topics'
 import { TopicSummaryItem } from './topics/TopicSummaryItem'
@@ -8,8 +7,6 @@ interface TopicFeedProps {
   data: TopicPage | null
   error: string | null
   isLoading: boolean
-  keyword: string
-  onSearch: (keyword: string) => void
   onPageChange: (page: number) => void
   onRetry: () => void
   onFilter: (key: 'categoryId' | 'tagId', value: number) => void
@@ -25,8 +22,6 @@ export const TopicFeed = ({
   data,
   error,
   isLoading,
-  keyword,
-  onSearch,
   onPageChange,
   onRetry,
   onFilter,
@@ -37,7 +32,6 @@ export const TopicFeed = ({
   loginUrl = '/login',
   onShowLatest,
 }: TopicFeedProps) => {
-  const [draftKeyword, setDraftKeyword] = useState(keyword)
   return (
   <section aria-labelledby="topic-feed-title" className="grid gap-3" data-tour="content-feed">
     <div className="surface-card p-5 sm:p-6">
@@ -45,22 +39,6 @@ export const TopicFeed = ({
       <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950" id="topic-feed-title">
         {selectedType === 'article' ? 'Bài viết' : selectedType === 'question' ? 'Câu hỏi' : 'Bài viết và câu hỏi'}
       </h2>
-      <form className="mt-4 flex gap-2" onSubmit={(event) => {
-        event.preventDefault()
-        onSearch(draftKeyword)
-      }}>
-        <label className="sr-only" htmlFor="topic-search">Tìm kiếm nội dung</label>
-        <input
-          className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-          id="topic-search"
-          onChange={(event) => {
-            setDraftKeyword(event.target.value)
-          }}
-          placeholder="Tìm theo tiêu đề hoặc tóm tắt"
-          value={draftKeyword}
-        />
-        <Button label="Tìm kiếm" type="submit" variant="primary" />
-      </form>
     </div>
 
     {isLoading && <div className="surface-card p-8 text-center text-sm text-slate-500" role="status">Đang tải nội dung…</div>}
@@ -71,7 +49,7 @@ export const TopicFeed = ({
     {!isLoading && !requiresLogin && error && (
       <div className="surface-card space-y-4 p-8 text-center" role="alert">
         <p className="text-sm text-red-700">{error}</p>
-        <Button label="Thử lại" onClick={onRetry} variant="secondary" />
+        <Button onClick={onRetry} variant="outlined">Thử lại</Button>
       </div>
     )}
     {!isLoading && !requiresLogin && !error && data?.items.length === 0 && (
@@ -97,8 +75,8 @@ export const TopicFeed = ({
         <nav aria-label="Phân trang nội dung" className="surface-card flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-slate-600">
           <span>Trang {data.page} / {Math.max(data.totalPages, 1)} · {data.totalItems} nội dung</span>
           <div className="flex gap-2">
-            <Button isDisabled={data.page <= 1} label="Trang trước" onClick={() => onPageChange(data.page - 1)} variant="secondary" />
-            <Button isDisabled={data.page >= data.totalPages} label="Trang sau" onClick={() => onPageChange(data.page + 1)} variant="secondary" />
+            <Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button>
+            <Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button>
           </div>
         </nav>
       </>

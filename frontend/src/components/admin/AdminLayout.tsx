@@ -1,4 +1,4 @@
-import { Button } from '@astryxdesign/core/Button'
+import Button from '@mui/material/Button'
 import { useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../appRoutes'
@@ -91,13 +91,7 @@ export const AdminLayout = () => {
               <strong>{user?.displayName}</strong>
               <span>Quản trị viên</span>
             </div>
-            <Button
-              isDisabled={isLoggingOut}
-              isLoading={isLoggingOut}
-              label="Đăng xuất"
-              onClick={() => void signOut()}
-              variant="ghost"
-            />
+            <Button disabled={isLoggingOut} loading={isLoggingOut} onClick={() => void signOut()} variant="text">Đăng xuất</Button>
           </div>
         </header>
         <main className="admin-main" id="main-content">
