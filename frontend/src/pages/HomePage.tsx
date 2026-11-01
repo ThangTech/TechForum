@@ -9,6 +9,8 @@ import { createAuthUrl } from '../auth/returnUrl'
 import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../components/TopicFeed'
+import { ExploreNav } from '../components/home/ExploreNav'
+import { HomeHero } from '../components/home/HomeHero'
 import { HomeTour } from '../components/tour/HomeTour'
 import { getQuestionHighlights, type QuestionHighlights } from '../api/questionHighlights'
 import { QuestionHighlightsPanel } from '../components/questions/QuestionHighlightsPanel'
@@ -192,14 +194,11 @@ export const HomePage = ({
     <main className="main-area" id="main-content">
       {showTour && <HomeTour />}
       <div className="page-content">
-        <section className="intro" aria-labelledby="page-title">
-          <p className="eyebrow">Cộng đồng công nghệ Việt</p>
-          <h1 id="page-title">{title}</h1>
-          <p className="intro__description">{description}</p>
-        </section>
+        <HomeHero title={title} description={description} />
 
         <div className="content-grid">
           <aside className="browse-filters" aria-label="Lọc nội dung">
+            <ExploreNav currentPath={location.pathname} />
             <details open={areFiltersOpen} onToggle={(event) => setAreFiltersOpen(event.currentTarget.open)}>
               <summary>Chuyên mục và thẻ</summary>
               <div className="grid gap-4">

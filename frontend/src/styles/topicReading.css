@@ -21,8 +21,9 @@
 .topic-reading-article {
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 3px;
+  border-radius: var(--radius-card);
   background: white;
+  box-shadow: var(--shadow-card);
 }
 
 .topic-reading-article h1 {
@@ -81,7 +82,7 @@
 .reading-toc {
   margin-bottom: 16px;
   border: 1px solid var(--color-border);
-  border-radius: 3px;
+  border-radius: var(--radius-card);
   background: white;
   font-size: 13px;
 }

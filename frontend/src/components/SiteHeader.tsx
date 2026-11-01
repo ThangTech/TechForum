@@ -39,6 +39,7 @@ export const SiteHeader = () => {
           <Link to={appRoutes.articles} className={isArticlePage ? 'active' : undefined} aria-current={isArticlePage ? 'page' : undefined}>Bài viết</Link>
           <NavLink to={appRoutes.questions}>Hỏi đáp</NavLink>
           <NavLink to={appRoutes.discussions}>Thảo luận</NavLink>
+          <NavLink to={appRoutes.communities}>Cộng đồng</NavLink>
         </nav>
 
         <form className="search-unavailable" data-tour="search" onSubmit={handleSearch} role="search">

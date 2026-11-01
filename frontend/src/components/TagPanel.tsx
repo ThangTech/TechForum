@@ -15,14 +15,17 @@ interface TagPanelProps {
 export const TagPanel = ({ tags, isLoading, error, onRetry, selectedId, onSelect }: TagPanelProps) => {
   return (
     <section className="surface-card" aria-labelledby="tag-title">
-      <div className="border-b border-slate-200 p-5">
+      <div className="border-b border-slate-200 px-4 py-3.5">
         <div>
-          <h2 className="text-lg font-bold tracking-tight text-slate-900" id="tag-title">
+          <h2 className="text-[0.95rem] font-bold tracking-tight text-slate-900" id="tag-title">
             Thẻ công nghệ
           </h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
+          <p className="mt-1 text-xs leading-5 text-slate-500">
             Các thẻ đang được sử dụng trên TechForum.
           </p>
+          <Link className="mt-2 inline-block text-sm font-semibold text-blue-700 hover:underline" to={appRoutes.communities}>
+            Xem tất cả cộng đồng →
+          </Link>
         </div>
       </div>
 
@@ -37,7 +40,7 @@ export const TagPanel = ({ tags, isLoading, error, onRetry, selectedId, onSelect
         <div className="p-5 text-sm text-slate-500">Chưa có thẻ đang hoạt động.</div>
       )}
       {!isLoading && !error && tags.length > 0 && (
-        <ul className="flex list-none flex-wrap gap-2 p-5">
+        <ul className="flex list-none flex-wrap gap-2 p-4">
           {tags.map((tag) => (
             <li key={tag.id}>
               {onSelect ? <button className="tag-filter" aria-pressed={selectedId === tag.id} onClick={() => onSelect(tag.id)} type="button">

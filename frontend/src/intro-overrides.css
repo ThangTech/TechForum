@@ -10,12 +10,12 @@
   color: #263044;
   background: #fff;
   box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
-  font-family: Roboto, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .introjs-tooltip-title {
   color: #111827;
-  font-family: "Open Sans", Roboto, Arial, sans-serif;
+  font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 800;
 }
@@ -52,7 +52,7 @@
   color: #334155 !important;
   background: #fff !important;
   box-shadow: none !important;
-  font-family: Roboto, Arial, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-weight: 700 !important;
   text-shadow: none !important;
 }

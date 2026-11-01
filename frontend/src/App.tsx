@@ -23,6 +23,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SkillCommunityPage } from './pages/SkillCommunityPage'
+import { CommunitiesPage } from './pages/CommunitiesPage'
 import { FollowMembersPage } from './pages/FollowMembersPage'
 import { AdminLayout } from './components/admin/AdminLayout'
 import { AdminAuditPage } from './pages/AdminAuditPage'
@@ -104,6 +105,7 @@ const App = () => {
             <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
             <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
+            <Route path="communities" element={<CommunitiesPage />} />
             <Route path="skills/:tagId" element={<SkillCommunityPage />} />
             <Route path="bai-viet" element={<LegacyRouteRedirect to={appRoutes.articles} />} />
             <Route path="hoi-dap" element={<LegacyRouteRedirect to={appRoutes.questions} />} />

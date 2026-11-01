@@ -5,6 +5,8 @@ import { getTopic, type TopicDetail } from '../api/topics'
 import { toDisplayMediaHtml } from '../api/media'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
+import { UserAvatar } from '../components/account/UserAvatar'
+import { ViewIcon } from '../components/common/StatIcons'
 import { appRoutes } from '../appRoutes'
 import { DiscussionSection } from '../components/discussions/DiscussionSection'
 import { UsefulStarButton } from '../components/interactions/UsefulStarButton'
@@ -113,8 +115,10 @@ export const TopicDetailPage = () => {
                     {topic.title}
                   </h1>
                   <p className="mt-4 text-base leading-7 text-slate-600">{topic.summary}</p>
-                  <div className="mt-5 flex flex-wrap gap-x-3 gap-y-2 text-sm text-slate-500">
-                    <Link className="font-semibold text-slate-700 hover:text-blue-700" to={appRoutes.member(topic.author.id)}>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-500">
+                    <Link className="flex items-center gap-2 font-semibold text-slate-700 hover:text-blue-700" to={appRoutes.member(topic.author.id)}>
+                      {/* Chi tiết chủ đề chưa trả về ảnh đại diện nên hiển thị chữ cái đầu của tên. */}
+                      <UserAvatar avatarUrl={null} displayName={topic.author.displayName} />
                       {topic.author.displayName}
                     </Link>
                     <span aria-hidden="true">·</span>
@@ -122,7 +126,8 @@ export const TopicDetailPage = () => {
                     <span aria-hidden="true">·</span>
                     <Link className="hover:text-blue-700" to={`${topic.type === 'question' ? appRoutes.questions : appRoutes.articles}?categoryId=${topic.category.id}`}>{topic.category.name}</Link>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
+                    <span className="topic-stat" title="Lượt xem"><ViewIcon />{topic.viewCount}<span className="sr-only"> lượt xem</span></span>
                     <span title="Thời gian ước tính tùy theo nội dung và tốc độ đọc.">Khoảng {Math.max(1, readingContent.readingMinutes)} phút đọc</span>
                     {wasUpdatedAfterPublication && topic.updatedAtUtc && (
                       <time dateTime={topic.updatedAtUtc}>Cập nhật {formatDateTime(topic.updatedAtUtc)}</time>
@@ -131,7 +136,7 @@ export const TopicDetailPage = () => {
                   {topic.tags.length > 0 && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {topic.tags.map((tag) => (
-                        <Link className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-blue-700" key={tag.id} to={`${appRoutes.search}?tagId=${tag.id}`}>
+                        <Link className="topic-tag px-2.5 py-1" key={tag.id} to={`${appRoutes.search}?tagId=${tag.id}`}>
                           #{tag.name}
                         </Link>
                       ))}

@@ -11,6 +11,7 @@ export const appRoutes = {
   settings: '/settings',
   notifications: '/notifications',
   activity: '/activity',
+  communities: '/communities',
   skill: (tagId: number | string) => `/skills/${encodeURIComponent(String(tagId))}`,
   adminReports: '/admin/reports',
   adminCategories: '/admin/categories',

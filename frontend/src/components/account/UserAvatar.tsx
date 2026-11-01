@@ -3,11 +3,17 @@ import { apiBaseUrl } from '../../api/client'
 interface UserAvatarProps {
   avatarUrl: string | null
   displayName: string
-  size?: 'sm' | 'lg'
+  size?: 'xs' | 'sm' | 'lg'
+}
+
+const avatarSizeClasses = {
+  xs: 'size-6 text-xs',
+  sm: 'size-9 text-sm',
+  lg: 'size-16 text-2xl',
 }
 
 export const UserAvatar = ({ avatarUrl, displayName, size = 'sm' }: UserAvatarProps) => {
-  const sizeClass = size === 'lg' ? 'size-16 text-2xl' : 'size-9 text-sm'
+  const sizeClass = avatarSizeClasses[size]
   const fallback = displayName.slice(0, 1).toLocaleUpperCase('vi-VN')
 
   return avatarUrl ? (
