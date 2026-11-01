@@ -92,6 +92,8 @@ builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<IQuestionHighlightRepository, QuestionHighlightRepository>();
 builder.Services.AddScoped<IQuestionHighlightService, QuestionHighlightService>();
+builder.Services.AddScoped<IPublicStatisticsRepository, PublicStatisticsRepository>();
+builder.Services.AddScoped<IPublicStatisticsService, PublicStatisticsService>();
 builder.Services.AddScoped<IAdminAccountRepository, AdminAccountRepository>();
 builder.Services.AddScoped<IAdminAccountService, AdminAccountService>();
 builder.Services.AddScoped<IAdminTopicRepository, AdminTopicRepository>();
