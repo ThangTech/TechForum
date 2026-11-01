@@ -14,7 +14,7 @@ interface TagPanelProps {
 
 export const TagPanel = ({ tags, isLoading, error, onRetry, selectedId, onSelect }: TagPanelProps) => {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white" aria-labelledby="tag-title">
+    <section className="surface-card" aria-labelledby="tag-title">
       <div className="border-b border-slate-200 p-5">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-slate-900" id="tag-title">

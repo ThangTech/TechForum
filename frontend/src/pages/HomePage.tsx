@@ -223,7 +223,7 @@ export const HomePage = ({
               ] as const).map(([value, label]) => (
                 <button
                   aria-pressed={feed === value}
-                  className={`min-w-0 flex-1 border-b-2 px-2 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${feed === value ? 'border-blue-700 bg-blue-50 text-blue-800' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-blue-700'}`}
+                  className={`min-w-0 flex-1 border-b-2 px-2 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${feed === value ? 'border-[var(--color-primary)] text-[var(--color-heading)]' : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-heading)]'}`}
                   key={value}
                   onClick={() => updateSearchParams({ feed: value === 'latest' ? undefined : value, page: undefined })}
                   type="button"

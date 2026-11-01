@@ -6,8 +6,8 @@ interface TopicTypeBadgeProps {
 
 export const TopicTypeBadge = ({ type }: TopicTypeBadgeProps) => (
   <span className={type === 'question'
-    ? 'rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800'
-    : 'rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-800'}>
+    ? 'rounded-full bg-[var(--color-question-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-question)]'
+    : 'rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-primary-dark)]'}>
     {type === 'question' ? 'Câu hỏi' : 'Bài viết'}
   </span>
 )

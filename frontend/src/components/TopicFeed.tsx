@@ -39,7 +39,7 @@ export const TopicFeed = ({
 }: TopicFeedProps) => {
   const [draftKeyword, setDraftKeyword] = useState(keyword)
   return (
-  <section aria-labelledby="topic-feed-title" className="overflow-hidden border border-slate-200 bg-white" data-tour="content-feed">
+  <section aria-labelledby="topic-feed-title" className="surface-card" data-tour="content-feed">
     <div className="border-b border-slate-200 p-5 sm:p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{isDiscussion ? 'Đang có trao đổi' : 'Khám phá nội dung'}</p>
       <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950" id="topic-feed-title">
@@ -51,7 +51,7 @@ export const TopicFeed = ({
       }}>
         <label className="sr-only" htmlFor="topic-search">Tìm kiếm nội dung</label>
         <input
-          className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+          className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           id="topic-search"
           onChange={(event) => {
             setDraftKeyword(event.target.value)
@@ -89,7 +89,7 @@ export const TopicFeed = ({
       <>
         <ul className="divide-y divide-slate-200">
           {data.items.map((topic) => (
-            <li className="p-5 sm:p-6" key={topic.id}>
+            <li className={`topic-card topic-card--${topic.type} p-5 sm:p-6`} key={topic.id}>
               <TopicSummaryItem onFilter={onFilter} topic={topic} isDiscussion={isDiscussion} />
             </li>
           ))}

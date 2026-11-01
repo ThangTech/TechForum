@@ -241,7 +241,7 @@
 }
 
 .reading-content code {
-  font-family: Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .reading-content :not(pre) > code {
@@ -360,10 +360,56 @@
   }
 }
 
-.panel {
+.panel,
+.surface-card {
+  overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* Mục bài viết: hover nổi nhẹ và có vạch nhấn theo loại nội dung */
+.topic-card {
+  box-shadow: inset 3px 0 0 transparent;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.topic-card:hover {
+  background: var(--color-subtle);
+}
+
+.topic-card--article:hover {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.topic-card--question:hover {
+  box-shadow: inset 3px 0 0 var(--color-question);
+}
+
+.topic-card__stats {
+  font-variant-numeric: tabular-nums;
+}
+
+.topic-tag {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-muted);
+  background: var(--color-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+button.topic-tag:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  background: var(--color-primary-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topic-card {
+    transition: none;
+  }
 }
 
 .panel__heading {

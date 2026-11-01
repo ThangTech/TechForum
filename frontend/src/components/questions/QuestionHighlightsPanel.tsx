@@ -15,7 +15,7 @@ const QuestionList = ({ items }: { items: QuestionHighlight[] }) => items.length
   : <ol className="divide-y divide-slate-100">{items.map((item) => <li className="px-5 py-4" key={item.id}><Link className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 hover:text-blue-700" to={appRoutes.topic(item.id)}>{item.title}</Link><span className="mt-1 block text-xs text-slate-500">{item.answerCount} câu trả lời</span></li>)}</ol>
 
 export const QuestionHighlightsPanel = ({ data, error, isLoading, onRetry }: QuestionHighlightsPanelProps) => (
-  <section className="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-labelledby="question-highlights-title">
+  <section className="surface-card" aria-labelledby="question-highlights-title">
     <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-950" id="question-highlights-title">Câu hỏi cộng đồng</h2></div>
     {isLoading && <p className="px-5 py-8 text-center text-sm text-slate-500" role="status">Đang tải câu hỏi…</p>}
     {!isLoading && error && <div className="px-5 py-6 text-center" role="alert"><p className="text-sm text-red-700">{error}</p><div className="mt-3"><Button label="Thử lại" onClick={onRetry} variant="secondary" /></div></div>}
