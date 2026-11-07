@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { followMember, getPublicProfile, unfollowMember, type PublicProfile } from '../api/profiles'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicSummaryItem } from '../components/topics/TopicSummaryItem'
 import { UserAvatar } from '../components/account/UserAvatar'
@@ -9,6 +8,9 @@ import Button from '@mui/material/Button'
 import { useAuth } from '../auth/authState'
 import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
 import { appRoutes } from '../appRoutes'
+import { getErrorMessage } from '../queries/errorMessage'
+import { usePublicProfile, useToggleFollow } from '../queries/profiles'
+import { isInitialLoading } from '../queries/status'
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -16,56 +18,31 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 
 export const PublicProfilePage = () => {
   const { userId = '' } = useParams()
-  const [profile, setProfile] = useState<PublicProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
+  const isValidId = userId !== ''
+  const profileQuery = usePublicProfile(userId, isValidId)
+  const followMutation = useToggleFollow(userId)
+  const profile = profileQuery.data ?? null
+  const isLoading = isValidId && isInitialLoading(profileQuery)
+  const requestError = profileQuery.error
+  const loadError = requestError instanceof ApiError && requestError.status === 404
+    ? 'Không tìm thấy hồ sơ thành viên này.'
+    : getErrorMessage(requestError)
+  const error = isValidId ? loadError : 'Đường dẫn hồ sơ không hợp lệ.'
   const { user } = useAuth()
-  const [isFollowBusy, setIsFollowBusy] = useState(false)
+  const isFollowBusy = followMutation.isPending
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const isOwnProfile = Boolean(profile && user?.id === profile.id)
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadProfile = async () => {
-      if (!userId) {
-        setError('Đường dẫn hồ sơ không hợp lệ.')
-        setIsLoading(false)
-        return
-      }
-
-      setIsLoading(true)
-      setError(null)
-      try {
-        setProfile(await getPublicProfile(userId, controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        if (requestError instanceof ApiError && requestError.status === 404) {
-          setError('Không tìm thấy hồ sơ thành viên này.')
-        } else {
-          setError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
-        }
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-
-    void loadProfile()
-    return () => controller.abort()
-  }, [userId, requestVersion])
-
   const toggleFollow = async () => {
     if (!profile || isFollowBusy) return
     if (!user) { setIsAuthOpen(true); return }
-    setIsFollowBusy(true); setActionError(null)
+    setActionError(null)
     try {
-      const status = profile.isFollowedByViewer ? await unfollowMember(profile.id) : await followMember(profile.id)
-      setProfile({ ...profile, isFollowedByViewer: status.isFollowing, followerCount: status.followerCount })
+      await followMutation.mutateAsync(profile.isFollowedByViewer)
     } catch (requestError) {
       setActionError(requestError instanceof Error ? requestError.message : 'Không thể cập nhật theo dõi.')
-    } finally { setIsFollowBusy(false) }
+    }
   }
 
   return (
@@ -80,7 +57,7 @@ export const PublicProfilePage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải hồ sơ…"
-            onRetry={() => setRequestVersion((version) => version + 1)}
+            onRetry={() => void profileQuery.refetch()}
           />
         </div>
 

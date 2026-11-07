@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { deleteTopic, getMyTopics, type OwnTopicPage, type TopicType } from '../api/topics'
+import type { TopicType } from '../api/topics'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { ConfirmDialog } from '../components/feedback/ConfirmDialog'
 import { OwnTopicFilters } from '../components/topics/OwnTopicFilters'
 import { OwnTopicList } from '../components/topics/OwnTopicList'
 import { appRoutes } from '../appRoutes'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
+import { useDeleteTopic, useMyTopics } from '../queries/topics'
 
 const readPositiveInteger = (value: string | null) => {
   const parsed = Number(value)
@@ -20,37 +23,19 @@ export const MyTopicsPage = () => {
   const page = readPositiveInteger(searchParams.get('page'))
   const keyword = searchParams.get('keyword')?.trim() ?? ''
   const type = readTopicType(searchParams.get('type'))
-  const [data, setData] = useState<OwnTopicPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
+  const topicsQuery = useMyTopics({
+    page,
+    pageSize: 10,
+    keyword: keyword || undefined,
+    type: type === 'article' ? 'Article' : type === 'question' ? 'Question' : undefined,
+  })
+  const deleteMutation = useDeleteTopic()
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadTopics = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setData(await getMyTopics({
-          page,
-          pageSize: 10,
-          keyword: keyword || undefined,
-          type: type === 'article' ? 'Article' : type === 'question' ? 'Question' : undefined,
-        }, controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof Error ? requestError.message : 'Không thể tải nội dung của bạn.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-
-    void loadTopics()
-    return () => controller.abort()
-  }, [page, keyword, type, requestVersion])
+  const data = topicsQuery.data ?? null
+  const isLoading = isInitialLoading(topicsQuery)
+  const isDeleting = deleteMutation.isPending
+  const error = deleteError ?? getErrorMessage(topicsQuery.error, 'Không thể tải nội dung của bạn.')
 
   const updateParams = (updates: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams)
@@ -63,16 +48,13 @@ export const MyTopicsPage = () => {
 
   const confirmDelete = async () => {
     if (deletingId === null || isDeleting) return
-    setIsDeleting(true)
-    setError(null)
+    setDeleteError(null)
     try {
-      await deleteTopic(deletingId)
+      // The list loads again after the delete.
+      await deleteMutation.mutateAsync(deletingId)
       setDeletingId(null)
-      setRequestVersion((version) => version + 1)
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Không thể xóa nội dung.')
-    } finally {
-      setIsDeleting(false)
+      setDeleteError(requestError instanceof Error ? requestError.message : 'Không thể xóa nội dung.')
     }
   }
 
@@ -102,7 +84,10 @@ export const MyTopicsPage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải nội dung của bạn…"
-            onRetry={() => setRequestVersion((version) => version + 1)}
+            onRetry={() => {
+              setDeleteError(null)
+              void topicsQuery.refetch()
+            }}
           />
           {!isLoading && !error && data && (
             <OwnTopicList

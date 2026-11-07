@@ -1,11 +1,11 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getSavedTopics, type SavedTopicPage } from '../api/bookmarks'
-import { ApiError } from '../api/client'
 import { appRoutes } from '../appRoutes'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
+import { useSavedTopics } from '../queries/bookmarks'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 
 const readPage = (value: string | null) => {
   const page = Number(value)
@@ -15,25 +15,10 @@ const readPage = (value: string | null) => {
 export const SavedTopicsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPage(searchParams.get('page'))
-  const [data, setData] = useState<SavedTopicPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [retry, setRetry] = useState(0)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try { setData(await getSavedTopics(page, 10, controller.signal)) }
-      catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError ? requestError.message : 'Không thể tải danh sách đã lưu.')
-      } finally { if (!controller.signal.aborted) setIsLoading(false) }
-    }
-    void load()
-    return () => controller.abort()
-  }, [page, retry])
+  const savedQuery = useSavedTopics(page, 10)
+  const data = savedQuery.data ?? null
+  const isLoading = isInitialLoading(savedQuery)
+  const error = getErrorMessage(savedQuery.error, 'Không thể tải danh sách đã lưu.')
 
   const changePage = (nextPage: number) => {
     const next = new URLSearchParams(searchParams)
@@ -49,7 +34,7 @@ export const SavedTopicsPage = () => {
         <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Nội dung đã lưu</h1>
         <p className="mt-2 text-slate-600">Các bài viết và câu hỏi bạn muốn đọc lại.</p>
         <div className="mt-7">
-          <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải nội dung đã lưu…" onRetry={() => setRetry((value) => value + 1)} />
+          <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải nội dung đã lưu…" onRetry={() => void savedQuery.refetch()} />
           {!isLoading && !error && data?.items.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
               <h2 className="font-bold text-slate-900">Bạn chưa lưu nội dung nào</h2>

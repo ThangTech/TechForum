@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { addBookmark, getBookmarkStatus, removeBookmark } from '../api/bookmarks'
+import { addBookmark, getBookmarkStatus, getSavedTopics, removeBookmark } from '../api/bookmarks'
 import { topicKeys } from './topics'
 import { useUserScope, userKey } from './userScope'
 
@@ -7,6 +7,8 @@ export const bookmarkKeys = {
   // Everything about the saved topics of one user: the list and the status of single topics.
   all: (scope: string) => userKey(scope, 'bookmarks'),
   status: (scope: string, topicId: number) => userKey(scope, 'topics', topicId, 'bookmark'),
+  list: (scope: string, page: number, pageSize: number) =>
+    [...bookmarkKeys.all(scope), 'list', { page, pageSize }] as const,
 }
 
 export const useBookmarkStatus = (topicId: number) => {
@@ -33,5 +35,15 @@ export const useToggleBookmark = (topicId: number) => {
       void queryClient.invalidateQueries({ queryKey: bookmarkKeys.all(scope) })
       void queryClient.invalidateQueries({ queryKey: topicKeys.lists })
     },
+  })
+}
+
+export const useSavedTopics = (page: number, pageSize: number) => {
+  const { scope, isReady, isSignedIn } = useUserScope()
+
+  return useQuery({
+    queryKey: bookmarkKeys.list(scope, page, pageSize),
+    queryFn: ({ signal }) => getSavedTopics(page, pageSize, signal),
+    enabled: isReady && isSignedIn,
   })
 }

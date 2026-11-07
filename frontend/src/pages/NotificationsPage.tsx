@@ -1,10 +1,11 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { getNotifications, markNotificationRead, type NotificationPage } from '../api/notifications'
 import { NotificationList } from '../components/notifications/NotificationList'
-import { notificationsChangedEvent } from '../components/notifications/NotificationLink'
+import { getErrorMessage } from '../queries/errorMessage'
+import { useMarkNotificationRead, useNotifications } from '../queries/notifications'
+import { isInitialLoading } from '../queries/status'
 
 const readPage = (value: string | null) => {
   const page = Number(value)
@@ -18,61 +19,38 @@ export const NotificationsPage = () => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPage(searchParams.get('page'))
-  const [data, setData] = useState<NotificationPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const notificationsQuery = useNotifications(page, 10)
+  const markReadMutation = useMarkNotificationRead()
+  const [actionError, setActionError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
   const [openedId, setOpenedId] = useState<number | null>(null)
+  const data = notificationsQuery.data ?? null
+  const isLoading = isInitialLoading(notificationsQuery)
+  const error = actionError ?? getErrorMessage(notificationsQuery.error, 'Không thể tải thông báo.')
   const openedNotification = data?.items.find((item) => item.id === openedId)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadNotifications = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const result = await getNotifications(page, 10, controller.signal)
-        if (!controller.signal.aborted) setData(result)
-      } catch (requestError) {
-        if (controller.signal.aborted) return
-        setError(requestError instanceof Error ? requestError.message : 'Không thể tải thông báo.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-
-    void loadNotifications()
-    return () => controller.abort()
-  }, [page, requestVersion])
 
   const changePage = (nextPage: number) => {
     setSearchParams(nextPage <= 1 ? {} : { page: String(nextPage) })
   }
 
   const retry = () => {
-    setRequestVersion((value) => value + 1)
+    setActionError(null)
+    void notificationsQuery.refetch()
   }
 
   const openNotification = async (id: number, link: string, isRead: boolean) => {
     if (busyId !== null) return
-    setBusyId(id); setError(null)
+    setBusyId(id); setActionError(null)
     try {
       if (!isRead) {
-        await markNotificationRead(id)
-        setData((current) => current ? {
-          ...current,
-          unreadCount: Math.max(current.unreadCount - 1, 0),
-          items: current.items.map((item) => item.id === id ? { ...item, readAtUtc: new Date().toISOString() } : item),
-        } : null)
-        window.dispatchEvent(new Event(notificationsChangedEvent))
+        // The list and the unread count in the header load again after this.
+        await markReadMutation.mutateAsync(id)
       }
       const destination = safeNotificationLink(link)
       if (destination === '/notifications') setOpenedId(id)
       else navigate(destination)
     } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Không thể mở thông báo.')
+      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể mở thông báo.')
     } finally {
       setBusyId(null)
     }

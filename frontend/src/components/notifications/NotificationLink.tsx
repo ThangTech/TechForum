@@ -1,33 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { getNotifications } from '../../api/notifications'
 import { appRoutes } from '../../appRoutes'
-
-export const notificationsChangedEvent = 'techforum:notifications-changed'
+import { useNotifications } from '../../queries/notifications'
 
 export const NotificationLink = () => {
-  const [unreadCount, setUnreadCount] = useState(0)
-
-  const loadCount = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const result = await getNotifications(1, 1, signal)
-      setUnreadCount(result.unreadCount)
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === 'AbortError')) setUnreadCount(0)
-    }
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const timer = window.setTimeout(() => void loadCount(controller.signal), 0)
-    const refresh = () => void loadCount()
-    window.addEventListener(notificationsChangedEvent, refresh)
-    return () => {
-      controller.abort()
-      window.clearTimeout(timer)
-      window.removeEventListener(notificationsChangedEvent, refresh)
-    }
-  }, [loadCount])
+  // The unread count comes with the first page of notifications. Marking a notification as read
+  // loads it again, so the number changes without any extra code. If it cannot be loaded, it shows 0.
+  const { data } = useNotifications(1, 1)
+  const unreadCount = data?.unreadCount ?? 0
 
   return (
     <NavLink

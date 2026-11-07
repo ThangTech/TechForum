@@ -1,8 +1,10 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getMyReports, type MyReportPage, type ReportReason, type ReportStatus } from '../api/reports'
+import type { ReportReason, ReportStatus } from '../api/reports'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { getErrorMessage } from '../queries/errorMessage'
+import { useMyReports } from '../queries/reports'
+import { isInitialLoading } from '../queries/status'
 
 const statusLabels: Record<ReportStatus, string> = {
   pending: 'Chờ xử lý',
@@ -36,29 +38,10 @@ export const MyReportsPage = () => {
       : ''
   const pageValue = Number(searchParams.get('page'))
   const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
-  const [data, setData] = useState<MyReportPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [retry, setRetry] = useState(0)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const result = await getMyReports(status, page, 10, controller.signal)
-        if (!controller.signal.aborted) setData(result)
-      } catch (requestError) {
-        if (!controller.signal.aborted)
-          setError(requestError instanceof Error ? requestError.message : 'Không thể tải báo cáo.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [status, page, retry])
+  const reportsQuery = useMyReports(status, page, 10)
+  const data = reportsQuery.data ?? null
+  const isLoading = isInitialLoading(reportsQuery)
+  const error = getErrorMessage(reportsQuery.error, 'Không thể tải báo cáo.')
 
   const changePage = (nextPage: number) => {
     const next = new URLSearchParams(searchParams)
@@ -97,7 +80,7 @@ export const MyReportsPage = () => {
           error={error}
           isLoading={isLoading}
           loadingText="Đang tải báo cáo…"
-          onRetry={() => setRetry((value) => value + 1)}
+          onRetry={() => void reportsQuery.refetch()}
         />
         {!isLoading && !error && data && (
           <>

@@ -1,8 +1,9 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getMyActivity, type ActivityPage as ActivityPageData } from '../api/activity'
 import { ActivityList } from '../components/account/ActivityList'
+import { useMyActivity } from '../queries/activity'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 
 const readPage = (value: string | null) => {
   const page = Number(value)
@@ -12,31 +13,12 @@ const readPage = (value: string | null) => {
 export const ActivityPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPage(searchParams.get('page'))
-  const [data, setData] = useState<ActivityPageData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
+  const activityQuery = useMyActivity(page, 20)
+  const data = activityQuery.data ?? null
+  const isLoading = isInitialLoading(activityQuery)
+  const error = getErrorMessage(activityQuery.error, 'Không thể tải lịch sử hoạt động.')
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const loadActivity = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const result = await getMyActivity(page, 20, controller.signal)
-        if (!controller.signal.aborted) setData(result)
-      } catch (requestError) {
-        if (controller.signal.aborted) return
-        setError(requestError instanceof Error ? requestError.message : 'Không thể tải lịch sử hoạt động.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void loadActivity()
-    return () => controller.abort()
-  }, [page, requestVersion])
-
-  const reload = () => setRequestVersion((value) => value + 1)
+  const reload = () => void activityQuery.refetch()
   const changePage = (next: number) => setSearchParams(next <= 1 ? {} : { page: String(next) })
 
   return (

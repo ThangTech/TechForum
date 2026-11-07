@@ -1,10 +1,11 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { getFollowMembers, type FollowMemberPage } from '../api/profiles'
 import { appRoutes } from '../appRoutes'
 import { FollowMemberList } from '../components/profile/FollowMemberList'
+import { getErrorMessage } from '../queries/errorMessage'
+import { useFollowMembers } from '../queries/profiles'
+import { isInitialLoading } from '../queries/status'
 
 interface FollowMembersPageProps {
   kind: 'followers' | 'following'
@@ -19,37 +20,19 @@ export const FollowMembersPage = ({ kind }: FollowMembersPageProps) => {
   const { userId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPage(searchParams.get('page'))
-  const [data, setData] = useState<FollowMemberPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [version, setVersion] = useState(0)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const loadMembers = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const result = await getFollowMembers(userId, kind, page, controller.signal)
-        if (!controller.signal.aborted) setData(result)
-      } catch (requestError) {
-        if (controller.signal.aborted) return
-        setError(requestError instanceof ApiError && requestError.status === 404
-          ? 'Không tìm thấy hồ sơ thành viên này.'
-          : requestError instanceof Error ? requestError.message : 'Không thể tải danh sách theo dõi.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void loadMembers()
-    return () => controller.abort()
-  }, [kind, page, userId, version])
+  const membersQuery = useFollowMembers(userId, kind, page)
+  const data = membersQuery.data ?? null
+  const isLoading = isInitialLoading(membersQuery)
+  const requestError = membersQuery.error
+  const error = requestError instanceof ApiError && requestError.status === 404
+    ? 'Không tìm thấy hồ sơ thành viên này.'
+    : getErrorMessage(requestError, 'Không thể tải danh sách theo dõi.')
 
   const changePage = (next: number) => {
     setSearchParams(next <= 1 ? {} : { page: String(next) })
   }
   const retry = () => {
-    setVersion((value) => value + 1)
+    void membersQuery.refetch()
   }
   const title = kind === 'followers' ? 'Người theo dõi' : 'Đang theo dõi'
 
