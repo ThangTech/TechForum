@@ -54,7 +54,6 @@ public sealed class AvatarService(
         }
 
         DeleteOldAvatar(oldAvatarUrl, storageRoot);
-        await accountRepository.RefreshSignInAsync(user);
         return AvatarUpdateResult.Success(await MapUserAsync(user));
     }
 
@@ -67,7 +66,6 @@ public sealed class AvatarService(
         var updateResult = await accountRepository.UpdateAsync(user);
         if (!updateResult.Succeeded) return AvatarUpdateResult.Invalid("Không thể xóa avatar lúc này.");
         DeleteOldAvatar(oldAvatarUrl, GetStorageRoot());
-        await accountRepository.RefreshSignInAsync(user);
         return AvatarUpdateResult.Success(await MapUserAsync(user));
     }
 

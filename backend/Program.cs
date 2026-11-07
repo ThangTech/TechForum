@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -33,8 +34,17 @@ builder.Services.Configure<FormOptions>(options =>
         mediaOptions.MaxVideoBytes) + 1024 * 1024);
 builder.Services.AddDbContext<TechForumDbContext>(options =>
     options.UseSqlServer(connectionString));
+var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
+var jwtOptions = jwtSection.Get<JwtOptions>() ?? new JwtOptions();
+var jwtConfigurationError = jwtOptions.GetConfigurationError();
+if (jwtConfigurationError is not null)
+{
+    throw new InvalidOperationException(jwtConfigurationError);
+}
+
+builder.Services.Configure<JwtOptions>(jwtSection);
 builder.Services
-    .AddIdentity<ApplicationUser, IdentityRole>(options =>
+    .AddIdentityCore<ApplicationUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
         options.Password.RequiredLength = 8;
@@ -46,46 +56,43 @@ builder.Services
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<TechForumDbContext>()
+    .AddSignInManager()
     .AddDefaultTokenProviders();
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.Name = "TechForum.Auth";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    options.ExpireTimeSpan = TimeSpan.FromHours(8);
-    options.SlidingExpiration = true;
-    options.Events.OnRedirectToLogin = context =>
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        return context.Response.WriteAsJsonAsync(new ProblemDetails
+        options.TokenValidationParameters = jwtOptions.CreateValidationParameters();
+        options.Events = new JwtBearerEvents
         {
-            Status = StatusCodes.Status401Unauthorized,
-            Title = "Bạn cần đăng nhập"
-        });
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return context.Response.WriteAsJsonAsync(new ProblemDetails
-        {
-            Status = StatusCodes.Status403Forbidden,
-            Title = "Bạn không có quyền thực hiện thao tác này"
-        });
-    };
-});
-builder.Services.AddAntiforgery(options =>
-{
-    options.HeaderName = "X-CSRF-TOKEN";
-    options.Cookie.Name = "TechForum.Antiforgery";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-});
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return context.Response.WriteAsJsonAsync(new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Bạn cần đăng nhập"
+                });
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return context.Response.WriteAsJsonAsync(new ProblemDetails
+                {
+                    Status = StatusCodes.Status403Forbidden,
+                    Title = "Bạn không có quyền thực hiện thao tác này"
+                });
+            }
+        };
+    });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddPasswordRecovery(builder.Configuration);
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
@@ -195,8 +202,6 @@ app.UseAuthentication();
 app.UseRateLimiter();
 
 app.UseMiddleware<ActiveAccountMiddleware>();
-
-app.UseMiddleware<ApiAntiforgeryMiddleware>();
 
 app.UseAuthorization();
 

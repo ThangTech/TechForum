@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using TechForum.Api.Configuration;
 using TechForum.Api.Data.Repositories;
 using TechForum.Api.Dtos.Auth;
 using TechForum.Api.Enums;
@@ -8,9 +10,12 @@ namespace TechForum.Api.Services;
 
 public sealed class AuthService(
     IAccountRepository accountRepository,
+    IRefreshTokenRepository refreshTokenRepository,
+    ITokenService tokenService,
+    IOptions<JwtOptions> jwtOptions,
     TimeProvider timeProvider) : IAuthService
 {
-    public async Task<AuthResult> RegisterAsync(RegisterRequest request)
+    public async Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim();
         if (await accountRepository.FindByEmailAsync(email) is not null)
@@ -35,11 +40,12 @@ public sealed class AuthService(
                 MapIdentityErrors(createResult.Errors));
         }
 
-        await accountRepository.SignInAsync(user);
-        return AuthResult.Success(await MapUserAsync(user));
+        // A new member is signed in right after registering, with the short refresh token lifetime.
+        var shortLifetime = TimeSpan.FromDays(jwtOptions.Value.ShortRefreshTokenDays);
+        return await CreateSessionAsync(user, shortLifetime, cancellationToken);
     }
 
-    public async Task<AuthResult> LoginAsync(LoginRequest request)
+    public async Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         var user = await accountRepository.FindByEmailAsync(request.Email.Trim());
         if (user is null)
@@ -56,10 +62,7 @@ public sealed class AuthService(
                 return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
         }
 
-        var signInResult = await accountRepository.PasswordSignInAsync(
-            user,
-            request.Password,
-            request.RememberMe);
+        var signInResult = await accountRepository.CheckPasswordAsync(user, request.Password);
 
         if (signInResult.IsLockedOut)
         {
@@ -71,7 +74,68 @@ public sealed class AuthService(
             return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
         }
 
-        return AuthResult.Success(await MapUserAsync(user));
+        var lifetime = request.RememberMe
+            ? TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays)
+            : TimeSpan.FromDays(jwtOptions.Value.ShortRefreshTokenDays);
+        return await CreateSessionAsync(user, lifetime, cancellationToken);
+    }
+
+    public async Task<AuthResult> RefreshAsync(string? refreshToken, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+        }
+
+        var now = timeProvider.GetUtcNow();
+        var storedToken = await refreshTokenRepository.FindByHashAsync(
+            tokenService.HashRefreshToken(refreshToken),
+            cancellationToken);
+        if (storedToken is null)
+        {
+            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+        }
+
+        if (storedToken.RevokedAtUtc is not null)
+        {
+            // An old token is being used again, so it may have been copied.
+            // Sign the user out on every device.
+            await refreshTokenRepository.RevokeAllForUserAsync(storedToken.UserId, now, cancellationToken);
+            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+        }
+
+        if (storedToken.ExpiresAtUtc <= now)
+        {
+            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+        }
+
+        var user = await accountRepository.FindByIdAsync(storedToken.UserId);
+        if (user is null)
+        {
+            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+        }
+
+        if (await accountRepository.IsLockedOutAsync(user))
+        {
+            await refreshTokenRepository.RevokeAllForUserAsync(user.Id, now, cancellationToken);
+            return AuthResult.Failed(AuthFailureKind.LockedOut);
+        }
+
+        // The new token keeps the same lifetime as the one it replaces.
+        var lifetime = storedToken.ExpiresAtUtc - storedToken.CreatedAtUtc;
+        var newRefreshToken = tokenService.GenerateRefreshToken();
+        var replacement = CreateRefreshTokenRecord(user.Id, newRefreshToken, now, lifetime);
+        var wasRotated = await refreshTokenRepository.RotateAsync(
+            storedToken.Id,
+            replacement,
+            now,
+            cancellationToken);
+        if (!wasRotated)
+        {
+            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+        }
+
+        return await BuildSuccessAsync(user, newRefreshToken, replacement.ExpiresAtUtc);
     }
 
     public async Task<CurrentUserDto?> GetCurrentUserAsync(string userId)
@@ -111,13 +175,13 @@ public sealed class AuthService(
                 MapIdentityErrors(updateResult.Errors));
         }
 
-        await accountRepository.RefreshSignInAsync(user);
         return AuthResult.Success(await MapUserAsync(user));
     }
 
     public async Task<AuthResult> ChangePasswordAsync(
         string userId,
-        ChangePasswordRequest request)
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
     {
         var user = await accountRepository.FindByIdAsync(userId);
         if (user is null)
@@ -136,11 +200,66 @@ public sealed class AuthService(
                 MapPasswordChangeErrors(changeResult.Errors));
         }
 
-        await accountRepository.RefreshSignInAsync(user);
+        // The security stamp changed, so access tokens stop working.
+        // Revoking the refresh tokens signs the user out on every device.
+        await refreshTokenRepository.RevokeAllForUserAsync(
+            user.Id,
+            timeProvider.GetUtcNow(),
+            cancellationToken);
         return AuthResult.Success(await MapUserAsync(user));
     }
 
-    public Task LogoutAsync() => accountRepository.SignOutAsync();
+    public async Task LogoutAsync(string? refreshToken, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return;
+        }
+
+        await refreshTokenRepository.RevokeByHashAsync(
+            tokenService.HashRefreshToken(refreshToken),
+            timeProvider.GetUtcNow(),
+            cancellationToken);
+    }
+
+    private async Task<AuthResult> CreateSessionAsync(
+        ApplicationUser user,
+        TimeSpan refreshTokenLifetime,
+        CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        var refreshToken = tokenService.GenerateRefreshToken();
+        var record = CreateRefreshTokenRecord(user.Id, refreshToken, now, refreshTokenLifetime);
+        await refreshTokenRepository.AddAsync(record, cancellationToken);
+        return await BuildSuccessAsync(user, refreshToken, record.ExpiresAtUtc);
+    }
+
+    private RefreshToken CreateRefreshTokenRecord(
+        string userId,
+        string refreshToken,
+        DateTimeOffset now,
+        TimeSpan lifetime) => new()
+    {
+        UserId = userId,
+        TokenHash = tokenService.HashRefreshToken(refreshToken),
+        CreatedAtUtc = now,
+        ExpiresAtUtc = now.Add(lifetime)
+    };
+
+    private async Task<AuthResult> BuildSuccessAsync(
+        ApplicationUser user,
+        string refreshToken,
+        DateTimeOffset refreshTokenExpiresAtUtc)
+    {
+        var roles = await accountRepository.GetRolesAsync(user);
+        var accessToken = tokenService.CreateAccessToken(user, roles);
+        var tokens = new AuthTokens(
+            accessToken.Token,
+            accessToken.ExpiresAtUtc,
+            refreshToken,
+            refreshTokenExpiresAtUtc);
+        return AuthResult.Success(await MapUserAsync(user), tokens);
+    }
 
     private async Task<CurrentUserDto> MapUserAsync(ApplicationUser user)
     {

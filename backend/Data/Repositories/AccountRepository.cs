@@ -34,20 +34,12 @@ public sealed class AccountRepository(
         return roleResult;
     }
 
-    public Task<SignInResult> PasswordSignInAsync(
-        ApplicationUser user,
-        string password,
-        bool rememberMe) =>
-        signInManager.PasswordSignInAsync(
-            user,
-            password,
-            rememberMe,
-            lockoutOnFailure: true);
+    // Checks the password and counts failed attempts, so five wrong passwords lock the account.
+    public Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password) =>
+        signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
 
-    public Task SignInAsync(ApplicationUser user) =>
-        signInManager.SignInAsync(user, isPersistent: false);
-
-    public Task SignOutAsync() => signInManager.SignOutAsync();
+    public Task<bool> IsLockedOutAsync(ApplicationUser user) =>
+        userManager.IsLockedOutAsync(user);
 
     public async Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user) =>
         (await userManager.GetRolesAsync(user)).ToList();
@@ -60,7 +52,4 @@ public sealed class AccountRepository(
         string currentPassword,
         string newPassword) =>
         userManager.ChangePasswordAsync(user, currentPassword, newPassword);
-
-    public Task RefreshSignInAsync(ApplicationUser user) =>
-        signInManager.RefreshSignInAsync(user);
 }

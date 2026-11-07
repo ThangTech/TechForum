@@ -11,14 +11,9 @@ public interface IAccountRepository
 
     Task<IdentityResult> CreateMemberAsync(ApplicationUser user, string password);
 
-    Task<SignInResult> PasswordSignInAsync(
-        ApplicationUser user,
-        string password,
-        bool rememberMe);
+    Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password);
 
-    Task SignInAsync(ApplicationUser user);
-
-    Task SignOutAsync();
+    Task<bool> IsLockedOutAsync(ApplicationUser user);
 
     Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user);
 
@@ -28,6 +23,4 @@ public interface IAccountRepository
         ApplicationUser user,
         string currentPassword,
         string newPassword);
-
-    Task RefreshSignInAsync(ApplicationUser user);
 }

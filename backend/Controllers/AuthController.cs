@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos.Auth;
@@ -12,29 +11,26 @@ namespace TechForum.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(
     IAuthService authService,
-    IAvatarService avatarService,
-    IAntiforgery antiforgery) : ControllerBase
+    IAvatarService avatarService) : ControllerBase
 {
-    [AllowAnonymous]
-    [HttpGet("antiforgery-token")]
-    [ProducesResponseType<AntiforgeryTokenDto>(StatusCodes.Status200OK)]
-    public ActionResult<AntiforgeryTokenDto> GetAntiforgeryToken()
-    {
-        var tokens = antiforgery.GetAndStoreTokens(HttpContext);
-        return Ok(new AntiforgeryTokenDto(tokens.RequestToken!));
-    }
+    // The refresh token lives in an HttpOnly cookie, so JavaScript cannot read it.
+    // The cookie is only sent to /api/auth, where refresh and logout are handled.
+    private const string RefreshTokenCookieName = "TechForum.Refresh";
+    private const string RefreshTokenCookiePath = "/api/auth";
 
     [AllowAnonymous]
     [HttpPost("register")]
-    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CurrentUserDto>> Register(RegisterRequest request)
+    public async Task<ActionResult<AuthResponseDto>> Register(
+        RegisterRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await authService.RegisterAsync(request);
+        var result = await authService.RegisterAsync(request, cancellationToken);
         if (result.Succeeded)
         {
-            return StatusCode(StatusCodes.Status201Created, result.User);
+            return StatusCode(StatusCodes.Status201Created, CreateAuthResponse(result));
         }
 
         if (result.Failure == AuthFailureKind.DuplicateEmail)
@@ -57,25 +53,22 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
-    public async Task<ActionResult<CurrentUserDto>> Login(LoginRequest request)
+    public async Task<ActionResult<AuthResponseDto>> Login(
+        LoginRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await authService.LoginAsync(request);
+        var result = await authService.LoginAsync(request, cancellationToken);
         if (result.Succeeded)
         {
-            return Ok(result.User);
+            return Ok(CreateAuthResponse(result));
         }
 
         if (result.Failure == AuthFailureKind.LockedOut)
         {
-            return StatusCode(StatusCodes.Status423Locked, new ProblemDetails
-            {
-                Status = StatusCodes.Status423Locked,
-                Title = "Tài khoản đang bị khóa",
-                Detail = "Vui lòng liên hệ quản trị viên để được hỗ trợ."
-            });
+            return CreateLockedResponse();
         }
 
         return Unauthorized(new ProblemDetails
@@ -83,6 +76,34 @@ public sealed class AuthController(
             Status = StatusCodes.Status401Unauthorized,
             Title = "Đăng nhập không thành công",
             Detail = "Email hoặc mật khẩu không chính xác."
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
+    public async Task<ActionResult<AuthResponseDto>> Refresh(CancellationToken cancellationToken)
+    {
+        var refreshToken = Request.Cookies[RefreshTokenCookieName];
+        var result = await authService.RefreshAsync(refreshToken, cancellationToken);
+        if (result.Succeeded)
+        {
+            return Ok(CreateAuthResponse(result));
+        }
+
+        DeleteRefreshTokenCookie();
+        if (result.Failure == AuthFailureKind.LockedOut)
+        {
+            return CreateLockedResponse();
+        }
+
+        return Unauthorized(new ProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Title = "Phiên đăng nhập đã hết hạn",
+            Detail = "Vui lòng đăng nhập lại."
         });
     }
 
@@ -118,9 +139,17 @@ public sealed class AuthController(
     [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<CurrentUserDto>> ChangePassword(ChangePasswordRequest request)
+    public async Task<ActionResult<CurrentUserDto>> ChangePassword(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await authService.ChangePasswordAsync(GetUserId(), request);
+        var result = await authService.ChangePasswordAsync(GetUserId(), request, cancellationToken);
+        if (result.Succeeded)
+        {
+            // Every refresh token was revoked, so the browser cookie is no longer useful.
+            DeleteRefreshTokenCookie();
+        }
+
         return ToAccountUpdateResponse(result, "Không thể đổi mật khẩu");
     }
 
@@ -150,18 +179,55 @@ public sealed class AuthController(
         return result.Succeeded ? Ok(result.User) : Unauthorized();
     }
 
-    [Authorize]
+    // Anonymous on purpose: the access token may already be expired when the user logs out.
+    [AllowAnonymous]
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
-        await authService.LogoutAsync();
+        var refreshToken = Request.Cookies[RefreshTokenCookieName];
+        await authService.LogoutAsync(refreshToken, cancellationToken);
+        DeleteRefreshTokenCookie();
         return NoContent();
     }
 
     private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+
+    // Sets the refresh token cookie and returns the part of the result the browser may keep in memory.
+    private AuthResponseDto CreateAuthResponse(AuthResult result)
+    {
+        var tokens = result.Tokens!;
+        Response.Cookies.Append(RefreshTokenCookieName, tokens.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Strict,
+            Path = RefreshTokenCookiePath,
+            Expires = tokens.RefreshTokenExpiresAtUtc,
+            IsEssential = true
+        });
+
+        return new AuthResponseDto(
+            result.User!,
+            tokens.AccessToken,
+            tokens.AccessTokenExpiresAtUtc);
+    }
+
+    private void DeleteRefreshTokenCookie()
+    {
+        Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions
+        {
+            Path = RefreshTokenCookiePath
+        });
+    }
+
+    private ObjectResult CreateLockedResponse() => StatusCode(StatusCodes.Status423Locked, new ProblemDetails
+    {
+        Status = StatusCodes.Status423Locked,
+        Title = "Tài khoản đang bị khóa",
+        Detail = "Vui lòng liên hệ quản trị viên để được hỗ trợ."
+    });
 
     private ActionResult<CurrentUserDto> ToAccountUpdateResponse(
         AuthResult result,

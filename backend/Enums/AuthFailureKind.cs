@@ -6,5 +6,6 @@ public enum AuthFailureKind
     Validation,
     DuplicateEmail,
     InvalidCredentials,
-    LockedOut
+    LockedOut,
+    InvalidRefreshToken
 }

@@ -1,15 +1,17 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using TechForum.Api.Constants;
 using TechForum.Api.Models;
 
 namespace TechForum.Api.Middleware;
 
+// Runs after JWT validation. A valid token is still rejected when the account was locked
+// or its security stamp changed (for example after a password change).
 public sealed class ActiveAccountMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(
         HttpContext context,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        UserManager<ApplicationUser> userManager)
     {
         if (context.User.Identity?.IsAuthenticated != true)
         {
@@ -19,7 +21,7 @@ public sealed class ActiveAccountMiddleware(RequestDelegate next)
 
         var user = await userManager.GetUserAsync(context.User);
         var isLockedOut = user is not null && await userManager.IsLockedOutAsync(user);
-        var stampClaim = context.User.FindFirst(userManager.Options.ClaimsIdentity.SecurityStampClaimType)?.Value;
+        var stampClaim = context.User.FindFirst(AuthClaimTypes.SecurityStamp)?.Value;
         var isCurrentSession = user is not null && !string.IsNullOrWhiteSpace(stampClaim) &&
             string.Equals(user.SecurityStamp, stampClaim, StringComparison.Ordinal);
         if (isCurrentSession && !isLockedOut)
@@ -28,7 +30,6 @@ public sealed class ActiveAccountMiddleware(RequestDelegate next)
             return;
         }
 
-        await signInManager.SignOutAsync();
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         await context.Response.WriteAsJsonAsync(new ProblemDetails
         {
