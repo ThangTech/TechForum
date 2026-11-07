@@ -69,4 +69,9 @@ public sealed class RefreshTokenRepository(TechForumDbContext dbContext) : IRefr
                 setters => setters.SetProperty(token => token.RevokedAtUtc, now),
                 cancellationToken);
     }
+
+    public Task<int> DeleteExpiredAsync(DateTimeOffset expiredBefore, CancellationToken cancellationToken) =>
+        dbContext.RefreshTokens
+            .Where(token => token.ExpiresAtUtc < expiredBefore)
+            .ExecuteDeleteAsync(cancellationToken);
 }

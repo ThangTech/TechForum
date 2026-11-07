@@ -142,6 +142,8 @@ builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
 builder.Services.AddSingleton<IContentSanitizer, ContentSanitizer>();
 builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddHostedService<MediaCleanupBackgroundService>();
+builder.Services.AddScoped<IRefreshTokenCleanupService, RefreshTokenCleanupService>();
+builder.Services.AddHostedService<RefreshTokenCleanupBackgroundService>();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>

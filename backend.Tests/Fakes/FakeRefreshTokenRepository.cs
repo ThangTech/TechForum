@@ -59,4 +59,7 @@ public sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
 
         return Task.CompletedTask;
     }
+
+    public Task<int> DeleteExpiredAsync(DateTimeOffset expiredBefore, CancellationToken cancellationToken) =>
+        Task.FromResult(Tokens.RemoveAll(token => token.ExpiresAtUtc < expiredBefore));
 }

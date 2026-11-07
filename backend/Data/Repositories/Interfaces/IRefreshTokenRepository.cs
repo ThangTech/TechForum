@@ -20,4 +20,7 @@ public interface IRefreshTokenRepository
     Task RevokeByHashAsync(string tokenHash, DateTimeOffset now, CancellationToken cancellationToken);
 
     Task RevokeAllForUserAsync(string userId, DateTimeOffset now, CancellationToken cancellationToken);
+
+    // Deletes the tokens whose expiry time is before `expiredBefore`. Returns the number of rows deleted.
+    Task<int> DeleteExpiredAsync(DateTimeOffset expiredBefore, CancellationToken cancellationToken);
 }
