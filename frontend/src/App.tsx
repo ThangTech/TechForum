@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './auth/ProtectedRoute'
+import { AuthRequiredDialogHost } from './components/AuthRequiredDialogHost'
 import { SiteLayout } from './components/SiteLayout'
 import { AccountPage } from './pages/AccountPage'
 import { HomePage } from './pages/HomePage'
@@ -131,6 +132,7 @@ const App = () => {
         <Route path="dang-nhap" element={<LegacyRouteRedirect to={appRoutes.login} />} />
         <Route path="dang-ky" element={<LegacyRouteRedirect to={appRoutes.register} />} />
       </Routes>
+      <AuthRequiredDialogHost />
     </BrowserRouter>
   )
 }

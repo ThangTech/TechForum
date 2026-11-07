@@ -2,7 +2,7 @@ import Button from '@mui/material/Button'
 import { useState } from 'react'
 import type { ReportTargetType } from '../../api/reports'
 import { useAuth } from '../../auth/authState'
-import { AuthRequiredDialog } from '../AuthRequiredDialog'
+import { openAuthDialog } from '../../auth/authDialogStore'
 import { ReportDialog } from './ReportDialog'
 
 interface ReportActionProps {
@@ -12,7 +12,6 @@ interface ReportActionProps {
 
 export const ReportAction = ({ targetId, targetType }: ReportActionProps) => {
   const { user } = useAuth()
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
 
   const open = () => {
@@ -21,13 +20,12 @@ export const ReportAction = ({ targetId, targetType }: ReportActionProps) => {
       return
     }
 
-    setIsAuthDialogOpen(true)
+    openAuthDialog()
   }
 
   return (
     <>
       <Button onClick={open} variant="text">Báo cáo</Button>
-      <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
       <ReportDialog
         isOpen={isReportDialogOpen}
         onClose={() => setIsReportDialogOpen(false)}

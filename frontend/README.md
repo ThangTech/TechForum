@@ -157,6 +157,16 @@ Dữ liệu từ API được tải bằng TanStack React Query (`src/queries/`)
   là cũ để tải lại. Ví dụ: đánh dấu thông báo đã đọc làm số thông báo trên header tự cập nhật.
 - Các form (đăng câu trả lời, sửa câu trả lời, báo cáo...) vẫn giữ trạng thái gửi riêng.
 
+Trạng thái giao diện dùng chung nằm trong store Zustand:
+
+- `src/auth/authStore.ts`: người dùng hiện tại và access token.
+- `src/auth/authDialogStore.ts`: hộp thoại "Bạn cần đăng nhập". Chỉ có một hộp thoại, gắn một lần ở
+  `App.tsx` (`AuthRequiredDialogHost`). Component nào cần cũng gọi `openAuthDialog()`, không tự giữ
+  trạng thái mở/đóng. Hộp thoại tự đóng khi chuyển trang. `ProtectedRoute` vẫn dùng hộp thoại riêng vì
+  khi đóng nó phải đưa người dùng về trang chủ.
+- Trạng thái chỉ một component dùng (menu đang mở, nội dung ô tìm kiếm, tour hướng dẫn) vẫn dùng
+  `useState`/`useRef` tại chỗ, không đưa vào store.
+
 ## Kiểm tra
 
 ```powershell

@@ -4,7 +4,7 @@ import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { getErrorMessage } from '../../queries/errorMessage'
 import { useRecordTopicShare, useRecordTopicView, useTopic } from '../../queries/topics'
-import { AuthRequiredDialog } from '../AuthRequiredDialog'
+import { openAuthDialog } from '../../auth/authDialogStore'
 
 interface TopicEngagementBarProps {
   title: string
@@ -21,7 +21,6 @@ export const TopicEngagementBar = ({ title, topicId }: TopicEngagementBarProps) 
   const [isSharing, setIsSharing] = useState(false)
   const [shareError, setShareError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const error = shareError ?? getErrorMessage(viewError, 'Không thể cập nhật lượt xem.')
 
   // The server counts one view per visitor and day, so asking again on the same day is safe.
@@ -30,7 +29,7 @@ export const TopicEngagementBar = ({ title, topicId }: TopicEngagementBarProps) 
   }, [recordView, topicId])
 
   const share = async () => {
-    if (!user) { setIsAuthDialogOpen(true); return }
+    if (!user) { openAuthDialog(); return }
     if (isSharing) return
     setIsSharing(true); setShareError(null); setSuccess(null)
     const url = window.location.href
@@ -58,7 +57,6 @@ export const TopicEngagementBar = ({ title, topicId }: TopicEngagementBarProps) 
       </div>
       {success && <p className="mt-2 text-sm text-green-700" role="status">{success}</p>}
       {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}
-      <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
     </div>
   )
 }

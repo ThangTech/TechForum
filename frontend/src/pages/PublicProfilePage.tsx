@@ -6,7 +6,7 @@ import { TopicSummaryItem } from '../components/topics/TopicSummaryItem'
 import { UserAvatar } from '../components/account/UserAvatar'
 import Button from '@mui/material/Button'
 import { useAuth } from '../auth/authState'
-import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
+import { openAuthDialog } from '../auth/authDialogStore'
 import { appRoutes } from '../appRoutes'
 import { getErrorMessage } from '../queries/errorMessage'
 import { usePublicProfile, useToggleFollow } from '../queries/profiles'
@@ -30,13 +30,12 @@ export const PublicProfilePage = () => {
   const error = isValidId ? loadError : 'Đường dẫn hồ sơ không hợp lệ.'
   const { user } = useAuth()
   const isFollowBusy = followMutation.isPending
-  const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const isOwnProfile = Boolean(profile && user?.id === profile.id)
 
   const toggleFollow = async () => {
     if (!profile || isFollowBusy) return
-    if (!user) { setIsAuthOpen(true); return }
+    if (!user) { openAuthDialog(); return }
     setActionError(null)
     try {
       await followMutation.mutateAsync(profile.isFollowedByViewer)
@@ -109,7 +108,6 @@ export const PublicProfilePage = () => {
           </div>
         )}
       </div>
-      <AuthRequiredDialog isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </main>
   )
 }

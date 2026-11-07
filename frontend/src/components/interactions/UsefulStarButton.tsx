@@ -1,11 +1,10 @@
 import Button from '@mui/material/Button'
-import { useState } from 'react'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { getErrorMessage } from '../../queries/errorMessage'
 import { useToggleTopicStar, useTopicStar } from '../../queries/stars'
 import { isInitialLoading } from '../../queries/status'
-import { AuthRequiredDialog } from '../AuthRequiredDialog'
+import { openAuthDialog } from '../../auth/authDialogStore'
 
 interface UsefulStarButtonProps {
   topicId: number
@@ -15,7 +14,6 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
   const { user } = useAuth()
   const statusQuery = useTopicStar(topicId)
   const toggleMutation = useToggleTopicStar(topicId)
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
 
   const status = statusQuery.data ?? null
   const isLoading = isInitialLoading(statusQuery)
@@ -26,7 +24,7 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
 
   const handleToggle = async () => {
     if (!user) {
-      setIsAuthDialogOpen(true)
+      openAuthDialog()
       return
     }
     if (!status || isSaving) return
@@ -35,7 +33,7 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
       await toggleMutation.mutateAsync(status.hasStar)
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401) {
-        setIsAuthDialogOpen(true)
+        openAuthDialog()
       }
     }
   }
@@ -57,7 +55,6 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
           <Button onClick={retry} variant="text">Thử lại</Button>
         </div>
       )}
-      <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
     </div>
   )
 }

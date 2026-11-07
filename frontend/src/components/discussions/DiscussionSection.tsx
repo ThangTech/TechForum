@@ -9,7 +9,7 @@ import { answerKeys, useAnswers } from '../../queries/answers'
 import { isInitialLoading } from '../../queries/status'
 import { topicKeys } from '../../queries/topics'
 import { useUserScope } from '../../queries/userScope'
-import { AuthRequiredDialog } from '../AuthRequiredDialog'
+import { openAuthDialog } from '../../auth/authDialogStore'
 import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
 import { AnswerForm } from './AnswerForm'
 import { AnswerList } from './AnswerList'
@@ -43,7 +43,6 @@ export const DiscussionSection = ({
   const aroundAnswerId = readPositiveInteger(answerHash?.[1] ?? null)
   const queryClient = useQueryClient()
   const { scope } = useUserScope()
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const canAcceptAnswers = user?.id === topicAuthorId && topicType === 'question'
@@ -143,7 +142,7 @@ export const DiscussionSection = ({
       await acceptMutation.mutateAsync(answerId)
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401) {
-        setIsAuthDialogOpen(true)
+        openAuthDialog()
       }
       setActionError(
         requestError instanceof ApiError
@@ -186,7 +185,7 @@ export const DiscussionSection = ({
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
           <p className="text-sm leading-6 text-slate-700">Đăng nhập để đóng góp câu trả lời cho chủ đề này.</p>
           <div className="mt-4 sm:mt-0">
-            <Button onClick={() => setIsAuthDialogOpen(true)} variant="contained">Viết câu trả lời</Button>
+            <Button onClick={() => openAuthDialog()} variant="contained">Viết câu trả lời</Button>
           </div>
         </div>
       )}
@@ -227,7 +226,7 @@ export const DiscussionSection = ({
               refreshAnswers()
               setSuccessMessage('Đã xóa câu trả lời.')
             }}
-            onLoginRequired={() => setIsAuthDialogOpen(true)}
+            onLoginRequired={() => openAuthDialog()}
             onHelpfulChanged={(answerId, helpful) => {
               patchAnswers((current) => ({
                 ...current,
@@ -247,7 +246,6 @@ export const DiscussionSection = ({
         )}
       </div>
 
-      <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
     </section>
   )
 }

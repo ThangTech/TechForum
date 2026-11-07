@@ -1,9 +1,8 @@
 import { ActionMenu, type ActionMenuItem } from '../common/ActionMenu'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
 import { appRoutes } from '../../appRoutes'
 import { useAuth } from '../../auth/authState'
-import { AuthRequiredDialog } from '../AuthRequiredDialog'
+import { openAuthDialog } from '../../auth/authDialogStore'
 
 const PenIcon = () => (
   <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
@@ -15,10 +14,9 @@ const PenIcon = () => (
 export const WriteMenu = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [isAuthOpen, setIsAuthOpen] = useState(false)
   const write = (type: 'article' | 'question') => {
     if (!user) {
-      setIsAuthOpen(true)
+      openAuthDialog()
       return
     }
     navigate(`${appRoutes.write}?type=${type}`)
@@ -31,7 +29,6 @@ export const WriteMenu = () => {
   return (
     <span data-tour="write" title="Viết nội dung">
       <ActionMenu icon={<PenIcon />} items={items} label="Viết" menuWidth={180} />
-      <AuthRequiredDialog isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </span>
   )
 }
