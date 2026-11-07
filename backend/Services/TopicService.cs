@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -90,139 +91,47 @@ public sealed partial class TopicService(
         CreateTopicRequest request,
         CancellationToken cancellationToken)
     {
-        var title = request.Title?.Trim();
-        if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
-        {
-            return CreateTopicResult.ValidationError(
-                "title",
-                "Tiêu đề phải có từ 10 đến 200 ký tự.");
-        }
-
-        var summary = request.Summary?.Trim();
-        if (string.IsNullOrWhiteSpace(summary) || summary.Length is < 20 or > 500)
-        {
-            return CreateTopicResult.ValidationError(
-                "summary",
-                "Tóm tắt phải có từ 20 đến 500 ký tự.");
-        }
-
-        if (!TryParseType(request.Type, out var type))
-        {
-            return CreateTopicResult.ValidationError(
-                "type",
-                "Loại nội dung phải là 'article' hoặc 'question'.");
-        }
-
-        if (request.BodyHtml is null || request.BodyHtml.Length > 100_000)
-        {
-            return CreateTopicResult.ValidationError(
-                "bodyHtml",
-                "Nội dung không được để trống hoặc vượt quá 100.000 ký tự.");
-        }
-
-        var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
-        if (!HasMeaningfulContent(sanitizedBody))
-        {
-            return CreateTopicResult.ValidationError(
-                "bodyHtml",
-                "Nội dung phải có văn bản hoặc media hợp lệ.");
-        }
-
-        var category = await topicRepository.GetCategoryByIdAsync(
+        var form = new TopicForm(
+            request.Title,
+            request.Summary,
+            request.Type,
+            request.BodyHtml,
             request.CategoryId,
-            cancellationToken);
-        if (category is null)
+            request.TagIds,
+            request.MediaIds);
+        var validation = await ValidateFormAsync(form, authorId, editingTopicId: null, cancellationToken);
+        if (!validation.IsValid)
         {
-            return CreateTopicResult.ValidationError("categoryId", "Chuyên mục không tồn tại.");
+            return validation.Error;
         }
 
-        var tagIds = (request.TagIds ?? []).Distinct().ToArray();
-        if (tagIds.Length > 5 || tagIds.Any(id => id <= 0))
-        {
-            return CreateTopicResult.ValidationError(
-                "tagIds",
-                "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
-        }
-
-        var tags = await topicRepository.GetActiveTagsByIdsAsync(tagIds, cancellationToken);
-        if (tags.Count != tagIds.Length)
-        {
-            return CreateTopicResult.ValidationError(
-                "tagIds",
-                "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
-        }
-
-        var mediaIds = (request.MediaIds ?? []).Distinct().ToArray();
-        if (mediaIds.Length > 20 || mediaIds.Any(id => id == Guid.Empty))
-        {
-            return CreateTopicResult.ValidationError(
-                "mediaIds",
-                "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
-        }
-
-        var mediaAssets = await mediaAssetRepository.GetOwnedUnattachedByIdsAsync(
-            mediaIds,
-            authorId,
-            cancellationToken);
-        if (mediaAssets.Count != mediaIds.Length)
-        {
-            return CreateTopicResult.ValidationError(
-                "mediaIds",
-                "Một hoặc nhiều media không tồn tại, đã được sử dụng hoặc không thuộc tài khoản này.");
-        }
-
-        var embeddedMediaUrls = MediaUrl().Matches(sanitizedBody)
-            .Select(match => match.Value)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        if (embeddedMediaUrls.Length != mediaAssets.Count ||
-            mediaAssets.Any(asset => !embeddedMediaUrls.Contains(
-                asset.PublicUrl,
-                StringComparer.OrdinalIgnoreCase)))
-        {
-            return CreateTopicResult.ValidationError(
-                "mediaIds",
-                "Danh sách media không khớp với ảnh hoặc video trong nội dung.");
-        }
-
-        var slug = await CreateUniqueSlugAsync(title, cancellationToken);
+        var values = validation.Values;
+        var slug = await CreateUniqueSlugAsync(values.Title, cancellationToken);
         var now = timeProvider.GetUtcNow();
         var topic = new Topic
         {
-            Title = title,
+            Title = values.Title,
             Slug = slug,
-            Summary = summary,
-            BodyHtml = sanitizedBody,
-            Type = type,
+            Summary = values.Summary,
+            BodyHtml = values.SanitizedBody,
+            Type = values.Type,
             Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft,
-            CategoryId = category.Id,
+            CategoryId = values.Category.Id,
             AuthorId = authorId,
             CreatedAtUtc = now,
             PublishedAtUtc = request.Publish ? now : null,
-            TopicTags = tags.Select(tag => new TopicTag { TagId = tag.Id }).ToList(),
-            MediaAssets = mediaAssets.ToList()
+            TopicTags = values.Tags.Select(tag => new TopicTag { TagId = tag.Id }).ToList(),
+            MediaAssets = values.MediaAssets.ToList()
         };
 
-        if (!await TryAddWithUniqueSlugAsync(topic, title, cancellationToken))
+        if (!await TryAddWithUniqueSlugAsync(topic, values.Title, cancellationToken))
         {
             return CreateTopicResult.ValidationError(
                 "title",
                 "Không thể tạo đường dẫn riêng cho tiêu đề này lúc này. Vui lòng thử lại.");
         }
 
-        return CreateTopicResult.Success(new OwnTopicDto(
-            topic.Id,
-            topic.Title,
-            topic.Slug,
-            topic.Summary,
-            topic.BodyHtml,
-            MapType(topic.Type),
-            topic.Status == TopicStatus.Published ? "published" : "draft",
-            new TopicCategoryDto(category.Id, category.Name, category.Slug),
-            tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
-            mediaAssets.Select(MapMedia).ToList(),
-            topic.CreatedAtUtc,
-            topic.PublishedAtUtc));
+        return CreateTopicResult.Success(MapSavedTopic(topic, values));
     }
 
     public async Task<CreateTopicResult?> UpdateAsync(
@@ -247,121 +156,57 @@ public sealed partial class TopicService(
                 "Bạn có thể giữ nguyên bài đã xuất bản hoặc liên hệ quản trị viên khi cần xử lý.");
         }
 
-        var title = request.Title?.Trim();
-        if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
+        var form = new TopicForm(
+            request.Title,
+            request.Summary,
+            request.Type,
+            request.BodyHtml,
+            request.CategoryId,
+            request.TagIds,
+            request.MediaIds);
+        var validation = await ValidateFormAsync(form, authorId, topic.Id, cancellationToken);
+        if (!validation.IsValid)
         {
-            return CreateTopicResult.ValidationError("title", "Tiêu đề phải có từ 10 đến 200 ký tự.");
+            return validation.Error;
         }
 
-        var summary = request.Summary?.Trim();
-        if (string.IsNullOrWhiteSpace(summary) || summary.Length is < 20 or > 500)
-        {
-            return CreateTopicResult.ValidationError("summary", "Tóm tắt phải có từ 20 đến 500 ký tự.");
-        }
-
-        if (!TryParseType(request.Type, out var type))
-        {
-            return CreateTopicResult.ValidationError("type", "Loại nội dung phải là 'article' hoặc 'question'.");
-        }
-
-        if (request.BodyHtml is null || request.BodyHtml.Length > 100_000)
-        {
-            return CreateTopicResult.ValidationError("bodyHtml", "Nội dung không được để trống hoặc vượt quá 100.000 ký tự.");
-        }
-
-        var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
-        if (!HasMeaningfulContent(sanitizedBody))
-        {
-            return CreateTopicResult.ValidationError("bodyHtml", "Nội dung phải có văn bản hoặc media hợp lệ.");
-        }
-
-        var category = await topicRepository.GetCategoryByIdAsync(request.CategoryId, cancellationToken);
-        if (category is null)
-        {
-            return CreateTopicResult.ValidationError("categoryId", "Chuyên mục không tồn tại.");
-        }
-
-        var tagIds = (request.TagIds ?? []).Distinct().ToArray();
-        if (tagIds.Length > 5 || tagIds.Any(tagId => tagId <= 0))
-        {
-            return CreateTopicResult.ValidationError("tagIds", "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
-        }
-
-        var tags = await topicRepository.GetActiveTagsByIdsAsync(tagIds, cancellationToken);
-        if (tags.Count != tagIds.Length)
-        {
-            return CreateTopicResult.ValidationError("tagIds", "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
-        }
-
-        var mediaIds = (request.MediaIds ?? []).Distinct().ToArray();
-        if (mediaIds.Length > 20 || mediaIds.Any(mediaId => mediaId == Guid.Empty))
-        {
-            return CreateTopicResult.ValidationError("mediaIds", "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
-        }
-
-        var mediaAssets = await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(
-            mediaIds,
-            authorId,
-            topic.Id,
-            cancellationToken);
-        if (mediaAssets.Count != mediaIds.Length)
-        {
-            return CreateTopicResult.ValidationError("mediaIds", "Một hoặc nhiều media không hợp lệ hoặc không thuộc tài khoản này.");
-        }
-
-        var embeddedMediaUrls = MediaUrl().Matches(sanitizedBody)
-            .Select(match => match.Value)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        if (embeddedMediaUrls.Length != mediaAssets.Count ||
-            mediaAssets.Any(asset => !embeddedMediaUrls.Contains(asset.PublicUrl, StringComparer.OrdinalIgnoreCase)))
-            return CreateTopicResult.ValidationError("mediaIds", "Danh sách media không khớp với ảnh hoặc video trong nội dung.");
-
-        topic.Title = title;
-        topic.Summary = summary;
-        topic.BodyHtml = sanitizedBody;
-        topic.Type = type;
-        if (type == TopicType.Article)
+        var values = validation.Values;
+        topic.Title = values.Title;
+        topic.Summary = values.Summary;
+        topic.BodyHtml = values.SanitizedBody;
+        topic.Type = values.Type;
+        if (values.Type == TopicType.Article)
         {
             topic.AcceptedAnswerId = null;
         }
-        topic.CategoryId = category.Id;
+
+        topic.CategoryId = values.Category.Id;
         topic.Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft;
         topic.PublishedAtUtc = request.Publish ? topic.PublishedAtUtc ?? timeProvider.GetUtcNow() : null;
         topic.UpdatedAtUtc = timeProvider.GetUtcNow();
 
-        foreach (var topicTag in topic.TopicTags.Where(item => !tagIds.Contains(item.TagId)).ToList())
+        foreach (var topicTag in topic.TopicTags.Where(item => !values.TagIds.Contains(item.TagId)).ToList())
         {
             topic.TopicTags.Remove(topicTag);
         }
-        foreach (var tag in tags.Where(tag => topic.TopicTags.All(item => item.TagId != tag.Id)))
+
+        foreach (var tag in values.Tags.Where(tag => topic.TopicTags.All(item => item.TagId != tag.Id)))
         {
             topic.TopicTags.Add(new TopicTag { TopicId = topic.Id, TagId = tag.Id, Tag = tag });
         }
 
-        foreach (var mediaAsset in topic.MediaAssets.Where(item => !mediaIds.Contains(item.Id)).ToList())
+        foreach (var mediaAsset in topic.MediaAssets.Where(item => !values.MediaIds.Contains(item.Id)).ToList())
         {
             topic.MediaAssets.Remove(mediaAsset);
         }
-        foreach (var mediaAsset in mediaAssets.Where(item => topic.MediaAssets.All(current => current.Id != item.Id)))
+
+        foreach (var mediaAsset in values.MediaAssets.Where(item => topic.MediaAssets.All(current => current.Id != item.Id)))
         {
             topic.MediaAssets.Add(mediaAsset);
         }
 
         await topicRepository.SaveChangesAsync(cancellationToken);
-        return CreateTopicResult.Success(new OwnTopicDto(
-            topic.Id,
-            topic.Title,
-            topic.Slug,
-            topic.Summary,
-            topic.BodyHtml,
-            MapType(topic.Type),
-            topic.Status == TopicStatus.Published ? "published" : "draft",
-            new TopicCategoryDto(category.Id, category.Name, category.Slug),
-            tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
-            mediaAssets.Select(MapMedia).ToList(),
-            topic.CreatedAtUtc,
-            topic.PublishedAtUtc));
+        return CreateTopicResult.Success(MapSavedTopic(topic, values));
     }
 
     public async Task<SoftDeleteTopicResult> SoftDeleteAsync(
@@ -385,6 +230,157 @@ public sealed partial class TopicService(
         await topicRepository.SaveChangesAsync(cancellationToken);
         return SoftDeleteTopicResult.Success();
     }
+
+    // The fields of the "write a topic" form. Creating and editing send the same fields.
+    private sealed record TopicForm(
+        string? Title,
+        string? Summary,
+        string? Type,
+        string? BodyHtml,
+        int CategoryId,
+        IReadOnlyList<int>? TagIds,
+        IReadOnlyList<Guid>? MediaIds);
+
+    // The form after every check passed: text trimmed, HTML cleaned, and the category, tags and
+    // media loaded from the database.
+    private sealed record ValidatedTopic(
+        string Title,
+        string Summary,
+        TopicType Type,
+        string SanitizedBody,
+        Category Category,
+        IReadOnlyList<Tag> Tags,
+        int[] TagIds,
+        Guid[] MediaIds,
+        IReadOnlyList<MediaAsset> MediaAssets);
+
+    private sealed class TopicValidation
+    {
+        private readonly ValidatedTopic? values;
+        private readonly CreateTopicResult? error;
+
+        private TopicValidation(ValidatedTopic? values, CreateTopicResult? error)
+        {
+            this.values = values;
+            this.error = error;
+        }
+
+        [MemberNotNullWhen(true, nameof(Values))]
+        [MemberNotNullWhen(false, nameof(Error))]
+        public bool IsValid => values is not null;
+
+        public ValidatedTopic? Values => values;
+
+        public CreateTopicResult? Error => error;
+
+        public static TopicValidation Valid(ValidatedTopic values) => new(values, null);
+
+        public static TopicValidation Invalid(string field, string message) =>
+            new(null, CreateTopicResult.ValidationError(field, message));
+    }
+
+    // Checks the form of a new topic (editingTopicId is null) or of a topic that is being edited.
+    // The checks run in a fixed order and the first problem is reported.
+    private async Task<TopicValidation> ValidateFormAsync(
+        TopicForm form,
+        string authorId,
+        int? editingTopicId,
+        CancellationToken cancellationToken)
+    {
+        var title = form.Title?.Trim();
+        if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
+        {
+            return TopicValidation.Invalid("title", "Tiêu đề phải có từ 10 đến 200 ký tự.");
+        }
+
+        var summary = form.Summary?.Trim();
+        if (string.IsNullOrWhiteSpace(summary) || summary.Length is < 20 or > 500)
+        {
+            return TopicValidation.Invalid("summary", "Tóm tắt phải có từ 20 đến 500 ký tự.");
+        }
+
+        if (!TryParseType(form.Type, out var type))
+        {
+            return TopicValidation.Invalid("type", "Loại nội dung phải là 'article' hoặc 'question'.");
+        }
+
+        if (form.BodyHtml is null || form.BodyHtml.Length > 100_000)
+        {
+            return TopicValidation.Invalid("bodyHtml", "Nội dung không được để trống hoặc vượt quá 100.000 ký tự.");
+        }
+
+        var sanitizedBody = contentSanitizer.Sanitize(form.BodyHtml).Trim();
+        if (!HasMeaningfulContent(sanitizedBody))
+        {
+            return TopicValidation.Invalid("bodyHtml", "Nội dung phải có văn bản hoặc media hợp lệ.");
+        }
+
+        var category = await topicRepository.GetCategoryByIdAsync(form.CategoryId, cancellationToken);
+        if (category is null)
+        {
+            return TopicValidation.Invalid("categoryId", "Chuyên mục không tồn tại.");
+        }
+
+        var tagIds = (form.TagIds ?? []).Distinct().ToArray();
+        if (tagIds.Length > 5 || tagIds.Any(tagId => tagId <= 0))
+        {
+            return TopicValidation.Invalid("tagIds", "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
+        }
+
+        var tags = await topicRepository.GetActiveTagsByIdsAsync(tagIds, cancellationToken);
+        if (tags.Count != tagIds.Length)
+        {
+            return TopicValidation.Invalid("tagIds", "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
+        }
+
+        var mediaIds = (form.MediaIds ?? []).Distinct().ToArray();
+        if (mediaIds.Length > 20 || mediaIds.Any(mediaId => mediaId == Guid.Empty))
+        {
+            return TopicValidation.Invalid("mediaIds", "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
+        }
+
+        // A new topic can only use media that is not attached to anything yet. An edited topic can also keep
+        // the media it already has.
+        var mediaAssets = editingTopicId is { } topicId
+            ? await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(mediaIds, authorId, topicId, cancellationToken)
+            : await mediaAssetRepository.GetOwnedUnattachedByIdsAsync(mediaIds, authorId, cancellationToken);
+        if (mediaAssets.Count != mediaIds.Length)
+        {
+            return TopicValidation.Invalid(
+                "mediaIds",
+                editingTopicId is null
+                    ? "Một hoặc nhiều media không tồn tại, đã được sử dụng hoặc không thuộc tài khoản này."
+                    : "Một hoặc nhiều media không hợp lệ hoặc không thuộc tài khoản này.");
+        }
+
+        var embeddedMediaUrls = MediaUrl().Matches(sanitizedBody)
+            .Select(match => match.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (embeddedMediaUrls.Length != mediaAssets.Count ||
+            mediaAssets.Any(asset => !embeddedMediaUrls.Contains(asset.PublicUrl, StringComparer.OrdinalIgnoreCase)))
+        {
+            return TopicValidation.Invalid("mediaIds", "Danh sách media không khớp với ảnh hoặc video trong nội dung.");
+        }
+
+        return TopicValidation.Valid(new ValidatedTopic(
+            title, summary, type, sanitizedBody, category, tags, tagIds, mediaIds, mediaAssets));
+    }
+
+    // The answer of the create and edit calls: the saved topic plus the category, tags and media that were checked.
+    private static OwnTopicDto MapSavedTopic(Topic topic, ValidatedTopic values) => new(
+        topic.Id,
+        topic.Title,
+        topic.Slug,
+        topic.Summary,
+        topic.BodyHtml,
+        MapType(topic.Type),
+        topic.Status == TopicStatus.Published ? "published" : "draft",
+        new TopicCategoryDto(values.Category.Id, values.Category.Name, values.Category.Slug),
+        values.Tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
+        values.MediaAssets.Select(MapMedia).ToList(),
+        topic.CreatedAtUtc,
+        topic.PublishedAtUtc);
 
     // Two requests with the same title can both see the same slug as free. The database accepts only
     // one of them, so the other one picks another slug and saves again. After the first conflict it
