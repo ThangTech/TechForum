@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Constants;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -20,24 +20,22 @@ public sealed class AdminTagsController(ITagService tagService) : ControllerBase
     public async Task<ActionResult<AdminTagDto>> Create(
         [FromBody] SaveTagRequest request,
         CancellationToken cancellationToken) =>
-        ToActionResult(await tagService.CreateAsync(GetAdministratorId(), request, cancellationToken), true);
+        ToActionResult(await tagService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken), true);
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult<AdminTagDto>> Update(
         int id,
         [FromBody] SaveTagRequest request,
         CancellationToken cancellationToken) =>
-        ToActionResult(await tagService.UpdateAsync(GetAdministratorId(), id, request, cancellationToken));
+        ToActionResult(await tagService.UpdateAsync(User.GetRequiredUserId(), id, request, cancellationToken));
 
     [HttpPut("{id:int}/active")]
     public async Task<ActionResult<AdminTagDto>> SetActive(
         int id,
         [FromBody] SetActiveRequest request,
         CancellationToken cancellationToken) =>
-        ToActionResult(await tagService.SetActiveAsync(GetAdministratorId(), id, request.IsActive, cancellationToken));
+        ToActionResult(await tagService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken));
 
-    private string GetAdministratorId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên quản trị thiếu định danh tài khoản.");
 
     private ActionResult<AdminTagDto> ToActionResult(TagWriteResult result, bool created = false) =>
         result.Failure switch

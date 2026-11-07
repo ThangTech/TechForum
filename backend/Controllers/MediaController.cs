@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -33,7 +33,7 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteUnused(Guid id, CancellationToken cancellationToken)
     {
-        var userId = GetUserId();
+        var userId = User.GetRequiredUserId();
         var result = await mediaStorageService.DeleteUnusedAsync(userId, id, cancellationToken);
         return result switch
         {
@@ -55,7 +55,7 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
     private async Task<ActionResult<MediaUploadDto>> StoreAsync(
         Func<string, Task<MediaUploadResult>> store)
     {
-        var result = await store(GetUserId());
+        var result = await store(User.GetRequiredUserId());
         if (!result.Succeeded)
         {
             return BadRequest(new ProblemDetails
@@ -73,7 +73,4 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
             media with { Link = absoluteLink });
     }
 
-    private string GetUserId() =>
-        User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 }

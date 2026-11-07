@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -40,7 +40,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         [FromQuery] TopicQuery query,
         CancellationToken cancellationToken)
     {
-        var followerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var followerId = User.GetUserIdOrNull();
         if (string.IsNullOrWhiteSpace(followerId))
         {
             return Unauthorized();
@@ -68,7 +68,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         [FromQuery] TopicQuery query,
         CancellationToken cancellationToken)
     {
-        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var authorId = User.GetUserIdOrNull();
         if (string.IsNullOrWhiteSpace(authorId))
         {
             return Unauthorized();
@@ -95,7 +95,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         int id,
         CancellationToken cancellationToken)
     {
-        var topic = await topicService.GetOwnedByIdAsync(id, GetUserId(), cancellationToken);
+        var topic = await topicService.GetOwnedByIdAsync(id, User.GetRequiredUserId(), cancellationToken);
         return topic is null
             ? NotFound(CreateNotFoundProblem())
             : Ok(topic);
@@ -131,7 +131,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         [FromBody] CreateTopicRequest request,
         CancellationToken cancellationToken)
     {
-        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var authorId = User.GetUserIdOrNull();
         if (string.IsNullOrWhiteSpace(authorId))
         {
             return Unauthorized(new ProblemDetails
@@ -166,7 +166,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         [FromBody] UpdateTopicRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await topicService.UpdateAsync(id, GetUserId(), request, cancellationToken);
+        var result = await topicService.UpdateAsync(id, User.GetRequiredUserId(), request, cancellationToken);
         if (result is null)
         {
             return NotFound(CreateNotFoundProblem());
@@ -201,7 +201,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var result = await topicService.SoftDeleteAsync(id, GetUserId(), cancellationToken);
+        var result = await topicService.SoftDeleteAsync(id, User.GetRequiredUserId(), cancellationToken);
         return result.Failure switch
         {
             SoftDeleteTopicFailure.None => NoContent(),
@@ -215,9 +215,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         };
     }
 
-    private string GetUserId() =>
-        User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 
     private static ProblemDetails CreateNotFoundProblem() => new()
     {

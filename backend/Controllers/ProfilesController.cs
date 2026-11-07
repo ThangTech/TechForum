@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -21,7 +21,7 @@ public sealed class ProfilesController(
     {
         var profile = await profileService.GetByUserIdAsync(
             userId,
-            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            User.GetUserIdOrNull(),
             cancellationToken);
         if (profile is null)
         {
@@ -58,7 +58,7 @@ public sealed class ProfilesController(
         string userId,
         CancellationToken cancellationToken)
     {
-        var result = await followService.FollowAsync(GetUserId(), userId, cancellationToken);
+        var result = await followService.FollowAsync(User.GetRequiredUserId(), userId, cancellationToken);
         return result.Failure switch
         {
             FollowFailure.None => Ok(result.Status),
@@ -73,10 +73,8 @@ public sealed class ProfilesController(
     public async Task<ActionResult<FollowStatusDto>> Unfollow(
         string userId,
         CancellationToken cancellationToken) =>
-        Ok(await followService.UnfollowAsync(GetUserId(), userId, cancellationToken));
+        Ok(await followService.UnfollowAsync(User.GetRequiredUserId(), userId, cancellationToken));
 
-    private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 
     private async Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetConnections(
         string userId,

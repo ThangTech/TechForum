@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Constants;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -38,8 +38,7 @@ public sealed class AdminTopicsController(IAdminTopicService topicService) : Con
         [FromBody] ModerateTopicRequest request,
         CancellationToken cancellationToken)
     {
-        var administratorId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("Phiên quản trị thiếu định danh tài khoản.");
+        var administratorId = User.GetRequiredUserId();
         var result = await topicService.ModerateAsync(topicId, administratorId, request, cancellationToken);
         return result.Failure switch
         {

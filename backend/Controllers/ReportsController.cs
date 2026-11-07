@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 using TechForum.Api.Constants;
 
@@ -17,8 +17,7 @@ public sealed class ReportsController(IContentReportService reportService) : Con
         [FromBody] CreateReportRequest request,
         CancellationToken cancellationToken)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+        var userId = User.GetRequiredUserId();
         var result = await reportService.CreateAsync(userId, request, cancellationToken);
         return result.Failure switch
         {
@@ -55,8 +54,7 @@ public sealed class ReportsController(IContentReportService reportService) : Con
         [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
+        var userId = User.GetRequiredUserId();
         var result = await reportService.GetMineAsync(userId, status, page, pageSize, cancellationToken);
         return result is null
             ? BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
@@ -73,8 +71,7 @@ public sealed class ReportsController(IContentReportService reportService) : Con
         [FromBody] ResolveReportRequest request,
         CancellationToken cancellationToken)
     {
-        var administratorId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new InvalidOperationException("Phiên quản trị thiếu định danh tài khoản.");
+        var administratorId = User.GetRequiredUserId();
         var result = await reportService.ResolveAsync(reportId, administratorId, request, cancellationToken);
         return result.Failure switch
         {

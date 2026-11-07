@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -15,7 +15,7 @@ public sealed class TopicEngagementsController(ITopicEngagementService engagemen
     [HttpPost("view")]
     public async Task<ActionResult<TopicEngagementDto>> RecordView(int topicId, CancellationToken cancellationToken)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserIdOrNull();
         var visitorKey = userId is null ? GetOrCreateVisitorKey() : $"user:{userId}";
         var result = await engagementService.RecordViewAsync(topicId, visitorKey, cancellationToken);
         return result is null ? NotFound() : Ok(result);

@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos.Auth;
 using TechForum.Api.Enums;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -113,7 +113,7 @@ public sealed class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<CurrentUserDto>> GetCurrentUser()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.GetUserIdOrNull();
         if (string.IsNullOrWhiteSpace(userId))
         {
             return Unauthorized();
@@ -130,7 +130,7 @@ public sealed class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<CurrentUserDto>> UpdateProfile(UpdateProfileRequest request)
     {
-        var result = await authService.UpdateProfileAsync(GetUserId(), request);
+        var result = await authService.UpdateProfileAsync(User.GetRequiredUserId(), request);
         return ToAccountUpdateResponse(result, "Không thể cập nhật hồ sơ");
     }
 
@@ -143,7 +143,7 @@ public sealed class AuthController(
         ChangePasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await authService.ChangePasswordAsync(GetUserId(), request, cancellationToken);
+        var result = await authService.ChangePasswordAsync(User.GetRequiredUserId(), request, cancellationToken);
         if (result.Succeeded)
         {
             // Every refresh token was revoked, so the browser cookie is no longer useful.
@@ -160,7 +160,7 @@ public sealed class AuthController(
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<CurrentUserDto>> UpdateAvatar(IFormFile file, CancellationToken cancellationToken)
     {
-        var result = await avatarService.UpdateAsync(GetUserId(), file, cancellationToken);
+        var result = await avatarService.UpdateAsync(User.GetRequiredUserId(), file, cancellationToken);
         return result.Succeeded
             ? Ok(result.User)
             : BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]> { ["file"] = [result.Error!] })
@@ -175,7 +175,7 @@ public sealed class AuthController(
     [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CurrentUserDto>> DeleteAvatar(CancellationToken cancellationToken)
     {
-        var result = await avatarService.DeleteAsync(GetUserId(), cancellationToken);
+        var result = await avatarService.DeleteAsync(User.GetRequiredUserId(), cancellationToken);
         return result.Succeeded ? Ok(result.User) : Unauthorized();
     }
 
@@ -191,8 +191,6 @@ public sealed class AuthController(
         return NoContent();
     }
 
-    private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 
     // Sets the refresh token cookie and returns the part of the result the browser may keep in memory.
     private AuthResponseDto CreateAuthResponse(AuthResult result)

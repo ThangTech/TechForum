@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -13,7 +13,7 @@ public sealed class TopicBookmarksController(ITopicBookmarkService bookmarkServi
     [HttpGet]
     public async Task<ActionResult<BookmarkStatusDto>> Get(int topicId, CancellationToken cancellationToken)
     {
-        var result = await bookmarkService.GetStatusAsync(topicId, UserIdOrNull(), cancellationToken);
+        var result = await bookmarkService.GetStatusAsync(topicId, User.GetUserIdOrNull(), cancellationToken);
         return result is null ? TopicNotFound() : Ok(result);
     }
 
@@ -21,7 +21,7 @@ public sealed class TopicBookmarksController(ITopicBookmarkService bookmarkServi
     [HttpPut]
     public async Task<ActionResult<BookmarkStatusDto>> Add(int topicId, CancellationToken cancellationToken)
     {
-        var result = await bookmarkService.AddAsync(topicId, RequiredUserId(), cancellationToken);
+        var result = await bookmarkService.AddAsync(topicId, User.GetRequiredUserId(), cancellationToken);
         return result is null ? TopicNotFound() : Ok(result);
     }
 
@@ -29,13 +29,10 @@ public sealed class TopicBookmarksController(ITopicBookmarkService bookmarkServi
     [HttpDelete]
     public async Task<ActionResult<BookmarkStatusDto>> Remove(int topicId, CancellationToken cancellationToken)
     {
-        var result = await bookmarkService.RemoveAsync(topicId, RequiredUserId(), cancellationToken);
+        var result = await bookmarkService.RemoveAsync(topicId, User.GetRequiredUserId(), cancellationToken);
         return result is null ? TopicNotFound() : Ok(result);
     }
 
-    private string? UserIdOrNull() => User.FindFirstValue(ClaimTypes.NameIdentifier);
-    private string RequiredUserId() => UserIdOrNull()
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
     private NotFoundObjectResult TopicNotFound() => NotFound(new ProblemDetails
     {
         Status = StatusCodes.Status404NotFound,

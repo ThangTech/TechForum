@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -27,9 +27,7 @@ public sealed class ActivityController(IActivityService activityService) : Contr
                     [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số hoạt động mỗi trang phải từ 1 đến 50."]
             }));
         }
-        return Ok(await activityService.GetMineAsync(GetUserId(), page, pageSize, cancellationToken));
+        return Ok(await activityService.GetMineAsync(User.GetRequiredUserId(), page, pageSize, cancellationToken));
     }
 
-    private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 }

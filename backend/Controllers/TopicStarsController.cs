@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -19,7 +19,7 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
     {
         var status = await topicStarService.GetAsync(
             topicId,
-            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            User.GetUserIdOrNull(),
             cancellationToken);
         return status is null ? NotFoundProblem() : Ok(status);
     }
@@ -32,7 +32,7 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
         int topicId,
         CancellationToken cancellationToken)
     {
-        var status = await topicStarService.AddAsync(topicId, GetUserId(), cancellationToken);
+        var status = await topicStarService.AddAsync(topicId, User.GetRequiredUserId(), cancellationToken);
         return status is null ? NotFoundProblem() : Ok(status);
     }
 
@@ -44,13 +44,10 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
         int topicId,
         CancellationToken cancellationToken)
     {
-        var status = await topicStarService.RemoveAsync(topicId, GetUserId(), cancellationToken);
+        var status = await topicStarService.RemoveAsync(topicId, User.GetRequiredUserId(), cancellationToken);
         return status is null ? NotFoundProblem() : Ok(status);
     }
 
-    private string GetUserId() =>
-        User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 
     private NotFoundObjectResult NotFoundProblem() => NotFound(new ProblemDetails
     {

@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -33,7 +33,7 @@ public sealed class NotificationsController(INotificationService notificationSer
         }
 
         return Ok(await notificationService.GetPageAsync(
-            GetUserId(), page, pageSize, cancellationToken));
+            User.GetRequiredUserId(), page, pageSize, cancellationToken));
     }
 
     [HttpPut("{id:long}/read")]
@@ -41,7 +41,7 @@ public sealed class NotificationsController(INotificationService notificationSer
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MarkRead(long id, CancellationToken cancellationToken)
     {
-        var updated = await notificationService.MarkReadAsync(id, GetUserId(), cancellationToken);
+        var updated = await notificationService.MarkReadAsync(id, User.GetRequiredUserId(), cancellationToken);
         return updated ? NoContent() : NotFound(new ProblemDetails
         {
             Status = StatusCodes.Status404NotFound,
@@ -49,7 +49,4 @@ public sealed class NotificationsController(INotificationService notificationSer
         });
     }
 
-    private string GetUserId() =>
-        User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 }

@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -26,7 +26,7 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         }
 
         var viewerId = User.Identity?.IsAuthenticated == true
-            ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ? User.GetUserIdOrNull()
             : null;
         var page = await answerService.GetPublicPageAsync(topicId, query, cancellationToken, viewerId);
         if (page is not null)
@@ -57,7 +57,7 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         int answerId,
         CancellationToken cancellationToken) =>
         ToHelpfulResponse(await answerService.SetHelpfulAsync(
-            topicId, answerId, GetUserId(), true, cancellationToken));
+            topicId, answerId, User.GetRequiredUserId(), true, cancellationToken));
 
     [Authorize]
     [HttpDelete("{answerId:int}/helpful")]
@@ -69,7 +69,7 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         int answerId,
         CancellationToken cancellationToken) =>
         ToHelpfulResponse(await answerService.SetHelpfulAsync(
-            topicId, answerId, GetUserId(), false, cancellationToken));
+            topicId, answerId, User.GetRequiredUserId(), false, cancellationToken));
 
     private ActionResult<AnswerHelpfulDto> ToHelpfulResponse(AnswerHelpfulResult result) =>
         result.Failure switch
@@ -102,7 +102,7 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         [FromBody] CreateAnswerRequest request,
         CancellationToken cancellationToken)
     {
-        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var authorId = User.GetUserIdOrNull();
         if (string.IsNullOrWhiteSpace(authorId))
         {
             return Unauthorized();
@@ -148,7 +148,7 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         int answerId,
         CancellationToken cancellationToken)
     {
-        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var authorId = User.GetUserIdOrNull();
         if (string.IsNullOrWhiteSpace(authorId))
         {
             return Unauthorized();
@@ -187,7 +187,7 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         CancellationToken cancellationToken)
     {
         var result = await answerService.UpdateAsync(
-            topicId, answerId, GetUserId(), request, cancellationToken);
+            topicId, answerId, User.GetRequiredUserId(), request, cancellationToken);
         return result.Failure switch
         {
             UpdateAnswerFailure.None => Ok(result.Answer),
@@ -211,7 +211,7 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         CancellationToken cancellationToken)
     {
         var deleted = await answerService.DeleteAsync(
-            topicId, answerId, GetUserId(), cancellationToken);
+            topicId, answerId, User.GetRequiredUserId(), cancellationToken);
         return deleted ? NoContent() : NotFound(new ProblemDetails
         {
             Status = 404,
@@ -220,9 +220,6 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         });
     }
 
-    private string GetUserId() =>
-        User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new InvalidOperationException("Phiên đăng nhập thiếu định danh tài khoản.");
 
     private static ValidationProblemDetails? Validate(AnswerQuery query)
     {
