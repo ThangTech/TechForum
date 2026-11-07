@@ -1,39 +1,38 @@
 import Button from '@mui/material/Button'
 import { useEffect, useState } from 'react'
-import { recordTopicShare, recordTopicView, type TopicEngagement } from '../../api/engagements'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
+import { getErrorMessage } from '../../queries/errorMessage'
+import { useRecordTopicShare, useRecordTopicView, useTopic } from '../../queries/topics'
 import { AuthRequiredDialog } from '../AuthRequiredDialog'
 
 interface TopicEngagementBarProps {
-  initial: TopicEngagement
   title: string
   topicId: number
 }
 
-export const TopicEngagementBar = ({ initial, title, topicId }: TopicEngagementBarProps) => {
+export const TopicEngagementBar = ({ title, topicId }: TopicEngagementBarProps) => {
   const { user } = useAuth()
-  const [engagement, setEngagement] = useState(initial)
+  // The counts are part of the cached topic. Recording a view or a share updates that cache.
+  const { data: topic } = useTopic(topicId, true)
+  const engagement = { viewCount: topic?.viewCount ?? 0, shareCount: topic?.shareCount ?? 0 }
+  const { mutate: recordView, error: viewError } = useRecordTopicView()
+  const shareMutation = useRecordTopicShare()
   const [isSharing, setIsSharing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [shareError, setShareError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  const error = shareError ?? getErrorMessage(viewError, 'Không thể cập nhật lượt xem.')
 
+  // The server counts one view per visitor and day, so asking again on the same day is safe.
   useEffect(() => {
-    const controller = new AbortController()
-    recordTopicView(topicId, controller.signal)
-      .then(setEngagement)
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật lượt xem.')
-      })
-    return () => controller.abort()
-  }, [topicId])
+    recordView(topicId)
+  }, [recordView, topicId])
 
   const share = async () => {
     if (!user) { setIsAuthDialogOpen(true); return }
     if (isSharing) return
-    setIsSharing(true); setError(null); setSuccess(null)
+    setIsSharing(true); setShareError(null); setSuccess(null)
     const url = window.location.href
     try {
       if (navigator.share) {
@@ -43,10 +42,10 @@ export const TopicEngagementBar = ({ initial, title, topicId }: TopicEngagementB
         await navigator.clipboard.writeText(url)
         setSuccess('Đã sao chép liên kết.')
       }
-      setEngagement(await recordTopicShare(topicId))
+      await shareMutation.mutateAsync(topicId)
     } catch (requestError) {
       if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-      setError(requestError instanceof ApiError ? requestError.message : 'Không thể chia sẻ hoặc sao chép liên kết.')
+      setShareError(requestError instanceof ApiError ? requestError.message : 'Không thể chia sẻ hoặc sao chép liên kết.')
     } finally { setIsSharing(false) }
   }
 

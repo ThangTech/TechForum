@@ -1,9 +1,14 @@
 import Button from '@mui/material/Button'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { acceptAnswer, getAnswers, type Answer, type AnswerPage, type AnswerSort } from '../../api/answers'
+import { acceptAnswer, type Answer, type AnswerPage, type AnswerSort } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
+import { answerKeys, useAnswers } from '../../queries/answers'
+import { isInitialLoading } from '../../queries/status'
+import { topicKeys } from '../../queries/topics'
+import { useUserScope } from '../../queries/userScope'
 import { AuthRequiredDialog } from '../AuthRequiredDialog'
 import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
 import { AnswerForm } from './AnswerForm'
@@ -36,55 +41,67 @@ export const DiscussionSection = ({
   const sort: AnswerSort = new URLSearchParams(location.search).get('answerSort') === 'helpful' ? 'helpful' : 'oldest'
   const answerHash = /^#answer-(\d+)$/.exec(location.hash)
   const aroundAnswerId = readPositiveInteger(answerHash?.[1] ?? null)
-  const [data, setData] = useState<AnswerPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isTargetUnavailable, setIsTargetUnavailable] = useState(false)
-  const [requestVersion, setRequestVersion] = useState(0)
+  const queryClient = useQueryClient()
+  const { scope } = useUserScope()
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [acceptingAnswerId, setAcceptingAnswerId] = useState<number | null>(null)
   const canAcceptAnswers = user?.id === topicAuthorId && topicType === 'question'
 
+  const pageParams = { page, pageSize: PAGE_SIZE, aroundAnswerId, sort }
+  const answersQuery = useAnswers(topicId, pageParams)
+  const data = answersQuery.data ?? null
+  const isLoading = isInitialLoading(answersQuery)
+  const requestError = answersQuery.error
+  const isTargetUnavailable = aroundAnswerId !== undefined &&
+    requestError instanceof ApiError && requestError.status === 404
+  const error = requestError === null
+    ? null
+    : requestError instanceof ApiError ? requestError.message : 'Không thể tải câu trả lời lúc này.'
+
+  // Change the answers on the page that is shown, without asking the server again.
+  const patchAnswers = (update: (current: AnswerPage) => AnswerPage) => {
+    queryClient.setQueryData<AnswerPage>(
+      answerKeys.page(scope, topicId, pageParams),
+      (current) => current ? update(current) : current,
+    )
+  }
+
+  // Load every page of these answers again, for example after a new answer or a delete.
+  const refreshAnswers = () => {
+    void queryClient.invalidateQueries({ queryKey: answerKeys.all(scope, topicId) })
+    // Topic lists show the number of answers of each topic.
+    void queryClient.invalidateQueries({ queryKey: topicKeys.lists })
+  }
+
+  const acceptMutation = useMutation({
+    mutationFn: (answerId: number) => acceptAnswer(topicId, answerId),
+    onSuccess: (_answer, answerId) => {
+      patchAnswers((current) => ({
+        ...current,
+        items: current.items.map((answer) => ({ ...answer, isAccepted: answer.id === answerId })),
+      }))
+      setSuccessMessage('Đã cập nhật câu trả lời được chấp nhận.')
+    },
+  })
+  const acceptingAnswerId = acceptMutation.isPending ? acceptMutation.variables : null
+
+  // The server can answer with another page than the one asked for, for example when the
+  // page number is too high or a linked answer is on a different page. The address follows it.
   useEffect(() => {
-    const controller = new AbortController()
-
-    const loadAnswers = async () => {
-      setIsLoading(true)
-      setError(null)
-      setIsTargetUnavailable(false)
-      try {
-        const result = await getAnswers(topicId, page, PAGE_SIZE, controller.signal, aroundAnswerId, sort)
-        if (controller.signal.aborted) return
-        setData(result)
-        if (!aroundAnswerId && result.totalPages > 0 && result.page > result.totalPages) {
-          const search = new URLSearchParams(location.search)
-          search.set('answerPage', String(result.totalPages))
-          void navigate({ pathname: location.pathname, search: `?${search}` }, { replace: true })
-          return
-        }
-        if (result.page !== page) {
-          const search = new URLSearchParams(location.search)
-          search.set('answerPage', String(result.page))
-          void navigate({ pathname: location.pathname, search: `?${search}`, hash: aroundAnswerId ? `#answer-${aroundAnswerId}` : undefined }, { replace: true })
-        }
-      } catch (requestError) {
-        if (controller.signal.aborted) return
-        setIsTargetUnavailable(aroundAnswerId !== undefined && requestError instanceof ApiError && requestError.status === 404)
-        setError(
-          requestError instanceof ApiError
-            ? requestError.message
-            : 'Không thể tải câu trả lời lúc này.',
-        )
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
+    if (!data) return
+    if (!aroundAnswerId && data.totalPages > 0 && data.page > data.totalPages) {
+      const search = new URLSearchParams(location.search)
+      search.set('answerPage', String(data.totalPages))
+      void navigate({ pathname: location.pathname, search: `?${search}` }, { replace: true })
+      return
     }
-
-    void loadAnswers()
-    return () => controller.abort()
-  }, [aroundAnswerId, location.pathname, location.search, navigate, page, requestVersion, sort, topicId, user?.id])
+    if (data.page !== page) {
+      const search = new URLSearchParams(location.search)
+      search.set('answerPage', String(data.page))
+      void navigate({ pathname: location.pathname, search: `?${search}`, hash: aroundAnswerId ? `#answer-${aroundAnswerId}` : undefined }, { replace: true })
+    }
+  }, [aroundAnswerId, data, location.pathname, location.search, navigate, page])
 
   useEffect(() => {
     if (isLoading || error || !aroundAnswerId || !data?.items.some((answer) => answer.id === aroundAnswerId)) return
@@ -106,7 +123,7 @@ export const DiscussionSection = ({
     const lastPage = Math.max(1, Math.ceil(nextTotalItems / PAGE_SIZE))
     setSuccessMessage(answer.parentAnswerId ? 'Phản hồi đã được đăng.' : 'Câu trả lời đã được đăng.')
     changePage(lastPage, answer.id)
-    setRequestVersion((version) => version + 1)
+    refreshAnswers()
   }
 
   const changeSort = (nextSort: AnswerSort) => {
@@ -122,21 +139,8 @@ export const DiscussionSection = ({
 
     setActionError(null)
     setSuccessMessage(null)
-    setAcceptingAnswerId(answerId)
     try {
-      await acceptAnswer(topicId, answerId)
-      setData((current) => {
-        if (!current) return current
-
-        return {
-          ...current,
-          items: current.items.map((answer) => ({
-            ...answer,
-            isAccepted: answer.id === answerId,
-          })),
-        }
-      })
-      setSuccessMessage('Đã cập nhật câu trả lời được chấp nhận.')
+      await acceptMutation.mutateAsync(answerId)
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401) {
         setIsAuthDialogOpen(true)
@@ -146,8 +150,6 @@ export const DiscussionSection = ({
           ? requestError.message
           : 'Không thể chọn câu trả lời lúc này.',
       )
-    } finally {
-      setAcceptingAnswerId(null)
     }
   }
 
@@ -205,7 +207,7 @@ export const DiscussionSection = ({
           error={error}
           isLoading={isLoading}
           loadingText="Đang tải câu trả lời…"
-          onRetry={() => setRequestVersion((version) => version + 1)}
+          onRetry={() => void answersQuery.refetch()}
         />
         {!isLoading && isTargetUnavailable && (
           <div className="mt-3">
@@ -222,22 +224,23 @@ export const DiscussionSection = ({
             onDeleted={() => {
               const lastPage = Math.max(1, Math.ceil((data.totalItems - 1) / PAGE_SIZE))
               changePage(Math.min(data.page, lastPage))
-              setRequestVersion((version) => version + 1)
+              refreshAnswers()
               setSuccessMessage('Đã xóa câu trả lời.')
             }}
             onLoginRequired={() => setIsAuthDialogOpen(true)}
             onHelpfulChanged={(answerId, helpful) => {
-              setData((current) => current ? {
+              patchAnswers((current) => ({
                 ...current,
                 items: current.items.map((answer) => answer.id === answerId ? { ...answer, ...helpful } : answer),
-              } : current)
+              }))
               setSuccessMessage(helpful.isHelpful ? 'Đã đánh giá câu trả lời hữu ích.' : 'Đã bỏ đánh giá hữu ích.')
-              if (sort === 'helpful') setRequestVersion((version) => version + 1)
+              // With the "most helpful" order, the new count can move the answer to another place.
+              if (sort === 'helpful') refreshAnswers()
             }}
             onPageChange={changePage}
             onReplyCreated={handleCreated}
             onUpdated={(updated) => {
-              setData((current) => current ? { ...current, items: current.items.map((answer) => answer.id === updated.id ? updated : answer) } : current)
+              patchAnswers((current) => ({ ...current, items: current.items.map((answer) => answer.id === updated.id ? updated : answer) }))
               setSuccessMessage('Đã cập nhật câu trả lời.')
             }}
           />

@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { getTopic, type TopicDetail } from '../api/topics'
 import { toDisplayMediaHtml } from '../api/media'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
@@ -16,6 +15,9 @@ import { TopicEngagementBar } from '../components/interactions/TopicEngagementBa
 import { useAuth } from '../auth/authState'
 import { ReadingTableOfContents } from '../components/topics/ReadingTableOfContents'
 import { RelatedTopics } from '../components/topics/RelatedTopics'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
+import { useTopic } from '../queries/topics'
 import { prepareReadingContent } from '../utils/readingContent'
 import '../styles/topicReading.css'
 
@@ -29,45 +31,19 @@ export const TopicDetailPage = () => {
   const location = useLocation()
   const topicId = Number(id)
   const { user } = useAuth()
-  const [topic, setTopic] = useState<TopicDetail | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
+  const isValidId = Number.isInteger(topicId) && topicId > 0
+  const topicQuery = useTopic(topicId, isValidId)
+  const topic = topicQuery.data ?? null
+  const isLoading = isValidId && isInitialLoading(topicQuery)
+  const requestError = topicQuery.error
+  const loadError = requestError instanceof ApiError && requestError.status === 404
+    ? 'Nội dung không tồn tại hoặc không còn được công khai.'
+    : getErrorMessage(requestError)
+  const error = isValidId ? loadError : 'Đường dẫn nội dung không hợp lệ.'
   const readingContent = useMemo(
     () => topic ? prepareReadingContent(toDisplayMediaHtml(topic.bodyHtml), topic.id) : null,
     [topic],
   )
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadTopic = async () => {
-      if (!Number.isInteger(topicId) || topicId <= 0) {
-        setError('Đường dẫn nội dung không hợp lệ.')
-        setIsLoading(false)
-        return
-      }
-
-      setIsLoading(true)
-      setError(null)
-      try {
-        const loadedTopic = await getTopic(topicId, controller.signal)
-        if (!controller.signal.aborted) setTopic(loadedTopic)
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        if (requestError instanceof ApiError && requestError.status === 404) {
-          setError('Nội dung không tồn tại hoặc không còn được công khai.')
-        } else {
-          setError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
-        }
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-
-    void loadTopic()
-    return () => controller.abort()
-  }, [topicId, requestVersion])
 
   useEffect(() => {
     if (isLoading || error || topic?.id !== topicId || !readingContent) return
@@ -95,7 +71,7 @@ export const TopicDetailPage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải nội dung…"
-            onRetry={() => setRequestVersion((version) => version + 1)}
+            onRetry={() => void topicQuery.refetch()}
           />
         </div>
 
@@ -155,11 +131,7 @@ export const TopicDetailPage = () => {
                     <ReportAction targetId={topic.id} targetType="topic" />
                   </div>
                   <div className="mt-4 border-t border-slate-200 pt-4">
-                    <TopicEngagementBar
-                      initial={{ viewCount: topic.viewCount, shareCount: topic.shareCount }}
-                      title={topic.title}
-                      topicId={topic.id}
-                    />
+                    <TopicEngagementBar title={topic.title} topicId={topic.id} />
                   </div>
                 </footer>
               </article>

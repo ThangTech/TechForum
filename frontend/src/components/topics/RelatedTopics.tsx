@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '@mui/material/Button'
-import { getRelatedTopics, type RelatedTopic } from '../../api/relatedTopics'
 import { appRoutes } from '../../appRoutes'
+import { getErrorMessage } from '../../queries/errorMessage'
+import { useRelatedTopics } from '../../queries/relatedTopics'
+import { isInitialLoading } from '../../queries/status'
 import { TopicTypeBadge } from './TopicTypeBadge'
 
 interface Props {
@@ -10,29 +11,10 @@ interface Props {
 }
 
 export const RelatedTopics = ({ topicId }: Props) => {
-  const [items, setItems] = useState<RelatedTopic[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const topics = await getRelatedTopics(topicId, controller.signal)
-        if (!controller.signal.aborted) setItems(topics)
-      } catch (requestError) {
-        if (controller.signal.aborted) return
-        setError(requestError instanceof Error ? requestError.message : 'Không thể tải nội dung liên quan.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [topicId, requestVersion])
+  const relatedQuery = useRelatedTopics(topicId)
+  const items = relatedQuery.data ?? []
+  const isLoading = isInitialLoading(relatedQuery)
+  const error = getErrorMessage(relatedQuery.error, 'Không thể tải nội dung liên quan.')
 
   return (
     <section aria-labelledby="related-topics-title" className="related-topics">
@@ -42,7 +24,7 @@ export const RelatedTopics = ({ topicId }: Props) => {
       {!isLoading && error && (
         <div className="related-topics__state">
           <p role="alert">{error}</p>
-          <Button onClick={() => setRequestVersion((value) => value + 1)} variant="outlined">Thử lại</Button>
+          <Button onClick={() => void relatedQuery.refetch()} variant="outlined">Thử lại</Button>
         </div>
       )}
       {!isLoading && !error && items.length === 0 && (

@@ -1,8 +1,10 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
-import { addTopicStar, getTopicStar, removeTopicStar, type TopicStarStatus } from '../../api/stars'
+import { useState } from 'react'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
+import { getErrorMessage } from '../../queries/errorMessage'
+import { useToggleTopicStar, useTopicStar } from '../../queries/stars'
+import { isInitialLoading } from '../../queries/status'
 import { AuthRequiredDialog } from '../AuthRequiredDialog'
 
 interface UsefulStarButtonProps {
@@ -11,34 +13,16 @@ interface UsefulStarButtonProps {
 
 export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
   const { user } = useAuth()
-  const [status, setStatus] = useState<TopicStarStatus | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
+  const statusQuery = useTopicStar(topicId)
+  const toggleMutation = useToggleTopicStar(topicId)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadStatus = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setStatus(await getTopicStar(topicId, controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError
-          ? requestError.message
-          : 'Không thể tải số Sao hữu ích.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-
-    void loadStatus()
-    return () => controller.abort()
-  }, [requestVersion, topicId, user?.id])
+  const status = statusQuery.data ?? null
+  const isLoading = isInitialLoading(statusQuery)
+  const isSaving = toggleMutation.isPending
+  // A failed save is more recent than a failed load, so it is shown first.
+  const error = getErrorMessage(toggleMutation.error, 'Không thể cập nhật Sao hữu ích.') ??
+    getErrorMessage(statusQuery.error, 'Không thể tải số Sao hữu ích.')
 
   const handleToggle = async () => {
     if (!user) {
@@ -47,23 +31,18 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
     }
     if (!status || isSaving) return
 
-    setIsSaving(true)
-    setError(null)
     try {
-      const nextStatus = status.hasStar
-        ? await removeTopicStar(topicId)
-        : await addTopicStar(topicId)
-      setStatus(nextStatus)
+      await toggleMutation.mutateAsync(status.hasStar)
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401) {
         setIsAuthDialogOpen(true)
       }
-      setError(requestError instanceof ApiError
-        ? requestError.message
-        : 'Không thể cập nhật Sao hữu ích.')
-    } finally {
-      setIsSaving(false)
     }
+  }
+
+  const retry = () => {
+    toggleMutation.reset()
+    void statusQuery.refetch()
   }
 
   return (
@@ -75,7 +54,7 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
       {error && (
         <div className="mt-3 flex flex-wrap items-center gap-3" role="alert">
           <span className="text-sm text-red-700">{error}</span>
-          <Button onClick={() => setRequestVersion((version) => version + 1)} variant="text">Thử lại</Button>
+          <Button onClick={retry} variant="text">Thử lại</Button>
         </div>
       )}
       <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />

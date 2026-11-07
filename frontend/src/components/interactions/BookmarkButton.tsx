@@ -1,50 +1,44 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
-import { addBookmark, getBookmarkStatus, removeBookmark, type BookmarkStatus } from '../../api/bookmarks'
+import { useState } from 'react'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
+import { useBookmarkStatus, useToggleBookmark } from '../../queries/bookmarks'
+import { getErrorMessage } from '../../queries/errorMessage'
+import { isInitialLoading } from '../../queries/status'
 import { AuthRequiredDialog } from '../AuthRequiredDialog'
 
 export const BookmarkButton = ({ topicId }: { topicId: number }) => {
   const { user } = useAuth()
-  const [status, setStatus] = useState<BookmarkStatus | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [retry, setRetry] = useState(0)
+  const statusQuery = useBookmarkStatus(topicId)
+  const toggleMutation = useToggleBookmark(topicId)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try { setStatus(await getBookmarkStatus(topicId, controller.signal)) }
-      catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError ? requestError.message : 'Không thể tải số lượt lưu.')
-      } finally { if (!controller.signal.aborted) setIsLoading(false) }
-    }
-    void load()
-    return () => controller.abort()
-  }, [retry, topicId, user?.id])
+  const status = statusQuery.data ?? null
+  const isLoading = isInitialLoading(statusQuery)
+  const isSaving = toggleMutation.isPending
+  // A failed save is more recent than a failed load, so it is shown first.
+  const error = getErrorMessage(toggleMutation.error, 'Không thể cập nhật bài đã lưu.') ??
+    getErrorMessage(statusQuery.error, 'Không thể tải số lượt lưu.')
 
   const toggle = async () => {
     if (!user) { setIsAuthDialogOpen(true); return }
     if (!status || isSaving) return
-    setIsSaving(true)
-    setError(null)
-    try { setStatus(status.hasBookmark ? await removeBookmark(topicId) : await addBookmark(topicId)) }
-    catch (requestError) {
+    try {
+      await toggleMutation.mutateAsync(status.hasBookmark)
+    } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401) setIsAuthDialogOpen(true)
-      setError(requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật bài đã lưu.')
-    } finally { setIsSaving(false) }
+    }
+  }
+
+  const retry = () => {
+    toggleMutation.reset()
+    void statusQuery.refetch()
   }
 
   return (
     <div>
       <Button disabled={isLoading || !status || isSaving} loading={isLoading || isSaving} onClick={() => void toggle()} variant={status?.hasBookmark ? 'contained' : 'outlined'}>{status?.hasBookmark ? `Bỏ lưu · ${status.count}` : `Lưu bài · ${status?.count ?? 0}`}</Button>
-      {error && <p className="mt-2 text-sm text-red-700" role="alert">{error} <button className="font-bold underline" onClick={() => setRetry((value) => value + 1)} type="button">Thử lại</button></p>}
+      {error && <p className="mt-2 text-sm text-red-700" role="alert">{error} <button className="font-bold underline" onClick={retry} type="button">Thử lại</button></p>}
       <AuthRequiredDialog isOpen={isAuthDialogOpen} onClose={() => setIsAuthDialogOpen(false)} />
     </div>
   )
