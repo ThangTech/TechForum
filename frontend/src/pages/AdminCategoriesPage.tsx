@@ -1,19 +1,15 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState, type FormEvent } from 'react'
-import {
-  createAdminCategory,
-  getAdminCategories,
-  setAdminCategoryActive,
-  updateAdminCategory,
-  type AdminCategory,
-  type SaveCategoryInput,
-} from '../api/adminCategories'
+import { useState, type FormEvent } from 'react'
+import type { AdminCategory, SaveCategoryInput } from '../api/adminCategories'
 import { useSearchParams } from 'react-router-dom'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { ApiError } from '../api/client'
 import { CategoryAdminCard } from '../components/admin/CategoryAdminCard'
 import { CategoryFormDialog } from '../components/admin/CategoryFormDialog'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { useAdminCategories, useSaveAdminCategory, useToggleAdminCategory } from '../queries/admin'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 import TextField from '@mui/material/TextField'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -28,34 +24,19 @@ export const AdminCategoriesPage = () => {
   const pageValue = Number(params.get('page'))
   const requestedPage = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
 
-  const [categories, setCategories] = useState<AdminCategory[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [editing, setEditing] = useState<AdminCategory | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [busyId, setBusyId] = useState<number | null>(null)
-  const [retry, setRetry] = useState(0)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setCategories(await getAdminCategories(controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError ? requestError.message : 'Không thể tải chuyên mục.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [retry])
+  const categoriesQuery = useAdminCategories()
+  const saveMutation = useSaveAdminCategory(editing?.id ?? null)
+  const toggleMutation = useToggleAdminCategory()
+  const categories = categoriesQuery.data ?? []
+  const isLoading = isInitialLoading(categoriesQuery)
+  const error = getErrorMessage(categoriesQuery.error, 'Không thể tải chuyên mục.')
+  const isSaving = saveMutation.isPending
+  const busyId = toggleMutation.isPending ? toggleMutation.variables.id : null
 
   const openCreate = () => {
     setEditing(null)
@@ -71,36 +52,24 @@ export const AdminCategoriesPage = () => {
 
   const save = async (input: SaveCategoryInput) => {
     if (isSaving) return
-    setIsSaving(true)
     setActionError(null)
     setSuccessMessage(null)
     try {
-      const saved = editing ? await updateAdminCategory(editing.id, input) : await createAdminCategory(input)
-      setCategories((current) =>
-        editing
-          ? current.map((item) => (item.id === saved.id ? saved : item))
-          : [...current, saved].sort(
-              (left, right) =>
-                left.displayOrder - right.displayOrder || left.name.localeCompare(right.name, 'vi'),
-            ),
-      )
+      // The list loads again after the save.
+      await saveMutation.mutateAsync(input)
       setSuccessMessage(editing ? 'Đã cập nhật chuyên mục.' : 'Đã tạo chuyên mục.')
       setIsFormOpen(false)
     } catch (requestError) {
       setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể lưu chuyên mục.')
-    } finally {
-      setIsSaving(false)
     }
   }
 
   const toggleActive = async (category: AdminCategory) => {
     if (busyId !== null) return
-    setBusyId(category.id)
     setActionError(null)
     setSuccessMessage(null)
     try {
-      const updated = await setAdminCategoryActive(category.id, !category.isActive)
-      setCategories((current) => current.map((item) => (item.id === updated.id ? updated : item)))
+      const updated = await toggleMutation.mutateAsync(category)
       setSuccessMessage(
         updated.isActive
           ? 'Chuyên mục đã được sử dụng lại.'
@@ -110,8 +79,6 @@ export const AdminCategoriesPage = () => {
       setActionError(
         requestError instanceof ApiError ? requestError.message : 'Không thể đổi trạng thái chuyên mục.',
       )
-    } finally {
-      setBusyId(null)
     }
   }
 
@@ -188,7 +155,7 @@ export const AdminCategoriesPage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải chuyên mục…"
-            onRetry={() => setRetry((value) => value + 1)}
+            onRetry={() => void categoriesQuery.refetch()}
           />
           {!isLoading && !error && filtered.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">

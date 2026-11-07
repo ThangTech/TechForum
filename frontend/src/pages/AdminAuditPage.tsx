@@ -1,13 +1,13 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { getAdminAuditLogs, type AdminAuditPage as AuditPageData } from '../api/adminOverview'
-import { getAdminAccounts, type AdminAccount } from '../api/adminAccounts'
-import { ApiError } from '../api/client'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { AuditLogList } from '../components/admin/AuditLogList'
 import { auditActionLabels } from '../components/admin/auditActionLabels'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { useAdminAuditLogs, useAdministrators } from '../queries/admin'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 import TextField from '@mui/material/TextField'
 
 export const AdminAuditPage = () => {
@@ -19,61 +19,22 @@ export const AdminAuditPage = () => {
   const from = params.get('from') ?? ''
   const to = params.get('to') ?? ''
   const administratorId = params.get('administratorId') ?? ''
-  const [administrators, setAdministrators] = useState<AdminAccount[]>([])
-  const [administratorError, setAdministratorError] = useState<string | null>(null)
-  const [data, setData] = useState<AuditPageData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [retry, setRetry] = useState(0)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const loadAdministrators = async () => {
-      setAdministratorError(null)
-      try {
-        const first = await getAdminAccounts('', 1, 50, controller.signal, '', 'administrator')
-        const items = [...first.items]
-        for (let nextPage = 2; nextPage <= first.totalPages; nextPage += 1) {
-          const result = await getAdminAccounts('', nextPage, 50, controller.signal, '', 'administrator')
-          items.push(...result.items)
-        }
-        if (!controller.signal.aborted) setAdministrators(items)
-      } catch {
-        if (!controller.signal.aborted)
-          setAdministratorError(
-            'Không thể tải bộ lọc quản trị viên. Bạn vẫn có thể tìm theo tên trong ô tìm kiếm.',
-          )
-      }
-    }
-    void loadAdministrators()
-    return () => controller.abort()
-  }, [retry])
+  const administratorsQuery = useAdministrators()
+  const auditQuery = useAdminAuditLogs({ page, pageSize: 15, keyword, action, administratorId, from, to })
+  const administrators = administratorsQuery.data ?? []
+  const administratorError = administratorsQuery.error
+    ? 'Không thể tải bộ lọc quản trị viên. Bạn vẫn có thể tìm theo tên trong ô tìm kiếm.'
+    : null
+  const data = auditQuery.data ?? null
+  const isLoading = isInitialLoading(auditQuery)
+  const error = getErrorMessage(auditQuery.error, 'Không thể tải nhật ký quản trị.')
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setData(
-          await getAdminAuditLogs(
-            { page, pageSize: 15, keyword, action, administratorId, from, to },
-            controller.signal,
-          ),
-        )
-      } catch (requestError) {
-        if (!controller.signal.aborted)
-          setError(
-            requestError instanceof ApiError ? requestError.message : 'Không thể tải nhật ký quản trị.',
-          )
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [page, keyword, action, administratorId, from, to, retry])
+  const retry = () => {
+    if (administratorsQuery.error) void administratorsQuery.refetch()
+    void auditQuery.refetch()
+  }
   const filter = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const fields = new FormData(event.currentTarget)
@@ -155,7 +116,7 @@ export const AdminAuditPage = () => {
         error={error}
         isLoading={isLoading}
         loadingText="Đang tải nhật ký…"
-        onRetry={() => setRetry((value) => value + 1)}
+        onRetry={retry}
       />
       {!isLoading && !error && data && (
         <>

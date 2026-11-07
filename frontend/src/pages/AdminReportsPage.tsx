@@ -1,18 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import {
-  getAdminReports,
-  resolveReport,
-  type AdminReport,
-  type AdminReportPage,
-  type ReportStatus,
-} from '../api/reports'
+import type { AdminReport, ReportStatus } from '../api/reports'
 import { ApiError } from '../api/client'
 import { ReportResolutionDialog } from '../components/admin/ReportResolutionDialog'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { ReportPreviewDialog } from '../components/admin/ReportPreviewDialog'
 import { ReportReviewCard } from '../components/admin/ReportReviewCard'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { useAdminReports, useResolveReport } from '../queries/admin'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
@@ -40,35 +37,19 @@ export const AdminReportsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPage(searchParams.get('page'))
   const status = readStatus(searchParams.get('status'))
-  const [data, setData] = useState<AdminReportPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ report: AdminReport; decision: 'accepted' | 'rejected' } | null>(
     null,
   )
-  const [isResolving, setIsResolving] = useState(false)
-  const [retry, setRetry] = useState(0)
   const [preview, setPreview] = useState<AdminReport | null>(null)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setData(await getAdminReports(status, page, PAGE_SIZE, controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError ? requestError.message : 'Không thể tải danh sách báo cáo.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [page, retry, status])
+  const reportsQuery = useAdminReports(status, page, PAGE_SIZE)
+  const resolveMutation = useResolveReport()
+  const data = reportsQuery.data ?? null
+  const isLoading = isInitialLoading(reportsQuery)
+  const error = getErrorMessage(reportsQuery.error, 'Không thể tải danh sách báo cáo.')
+  const isResolving = resolveMutation.isPending
 
   const updateFilters = (nextStatus: ReportStatus, nextPage = 1) => {
     const next = new URLSearchParams()
@@ -79,22 +60,24 @@ export const AdminReportsPage = () => {
 
   const handleResolution = async (note: string) => {
     if (!selected || isResolving) return
-    setIsResolving(true)
     setActionError(null)
     setSuccessMessage(null)
     try {
-      await resolveReport(selected.report.id, selected.decision, note)
+      // The list loads again after the decision.
+      await resolveMutation.mutateAsync({
+        reportId: selected.report.id,
+        decision: selected.decision,
+        note,
+      })
       setSuccessMessage(selected.decision === 'accepted' ? 'Đã chấp nhận báo cáo.' : 'Đã bác bỏ báo cáo.')
       setSelected(null)
-      setRetry((value) => value + 1)
     } catch (requestError) {
       setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể xử lý báo cáo.')
+      // 409: another administrator already decided this report, so show the current list.
       if (requestError instanceof ApiError && requestError.status === 409) {
         setSelected(null)
-        setRetry((value) => value + 1)
+        void reportsQuery.refetch()
       }
-    } finally {
-      setIsResolving(false)
     }
   }
 
@@ -145,7 +128,7 @@ export const AdminReportsPage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải báo cáo…"
-            onRetry={() => setRetry((value) => value + 1)}
+            onRetry={() => void reportsQuery.refetch()}
           />
           {!isLoading && !error && data?.items.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">

@@ -11,14 +11,15 @@ import { BarChart } from '@mui/x-charts/BarChart'
 import { LineChart } from '@mui/x-charts/LineChart'
 import { PieChart } from '@mui/x-charts/PieChart'
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getAdminDashboard, type AdminDashboard } from '../api/adminOverview'
-import { ApiError } from '../api/client'
 import { appRoutes } from '../appRoutes'
 import { AuditLogList } from '../components/admin/AuditLogList'
 import { StatusBadge } from '../components/admin/StatusBadge'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { useAdminDashboard } from '../queries/admin'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 
 // Màu biểu đồ khớp với palette trong DESIGN.md: bài viết xanh dương, câu hỏi hổ phách, trả lời xanh lá.
 const chartColors = {
@@ -59,31 +60,11 @@ export const AdminOverviewPage = () => {
   const [params, setParams] = useSearchParams()
   const endDate = readDate(params.get('endDate'), today())
   const startDate = readDate(params.get('startDate'), daysBefore(endDate, 29))
-  const [dashboard, setDashboard] = useState<AdminDashboard | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [retry, setRetry] = useState(0)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setDashboard(await getAdminDashboard(startDate, endDate, controller.signal))
-      } catch (requestError) {
-        if (controller.signal.aborted) return
-        setError(
-          requestError instanceof ApiError ? requestError.message : 'Không thể tải tổng quan quản trị.',
-        )
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [endDate, startDate, retry])
+  const dashboardQuery = useAdminDashboard(startDate, endDate)
+  const dashboard = dashboardQuery.data ?? null
+  const isLoading = isInitialLoading(dashboardQuery)
+  const error = getErrorMessage(dashboardQuery.error, 'Không thể tải tổng quan quản trị.')
 
   const setRange = (days: number) => {
     const end = today()
@@ -217,7 +198,7 @@ export const AdminOverviewPage = () => {
           error={error}
           isLoading={isLoading}
           loadingText="Đang tải dữ liệu tổng quan…"
-          onRetry={() => setRetry((value) => value + 1)}
+          onRetry={() => void dashboardQuery.refetch()}
         />
       </div>
       {!isLoading && !error && dashboard && (

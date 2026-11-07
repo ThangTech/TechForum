@@ -1,19 +1,15 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState, type FormEvent } from 'react'
-import {
-  createAdminTag,
-  getAdminTags,
-  setAdminTagActive,
-  updateAdminTag,
-  type AdminTag,
-  type SaveTagInput,
-} from '../api/adminTags'
+import { useState, type FormEvent } from 'react'
+import type { AdminTag, SaveTagInput } from '../api/adminTags'
 import { useSearchParams } from 'react-router-dom'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { ApiError } from '../api/client'
 import { TagAdminCard } from '../components/admin/TagAdminCard'
 import { TagFormDialog } from '../components/admin/TagFormDialog'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { useAdminTags, useSaveAdminTag, useToggleAdminTag } from '../queries/admin'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 import TextField from '@mui/material/TextField'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -28,34 +24,19 @@ export const AdminTagsPage = () => {
   const pageValue = Number(params.get('page'))
   const requestedPage = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
 
-  const [tags, setTags] = useState<AdminTag[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [editing, setEditing] = useState<AdminTag | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [busyId, setBusyId] = useState<number | null>(null)
-  const [retry, setRetry] = useState(0)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setTags(await getAdminTags(controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof ApiError ? requestError.message : 'Không thể tải danh sách thẻ.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [retry])
+  const tagsQuery = useAdminTags()
+  const saveMutation = useSaveAdminTag(editing?.id ?? null)
+  const toggleMutation = useToggleAdminTag()
+  const tags = tagsQuery.data ?? []
+  const isLoading = isInitialLoading(tagsQuery)
+  const error = getErrorMessage(tagsQuery.error, 'Không thể tải danh sách thẻ.')
+  const isSaving = saveMutation.isPending
+  const busyId = toggleMutation.isPending ? toggleMutation.variables.id : null
 
   const openForm = (tag: AdminTag | null) => {
     setEditing(tag)
@@ -65,33 +46,24 @@ export const AdminTagsPage = () => {
 
   const save = async (input: SaveTagInput) => {
     if (isSaving) return
-    setIsSaving(true)
     setActionError(null)
     setSuccessMessage(null)
     try {
-      const saved = editing ? await updateAdminTag(editing.id, input) : await createAdminTag(input)
-      setTags((current) =>
-        editing
-          ? current.map((item) => (item.id === saved.id ? saved : item))
-          : [...current, saved].sort((left, right) => left.name.localeCompare(right.name, 'vi')),
-      )
+      // The list loads again after the save.
+      await saveMutation.mutateAsync(input)
       setSuccessMessage(editing ? 'Đã cập nhật thẻ.' : 'Đã tạo thẻ.')
       setIsFormOpen(false)
     } catch (requestError) {
       setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể lưu thẻ.')
-    } finally {
-      setIsSaving(false)
     }
   }
 
   const toggleActive = async (tag: AdminTag) => {
     if (busyId !== null) return
-    setBusyId(tag.id)
     setActionError(null)
     setSuccessMessage(null)
     try {
-      const updated = await setAdminTagActive(tag.id, !tag.isActive)
-      setTags((current) => current.map((item) => (item.id === updated.id ? updated : item)))
+      const updated = await toggleMutation.mutateAsync(tag)
       setSuccessMessage(
         updated.isActive ? 'Thẻ đã được sử dụng lại.' : 'Thẻ đã ngừng sử dụng cho nội dung mới.',
       )
@@ -99,8 +71,6 @@ export const AdminTagsPage = () => {
       setActionError(
         requestError instanceof ApiError ? requestError.message : 'Không thể đổi trạng thái thẻ.',
       )
-    } finally {
-      setBusyId(null)
     }
   }
 
@@ -177,7 +147,7 @@ export const AdminTagsPage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải thẻ…"
-            onRetry={() => setRetry((value) => value + 1)}
+            onRetry={() => void tagsQuery.refetch()}
           />
           {!isLoading && !error && filtered.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">

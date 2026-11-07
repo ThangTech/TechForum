@@ -1,37 +1,18 @@
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getAdminTopicDetail, type AdminTopic } from '../../api/adminTopics'
-import { ApiError } from '../../api/client'
 import { appRoutes } from '../../appRoutes'
+import { useAdminTopicDetail } from '../../queries/admin'
+import { getErrorMessage } from '../../queries/errorMessage'
+import { isInitialLoading } from '../../queries/status'
 import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
 import { StatusBadge } from './StatusBadge'
 
 export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onClose: () => void }) => {
-  const [data, setData] = useState<{ topic: AdminTopic; bodyHtml: string } | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [retry, setRetry] = useState(0)
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setData(await getAdminTopicDetail(topicId, controller.signal))
-      } catch (requestError) {
-        if (!controller.signal.aborted)
-          setError(
-            requestError instanceof ApiError ? requestError.message : 'Không thể tải nội dung xem trước.',
-          )
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [topicId, retry])
+  const detailQuery = useAdminTopicDetail(topicId)
+  const data = detailQuery.data ?? null
+  const isLoading = isInitialLoading(detailQuery)
+  const error = getErrorMessage(detailQuery.error, 'Không thể tải nội dung xem trước.')
   return (
     <Dialog open onClose={() => onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': "Xem trước nội dung", sx: { width: 850, maxWidth: 'calc(100% - 32px)' } } }}>
       <div className="p-5 sm:p-7">
@@ -41,7 +22,7 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải nội dung…"
-            onRetry={() => setRetry((value) => value + 1)}
+            onRetry={() => void detailQuery.refetch()}
           />
         </div>
         {!isLoading && !error && data && (

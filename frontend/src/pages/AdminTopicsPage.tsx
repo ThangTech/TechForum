@@ -1,21 +1,17 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import {
-  getAdminTopics,
-  moderateTopic,
-  type AdminTopic,
-  type AdminTopicPage,
-  type ModerationAction,
-  type TopicVisibility,
-} from '../api/adminTopics'
-import { getCategories, type Category } from '../api/categories'
+import type { AdminTopic, ModerationAction, TopicVisibility } from '../api/adminTopics'
 import { ApiError } from '../api/client'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicModerationCard } from '../components/admin/TopicModerationCard'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { TopicPreviewDialog } from '../components/admin/TopicPreviewDialog'
 import { TopicModerationDialog } from '../components/admin/TopicModerationDialog'
+import { useAdminTopics, useModerateTopic } from '../queries/admin'
+import { useCategories } from '../queries/categories'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 import TextField from '@mui/material/TextField'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -43,43 +39,24 @@ export const AdminTopicsPage = () => {
   const categoryValue = Number(params.get('categoryId'))
   const categoryId = Number.isInteger(categoryValue) && categoryValue > 0 ? categoryValue : undefined
   const [previewId, setPreviewId] = useState<number | null>(null)
-  const [data, setData] = useState<AdminTopicPage | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ topic: AdminTopic; action: ModerationAction } | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
-  const [retry, setRetry] = useState(0)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const [topics, categoryItems] = await Promise.all([
-          getAdminTopics(
-            { keyword, type, visibility, categoryId, page, pageSize: PAGE_SIZE },
-            controller.signal,
-          ),
-          getCategories(controller.signal),
-        ])
-        setData(topics)
-        setCategories(categoryItems)
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(
-          requestError instanceof ApiError ? requestError.message : 'Không thể tải nội dung kiểm duyệt.',
-        )
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [keyword, page, retry, type, visibility, categoryId])
+  const topicsQuery = useAdminTopics({ keyword, type, visibility, categoryId, page, pageSize: PAGE_SIZE })
+  const categoriesQuery = useCategories()
+  const moderateMutation = useModerateTopic()
+  const data = topicsQuery.data ?? null
+  const categories = categoriesQuery.data ?? []
+  const isLoading = isInitialLoading(topicsQuery) || isInitialLoading(categoriesQuery)
+  const error = getErrorMessage(topicsQuery.error, 'Không thể tải nội dung kiểm duyệt.') ??
+    getErrorMessage(categoriesQuery.error, 'Không thể tải nội dung kiểm duyệt.')
+  const isSaving = moderateMutation.isPending
+
+  const retry = () => {
+    if (topicsQuery.error) void topicsQuery.refetch()
+    if (categoriesQuery.error) void categoriesQuery.refetch()
+  }
 
   const update = (changes: Record<string, string>, resetPage = true) => {
     const next = new URLSearchParams(params)
@@ -99,20 +76,22 @@ export const AdminTopicsPage = () => {
   }
   const apply = async (reason: string, categoryId?: number) => {
     if (!selected || isSaving) return
-    setIsSaving(true)
     setActionError(null)
     setSuccess(null)
     try {
-      await moderateTopic(selected.topic.id, selected.action, reason, categoryId)
-      setRetry((value) => value + 1)
+      // The list loads again after the change.
+      await moderateMutation.mutateAsync({
+        topicId: selected.topic.id,
+        action: selected.action,
+        reason,
+        categoryId,
+      })
       setSuccess('Đã cập nhật trạng thái nội dung và ghi nhật ký quản trị.')
       setSelected(null)
     } catch (requestError) {
       setActionError(
         requestError instanceof ApiError ? requestError.message : 'Không thể kiểm duyệt nội dung.',
       )
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -177,7 +156,7 @@ export const AdminTopicsPage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải nội dung…"
-            onRetry={() => setRetry((value) => value + 1)}
+            onRetry={retry}
           />
           {!isLoading && !error && data?.items.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">

@@ -19,6 +19,8 @@ import { statisticsKeys } from './statistics'
 import { useUserScope, userKey } from './userScope'
 
 export const topicKeys = {
+  // Everything public about topics: lists, details and related topics.
+  all: ['topics'] as const,
   // Every public list of topics. Invalidate this after a topic is created, changed or deleted.
   lists: ['topics', 'list'] as const,
   list: (filters: TopicFilters) => ['topics', 'list', filters] as const,

@@ -1,17 +1,15 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import {
-  getAdminAccounts,
-  setAccountLocked,
-  type AdminAccount,
-  type AdminAccountPage,
-} from '../api/adminAccounts'
+import type { AdminAccount } from '../api/adminAccounts'
 import { ApiError } from '../api/client'
 import { AccountAdminCard } from '../components/admin/AccountAdminCard'
 import { AccountLockDialog } from '../components/admin/AccountLockDialog'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { useAdminAccounts, useSetAccountLocked } from '../queries/admin'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
 import TextField from '@mui/material/TextField'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -30,34 +28,16 @@ export const AdminAccountsPage = () => {
     : ''
   const pageValue = Number(params.get('page'))
   const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
-  const [data, setData] = useState<AdminAccountPage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [selected, setSelected] = useState<AdminAccount | null>(null)
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const [retry, setRetry] = useState(0)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setData(await getAdminAccounts(keyword, page, 15, controller.signal, status, role))
-      } catch (requestError) {
-        if (!controller.signal.aborted)
-          setError(
-            requestError instanceof ApiError ? requestError.message : 'Không thể tải danh sách tài khoản.',
-          )
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-    void load()
-    return () => controller.abort()
-  }, [keyword, status, role, page, retry])
+  const accountsQuery = useAdminAccounts({ keyword, page, pageSize: 15, status, role })
+  const lockMutation = useSetAccountLocked()
+  const data = accountsQuery.data ?? null
+  const isLoading = isInitialLoading(accountsQuery)
+  const error = getErrorMessage(accountsQuery.error, 'Không thể tải danh sách tài khoản.')
+  const busyId = lockMutation.isPending ? lockMutation.variables.account.id : null
   const filter = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const fields = new FormData(event.currentTarget)
@@ -76,20 +56,17 @@ export const AdminAccountsPage = () => {
   }
   const toggleLock = async (reason: string | null, lockoutEndUtc: string | null) => {
     if (!selected || busyId) return
-    setBusyId(selected.id)
     setActionError(null)
     setSuccess(null)
     try {
-      const updated = await setAccountLocked(selected.id, !selected.isLocked, reason, lockoutEndUtc)
+      // The list loads again after the change.
+      const updated = await lockMutation.mutateAsync({ account: selected, reason, lockoutEndUtc })
       setSuccess(updated.isLocked ? 'Đã khóa tài khoản và lưu lý do xử lý.' : 'Đã mở khóa tài khoản.')
       setSelected(null)
-      setRetry((value) => value + 1)
     } catch (requestError) {
       setActionError(
         requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật tài khoản.',
       )
-    } finally {
-      setBusyId(null)
     }
   }
   return (
@@ -128,7 +105,7 @@ export const AdminAccountsPage = () => {
         error={error}
         isLoading={isLoading}
         loadingText="Đang tải tài khoản…"
-        onRetry={() => setRetry((value) => value + 1)}
+        onRetry={() => void accountsQuery.refetch()}
       />
       {!isLoading && !error && data && (
         <>
