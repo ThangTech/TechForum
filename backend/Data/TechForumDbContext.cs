@@ -32,6 +32,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<TopicView> TopicViews => Set<TopicView>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -265,6 +266,19 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         userFollow.HasIndex(item => new { item.FollowingId, item.CreatedAtUtc });
         userFollow.HasOne(item => item.Follower).WithMany().HasForeignKey(item => item.FollowerId).OnDelete(DeleteBehavior.Restrict);
         userFollow.HasOne(item => item.Following).WithMany().HasForeignKey(item => item.FollowingId).OnDelete(DeleteBehavior.Restrict);
+
+        var refreshToken = modelBuilder.Entity<RefreshToken>();
+        refreshToken.ToTable("RefreshTokens");
+        refreshToken.HasKey(item => item.Id);
+        refreshToken.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        refreshToken.Property(item => item.TokenHash).HasMaxLength(128).IsRequired();
+        refreshToken.Property(item => item.ReplacedByTokenHash).HasMaxLength(128);
+        refreshToken.HasIndex(item => item.TokenHash).IsUnique();
+        refreshToken.HasIndex(item => new { item.UserId, item.ExpiresAtUtc });
+        refreshToken.HasOne(item => item.User)
+            .WithMany()
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {
