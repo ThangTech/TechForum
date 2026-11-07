@@ -19,7 +19,7 @@ public sealed class UserFollowService(
         }
         if (!await repository.UserExistsAsync(followingId, cancellationToken))
         {
-                return UserFollowResult.Failed(FollowFailure.NotFound);
+            return UserFollowResult.Failed(FollowFailure.NotFound);
         }
         await repository.AddIfMissingAsync(new UserFollow
         {

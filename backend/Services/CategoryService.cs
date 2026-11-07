@@ -46,7 +46,7 @@ public sealed class CategoryService(
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await categoryRepository.SlugExistsAsync(slug, null, cancellationToken))
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
 
         var category = new Category
@@ -59,7 +59,7 @@ public sealed class CategoryService(
         };
         if (!await categoryRepository.AddAsync(category, cancellationToken))
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "category-created", "Category", category.Id.ToString(), null,
             $"name={category.Name};slug={category.Slug};active=true", "Tạo chuyên mục.", cancellationToken);
@@ -80,13 +80,13 @@ public sealed class CategoryService(
         var category = await categoryRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (category is null)
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.NotFound, "Không tìm thấy chuyên mục.");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.NotFound, "Không tìm thấy chuyên mục.");
         }
 
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await categoryRepository.SlugExistsAsync(slug, id, cancellationToken))
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
         var previous = $"name={category.Name};slug={category.Slug};order={category.DisplayOrder}";
         category.Name = request.Name!.Trim();
@@ -95,7 +95,7 @@ public sealed class CategoryService(
         category.DisplayOrder = request.DisplayOrder;
         if (!await categoryRepository.SaveChangesAsync(cancellationToken))
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "category-updated", "Category", category.Id.ToString(), previous,
             $"name={category.Name};slug={category.Slug};order={category.DisplayOrder}", "Cập nhật chuyên mục.", cancellationToken);
@@ -113,7 +113,7 @@ public sealed class CategoryService(
         var category = await categoryRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (category is null)
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.NotFound, "Không tìm thấy chuyên mục.");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.NotFound, "Không tìm thấy chuyên mục.");
         }
         var previous = category.IsActive;
         category.IsActive = isActive;
@@ -131,7 +131,7 @@ public sealed class CategoryService(
         var name = request.Name?.Trim();
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Tên chuyên mục phải có từ 1 đến 100 ký tự.", "name");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Tên chuyên mục phải có từ 1 đến 100 ký tự.", "name");
         }
         var slug = request.Slug?.Trim();
         if (string.IsNullOrWhiteSpace(slug) || slug.Length > 100 ||
@@ -140,11 +140,11 @@ public sealed class CategoryService(
             return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Đường dẫn chỉ gồm chữ thường, số và dấu gạch ngang.", "slug");
         if (request.Description?.Trim().Length > 500)
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Mô tả không được vượt quá 500 ký tự.", "description");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Mô tả không được vượt quá 500 ký tự.", "description");
         }
         if (request.DisplayOrder < 0 || request.DisplayOrder > 10_000)
         {
-                return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Thứ tự hiển thị phải từ 0 đến 10.000.", "displayOrder");
+            return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Thứ tự hiển thị phải từ 0 đến 10.000.", "displayOrder");
         }
         return null;
     }

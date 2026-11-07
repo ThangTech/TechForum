@@ -16,7 +16,7 @@ public sealed class AdminTopicRepository(TechForumDbContext dbContext) : IAdminT
         var keyword = query.Keyword?.Trim();
         if (!string.IsNullOrWhiteSpace(keyword))
         {
-                topics = topics.Where(topic => topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
+            topics = topics.Where(topic => topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
         }
         if (type.HasValue)
         {

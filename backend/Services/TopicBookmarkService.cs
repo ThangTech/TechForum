@@ -85,7 +85,7 @@ public sealed class TopicBookmarkService(
         var topic = bookmark.Topic;
         if (topic.PublishedAtUtc is null || topic.Status != TopicStatus.Published)
         {
-                throw new InvalidOperationException("Danh sách lưu chứa chủ đề chưa xuất bản.");
+            throw new InvalidOperationException("Danh sách lưu chứa chủ đề chưa xuất bản.");
         }
 
         return new SavedTopicDto(

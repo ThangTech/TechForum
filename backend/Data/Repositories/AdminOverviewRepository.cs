@@ -103,19 +103,19 @@ public sealed class AdminOverviewRepository(TechForumDbContext dbContext) : IAdm
         }
         if (!string.IsNullOrWhiteSpace(filter.AdministratorId))
         {
-                query = query.Where(item => item.AdministratorId == filter.AdministratorId);
+            query = query.Where(item => item.AdministratorId == filter.AdministratorId);
         }
         if (!string.IsNullOrWhiteSpace(filter.Action))
         {
-                query = query.Where(item => item.Action == filter.Action);
+            query = query.Where(item => item.Action == filter.Action);
         }
         if (filter.FromUtc.HasValue)
         {
-                query = query.Where(item => item.CreatedAtUtc >= filter.FromUtc.Value);
+            query = query.Where(item => item.CreatedAtUtc >= filter.FromUtc.Value);
         }
         if (filter.ToUtcExclusive.HasValue)
         {
-                query = query.Where(item => item.CreatedAtUtc < filter.ToUtcExclusive.Value);
+            query = query.Where(item => item.CreatedAtUtc < filter.ToUtcExclusive.Value);
         }
         var totalItems = await query.CountAsync(cancellationToken);
         var items = await query

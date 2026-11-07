@@ -22,23 +22,23 @@ public sealed class ContentReportService(
         var targetType = request.TargetType?.Trim().ToLowerInvariant();
         if (targetType is not ("topic" or "answer") || request.TargetId <= 0)
         {
-                return CreateReportResult.Failed(CreateReportFailure.Validation, "Nội dung cần báo cáo không hợp lệ.", "targetId");
+            return CreateReportResult.Failed(CreateReportFailure.Validation, "Nội dung cần báo cáo không hợp lệ.", "targetId");
         }
 
         var reason = request.Reason?.Trim().ToLowerInvariant();
         if (reason is null || !Reasons.Contains(reason))
         {
-                return CreateReportResult.Failed(CreateReportFailure.Validation, "Lý do báo cáo không hợp lệ.", "reason");
+            return CreateReportResult.Failed(CreateReportFailure.Validation, "Lý do báo cáo không hợp lệ.", "reason");
         }
 
         var details = request.Details?.Trim();
         if (details?.Length > 1000)
         {
-                return CreateReportResult.Failed(CreateReportFailure.Validation, "Mô tả không được vượt quá 1.000 ký tự.", "details");
+            return CreateReportResult.Failed(CreateReportFailure.Validation, "Mô tả không được vượt quá 1.000 ký tự.", "details");
         }
         if (reason == "other" && string.IsNullOrWhiteSpace(details))
         {
-                return CreateReportResult.Failed(CreateReportFailure.Validation, "Vui lòng mô tả lý do khác.", "details");
+            return CreateReportResult.Failed(CreateReportFailure.Validation, "Vui lòng mô tả lý do khác.", "details");
         }
 
         int? topicId = targetType == "topic" ? request.TargetId : null;
@@ -53,7 +53,7 @@ public sealed class ContentReportService(
 
         if (await reportRepository.PendingExistsAsync(reporterId, topicId, answerId, cancellationToken))
         {
-                return CreateReportResult.Failed(CreateReportFailure.Duplicate, "Bạn đã gửi báo cáo cho nội dung này và báo cáo đang chờ xử lý.");
+            return CreateReportResult.Failed(CreateReportFailure.Duplicate, "Bạn đã gửi báo cáo cho nội dung này và báo cáo đang chờ xử lý.");
         }
 
         var report = new ContentReport
@@ -68,7 +68,7 @@ public sealed class ContentReportService(
         };
         if (!await reportRepository.AddAsync(report, cancellationToken))
         {
-                return CreateReportResult.Failed(CreateReportFailure.Duplicate, "Bạn đã gửi báo cáo cho nội dung này và báo cáo đang chờ xử lý.");
+            return CreateReportResult.Failed(CreateReportFailure.Duplicate, "Bạn đã gửi báo cáo cho nội dung này và báo cáo đang chờ xử lý.");
         }
         return CreateReportResult.Success(new ReportReceiptDto(
             report.Id, targetType, request.TargetId, reason, details, "pending", report.CreatedAtUtc));
@@ -118,27 +118,27 @@ public sealed class ContentReportService(
         };
         if (!status.HasValue)
         {
-                return ResolveReportResult.Failed(ResolveReportFailure.Validation, "Quyết định phải là accepted hoặc rejected.", "decision");
+            return ResolveReportResult.Failed(ResolveReportFailure.Validation, "Quyết định phải là accepted hoặc rejected.", "decision");
         }
 
         var note = request.ResolutionNote?.Trim();
         if (string.IsNullOrWhiteSpace(note))
         {
-                return ResolveReportResult.Failed(ResolveReportFailure.Validation, "Vui lòng ghi lý do xử lý báo cáo.", "resolutionNote");
+            return ResolveReportResult.Failed(ResolveReportFailure.Validation, "Vui lòng ghi lý do xử lý báo cáo.", "resolutionNote");
         }
         if (note.Length > 1000)
         {
-                return ResolveReportResult.Failed(ResolveReportFailure.Validation, "Lý do xử lý không được vượt quá 1.000 ký tự.", "resolutionNote");
+            return ResolveReportResult.Failed(ResolveReportFailure.Validation, "Lý do xử lý không được vượt quá 1.000 ký tự.", "resolutionNote");
         }
 
         var existing = await reportRepository.GetByIdAsync(reportId, cancellationToken);
         if (existing is null)
         {
-                return ResolveReportResult.Failed(ResolveReportFailure.NotFound, "Không tìm thấy báo cáo.");
+            return ResolveReportResult.Failed(ResolveReportFailure.NotFound, "Không tìm thấy báo cáo.");
         }
         if (existing.Status != ReportStatus.Pending)
         {
-                return ResolveReportResult.Failed(ResolveReportFailure.AlreadyResolved, "Báo cáo này đã được xử lý trước đó.");
+            return ResolveReportResult.Failed(ResolveReportFailure.AlreadyResolved, "Báo cáo này đã được xử lý trước đó.");
         }
 
         var now = timeProvider.GetUtcNow();
@@ -172,7 +172,7 @@ public sealed class ContentReportService(
             cancellationToken);
         if (!resolved)
         {
-                return ResolveReportResult.Failed(ResolveReportFailure.AlreadyResolved, "Báo cáo này vừa được quản trị viên khác xử lý.");
+            return ResolveReportResult.Failed(ResolveReportFailure.AlreadyResolved, "Báo cáo này vừa được quản trị viên khác xử lý.");
         }
 
         var updated = await reportRepository.GetByIdAsync(reportId, cancellationToken)

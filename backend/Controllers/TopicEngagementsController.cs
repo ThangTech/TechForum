@@ -33,7 +33,7 @@ public sealed class TopicEngagementsController(ITopicEngagementService engagemen
     {
         if (Request.Cookies.TryGetValue(VisitorCookie, out var existing) && Guid.TryParse(existing, out _))
         {
-                return $"guest:{existing}";
+            return $"guest:{existing}";
         }
         var value = Guid.NewGuid().ToString("N");
         Response.Cookies.Append(VisitorCookie, value, new CookieOptions

@@ -39,7 +39,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await tagRepository.SlugExistsAsync(slug, null, cancellationToken))
         {
-                return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
 
         var tag = new Tag
@@ -51,7 +51,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
         };
         if (!await tagRepository.AddAsync(tag, cancellationToken))
         {
-                return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "tag-created", "Tag", tag.Id.ToString(), null,
             $"name={tag.Name};slug={tag.Slug};active=true", "Tạo thẻ.", cancellationToken);
@@ -78,7 +78,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await tagRepository.SlugExistsAsync(slug, id, cancellationToken))
         {
-                return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
         var previous = $"name={tag.Name};slug={tag.Slug}";
         tag.Name = request.Name!.Trim();
@@ -86,7 +86,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
         tag.Description = NormalizeDescription(request.Description);
         if (!await tagRepository.SaveChangesAsync(cancellationToken))
         {
-                return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "tag-updated", "Tag", tag.Id.ToString(), previous,
             $"name={tag.Name};slug={tag.Slug}", "Cập nhật thẻ.", cancellationToken);
@@ -118,7 +118,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
         var name = request.Name?.Trim();
         if (string.IsNullOrWhiteSpace(name) || name.Length > 60)
         {
-                return TagWriteResult.Failed(TagWriteFailure.Validation, "Tên thẻ phải có từ 1 đến 60 ký tự.", "name");
+            return TagWriteResult.Failed(TagWriteFailure.Validation, "Tên thẻ phải có từ 1 đến 60 ký tự.", "name");
         }
         var slug = request.Slug?.Trim();
         if (string.IsNullOrWhiteSpace(slug) || slug.Length > 60 ||
@@ -127,7 +127,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
             return TagWriteResult.Failed(TagWriteFailure.Validation, "Đường dẫn chỉ gồm chữ thường, số và dấu gạch ngang.", "slug");
         if (request.Description?.Trim().Length > 300)
         {
-                return TagWriteResult.Failed(TagWriteFailure.Validation, "Mô tả không được vượt quá 300 ký tự.", "description");
+            return TagWriteResult.Failed(TagWriteFailure.Validation, "Mô tả không được vượt quá 300 ký tự.", "description");
         }
         return null;
     }

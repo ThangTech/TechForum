@@ -233,15 +233,15 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         }
         if (query.PageSize is < 1 or > 50)
         {
-                errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
+            errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
         }
         if (query.AroundAnswerId is <= 0)
         {
-                errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
+            errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
         }
         if (query.Sort is not ("oldest" or "helpful"))
         {
-                errors["sort"] = ["Cách sắp xếp phải là oldest hoặc helpful."];
+            errors["sort"] = ["Cách sắp xếp phải là oldest hoặc helpful."];
         }
 
         return errors.Count == 0

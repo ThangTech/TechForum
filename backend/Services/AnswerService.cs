@@ -75,7 +75,7 @@ public sealed partial class AnswerService(
         }
         if (isHelpful && answer.AuthorId == userId)
         {
-                return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.OwnAnswer);
+            return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.OwnAnswer);
         }
 
         if (isHelpful)
@@ -242,17 +242,17 @@ public sealed partial class AnswerService(
             topicId, answerId, authorId, cancellationToken);
         if (answer is null)
         {
-                return UpdateAnswerResult.Failed(UpdateAnswerFailure.NotFound, "Không tìm thấy câu trả lời thuộc tài khoản của bạn.");
+            return UpdateAnswerResult.Failed(UpdateAnswerFailure.NotFound, "Không tìm thấy câu trả lời thuộc tài khoản của bạn.");
         }
 
         if (request.BodyHtml is null || request.BodyHtml.Length > 20_000)
         {
-                return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.", "bodyHtml");
+            return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.", "bodyHtml");
         }
         var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
         if (!HasMeaningfulContent(sanitizedBody))
         {
-                return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời phải có nội dung văn bản hợp lệ.", "bodyHtml");
+            return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời phải có nội dung văn bản hợp lệ.", "bodyHtml");
         }
 
         answer.BodyHtml = sanitizedBody;

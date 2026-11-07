@@ -25,7 +25,7 @@ public sealed class AdminTopicService(
     {
         if (query.Page < 1 || query.PageSize is < 1 or > 50 || query.Keyword?.Trim().Length > 100 || query.CategoryId is <= 0)
         {
-                return null;
+            return null;
         }
         TopicType? type = query.Type?.Trim().ToLowerInvariant() switch
         {
@@ -59,12 +59,12 @@ public sealed class AdminTopicService(
         var action = request.Action?.Trim().ToLowerInvariant();
         if (action is null || !Actions.Contains(action))
         {
-                return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Hành động kiểm duyệt không hợp lệ.", "action");
+            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Hành động kiểm duyệt không hợp lệ.", "action");
         }
         var reason = request.Reason?.Trim();
         if (string.IsNullOrWhiteSpace(reason) || reason.Length > 1000)
         {
-                return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Lý do phải có từ 1 đến 1.000 ký tự.", "reason");
+            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Lý do phải có từ 1 đến 1.000 ký tự.", "reason");
         }
         var topic = await topicRepository.GetTrackedByIdAsync(topicId, cancellationToken);
         if (topic is null)
@@ -73,7 +73,7 @@ public sealed class AdminTopicService(
         }
         if (topic.IsDeleted && action is not ("lock" or "unlock"))
         {
-                return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Conflict, "Nội dung đã bị tác giả xóa và không thể thực hiện hành động này.");
+            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Conflict, "Nội dung đã bị tác giả xóa và không thể thực hiện hành động này.");
         }
 
         var previousValue = Describe(topic);
@@ -88,12 +88,12 @@ public sealed class AdminTopicService(
             case "move":
                 if (!request.CategoryId.HasValue)
                 {
-                        return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Vui lòng chọn chuyên mục đích.", "categoryId");
+                    return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Vui lòng chọn chuyên mục đích.", "categoryId");
                 }
                 var category = await topicRepository.GetActiveCategoryAsync(request.CategoryId.Value, cancellationToken);
                 if (category is null)
                 {
-                        return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Chuyên mục đích không tồn tại hoặc đã ngừng sử dụng.", "categoryId");
+                    return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Chuyên mục đích không tồn tại hoặc đã ngừng sử dụng.", "categoryId");
                 }
                 topic.CategoryId = category.Id;
                 topic.Category = category;
@@ -137,8 +137,8 @@ public sealed class AdminTopicService(
         }, notification, cancellationToken);
         if (!saved)
         {
-                return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Conflict,
-                    "Nội dung vừa được cập nhật bởi người khác. Vui lòng tải lại trước khi kiểm duyệt.");
+            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Conflict,
+                "Nội dung vừa được cập nhật bởi người khác. Vui lòng tải lại trước khi kiểm duyệt.");
         }
         return AdminTopicWriteResult.Success(Map(topic));
     }

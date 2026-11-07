@@ -250,53 +250,53 @@ public sealed partial class TopicService(
         var title = request.Title?.Trim();
         if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
         {
-                return CreateTopicResult.ValidationError("title", "Tiêu đề phải có từ 10 đến 200 ký tự.");
+            return CreateTopicResult.ValidationError("title", "Tiêu đề phải có từ 10 đến 200 ký tự.");
         }
 
         var summary = request.Summary?.Trim();
         if (string.IsNullOrWhiteSpace(summary) || summary.Length is < 20 or > 500)
         {
-                return CreateTopicResult.ValidationError("summary", "Tóm tắt phải có từ 20 đến 500 ký tự.");
+            return CreateTopicResult.ValidationError("summary", "Tóm tắt phải có từ 20 đến 500 ký tự.");
         }
 
         if (!TryParseType(request.Type, out var type))
         {
-                return CreateTopicResult.ValidationError("type", "Loại nội dung phải là 'article' hoặc 'question'.");
+            return CreateTopicResult.ValidationError("type", "Loại nội dung phải là 'article' hoặc 'question'.");
         }
 
         if (request.BodyHtml is null || request.BodyHtml.Length > 100_000)
         {
-                return CreateTopicResult.ValidationError("bodyHtml", "Nội dung không được để trống hoặc vượt quá 100.000 ký tự.");
+            return CreateTopicResult.ValidationError("bodyHtml", "Nội dung không được để trống hoặc vượt quá 100.000 ký tự.");
         }
 
         var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
         if (!HasMeaningfulContent(sanitizedBody))
         {
-                return CreateTopicResult.ValidationError("bodyHtml", "Nội dung phải có văn bản hoặc media hợp lệ.");
+            return CreateTopicResult.ValidationError("bodyHtml", "Nội dung phải có văn bản hoặc media hợp lệ.");
         }
 
         var category = await topicRepository.GetCategoryByIdAsync(request.CategoryId, cancellationToken);
         if (category is null)
         {
-                return CreateTopicResult.ValidationError("categoryId", "Chuyên mục không tồn tại.");
+            return CreateTopicResult.ValidationError("categoryId", "Chuyên mục không tồn tại.");
         }
 
         var tagIds = (request.TagIds ?? []).Distinct().ToArray();
         if (tagIds.Length > 5 || tagIds.Any(tagId => tagId <= 0))
         {
-                return CreateTopicResult.ValidationError("tagIds", "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
+            return CreateTopicResult.ValidationError("tagIds", "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
         }
 
         var tags = await topicRepository.GetActiveTagsByIdsAsync(tagIds, cancellationToken);
         if (tags.Count != tagIds.Length)
         {
-                return CreateTopicResult.ValidationError("tagIds", "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
+            return CreateTopicResult.ValidationError("tagIds", "Một hoặc nhiều thẻ không tồn tại hoặc đã ngừng sử dụng.");
         }
 
         var mediaIds = (request.MediaIds ?? []).Distinct().ToArray();
         if (mediaIds.Length > 20 || mediaIds.Any(mediaId => mediaId == Guid.Empty))
         {
-                return CreateTopicResult.ValidationError("mediaIds", "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
+            return CreateTopicResult.ValidationError("mediaIds", "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
         }
 
         var mediaAssets = await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(
@@ -306,7 +306,7 @@ public sealed partial class TopicService(
             cancellationToken);
         if (mediaAssets.Count != mediaIds.Length)
         {
-                return CreateTopicResult.ValidationError("mediaIds", "Một hoặc nhiều media không hợp lệ hoặc không thuộc tài khoản này.");
+            return CreateTopicResult.ValidationError("mediaIds", "Một hoặc nhiều media không hợp lệ hoặc không thuộc tài khoản này.");
         }
 
         var embeddedMediaUrls = MediaUrl().Matches(sanitizedBody)
@@ -323,7 +323,7 @@ public sealed partial class TopicService(
         topic.Type = type;
         if (type == TopicType.Article)
         {
-                topic.AcceptedAnswerId = null;
+            topic.AcceptedAnswerId = null;
         }
         topic.CategoryId = category.Id;
         topic.Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft;
@@ -332,20 +332,20 @@ public sealed partial class TopicService(
 
         foreach (var topicTag in topic.TopicTags.Where(item => !tagIds.Contains(item.TagId)).ToList())
         {
-                topic.TopicTags.Remove(topicTag);
+            topic.TopicTags.Remove(topicTag);
         }
         foreach (var tag in tags.Where(tag => topic.TopicTags.All(item => item.TagId != tag.Id)))
         {
-                topic.TopicTags.Add(new TopicTag { TopicId = topic.Id, TagId = tag.Id, Tag = tag });
+            topic.TopicTags.Add(new TopicTag { TopicId = topic.Id, TagId = tag.Id, Tag = tag });
         }
 
         foreach (var mediaAsset in topic.MediaAssets.Where(item => !mediaIds.Contains(item.Id)).ToList())
         {
-                topic.MediaAssets.Remove(mediaAsset);
+            topic.MediaAssets.Remove(mediaAsset);
         }
         foreach (var mediaAsset in mediaAssets.Where(item => topic.MediaAssets.All(current => current.Id != item.Id)))
         {
-                topic.MediaAssets.Add(mediaAsset);
+            topic.MediaAssets.Add(mediaAsset);
         }
 
         await topicRepository.SaveChangesAsync(cancellationToken);
@@ -372,12 +372,12 @@ public sealed partial class TopicService(
         var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
         if (topic is null)
         {
-                return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.NotFound);
+            return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.NotFound);
         }
 
         if (await topicRepository.HasPublicAnswersAsync(id, cancellationToken))
         {
-                return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.HasPublicAnswers);
+            return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.HasPublicAnswers);
         }
 
         topic.IsDeleted = true;

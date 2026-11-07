@@ -204,7 +204,7 @@ public sealed class MediaStorageService : IMediaStorageService
         }
         if (StartsWith(header, Gif87Signature) || StartsWith(header, Gif89Signature))
         {
-                return new(".gif", ["image/gif"]);
+            return new(".gif", ["image/gif"]);
         }
         if (StartsWith(header, WebPContainer) && header.Length >= 12 &&
             header.AsSpan(8, 4).SequenceEqual(WebPType))
@@ -216,7 +216,7 @@ public sealed class MediaStorageService : IMediaStorageService
     {
         if (header.Length >= 8 && header.AsSpan(4, 4).SequenceEqual(Mp4Type))
         {
-                return new(".mp4", ["video/mp4"]);
+            return new(".mp4", ["video/mp4"]);
         }
         if (StartsWith(header, WebMSignature))
         {

@@ -28,7 +28,7 @@ public sealed class AvatarService(
         }
         if (file.Length <= 0 || file.Length > options.MaxAvatarBytes)
         {
-                return AvatarUpdateResult.Invalid("Avatar phải có dung lượng từ 1 byte đến 2 MB.");
+            return AvatarUpdateResult.Invalid("Avatar phải có dung lượng từ 1 byte đến 2 MB.");
         }
 
         await using var input = file.OpenReadStream();
@@ -37,7 +37,7 @@ public sealed class AvatarService(
         var extension = DetectExtension(header[..bytesRead], file.ContentType);
         if (extension is null)
         {
-                return AvatarUpdateResult.Invalid("Avatar chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
+            return AvatarUpdateResult.Invalid("Avatar chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
         }
 
         var storageRoot = GetStorageRoot();
@@ -96,7 +96,7 @@ public sealed class AvatarService(
         var storageRoot = Path.GetFullPath(Path.Combine(contentRoot, options.StoragePath));
         if (!storageRoot.StartsWith(contentRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
         {
-                throw new InvalidOperationException("Media:StoragePath không được nằm ngoài backend.");
+            throw new InvalidOperationException("Media:StoragePath không được nằm ngoài backend.");
         }
         return storageRoot;
     }
@@ -130,7 +130,7 @@ public sealed class AvatarService(
         var avatarRoot = Path.GetFullPath(Path.Combine(storageRoot, "avatars"));
         if (filePath.StartsWith(avatarRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && File.Exists(filePath))
         {
-                File.Delete(filePath);
+            File.Delete(filePath);
         }
     }
 }

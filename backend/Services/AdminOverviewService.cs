@@ -27,15 +27,15 @@ public sealed class AdminOverviewService(
         var start = startDate ?? DateOnly.FromDayNumber(Math.Max(0, end.DayNumber - 29));
         if (start == DateOnly.MinValue || end == DateOnly.MaxValue)
         {
-                return AdminDashboardResult.ValidationError("startDate", "Khoảng ngày nằm ngoài giới hạn hỗ trợ.");
+            return AdminDashboardResult.ValidationError("startDate", "Khoảng ngày nằm ngoài giới hạn hỗ trợ.");
         }
         if (start > end)
         {
-                return AdminDashboardResult.ValidationError("startDate", "Ngày bắt đầu không được sau ngày kết thúc.");
+            return AdminDashboardResult.ValidationError("startDate", "Ngày bắt đầu không được sau ngày kết thúc.");
         }
         if (end.DayNumber - start.DayNumber + 1 > 366)
         {
-                return AdminDashboardResult.ValidationError("endDate", "Chỉ thống kê tối đa 366 ngày trong một lần.");
+            return AdminDashboardResult.ValidationError("endDate", "Chỉ thống kê tối đa 366 ngày trong một lần.");
         }
 
         var data = await repository.GetDashboardAsync(
@@ -48,7 +48,7 @@ public sealed class AdminOverviewService(
         var activity = new List<AdminActivityPointDto>();
         for (var date = start; date <= end; date = date.AddDays(1))
         {
-                activity.Add(dailyCounts.GetValueOrDefault(date) ?? new AdminActivityPointDto(date, 0, 0, 0, 0));
+            activity.Add(dailyCounts.GetValueOrDefault(date) ?? new AdminActivityPointDto(date, 0, 0, 0, 0));
         }
 
         var period = new AdminPeriodDto(
@@ -104,7 +104,7 @@ public sealed class AdminOverviewService(
             IsDeleted: false, IsHiddenByModerator: false };
         if (report.Answer is { IsDeleted: true } or { IsHiddenByModerator: true })
         {
-                isPublic = false;
+            isPublic = false;
         }
         // Dashboard chỉ đưa nhan đề còn công khai; xem nội dung vi phạm ở màn hình báo cáo riêng.
         var title = isPublic ? topic!.Title : "Nội dung không còn công khai";
