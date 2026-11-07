@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { getCategories, type Category } from '../api/categories'
-import { getTags, type Tag } from '../api/tags'
-import { getFollowingTopics, getTopics, type TopicPage, type TopicType, type QuestionStatus, type TopicFeedMode } from '../api/topics'
+import type { TopicType, QuestionStatus, TopicFeedMode } from '../api/topics'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
 import { createAuthUrl } from '../auth/returnUrl'
@@ -12,8 +10,13 @@ import { TopicFeed } from '../components/TopicFeed'
 import { ExploreNav } from '../components/home/ExploreNav'
 import { HomeHero } from '../components/home/HomeHero'
 import { HomeTour } from '../components/tour/HomeTour'
-import { getQuestionHighlights, type QuestionHighlights } from '../api/questionHighlights'
 import { QuestionHighlightsPanel } from '../components/questions/QuestionHighlightsPanel'
+import { useCategories } from '../queries/categories'
+import { getErrorMessage } from '../queries/errorMessage'
+import { useQuestionHighlights } from '../queries/questionHighlights'
+import { isInitialLoading } from '../queries/status'
+import { useTags } from '../queries/tags'
+import { useTopicFeed } from '../queries/topics'
 
 interface HomePageProps {
   fixedType?: 'Article' | 'Question'
@@ -50,128 +53,47 @@ export const HomePage = ({
   const questionStatus: QuestionStatus | undefined = selectedType !== 'Article' &&
     (statusParam === 'unanswered' || statusParam === 'unsolved' || statusParam === 'solved') ? statusParam : undefined
 
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
-  const [tags, setTags] = useState<Tag[]>([])
-  const [areTagsLoading, setAreTagsLoading] = useState(true)
-  const [tagError, setTagError] = useState<string | null>(null)
-  const [tagRequestVersion, setTagRequestVersion] = useState(0)
-  const [topics, setTopics] = useState<TopicPage | null>(null)
-  const [areTopicsLoading, setAreTopicsLoading] = useState(true)
-  const [topicError, setTopicError] = useState<string | null>(null)
-  const [topicRequestVersion, setTopicRequestVersion] = useState(0)
-  const [followingUnauthorized, setFollowingUnauthorized] = useState(false)
-  const [questionHighlights, setQuestionHighlights] = useState<QuestionHighlights | null>(null)
-  const [areHighlightsLoading, setAreHighlightsLoading] = useState(true)
-  const [highlightsError, setHighlightsError] = useState<string | null>(null)
-  const [highlightsVersion, setHighlightsVersion] = useState(0)
   const [areFiltersOpen, setAreFiltersOpen] = useState(() => window.matchMedia('(min-width: 761px)').matches)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    getQuestionHighlights(controller.signal)
-      .then(setQuestionHighlights)
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setHighlightsError(requestError instanceof Error ? requestError.message : 'Không thể tải câu hỏi nổi bật.')
-      })
-      .finally(() => { if (!controller.signal.aborted) setAreHighlightsLoading(false) })
-    return () => controller.abort()
-  }, [highlightsVersion])
+  const categoriesQuery = useCategories()
+  const tagsQuery = useTags()
+  const highlightsQuery = useQuestionHighlights()
+  const topicsQuery = useTopicFeed(feed, {
+    page,
+    pageSize: 10,
+    keyword: keyword || undefined,
+    type: selectedType,
+    categoryId,
+    tagId,
+    sort: feed === 'weekly' ? 'weekly' : sort,
+    questionStatus,
+  })
+
+  const categories = categoriesQuery.data ?? []
+  const tags = tagsQuery.data ?? []
+
+  // The "following" feed answers 401 for a guest. That is shown as "log in", not as an error.
+  const followingUnauthorized = feed === 'following' &&
+    topicsQuery.error instanceof ApiError && topicsQuery.error.status === 401
+  const topicError = followingUnauthorized ? null : getErrorMessage(topicsQuery.error)
+
+  // A page number past the last page (for example after a filter) goes back to the last page.
+  const lastPage = topicsQuery.data ? Math.max(1, topicsQuery.data.totalPages) : null
+  const isPageOutOfRange = lastPage !== null && page > lastPage
+  const topics = isPageOutOfRange ? null : topicsQuery.data ?? null
+  // The "following" feed waits for the login session before it can run.
+  const areTopicsLoading = isInitialLoading(topicsQuery) || isPageOutOfRange ||
+    (feed === 'following' && isAuthLoading)
 
   useEffect(() => {
-    const controller = new AbortController()
-
-    const loadCategories = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setCategories(await getCategories(controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-
-    void loadCategories()
-    return () => controller.abort()
-  }, [requestVersion])
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadTags = async () => {
-      setAreTagsLoading(true)
-      setTagError(null)
-      try {
-        setTags(await getTags(controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setTagError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
-      } finally {
-        if (!controller.signal.aborted) setAreTagsLoading(false)
-      }
-    }
-
-    void loadTags()
-    return () => controller.abort()
-  }, [tagRequestVersion])
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadTopics = async () => {
-      setAreTopicsLoading(true)
-      setTopicError(null)
-      setFollowingUnauthorized(false)
-      if (feed === 'following' && (isAuthLoading || !user)) {
-        setTopics(null)
-        setAreTopicsLoading(isAuthLoading)
-        return
-      }
-      try {
-        const loadPage = feed === 'following' ? getFollowingTopics : getTopics
-        const result = await loadPage({
-          page,
-          pageSize: 10,
-          keyword: keyword || undefined,
-          type: selectedType,
-          categoryId,
-          tagId,
-          sort: feed === 'weekly' ? 'weekly' : sort,
-          questionStatus,
-        }, controller.signal)
-        if (controller.signal.aborted) return
-        const lastPage = Math.max(1, result.totalPages)
-        if (page > lastPage) {
-          setSearchParams((current) => {
-            const next = new URLSearchParams(current)
-            if (lastPage === 1) next.delete('page')
-            else next.set('page', String(lastPage))
-            return next
-          }, { replace: true })
-          return
-        }
-        setTopics(result)
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        if (feed === 'following' && requestError instanceof ApiError && requestError.status === 401) {
-          setFollowingUnauthorized(true)
-          return
-        }
-        setTopicError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
-      } finally {
-        if (!controller.signal.aborted) setAreTopicsLoading(false)
-      }
-    }
-
-    void loadTopics()
-    return () => controller.abort()
-  }, [page, keyword, selectedType, categoryId, tagId, sort, questionStatus, feed, user, isAuthLoading, topicRequestVersion, setSearchParams])
+    if (lastPage === null || page <= lastPage) return
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (lastPage === 1) next.delete('page')
+      else next.set('page', String(lastPage))
+      return next
+    }, { replace: true })
+  }, [lastPage, page, setSearchParams])
 
   const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams)
@@ -198,12 +120,14 @@ export const HomePage = ({
             <details open={areFiltersOpen} onToggle={(event) => setAreFiltersOpen(event.currentTarget.open)}>
               <summary>Chuyên mục và thẻ</summary>
               <div className="grid gap-4">
-                <CategoryPanel categories={categories} error={error} isLoading={isLoading}
-                  onRetry={() => setRequestVersion((version) => version + 1)}
+                <CategoryPanel categories={categories} error={getErrorMessage(categoriesQuery.error)}
+                  isLoading={isInitialLoading(categoriesQuery)}
+                  onRetry={() => void categoriesQuery.refetch()}
                   selectedId={categoryId}
                   onSelect={(id) => updateSearchParams({ categoryId: id, page: undefined })} />
-                <TagPanel tags={tags} error={tagError} isLoading={areTagsLoading}
-                  onRetry={() => setTagRequestVersion((version) => version + 1)}
+                <TagPanel tags={tags} error={getErrorMessage(tagsQuery.error)}
+                  isLoading={isInitialLoading(tagsQuery)}
+                  onRetry={() => void tagsQuery.refetch()}
                   selectedId={tagId}
                   onSelect={(id) => updateSearchParams({ tagId: id === tagId ? undefined : id, page: undefined })} />
               </div>
@@ -267,7 +191,7 @@ export const HomePage = ({
             isLoading={areTopicsLoading}
             onFilter={handleFilter}
             onPageChange={(nextPage) => updateSearchParams({ page: nextPage <= 1 ? undefined : nextPage })}
-            onRetry={() => setTopicRequestVersion((version) => version + 1)}
+            onRetry={() => void topicsQuery.refetch()}
             selectedType={selectedType?.toLowerCase() as TopicType | undefined}
             isDiscussion={sort === 'discussion'}
             feed={feed}
@@ -279,14 +203,10 @@ export const HomePage = ({
 
           <aside className="browse-questions" aria-label="Câu hỏi cộng đồng">
             <QuestionHighlightsPanel
-              data={questionHighlights}
-              error={highlightsError}
-              isLoading={areHighlightsLoading}
-              onRetry={() => {
-                setAreHighlightsLoading(true)
-                setHighlightsError(null)
-                setHighlightsVersion((version) => version + 1)
-              }}
+              data={highlightsQuery.data ?? null}
+              error={getErrorMessage(highlightsQuery.error, 'Không thể tải câu hỏi nổi bật.')}
+              isLoading={isInitialLoading(highlightsQuery)}
+              onRetry={() => void highlightsQuery.refetch()}
             />
           </aside>
         </div>

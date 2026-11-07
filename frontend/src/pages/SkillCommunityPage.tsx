@@ -1,10 +1,11 @@
 import Button from '@mui/material/Button'
-import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { getSkillCommunity, type SkillCommunity } from '../api/skills'
 import { SkillMemberList } from '../components/skills/SkillMemberList'
 import { SkillSummary } from '../components/skills/SkillSummary'
+import { getErrorMessage } from '../queries/errorMessage'
+import { useSkillCommunity } from '../queries/skills'
+import { isInitialLoading } from '../queries/status'
 
 const readPage = (value: string | null) => { const page = Number(value); return Number.isInteger(page) && page > 0 ? page : 1 }
 
@@ -14,26 +15,18 @@ export const SkillCommunityPage = () => {
   const isValidId = Number.isInteger(id) && id > 0
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPage(searchParams.get('page'))
-  const [data, setData] = useState<SkillCommunity | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [version, setVersion] = useState(0)
+  const communityQuery = useSkillCommunity(id, page, isValidId)
+  const data = communityQuery.data ?? null
 
-  useEffect(() => {
-    const controller = new AbortController()
-    if (!isValidId) return () => controller.abort()
-    getSkillCommunity(id, page, controller.signal).then(setData).catch((requestError: unknown) => {
-      if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-      setError(requestError instanceof ApiError && requestError.status === 404 ? 'Kỹ năng này không tồn tại hoặc đã ngừng sử dụng.' : requestError instanceof Error ? requestError.message : 'Không thể tải kỹ năng.')
-    }).finally(() => { if (!controller.signal.aborted) setIsLoading(false) })
-    return () => controller.abort()
-  }, [id, isValidId, page, version])
+  const changePage = (next: number) => { setSearchParams(next <= 1 ? {} : { page: String(next) }) }
+  const retry = () => { void communityQuery.refetch() }
 
-  const changePage = (next: number) => { setIsLoading(true); setError(null); setSearchParams(next <= 1 ? {} : { page: String(next) }) }
-  const retry = () => { setIsLoading(true); setError(null); setVersion((value) => value + 1) }
-
+  const requestError = communityQuery.error
+  const error = requestError instanceof ApiError && requestError.status === 404
+    ? 'Kỹ năng này không tồn tại hoặc đã ngừng sử dụng.'
+    : getErrorMessage(requestError, 'Không thể tải kỹ năng.')
   const visibleError = isValidId ? error : 'Đường dẫn kỹ năng không hợp lệ.'
-  const visibleLoading = isValidId && isLoading
+  const visibleLoading = isValidId && isInitialLoading(communityQuery)
 
   return <main className="main-area" id="main-content"><div className="page-content py-10">
     {visibleLoading && <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">Đang tải kỹ năng…</div>}

@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { getPublicStatistics, type PublicStatistics } from '../../api/statistics'
+import { usePublicStatistics } from '../../queries/statistics'
 
 interface HomeHeroProps {
   title: string
@@ -9,16 +8,8 @@ interface HomeHeroProps {
 const formatCount = (value: number) => new Intl.NumberFormat('vi-VN').format(value)
 
 export const HomeHero = ({ title, description }: HomeHeroProps) => {
-  const [statistics, setStatistics] = useState<PublicStatistics | null>(null)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    // Số liệu chỉ là thông tin phụ: nếu lỗi thì ẩn khối thống kê, không chặn trang.
-    getPublicStatistics(controller.signal)
-      .then(setStatistics)
-      .catch(() => undefined)
-    return () => controller.abort()
-  }, [])
+  // Số liệu chỉ là thông tin phụ: nếu lỗi thì không có dữ liệu và khối thống kê bị ẩn, không chặn trang.
+  const { data: statistics } = usePublicStatistics()
 
   return (
     <section className="home-hero" aria-labelledby="page-title">

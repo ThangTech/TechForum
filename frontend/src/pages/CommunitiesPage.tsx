@@ -1,34 +1,15 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getTags, type Tag } from '../api/tags'
 import { appRoutes } from '../appRoutes'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { getErrorMessage } from '../queries/errorMessage'
+import { isInitialLoading } from '../queries/status'
+import { useTags } from '../queries/tags'
 
 export const CommunitiesPage = () => {
-  const [tags, setTags] = useState<Tag[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [requestVersion, setRequestVersion] = useState(0)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadTags = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        setTags(await getTags(controller.signal))
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
-        setError(requestError instanceof Error ? requestError.message : 'Đã xảy ra lỗi không xác định.')
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-      }
-    }
-
-    void loadTags()
-    return () => controller.abort()
-  }, [requestVersion])
+  const tagsQuery = useTags()
+  const tags = tagsQuery.data ?? []
+  const isLoading = isInitialLoading(tagsQuery)
+  const error = getErrorMessage(tagsQuery.error)
 
   return (
     <main className="main-area" id="main-content">
@@ -47,7 +28,7 @@ export const CommunitiesPage = () => {
           error={error}
           isLoading={isLoading}
           loadingText="Đang tải cộng đồng…"
-          onRetry={() => setRequestVersion((version) => version + 1)}
+          onRetry={() => void tagsQuery.refetch()}
         />
 
         {!isLoading && !error && tags.length === 0 && (
