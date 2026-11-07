@@ -69,6 +69,15 @@ public sealed class AdminAccountRepository(
             result = await userManager.ResetAccessFailedCountAsync(user);
             if (!result.Succeeded) return result;
         }
+        else
+        {
+            // A locked account must not get new access tokens from an old refresh token.
+            await dbContext.RefreshTokens
+                .Where(token => token.UserId == user.Id && token.RevokedAtUtc == null)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(token => token.RevokedAtUtc, auditLog.CreatedAtUtc),
+                    cancellationToken);
+        }
         dbContext.AdminAuditLogs.Add(auditLog);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

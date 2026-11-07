@@ -9,9 +9,11 @@ namespace TechForum.Api.Services;
 
 public sealed class PasswordRecoveryService(
     IPasswordRecoveryRepository repository,
+    IRefreshTokenRepository refreshTokenRepository,
     IRecoveryEmailSender emailSender,
     IOptions<RecoveryEmailOptions> options,
     IHostEnvironment environment,
+    TimeProvider timeProvider,
     ILogger<PasswordRecoveryService> logger) : IPasswordRecoveryService
 {
     public async Task<bool> RequestAsync(string email, CancellationToken cancellationToken)
@@ -42,7 +44,7 @@ public sealed class PasswordRecoveryService(
         return true;
     }
 
-    public async Task<bool> ResetAsync(ResetPasswordRequest request)
+    public async Task<bool> ResetAsync(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
         string token;
         try
@@ -56,8 +58,18 @@ public sealed class PasswordRecoveryService(
         var user = await repository.FindByEmailAsync(request.Email.Trim());
         if (user is null) return false;
         var result = await repository.ResetAsync(user, token, request.NewPassword);
-        // Identity đổi SecurityStamp để vô hiệu cả token đã dùng lẫn phiên đăng nhập cũ.
-        return result.Succeeded;
+        if (!result.Succeeded)
+        {
+            return false;
+        }
+
+        // Identity đổi SecurityStamp nên access token cũ hết hiệu lực.
+        // Thu hồi refresh token để các thiết bị khác không tự đăng nhập lại.
+        await refreshTokenRepository.RevokeAllForUserAsync(
+            user.Id,
+            timeProvider.GetUtcNow(),
+            cancellationToken);
+        return true;
     }
 
     private bool TryGetFrontendUrl(out string frontendUrl)

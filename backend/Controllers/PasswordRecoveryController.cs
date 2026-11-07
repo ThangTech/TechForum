@@ -33,9 +33,9 @@ public sealed class PasswordRecoveryController(IPasswordRecoveryService recovery
 
     [HttpPost("reset-password")]
     [EnableRateLimiting("reset-password")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
-        if (await recoveryService.ResetAsync(request)) return NoContent();
+        if (await recoveryService.ResetAsync(request, cancellationToken)) return NoContent();
         return BadRequest(new ProblemDetails
         {
             Status = 400,

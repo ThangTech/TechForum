@@ -10,6 +10,7 @@ using TechForum.Api.Data.Repositories;
 using TechForum.Api.Dtos.Auth;
 using TechForum.Api.Models;
 using TechForum.Api.Services;
+using TechForum.Api.Tests.Fakes;
 using Xunit;
 
 namespace TechForum.Api.Tests.Services;
@@ -56,7 +57,7 @@ public sealed class PasswordRecoveryServiceTests
     public async Task InvalidFrontendConfiguration_IsRejectedBeforeAccountLookup(string url)
     {
         var repository = new FakeRepository { User = User() };
-        Assert.False(await Create(repository, new FakeSender(), url).RequestAsync("member@example.com", default));
+        Assert.False(await Create(repository, new FakeSender(), url: url).RequestAsync("member@example.com", default));
         Assert.Equal(0, repository.LookupCount);
     }
 
@@ -74,7 +75,7 @@ public sealed class PasswordRecoveryServiceTests
         Assert.False(await Create(repository, new FakeSender()).ResetAsync(new ResetPasswordRequest
         {
             Email = "member@example.com", Token = "***invalid***", NewPassword = "Valid!2026"
-        }));
+        }, default));
         Assert.Null(repository.ResetToken);
     }
 
@@ -82,11 +83,27 @@ public sealed class PasswordRecoveryServiceTests
     public async Task Reset_DelegatesDecodedTokenAndReturnsIdentityFailure()
     {
         var repository = new FakeRepository { User = User(), ResetResult = IdentityResult.Failed(new IdentityError { Code = "InvalidToken" }) };
-        Assert.False(await Create(repository, new FakeSender()).ResetAsync(new ResetPasswordRequest
+        var refreshTokens = CreateRefreshTokens();
+        Assert.False(await Create(repository, new FakeSender(), refreshTokens).ResetAsync(new ResetPasswordRequest
         {
             Email = "member@example.com", Token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes("expired-token")), NewPassword = "Valid!2026"
-        }));
+        }, default));
         Assert.Equal("expired-token", repository.ResetToken);
+        Assert.All(refreshTokens.Tokens, token => Assert.Null(token.RevokedAtUtc));
+    }
+
+    [Fact]
+    public async Task Reset_WhenSuccessful_RevokesEveryRefreshTokenOfTheAccount()
+    {
+        var repository = new FakeRepository { User = User() };
+        var refreshTokens = CreateRefreshTokens();
+        Assert.True(await Create(repository, new FakeSender(), refreshTokens).ResetAsync(new ResetPasswordRequest
+        {
+            Email = "member@example.com", Token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes("valid-token")), NewPassword = "Valid!2026"
+        }, default));
+        Assert.Equal("valid-token", repository.ResetToken);
+        Assert.All(refreshTokens.Tokens.Where(token => token.UserId == "member-1"), token => Assert.NotNull(token.RevokedAtUtc));
+        Assert.Null(refreshTokens.Tokens.Single(token => token.UserId == "other-member").RevokedAtUtc);
     }
 
     [Theory]
@@ -103,11 +120,25 @@ public sealed class PasswordRecoveryServiceTests
         Assert.Equal(expected, sender.IsConfigured);
     }
 
-    private static ApplicationUser User() => new() { DisplayName = "Member", Email = "member@example.com" };
+    private static ApplicationUser User() => new() { Id = "member-1", DisplayName = "Member", Email = "member@example.com" };
 
-    private static PasswordRecoveryService Create(FakeRepository repository, FakeSender sender, string url = "http://localhost:5173") =>
-        new(repository, sender, Options.Create(new RecoveryEmailOptions { FrontendUrl = url }),
-            new FakeEnvironment(), NullLogger<PasswordRecoveryService>.Instance);
+    private static FakeRefreshTokenRepository CreateRefreshTokens()
+    {
+        var refreshTokens = new FakeRefreshTokenRepository();
+        refreshTokens.Tokens.Add(new RefreshToken { UserId = "member-1", TokenHash = "hash-1" });
+        refreshTokens.Tokens.Add(new RefreshToken { UserId = "member-1", TokenHash = "hash-2" });
+        refreshTokens.Tokens.Add(new RefreshToken { UserId = "other-member", TokenHash = "hash-3" });
+        return refreshTokens;
+    }
+
+    private static PasswordRecoveryService Create(
+        FakeRepository repository,
+        FakeSender sender,
+        FakeRefreshTokenRepository? refreshTokens = null,
+        string url = "http://localhost:5173") =>
+        new(repository, refreshTokens ?? new FakeRefreshTokenRepository(), sender,
+            Options.Create(new RecoveryEmailOptions { FrontendUrl = url }),
+            new FakeEnvironment(), TimeProvider.System, NullLogger<PasswordRecoveryService>.Instance);
 
     private sealed class FakeRepository : IPasswordRecoveryRepository
     {
