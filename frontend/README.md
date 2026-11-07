@@ -142,6 +142,21 @@ Phiên đăng nhập dùng JWT, được giữ trong store Zustand (`src/auth/au
   một refresh token.
 - Đổi mật khẩu đăng xuất mọi thiết bị, nên giao diện đưa người dùng về `/login`.
 
+Dữ liệu từ API được tải bằng TanStack React Query (`src/queries/`):
+
+- Mỗi nhóm dữ liệu có một file hook (`useCategories`, `useTopic`, `useNotifications`...).
+  Trang chỉ gọi hook, không tự viết `useEffect`, `AbortController` hay đếm số lần thử lại.
+  Hàm API đã nhận `signal`, nên React Query tự hủy request cũ khi đổi trang hoặc bộ lọc.
+- Dữ liệu được coi là mới trong 30 giây và không tải lại khi chuyển cửa sổ. Lỗi đọc được
+  thử lại một lần, trừ lỗi 4xx. Thao tác ghi không bao giờ tự thử lại, nên không tạo bản ghi trùng.
+- Dữ liệu phụ thuộc người đăng nhập (thông báo, nội dung của tôi, trạng thái sao/lưu, câu trả
+  lời hữu ích, trang quản trị) có khóa bắt đầu bằng `['user', userId, ...]` và chỉ chạy sau khi
+  phiên được khôi phục. Khi đăng xuất hoặc đổi người dùng, dữ liệu của người cũ bị xóa khỏi cache.
+  Dữ liệu công khai (chuyên mục, thẻ, danh sách chủ đề) được giữ.
+- Thao tác ghi dùng `useMutation`. Sau khi ghi, hook cập nhật cache hoặc đánh dấu dữ liệu liên quan
+  là cũ để tải lại. Ví dụ: đánh dấu thông báo đã đọc làm số thông báo trên header tự cập nhật.
+- Các form (đăng câu trả lời, sửa câu trả lời, báo cáo...) vẫn giữ trạng thái gửi riêng.
+
 ## Kiểm tra
 
 ```powershell
