@@ -227,6 +227,16 @@ public sealed partial class TopicService(
         var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
         if (topic is null) return null;
 
+        // Going back to draft hides the whole topic, including the answers of other members.
+        // A topic with public answers cannot be deleted by its author, so it cannot be hidden this way either.
+        var wouldBecomeDraft = topic.Status == TopicStatus.Published && !request.Publish;
+        if (wouldBecomeDraft && await topicRepository.HasPublicAnswersAsync(topic.Id, cancellationToken))
+        {
+            return CreateTopicResult.Conflict(
+                "Nội dung đã có câu trả lời công khai nên không thể chuyển về bản nháp. " +
+                "Bạn có thể giữ nguyên bài đã xuất bản hoặc liên hệ quản trị viên khi cần xử lý.");
+        }
+
         var title = request.Title?.Trim();
         if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
             return CreateTopicResult.ValidationError("title", "Tiêu đề phải có từ 10 đến 200 ký tự.");

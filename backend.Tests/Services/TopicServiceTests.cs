@@ -379,6 +379,65 @@ public sealed class TopicServiceTests
     }
 
     [Fact]
+    public async Task UpdateAsync_WhenPublishedTopicHasPublicAnswers_RefusesToMakeItADraft()
+    {
+        var existing = CreateTopic();
+        existing.Status = TopicStatus.Published;
+        var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category, HasPublicAnswers = true };
+
+        var result = await CreateService(repository).UpdateAsync(
+            existing.Id, existing.AuthorId, CreateUpdateRequest(existing, publish: false), CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.True(result.IsConflict);
+        Assert.False(result.Succeeded);
+        Assert.Equal(TopicStatus.Published, existing.Status);
+        Assert.False(repository.SavedChanges);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenPublishedTopicHasNoAnswers_AllowsMakingItADraft()
+    {
+        var existing = CreateTopic();
+        existing.Status = TopicStatus.Published;
+        var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category, HasPublicAnswers = false };
+
+        var result = await CreateService(repository).UpdateAsync(
+            existing.Id, existing.AuthorId, CreateUpdateRequest(existing, publish: false), CancellationToken.None);
+
+        Assert.True(result?.Succeeded);
+        Assert.Equal(TopicStatus.Draft, existing.Status);
+        Assert.True(repository.SavedChanges);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenPublishedTopicWithAnswersStaysPublished_Succeeds()
+    {
+        var existing = CreateTopic();
+        existing.Status = TopicStatus.Published;
+        var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category, HasPublicAnswers = true };
+
+        var result = await CreateService(repository).UpdateAsync(
+            existing.Id, existing.AuthorId, CreateUpdateRequest(existing, publish: true), CancellationToken.None);
+
+        Assert.True(result?.Succeeded);
+        Assert.Equal(TopicStatus.Published, existing.Status);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenDraftHasNoPublicAnswers_CanBeSavedAgainAsDraft()
+    {
+        var existing = CreateTopic();
+        existing.Status = TopicStatus.Draft;
+        var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category, HasPublicAnswers = true };
+
+        var result = await CreateService(repository).UpdateAsync(
+            existing.Id, existing.AuthorId, CreateUpdateRequest(existing, publish: false), CancellationToken.None);
+
+        Assert.True(result?.Succeeded);
+    }
+
+    [Fact]
     public async Task SoftDeleteAsync_WithPublicAnswers_ReturnsConflictWithoutDeleting()
     {
         var repository = new FakeTopicRepository
@@ -407,6 +466,11 @@ public sealed class TopicServiceTests
         Assert.True(repository.OwnedTopic.IsDeleted);
         Assert.True(repository.SavedChanges);
     }
+
+    private static UpdateTopicRequest CreateUpdateRequest(Topic existing, bool publish) => new(
+        "Tiêu đề kiểm tra chuyển bản nháp",
+        "Tóm tắt hợp lệ cho kiểm thử chuyển về bản nháp.",
+        "<p>Nội dung kiểm tra.</p>", "article", existing.CategoryId, [], [], publish);
 
     private static TopicService CreateService(
         FakeTopicRepository repository,

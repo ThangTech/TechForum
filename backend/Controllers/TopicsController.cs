@@ -157,6 +157,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     [ProducesResponseType<OwnTopicDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<OwnTopicDto>> Update(
         int id,
         [FromBody] UpdateTopicRequest request,
@@ -164,6 +165,16 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     {
         var result = await topicService.UpdateAsync(id, GetUserId(), request, cancellationToken);
         if (result is null) return NotFound(CreateNotFoundProblem());
+        if (result.IsConflict)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Không thể lưu thành bản nháp",
+                Detail = result.ConflictMessage
+            });
+        }
+
         if (!result.Succeeded)
         {
             return BadRequest(new ValidationProblemDetails(
