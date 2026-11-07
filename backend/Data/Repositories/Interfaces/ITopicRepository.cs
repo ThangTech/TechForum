@@ -34,7 +34,9 @@ public interface ITopicRepository
 
     Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken);
 
-    Task AddAsync(Topic topic, CancellationToken cancellationToken);
+    // Saves a new topic. Returns false when another topic already uses the same slug.
+    // The topic stays tracked, so the caller can change the slug and call this again.
+    Task<bool> TryAddAsync(Topic topic, CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }

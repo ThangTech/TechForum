@@ -15,6 +15,8 @@ public sealed partial class TopicService(
     IContentSanitizer contentSanitizer,
     TimeProvider timeProvider) : ITopicService
 {
+    private const int MaxSlugAttempts = 5;
+
     public async Task<PagedResultDto<TopicSummaryDto>> GetPublicPageAsync(
         TopicQuery query,
         CancellationToken cancellationToken)
@@ -201,7 +203,12 @@ public sealed partial class TopicService(
             MediaAssets = mediaAssets.ToList()
         };
 
-        await topicRepository.AddAsync(topic, cancellationToken);
+        if (!await TryAddWithUniqueSlugAsync(topic, title, cancellationToken))
+        {
+            return CreateTopicResult.ValidationError(
+                "title",
+                "Không thể tạo đường dẫn riêng cho tiêu đề này lúc này. Vui lòng thử lại.");
+        }
 
         return CreateTopicResult.Success(new OwnTopicDto(
             topic.Id,
@@ -340,6 +347,30 @@ public sealed partial class TopicService(
         topic.UpdatedAtUtc = timeProvider.GetUtcNow();
         await topicRepository.SaveChangesAsync(cancellationToken);
         return SoftDeleteTopicResult.Success();
+    }
+
+    // Two requests with the same title can both see the same slug as free. The database accepts only
+    // one of them, so the other one picks another slug and saves again. After the first conflict it
+    // takes the next free number (a nice slug). If many requests collide in a row they would all pick the
+    // same next number again, so after the second conflict it adds a short random part instead.
+    private async Task<bool> TryAddWithUniqueSlugAsync(
+        Topic topic,
+        string title,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; attempt <= MaxSlugAttempts; attempt++)
+        {
+            if (await topicRepository.TryAddAsync(topic, cancellationToken))
+            {
+                return true;
+            }
+
+            topic.Slug = attempt == 1
+                ? await CreateUniqueSlugAsync(title, cancellationToken)
+                : $"{CreateSlug(title)}-{Guid.NewGuid().ToString("N")[..6]}";
+        }
+
+        return false;
     }
 
     private async Task<string> CreateUniqueSlugAsync(

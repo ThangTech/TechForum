@@ -234,7 +234,7 @@ public sealed class ContentReportServiceTests
         public Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(IReadOnlyCollection<int> ids, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task AddAsync(Topic topic, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<bool> TryAddAsync(Topic topic, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task SaveChangesAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

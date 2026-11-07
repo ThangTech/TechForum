@@ -379,6 +379,73 @@ public sealed class TopicServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WhenAnotherRequestTookTheSlugFirst_UsesTheNextFreeNumber()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
+            SlugConflicts = 1
+        };
+
+        var result = await CreateService(repository).CreateAsync("member-a", CreateRequest(), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, repository.TriedSlugs.Count);
+        Assert.EndsWith("-2", result.Topic!.Slug);
+        Assert.Equal(repository.TriedSlugs[^1], result.Topic.Slug);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenTheNextNumberIsTakenToo_AddsARandomPartAndStillSucceeds()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
+            SlugConflicts = 2
+        };
+
+        var result = await CreateService(repository).CreateAsync("member-a", CreateRequest(), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(3, repository.TriedSlugs.Count);
+        Assert.Equal(3, repository.TriedSlugs.Distinct().Count());
+        Assert.Matches("^tieu-de-kiem-tra-duong-dan-trung-[0-9a-f]{6}$", result.Topic!.Slug);
+        Assert.Equal(repository.TriedSlugs[^1], result.Topic.Slug);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenSlugKeepsConflicting_ReturnsAFieldErrorInsteadOfFailing()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
+            SlugConflicts = 100
+        };
+
+        var result = await CreateService(repository).CreateAsync("member-a", CreateRequest(), CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.False(result.IsConflict);
+        Assert.Contains("title", result.Errors.Keys);
+        Assert.Equal(5, repository.TriedSlugs.Count);
+        Assert.Null(repository.AddedTopic);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenSlugIsFree_SavesOnce()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" }
+        };
+
+        var result = await CreateService(repository).CreateAsync("member-a", CreateRequest(), CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Single(repository.TriedSlugs);
+    }
+
+    [Fact]
     public async Task UpdateAsync_WhenPublishedTopicHasPublicAnswers_RefusesToMakeItADraft()
     {
         var existing = CreateTopic();
@@ -467,6 +534,11 @@ public sealed class TopicServiceTests
         Assert.True(repository.SavedChanges);
     }
 
+    private static CreateTopicRequest CreateRequest() => new(
+        "Tiêu đề kiểm tra đường dẫn trùng",
+        "Tóm tắt hợp lệ cho kiểm thử đường dẫn bị trùng.",
+        "<p>Nội dung kiểm tra.</p>", "article", 1, [], [], true);
+
     private static UpdateTopicRequest CreateUpdateRequest(Topic existing, bool publish) => new(
         "Tiêu đề kiểm tra chuyển bản nháp",
         "Tóm tắt hợp lệ cho kiểm thử chuyển về bản nháp.",
@@ -541,16 +613,29 @@ public sealed class TopicServiceTests
             Task.FromResult<IReadOnlyList<Tag>>(Tags.Where(tag => ids.Contains(tag.Id)).ToList());
 
         public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
-            Task.FromResult(false);
+            Task.FromResult(TakenSlugs.Contains(slug));
 
         public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) =>
             Task.FromResult(HasPublicAnswers);
 
-        public Task AddAsync(Topic topic, CancellationToken cancellationToken)
+        // How many times in a row the database says "this slug is taken", and the slugs that were tried.
+        public int SlugConflicts { get; init; }
+        public List<string> TriedSlugs { get; } = [];
+        public HashSet<string> TakenSlugs { get; } = [];
+
+        public Task<bool> TryAddAsync(Topic topic, CancellationToken cancellationToken)
         {
+            TriedSlugs.Add(topic.Slug);
+            if (TriedSlugs.Count <= SlugConflicts)
+            {
+                // The other request saved this slug a moment ago.
+                TakenSlugs.Add(topic.Slug);
+                return Task.FromResult(false);
+            }
+
             topic.Id = 99;
             AddedTopic = topic;
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken)

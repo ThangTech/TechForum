@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
@@ -248,11 +249,24 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
                  !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)),
             cancellationToken);
 
-    public async Task AddAsync(Topic topic, CancellationToken cancellationToken)
+    public async Task<bool> TryAddAsync(Topic topic, CancellationToken cancellationToken)
     {
         dbContext.Topics.Add(topic);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException exception) when (IsSlugConflict(exception))
+        {
+            return false;
+        }
     }
+
+    // 2601 and 2627 are SQL Server's "duplicate key" errors. Only the slug index is expected here.
+    private static bool IsSlugConflict(DbUpdateException exception) =>
+        exception.InnerException is SqlException { Number: 2601 or 2627 } sqlException &&
+        sqlException.Message.Contains("IX_Topics_Slug", StringComparison.Ordinal);
 
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         dbContext.SaveChangesAsync(cancellationToken);
