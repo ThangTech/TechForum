@@ -21,7 +21,10 @@ public sealed class TopicBookmarkRepository(TechForumDbContext dbContext) : ITop
         DateTimeOffset createdAtUtc,
         CancellationToken cancellationToken)
     {
-        if (await ExistsAsync(topicId, userId, cancellationToken)) return;
+        if (await ExistsAsync(topicId, userId, cancellationToken))
+        {
+            return;
+        }
 
         var bookmark = new TopicBookmark
         {

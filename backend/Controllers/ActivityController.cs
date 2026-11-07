@@ -20,11 +20,13 @@ public sealed class ActivityController(IActivityService activityService) : Contr
         CancellationToken cancellationToken = default)
     {
         if (page < 1 || pageSize is < 1 or > 50)
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                [page < 1 ? "page" : "pageSize"] =
-                    [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số hoạt động mỗi trang phải từ 1 đến 50."]
-            }));
+        {
+                return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+                {
+                    [page < 1 ? "page" : "pageSize"] =
+                        [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số hoạt động mỗi trang phải từ 1 đến 50."]
+                }));
+        }
         return Ok(await activityService.GetMineAsync(GetUserId(), page, pageSize, cancellationToken));
     }
 

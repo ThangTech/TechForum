@@ -20,13 +20,17 @@ public sealed class AdminAccountRepository(
     {
         var query = dbContext.Users.AsNoTracking();
         if (isLocked.HasValue)
-            query = isLocked.Value
-                ? query.Where(user => user.LockoutEnd != null && user.LockoutEnd > now)
-                : query.Where(user => user.LockoutEnd == null || user.LockoutEnd <= now);
+        {
+                query = isLocked.Value
+                    ? query.Where(user => user.LockoutEnd != null && user.LockoutEnd > now)
+                    : query.Where(user => user.LockoutEnd == null || user.LockoutEnd <= now);
+        }
         if (isAdministrator.HasValue)
-            query = query.Where(user => dbContext.UserRoles.Any(userRole =>
-                userRole.UserId == user.Id && dbContext.Roles.Any(role =>
-                    role.Id == userRole.RoleId && role.Name == RoleNames.Administrator)) == isAdministrator.Value);
+        {
+                query = query.Where(user => dbContext.UserRoles.Any(userRole =>
+                    userRole.UserId == user.Id && dbContext.Roles.Any(role =>
+                        role.Id == userRole.RoleId && role.Name == RoleNames.Administrator)) == isAdministrator.Value);
+        }
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             var normalized = keyword.Trim();
@@ -63,11 +67,17 @@ public sealed class AdminAccountRepository(
         var result = await userManager.SetLockoutEndDateAsync(
             user,
             isLocked ? lockoutEndUtc ?? DateTimeOffset.MaxValue : null);
-        if (!result.Succeeded) return result;
+        if (!result.Succeeded)
+        {
+            return result;
+        }
         if (!isLocked)
         {
             result = await userManager.ResetAccessFailedCountAsync(user);
-            if (!result.Succeeded) return result;
+            if (!result.Succeeded)
+            {
+                return result;
+            }
         }
         else
         {

@@ -41,7 +41,10 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         CancellationToken cancellationToken)
     {
         var followerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(followerId)) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(followerId))
+        {
+            return Unauthorized();
+        }
 
         var errors = Validate(query);
         if (errors.Count > 0)
@@ -164,7 +167,10 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         CancellationToken cancellationToken)
     {
         var result = await topicService.UpdateAsync(id, GetUserId(), request, cancellationToken);
-        if (result is null) return NotFound(CreateNotFoundProblem());
+        if (result is null)
+        {
+            return NotFound(CreateNotFoundProblem());
+        }
         if (result.IsConflict)
         {
             return Conflict(new ProblemDetails

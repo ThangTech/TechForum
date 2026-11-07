@@ -22,7 +22,10 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
                 .Where(answer => answer.Id == aroundAnswerId.Value)
                 .Select(answer => new { answer.Id, answer.CreatedAtUtc, HelpfulCount = answer.HelpfulVotes.Count })
                 .SingleOrDefaultAsync(cancellationToken);
-            if (target is null) return null;
+            if (target is null)
+            {
+                return null;
+            }
 
             // Dùng đúng thứ tự của danh sách để tìm trang, không tải các trang trước đó.
             var precedingCount = sort == "helpful"

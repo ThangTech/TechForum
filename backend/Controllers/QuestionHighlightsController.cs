@@ -17,13 +17,23 @@ public sealed class QuestionHighlightsController(IQuestionHighlightService servi
         CancellationToken cancellationToken = default)
     {
         var errors = new Dictionary<string, string[]>();
-        if (periodDays is < 7 or > 365) errors["periodDays"] = ["Khoảng thời gian phải từ 7 đến 365 ngày."];
-        if (limit is < 1 or > 10) errors["limit"] = ["Số câu hỏi mỗi nhóm phải từ 1 đến 10."];
-        if (errors.Count > 0) return BadRequest(new ValidationProblemDetails(errors)
+        if (periodDays is < 7 or > 365)
         {
-            Status = StatusCodes.Status400BadRequest,
-            Title = "Bộ lọc câu hỏi nổi bật chưa hợp lệ"
-        });
+            errors["periodDays"] = ["Khoảng thời gian phải từ 7 đến 365 ngày."];
+        }
+        if (limit is < 1 or > 10)
+        {
+            errors["limit"] = ["Số câu hỏi mỗi nhóm phải từ 1 đến 10."];
+        }
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ValidationProblemDetails(errors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bộ lọc câu hỏi nổi bật chưa hợp lệ"
+            });
+        }
+
         return Ok(await service.GetAsync(periodDays, limit, cancellationToken));
     }
 }

@@ -21,7 +21,10 @@ public sealed class RelatedTopicRepository(TechForumDbContext dbContext) : IRela
             .SingleOrDefaultAsync(cancellationToken);
 
         // Không dùng bản nháp hoặc nội dung đã bị ẩn làm nguồn gợi ý công khai.
-        if (source is null) return null;
+        if (source is null)
+        {
+            return null;
+        }
 
         return await PublicTopics()
             .Where(topic => topic.Id != topicId)

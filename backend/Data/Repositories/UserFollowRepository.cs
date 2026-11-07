@@ -46,7 +46,10 @@ public sealed class UserFollowRepository(TechForumDbContext dbContext) : IUserFo
         int pageSize,
         CancellationToken cancellationToken)
     {
-        if (!await UserExistsAsync(userId, cancellationToken)) return null;
+        if (!await UserExistsAsync(userId, cancellationToken))
+        {
+            return null;
+        }
 
         var query = dbContext.UserFollows
             .AsNoTracking()

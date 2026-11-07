@@ -63,7 +63,10 @@ public sealed class TagRepository(TechForumDbContext dbContext) : ITagRepository
         catch (DbUpdateException exception)
             when (exception.InnerException is SqlException { Number: 2601 or 2627 })
         {
-            if (addedTag is not null) dbContext.Entry(addedTag).State = EntityState.Detached;
+            if (addedTag is not null)
+            {
+                dbContext.Entry(addedTag).State = EntityState.Detached;
+            }
             return false;
         }
     }

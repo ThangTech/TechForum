@@ -20,14 +20,23 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         CancellationToken cancellationToken)
     {
         var validationProblem = Validate(query);
-        if (validationProblem is not null) return BadRequest(validationProblem);
+        if (validationProblem is not null)
+        {
+            return BadRequest(validationProblem);
+        }
 
         var viewerId = User.Identity?.IsAuthenticated == true
             ? User.FindFirstValue(ClaimTypes.NameIdentifier)
             : null;
         var page = await answerService.GetPublicPageAsync(topicId, query, cancellationToken, viewerId);
-        if (page is not null) return Ok(page);
-        if (!query.AroundAnswerId.HasValue) return NotFound(CreateTopicNotFoundProblem());
+        if (page is not null)
+        {
+            return Ok(page);
+        }
+        if (!query.AroundAnswerId.HasValue)
+        {
+            return NotFound(CreateTopicNotFoundProblem());
+        }
 
         return NotFound(new ProblemDetails
         {
@@ -94,7 +103,10 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         CancellationToken cancellationToken)
     {
         var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(authorId)) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(authorId))
+        {
+            return Unauthorized();
+        }
 
         var result = await answerService.CreateAsync(
             topicId,
@@ -137,7 +149,10 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         CancellationToken cancellationToken)
     {
         var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(authorId)) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(authorId))
+        {
+            return Unauthorized();
+        }
 
         var result = await answerService.AcceptAsync(
             topicId,
@@ -212,13 +227,22 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
     private static ValidationProblemDetails? Validate(AnswerQuery query)
     {
         var errors = new Dictionary<string, string[]>();
-        if (query.Page < 1) errors["page"] = ["Trang phải lớn hơn hoặc bằng 1."];
+        if (query.Page < 1)
+        {
+            errors["page"] = ["Trang phải lớn hơn hoặc bằng 1."];
+        }
         if (query.PageSize is < 1 or > 50)
-            errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
+        {
+                errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
+        }
         if (query.AroundAnswerId is <= 0)
-            errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
+        {
+                errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
+        }
         if (query.Sort is not ("oldest" or "helpful"))
-            errors["sort"] = ["Cách sắp xếp phải là oldest hoặc helpful."];
+        {
+                errors["sort"] = ["Cách sắp xếp phải là oldest hoặc helpful."];
+        }
 
         return errors.Count == 0
             ? null

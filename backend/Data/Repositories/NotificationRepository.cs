@@ -30,7 +30,10 @@ public sealed class NotificationRepository(TechForumDbContext dbContext) : INoti
         var exists = await dbContext.Notifications.AnyAsync(
             item => item.UserId == notification.UserId && item.SourceKey == notification.SourceKey,
             cancellationToken);
-        if (exists) return false;
+        if (exists)
+        {
+            return false;
+        }
         dbContext.Notifications.Add(notification);
         return true;
     }

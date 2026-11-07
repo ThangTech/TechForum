@@ -14,7 +14,10 @@ public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : IT
         CancellationToken cancellationToken)
     {
         var topic = await GetPublicTopicAsync(topicId, cancellationToken);
-        if (topic is null) return null;
+        if (topic is null)
+        {
+            return null;
+        }
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var viewedOnUtc = DateOnly.FromDateTime(viewedAtUtc.UtcDateTime);
@@ -49,7 +52,10 @@ public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : IT
     public async Task<TopicEngagementDto?> RecordShareAsync(int topicId, CancellationToken cancellationToken)
     {
         var topic = await GetPublicTopicAsync(topicId, cancellationToken);
-        if (topic is null) return null;
+        if (topic is null)
+        {
+            return null;
+        }
         await dbContext.Topics
             .Where(item => item.Id == topicId)
             .ExecuteUpdateAsync(setters => setters

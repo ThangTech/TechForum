@@ -65,7 +65,10 @@ public sealed class CategoryRepository(TechForumDbContext dbContext) : ICategory
         catch (DbUpdateException exception)
             when (exception.InnerException is SqlException { Number: 2601 or 2627 })
         {
-            if (addedCategory is not null) dbContext.Entry(addedCategory).State = EntityState.Detached;
+            if (addedCategory is not null)
+            {
+                dbContext.Entry(addedCategory).State = EntityState.Detached;
+            }
             return false;
         }
     }

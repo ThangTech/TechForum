@@ -23,7 +23,10 @@ public sealed class TopicStarRepository(TechForumDbContext dbContext) : ITopicSt
         DateTimeOffset createdAtUtc,
         CancellationToken cancellationToken)
     {
-        if (await ExistsAsync(topicId, userId, cancellationToken)) return;
+        if (await ExistsAsync(topicId, userId, cancellationToken))
+        {
+            return;
+        }
 
         var star = new TopicStar
         {

@@ -273,7 +273,10 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
 
     private static IQueryable<Topic> ApplyQuestionStatus(IQueryable<Topic> topics, string? status)
     {
-        if (status is null) return topics;
+        if (status is null)
+        {
+            return topics;
+        }
 
         topics = topics.Where(topic => topic.Type == TopicType.Question);
         if (status == "unanswered")

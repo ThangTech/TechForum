@@ -18,7 +18,10 @@ public sealed class PasswordRecoveryController(IPasswordRecoveryService recovery
         var startedAt = System.Diagnostics.Stopwatch.StartNew();
         var isAvailable = await recoveryService.RequestAsync(request.Email, cancellationToken);
         var remainingDelay = TimeSpan.FromMilliseconds(500) - startedAt.Elapsed;
-        if (remainingDelay > TimeSpan.Zero) await Task.Delay(remainingDelay, cancellationToken);
+        if (remainingDelay > TimeSpan.Zero)
+        {
+            await Task.Delay(remainingDelay, cancellationToken);
+        }
         if (!isAvailable)
         {
             return StatusCode(503, new ProblemDetails
@@ -35,7 +38,10 @@ public sealed class PasswordRecoveryController(IPasswordRecoveryService recovery
     [EnableRateLimiting("reset-password")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
-        if (await recoveryService.ResetAsync(request, cancellationToken)) return NoContent();
+        if (await recoveryService.ResetAsync(request, cancellationToken))
+        {
+            return NoContent();
+        }
         return BadRequest(new ProblemDetails
         {
             Status = 400,

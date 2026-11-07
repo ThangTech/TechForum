@@ -22,17 +22,21 @@ public sealed class AdminAccountsController(IAdminAccountService accountService)
         CancellationToken cancellationToken = default)
     {
         if (keyword?.Trim().Length > 100)
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["keyword"] = ["Từ khóa không được vượt quá 100 ký tự."]
-            }));
+        {
+                return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+                {
+                    ["keyword"] = ["Từ khóa không được vượt quá 100 ký tự."]
+                }));
+        }
         status = status?.Trim().ToLowerInvariant();
         role = role?.Trim().ToLowerInvariant();
         if (status is not (null or "" or "locked" or "unlocked") || role is not (null or "" or "administrator" or "member"))
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["filters"] = ["Trạng thái phải là locked/unlocked, vai trò phải là administrator/member."]
-            }));
+        {
+                return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+                {
+                    ["filters"] = ["Trạng thái phải là locked/unlocked, vai trò phải là administrator/member."]
+                }));
+        }
         return Ok(await accountService.GetPageAsync(keyword, status, role, page, pageSize, cancellationToken));
     }
 

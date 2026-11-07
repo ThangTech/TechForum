@@ -13,7 +13,10 @@ public sealed class SkillCommunityRepository(TechForumDbContext dbContext) : ISk
     {
         var tag = await dbContext.Tags.AsNoTracking()
             .SingleOrDefaultAsync(item => item.Id == tagId && item.IsActive, cancellationToken);
-        if (tag is null) return null;
+        if (tag is null)
+        {
+            return null;
+        }
 
         var topics = dbContext.TopicTags.AsNoTracking().Where(item =>
             item.TagId == tagId &&

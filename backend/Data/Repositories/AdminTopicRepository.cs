@@ -15,9 +15,17 @@ public sealed class AdminTopicRepository(TechForumDbContext dbContext) : IAdminT
         var topics = dbContext.Topics.AsNoTracking();
         var keyword = query.Keyword?.Trim();
         if (!string.IsNullOrWhiteSpace(keyword))
-            topics = topics.Where(topic => topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
-        if (type.HasValue) topics = topics.Where(topic => topic.Type == type.Value);
-        if (query.CategoryId.HasValue) topics = topics.Where(topic => topic.CategoryId == query.CategoryId.Value);
+        {
+                topics = topics.Where(topic => topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
+        }
+        if (type.HasValue)
+        {
+            topics = topics.Where(topic => topic.Type == type.Value);
+        }
+        if (query.CategoryId.HasValue)
+        {
+            topics = topics.Where(topic => topic.CategoryId == query.CategoryId.Value);
+        }
         topics = query.Visibility?.Trim().ToLowerInvariant() switch
         {
             "visible" => topics.Where(topic => topic.Status == TopicStatus.Published &&
@@ -61,11 +69,20 @@ public sealed class AdminTopicRepository(TechForumDbContext dbContext) : IAdminT
             .AsNoTracking()
             .Select(topic => new { topic.IsHiddenByModerator, topic.IsDiscussionLocked, topic.IsPinned, topic.CategoryId, topic.IsDeleted })
             .SingleOrDefaultAsync(cancellationToken);
-        if (current is null) return false;
+        if (current is null)
+        {
+            return false;
+        }
         var currentValue = $"hidden={current.IsHiddenByModerator};locked={current.IsDiscussionLocked};pinned={current.IsPinned};categoryId={current.CategoryId};deleted={current.IsDeleted}";
-        if (currentValue != auditLog.PreviousValue) return false;
+        if (currentValue != auditLog.PreviousValue)
+        {
+            return false;
+        }
         dbContext.AdminAuditLogs.Add(auditLog);
-        if (notification is not null) dbContext.Notifications.Add(notification);
+        if (notification is not null)
+        {
+            dbContext.Notifications.Add(notification);
+        }
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return true;

@@ -89,7 +89,10 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
         int page, int pageSize, CancellationToken cancellationToken)
     {
         var query = dbContext.ContentReports.AsNoTracking().Where(item => item.ReporterId == reporterId);
-        if (status.HasValue) query = query.Where(item => item.Status == status.Value);
+        if (status.HasValue)
+        {
+            query = query.Where(item => item.Status == status.Value);
+        }
         var total = await query.CountAsync(cancellationToken);
         var items = await query.OrderByDescending(item => item.CreatedAtUtc).ThenByDescending(item => item.Id)
             .Skip((page - 1) * pageSize).Take(pageSize)
@@ -119,7 +122,10 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
                 .SetProperty(item => item.ResolvedAtUtc, resolvedAtUtc)
                 .SetProperty(item => item.ResolutionNote, resolutionNote),
                 cancellationToken);
-        if (affectedRows != 1) return false;
+        if (affectedRows != 1)
+        {
+            return false;
+        }
         dbContext.Notifications.Add(notification);
         dbContext.AdminAuditLogs.Add(auditLog);
         await dbContext.SaveChangesAsync(cancellationToken);
