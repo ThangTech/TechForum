@@ -132,12 +132,9 @@ public sealed class AdminOverviewRepository(TechForumDbContext dbContext) : IAdm
         topic.Status == TopicStatus.Published && topic.PublishedAtUtc != null &&
         !topic.IsDeleted && !topic.IsHiddenByModerator);
 
-    private IQueryable<Answer> PublicAnswers() => dbContext.Answers.AsNoTracking().Where(answer =>
-        !answer.IsDeleted && !answer.IsHiddenByModerator &&
-        (answer.ParentAnswerId == null ||
-            (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == answer.TopicId &&
-             answer.ParentAnswer.ParentAnswerId == null &&
-             !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)) &&
-        answer.Topic.Status == TopicStatus.Published && answer.Topic.PublishedAtUtc != null &&
-        !answer.Topic.IsDeleted && !answer.Topic.IsHiddenByModerator);
+    private IQueryable<Answer> PublicAnswers() => dbContext.Answers.AsNoTracking()
+        .Where(AnswerVisibility.IsPublic)
+        .Where(answer =>
+            answer.Topic.Status == TopicStatus.Published && answer.Topic.PublishedAtUtc != null &&
+            !answer.Topic.IsDeleted && !answer.Topic.IsHiddenByModerator);
 }

@@ -56,12 +56,7 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
 
         if (string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
         {
-            topics = topics.Where(topic => topic.Answers.Any(answer =>
-                !answer.IsDeleted && !answer.IsHiddenByModerator &&
-                (answer.ParentAnswerId == null ||
-                    (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
-                     answer.ParentAnswer.ParentAnswerId == null &&
-                     !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator))));
+            topics = topics.Where(topic => topic.Answers.AsQueryable().Any(AnswerVisibility.IsPublic));
         }
 
         IQueryable<Topic> orderedTopics;
@@ -91,11 +86,8 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
         else if (string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
         {
             orderedTopics = topics.OrderByDescending(topic => topic.Answers
-                    .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
-                        (answer.ParentAnswerId == null ||
-                            (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
-                             answer.ParentAnswer.ParentAnswerId == null &&
-                             !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)))
+                    .AsQueryable()
+                    .Where(AnswerVisibility.IsPublic)
                     .Max(answer => answer.UpdatedAtUtc ?? answer.CreatedAtUtc))
                 .ThenByDescending(topic => topic.Id);
         }
@@ -124,20 +116,13 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
             {
                 topic.Id,
                 Summary = new TopicDiscussionDto(
-                    topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
-                        (answer.ParentAnswerId == null ||
-                            (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
-                             answer.ParentAnswer.ParentAnswerId == null &&
-                             !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator))),
+                    topic.Answers.AsQueryable().Count(AnswerVisibility.IsPublic),
                     topic.Type == TopicType.Question && topic.Answers.Any(answer =>
                         answer.Id == topic.AcceptedAnswerId && answer.ParentAnswerId == null &&
                         !answer.IsDeleted && !answer.IsHiddenByModerator),
                     topic.Answers
-                        .Where(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
-                            (answer.ParentAnswerId == null ||
-                                (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
-                                 answer.ParentAnswer.ParentAnswerId == null &&
-                                 !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)))
+                        .AsQueryable()
+                        .Where(AnswerVisibility.IsPublic)
                         .Max(answer => (DateTimeOffset?)(answer.UpdatedAtUtc ?? answer.CreatedAtUtc)),
                     topic.Stars.Count,
                     topic.Bookmarks.Count)
@@ -239,15 +224,10 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
         dbContext.Topics.AnyAsync(topic => topic.Slug == slug, cancellationToken);
 
     public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) =>
-        dbContext.Answers.AnyAsync(answer =>
-            answer.TopicId == topicId &&
-            !answer.IsDeleted &&
-            !answer.IsHiddenByModerator &&
-            (answer.ParentAnswerId == null ||
-                (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topicId &&
-                 answer.ParentAnswer.ParentAnswerId == null &&
-                 !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)),
-            cancellationToken);
+        dbContext.Answers
+            .Where(answer => answer.TopicId == topicId)
+            .Where(AnswerVisibility.IsPublic)
+            .AnyAsync(cancellationToken);
 
     public async Task<bool> TryAddAsync(Topic topic, CancellationToken cancellationToken)
     {

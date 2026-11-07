@@ -17,14 +17,10 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
             .Include(item => item.ResolvedBy);
 
     public Task<Answer?> GetPublicAnswerAsync(int answerId, CancellationToken cancellationToken) =>
-        dbContext.Answers.AsNoTracking().Include(item => item.Topic).SingleOrDefaultAsync(item =>
+        dbContext.Answers.AsNoTracking().Include(item => item.Topic)
+            .Where(AnswerVisibility.IsPublic)
+            .SingleOrDefaultAsync(item =>
             item.Id == answerId &&
-            !item.IsDeleted &&
-            !item.IsHiddenByModerator &&
-            (item.ParentAnswerId == null ||
-                (item.ParentAnswer != null && item.ParentAnswer.TopicId == item.TopicId &&
-                 item.ParentAnswer.ParentAnswerId == null &&
-                 !item.ParentAnswer.IsDeleted && !item.ParentAnswer.IsHiddenByModerator)) &&
             item.Topic.Status == TopicStatus.Published &&
             item.Topic.PublishedAtUtc != null &&
             !item.Topic.IsDeleted &&

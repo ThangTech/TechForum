@@ -26,32 +26,19 @@ public sealed class QuestionHighlightRepository(TechForumDbContext dbContext) : 
             .Select(topic => new QuestionHighlightData(
                 topic.Id,
                 topic.Title,
-                topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
-                    (answer.ParentAnswerId == null ||
-                        (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
-                         answer.ParentAnswer.ParentAnswerId == null &&
-                         !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator))),
+                topic.Answers.AsQueryable().Count(AnswerVisibility.IsPublic),
                 topic.PublishedAtUtc!.Value))
             .ToListAsync(cancellationToken);
         var mostAnswered = await questions
             .Where(topic => topic.PublishedAtUtc >= periodStartUtc)
-            .OrderByDescending(topic => topic.Answers.Count(answer =>
-                !answer.IsDeleted && !answer.IsHiddenByModerator &&
-                (answer.ParentAnswerId == null ||
-                    (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
-                     answer.ParentAnswer.ParentAnswerId == null &&
-                     !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator))))
+            .OrderByDescending(topic => topic.Answers.AsQueryable().Count(AnswerVisibility.IsPublic))
             .ThenByDescending(topic => topic.PublishedAtUtc)
             .ThenByDescending(topic => topic.Id)
             .Take(limit)
             .Select(topic => new QuestionHighlightData(
                 topic.Id,
                 topic.Title,
-                topic.Answers.Count(answer => !answer.IsDeleted && !answer.IsHiddenByModerator &&
-                    (answer.ParentAnswerId == null ||
-                        (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topic.Id &&
-                         answer.ParentAnswer.ParentAnswerId == null &&
-                         !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator))),
+                topic.Answers.AsQueryable().Count(AnswerVisibility.IsPublic),
                 topic.PublishedAtUtc!.Value))
             .ToListAsync(cancellationToken);
         return new QuestionHighlightsData(latest, mostAnswered);

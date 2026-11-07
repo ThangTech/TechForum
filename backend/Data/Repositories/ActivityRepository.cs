@@ -34,16 +34,11 @@ public sealed class ActivityRepository(TechForumDbContext dbContext) : IActivity
             .AsNoTracking()
             .Where(answer =>
                 answer.AuthorId == userId &&
-                !answer.IsDeleted &&
-                !answer.IsHiddenByModerator &&
-                (answer.ParentAnswerId == null ||
-                    (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == answer.TopicId &&
-                     answer.ParentAnswer.ParentAnswerId == null &&
-                     !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)) &&
                 answer.Topic.Status == TopicStatus.Published &&
                 answer.Topic.PublishedAtUtc != null &&
                 !answer.Topic.IsDeleted &&
                 !answer.Topic.IsHiddenByModerator)
+            .Where(AnswerVisibility.IsPublic)
             .Select(answer => new
             {
                 Type = "answer-created",

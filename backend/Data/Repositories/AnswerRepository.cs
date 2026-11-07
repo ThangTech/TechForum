@@ -96,13 +96,9 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
     }
 
     private IQueryable<Answer> PublicAnswers(int topicId) =>
-        dbContext.Answers.AsNoTracking().Where(answer =>
-            answer.TopicId == topicId &&
-            !answer.IsDeleted && !answer.IsHiddenByModerator &&
-            (answer.ParentAnswerId == null ||
-                (answer.ParentAnswer != null && answer.ParentAnswer.TopicId == topicId &&
-                 answer.ParentAnswer.ParentAnswerId == null &&
-                 !answer.ParentAnswer.IsDeleted && !answer.ParentAnswer.IsHiddenByModerator)));
+        dbContext.Answers.AsNoTracking()
+            .Where(answer => answer.TopicId == topicId)
+            .Where(AnswerVisibility.IsPublic);
 
     public async Task AddAsync(Answer answer, CancellationToken cancellationToken)
     {
