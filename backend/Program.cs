@@ -22,6 +22,9 @@ if (string.IsNullOrWhiteSpace(connectionString))
 }
 
 builder.Services.AddControllers();
+// Unexpected errors answer with problem details JSON and a trace id (see ServerErrorResponse).
+builder.Services.AddProblemDetails(options =>
+    options.CustomizeProblemDetails = ServerErrorResponse.Customize);
 builder.Services.AddOpenApi();
 var mediaOptions = builder.Configuration
     .GetSection(MediaOptions.SectionName)
@@ -156,6 +159,10 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// First in the pipeline, so it also catches errors thrown by the middleware below.
+// The framework writes the exception and its stack trace to the log before this answers.
+app.UseExceptionHandler();
 
 app.UseMiddleware<RequestCancellationMiddleware>();
 
