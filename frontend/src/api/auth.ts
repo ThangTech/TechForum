@@ -1,11 +1,12 @@
 import type {
+  AuthSession,
   ChangePasswordInput,
   CurrentUser,
   LoginInput,
   RegisterInput,
   UpdateProfileInput,
 } from '../types/auth'
-import { ApiError, apiRequest } from './client'
+import { ApiError, apiRequest, type ApiRequestInit } from './client'
 
 const isCurrentUser = (value: unknown): value is CurrentUser => {
   if (typeof value !== 'object' || value === null) {
@@ -24,11 +25,37 @@ const isCurrentUser = (value: unknown): value is CurrentUser => {
   )
 }
 
-const requestUser = async (path: string, init?: RequestInit): Promise<CurrentUser> => {
+const isAuthSession = (value: unknown): value is AuthSession => {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const session = value as Record<string, unknown>
+  return (
+    isCurrentUser(session.user) &&
+    typeof session.accessToken === 'string' &&
+    session.accessToken.length > 0 &&
+    typeof session.accessTokenExpiresAtUtc === 'string' &&
+    !Number.isNaN(Date.parse(session.accessTokenExpiresAtUtc))
+  )
+}
+
+const requestUser = async (path: string, init?: ApiRequestInit): Promise<CurrentUser> => {
   const data: unknown = await apiRequest(path, init)
 
   if (!isCurrentUser(data)) {
     throw new ApiError(500, 'Dữ liệu tài khoản từ API không đúng định dạng.')
+  }
+
+  return data
+}
+
+// Login, register and refresh answer with an access token. They never send a Bearer token themselves.
+const requestSession = async (path: string, init: ApiRequestInit): Promise<AuthSession> => {
+  const data: unknown = await apiRequest(path, { ...init, skipAuth: true })
+
+  if (!isAuthSession(data)) {
+    throw new ApiError(500, 'Dữ liệu phiên đăng nhập từ API không đúng định dạng.')
   }
 
   return data
@@ -39,21 +66,26 @@ export const getCurrentUser = (signal?: AbortSignal) => {
 }
 
 export const login = (input: LoginInput) => {
-  return requestUser('/api/auth/login', {
+  return requestSession('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(input),
   })
 }
 
 export const register = (input: RegisterInput) => {
-  return requestUser('/api/auth/register', {
+  return requestSession('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(input),
   })
 }
 
+// The browser sends the refresh cookie; the body is empty.
+export const refreshSession = () => {
+  return requestSession('/api/auth/refresh', { method: 'POST' })
+}
+
 export const logout = () => {
-  return apiRequest<void>('/api/auth/logout', { method: 'POST' })
+  return apiRequest<void>('/api/auth/logout', { method: 'POST', skipAuth: true })
 }
 
 export const updateProfile = (input: UpdateProfileInput) => {

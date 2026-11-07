@@ -20,6 +20,25 @@ export class ApiError extends Error {
   }
 }
 
+export interface ApiRequestInit extends RequestInit {
+  // Login, register, refresh and logout must not send a Bearer token or retry after a 401.
+  skipAuth?: boolean
+}
+
+// The session module registers these, so the client does not need to know where the token is kept.
+export interface ApiAuthHandlers {
+  // Resolves to the current access token. It waits while the first session restore is running.
+  getAccessToken: () => Promise<string | null>
+  // Gets a new access token with the refresh cookie. Resolves to null when the user is signed out.
+  refreshAccessToken: () => Promise<string | null>
+}
+
+let authHandlers: ApiAuthHandlers | null = null
+
+export const configureApiAuth = (handlers: ApiAuthHandlers | null) => {
+  authHandlers = handlers
+}
+
 const readProblem = async (response: Response): Promise<ProblemDetails | null> => {
   const contentType = response.headers.get('content-type')
   const mediaType = contentType?.split(';', 1)[0]?.trim().toLowerCase()
@@ -40,26 +59,11 @@ const toApiError = (response: Response, problem: ProblemDetails | null) => {
   return new ApiError(response.status, message, problem?.errors)
 }
 
-export const getAntiforgeryToken = async (): Promise<string> => {
-  const response = await fetch(`${apiBaseUrl}/api/auth/antiforgery-token`, {
-    credentials: 'include',
-    headers: { Accept: 'application/json' },
-  })
-
-  if (!response.ok) {
-    throw toApiError(response, await readProblem(response))
-  }
-
-  const data = (await response.json()) as { token?: unknown }
-  if (typeof data.token !== 'string' || data.token.length === 0) {
-    throw new ApiError(500, 'API không trả về mã bảo vệ biểu mẫu hợp lệ.')
-  }
-
-  return data.token
-}
-
-export const apiRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
-  const method = (init.method || 'GET').toUpperCase()
+const sendRequest = async (
+  path: string,
+  init: RequestInit,
+  accessToken: string | null,
+): Promise<Response> => {
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')
 
@@ -67,13 +71,13 @@ export const apiRequest = async <T>(path: string, init: RequestInit = {}): Promi
     headers.set('Content-Type', 'application/json')
   }
 
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    headers.set('X-CSRF-TOKEN', await getAntiforgeryToken())
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`)
   }
 
-  let response: Response
   try {
-    response = await fetch(`${apiBaseUrl}${path}`, {
+    // credentials: include sends the HttpOnly refresh cookie to /api/auth/refresh and /api/auth/logout.
+    return await fetch(`${apiBaseUrl}${path}`, {
       ...init,
       credentials: 'include',
       headers,
@@ -84,6 +88,22 @@ export const apiRequest = async <T>(path: string, init: RequestInit = {}): Promi
     }
 
     throw new ApiError(0, 'Không thể kết nối tới TechForum. Vui lòng thử lại.')
+  }
+}
+
+export const apiRequest = async <T>(path: string, init: ApiRequestInit = {}): Promise<T> => {
+  const { skipAuth = false, ...fetchInit } = init
+  const handlers = skipAuth ? null : authHandlers
+
+  const accessToken = handlers ? await handlers.getAccessToken() : null
+  let response = await sendRequest(path, fetchInit, accessToken)
+
+  // An expired access token: get a new one once and send the same request again.
+  if (response.status === 401 && handlers) {
+    const refreshedToken = await handlers.refreshAccessToken()
+    if (refreshedToken && refreshedToken !== accessToken) {
+      response = await sendRequest(path, fetchInit, refreshedToken)
+    }
   }
 
   if (!response.ok) {

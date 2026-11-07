@@ -6,8 +6,12 @@ import 'froala-editor/css/froala_style.min.css'
 import './index.css'
 import './intro-overrides.css'
 import App from './App.tsx'
+import { initializeSession } from './auth/session.ts'
 import { AppErrorBoundary } from './components/common/AppErrorBoundary.tsx'
 import { theme } from './theme.ts'
+
+// Connects the API client to the login session and restores it from the refresh cookie.
+initializeSession()
 
 createRoot(document.getElementById('root')!).render(
   // enableCssLayer đặt CSS của MUI vào layer "mui": thấp hơn App.css và Tailwind utilities nên các class Tailwind vẫn ghi đè được.

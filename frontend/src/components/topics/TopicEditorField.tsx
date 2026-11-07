@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import 'froala-editor/css/froala_editor.pkgd.min.css'
 import 'froala-editor/js/plugins.pkgd.min.js'
 import 'froala-editor/js/languages/vi.js'
-import { getAntiforgeryToken } from '../../api/client'
 import { parseUploadedMedia, type UploadedMedia } from '../../api/media'
+import { useAuthStore } from '../../auth/authStore'
 import { createFroalaConfig } from '../../config/froala'
 import { resolveModuleDefault } from '../../utils/moduleInterop'
 
@@ -30,25 +30,8 @@ export const TopicEditorField = ({
   const [uploadedMedia] = useState(() => new Map(
     initialMedia.map((media) => [media.link, media]),
   ))
-  const [antiforgeryToken, setAntiforgeryToken] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [pendingUploadCount, setPendingUploadCount] = useState(0)
-
-  useEffect(() => {
-    let isActive = true
-    getAntiforgeryToken()
-      .then((token) => {
-        if (isActive) setAntiforgeryToken(token)
-      })
-      .catch((requestError: unknown) => {
-        if (isActive) {
-          setUploadError(requestError instanceof Error
-            ? requestError.message
-            : 'Không thể chuẩn bị chức năng tải media.')
-        }
-      })
-    return () => { isActive = false }
-  }, [])
 
   useEffect(() => {
     onUploadStateChange(pendingUploadCount > 0)
@@ -83,35 +66,26 @@ export const TopicEditorField = ({
     finishUpload()
   }, [finishUpload])
 
-  const config = useMemo(() => antiforgeryToken
-    ? createFroalaConfig({
-        antiforgeryToken,
-        onMediaInserted: syncInsertedMedia,
-        onMediaUploaded: (rawMedia) => {
-          try {
-            const media = parseUploadedMedia(rawMedia)
-            uploadedMedia.set(media.link, media)
-            setUploadError(null)
-          } catch (requestError) {
-            setUploadError(requestError instanceof Error ? requestError.message : 'Upload media thất bại.')
-          }
-        },
-        onUploadStarted: startUpload,
-        onUploadError: handleUploadError,
-      })
-    : null, [antiforgeryToken, handleUploadError, startUpload, syncInsertedMedia, uploadedMedia])
+  const config = useMemo(() => createFroalaConfig({
+    getAccessToken: () => useAuthStore.getState().accessToken,
+    onMediaInserted: syncInsertedMedia,
+    onMediaUploaded: (rawMedia) => {
+      try {
+        const media = parseUploadedMedia(rawMedia)
+        uploadedMedia.set(media.link, media)
+        setUploadError(null)
+      } catch (requestError) {
+        setUploadError(requestError instanceof Error ? requestError.message : 'Upload media thất bại.')
+      }
+    },
+    onUploadStarted: startUpload,
+    onUploadError: handleUploadError,
+  }), [handleUploadError, startUpload, syncInsertedMedia, uploadedMedia])
 
   return (
     <div className="grid gap-2">
       <span className="text-sm font-bold text-slate-800">Nội dung</span>
-      {!config && !uploadError && (
-        <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          Đang chuẩn bị trình soạn thảo…
-        </p>
-      )}
-      {config && (
-        <FroalaEditorComponent config={config} model={value} onModelChange={handleChange} tag="textarea" />
-      )}
+      <FroalaEditorComponent config={config} model={value} onModelChange={handleChange} tag="textarea" />
       {pendingUploadCount > 0 && (
         <p className="text-sm text-blue-700" role="status">Đang tải media lên, vui lòng chờ hoàn tất…</p>
       )}

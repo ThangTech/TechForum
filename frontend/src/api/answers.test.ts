@@ -1,12 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getAnswers, setAnswerHelpful } from './answers'
+import { configureApiAuth } from './client'
 
 const jsonResponse = (value: unknown, status = 200) => new Response(JSON.stringify(value), {
   status,
   headers: { 'Content-Type': 'application/json' },
 })
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  configureApiAuth(null)
+  vi.unstubAllGlobals()
+})
 
 describe('answer helpful votes', () => {
   it('keeps the requested sort and linked answer when fetching a page', async () => {
@@ -32,22 +36,21 @@ describe('answer helpful votes', () => {
 
   it.each([true, false])('uses a protected idempotent write for helpful=%s', async (isHelpful) => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(jsonResponse({ token: 'vote-csrf' }))
       .mockResolvedValueOnce(jsonResponse({ helpfulCount: isHelpful ? 1 : 0, isHelpful }))
     vi.stubGlobal('fetch', fetchMock)
+    configureApiAuth({ getAccessToken: async () => 'vote-access', refreshAccessToken: vi.fn() })
 
     await expect(setAnswerHelpful(3, 42, isHelpful)).resolves.toEqual({
       helpfulCount: isHelpful ? 1 : 0, isHelpful,
     })
-    const [url, request] = fetchMock.mock.calls[1] as [string, RequestInit]
+    const [url, request] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toContain('/api/topics/3/answers/42/helpful')
     expect(request.method).toBe(isHelpful ? 'PUT' : 'DELETE')
-    expect((request.headers as Headers).get('X-CSRF-TOKEN')).toBe('vote-csrf')
+    expect((request.headers as Headers).get('Authorization')).toBe('Bearer vote-access')
   })
 
   it('surfaces a self-vote rejection without inventing a local count', async () => {
     vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(jsonResponse({ token: 'vote-csrf' }))
       .mockResolvedValueOnce(jsonResponse({ detail: 'Bạn không thể tự đánh giá câu trả lời của mình.' }, 409)))
 
     await expect(setAnswerHelpful(3, 42, true)).rejects.toMatchObject({ status: 409 })

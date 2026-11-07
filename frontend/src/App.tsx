@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { SiteLayout } from './components/SiteLayout'
 import { AccountPage } from './pages/AccountPage'
@@ -37,103 +36,101 @@ const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module)
 const App = () => {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route element={<SiteLayout />}>
-            <Route index element={<HomePage fixedType="Article" showTour title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng TechForum." />} />
-            <Route
-              path="search"
-              element={<HomePage title="Tìm kiếm nội dung" description="Tìm bài viết và câu hỏi công khai trong cộng đồng TechForum." />}
-            />
-            <Route
-              path="articles"
-              element={<HomePage fixedType="Article" title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng." />}
-            />
-            <Route
-              path="questions"
-              element={<HomePage fixedType="Question" title="Hỏi đáp công nghệ" description="Tìm câu hỏi đang cần sự đóng góp từ cộng đồng TechForum." />}
-            />
-            <Route
-              path="discussions"
-              element={<HomePage sort="discussion" title="Thảo luận đang diễn ra" description="Các bài viết và câu hỏi đã có phản hồi, sắp xếp theo hoạt động thảo luận mới nhất." />}
-            />
-            <Route path="topics/:id" element={<TopicDetailPage />} />
-            <Route path="members/:userId" element={<PublicProfilePage />} />
-            <Route path="members/:userId/followers" element={<FollowMembersPage kind="followers" />} />
-            <Route path="members/:userId/following" element={<FollowMembersPage kind="following" />} />
-            <Route
-              path="write"
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="route-status">Đang tải trình soạn thảo…</div>}>
-                    <WriteTopicPage />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="topics/:id/edit"
-              element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="route-status">Đang tải trình chỉnh sửa…</div>}>
-                    <WriteTopicPage />
-                  </Suspense>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="my-topics"
-              element={
-                <ProtectedRoute>
-                  <MyTopicsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="saved"
-              element={<ProtectedRoute><SavedTopicsPage /></ProtectedRoute>}
-            />
-            <Route
-              path="account"
-              element={
-                <ProtectedRoute>
-                  <AccountPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-            <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-            <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
-            <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
-            <Route path="communities" element={<CommunitiesPage />} />
-            <Route path="skills/:tagId" element={<SkillCommunityPage />} />
-            <Route path="bai-viet" element={<LegacyRouteRedirect to={appRoutes.articles} />} />
-            <Route path="hoi-dap" element={<LegacyRouteRedirect to={appRoutes.questions} />} />
-            <Route path="noi-dung/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.topic(params.id ?? '')} />} />
-            <Route path="thanh-vien/:userId" element={<LegacyRouteRedirect to={(params) => appRoutes.member(params.userId ?? '')} />} />
-            <Route path="viet-bai" element={<LegacyRouteRedirect to={appRoutes.write} />} />
-            <Route path="chinh-sua/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.editTopic(params.id ?? '')} />} />
-            <Route path="noi-dung-cua-toi" element={<LegacyRouteRedirect to={appRoutes.myTopics} />} />
-            <Route path="tai-khoan" element={<LegacyRouteRedirect to={appRoutes.account} />} />
-            <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
-          </Route>
-          <Route path="admin" element={<ProtectedRoute requiredRole="Administrator"><AdminLayout /></ProtectedRoute>}>
-            <Route index element={<AdminOverviewPage />} />
-            <Route path="topics" element={<AdminTopicsPage />} />
-            <Route path="reports" element={<AdminReportsPage />} />
-            <Route path="categories" element={<AdminCategoriesPage />} />
-            <Route path="tags" element={<AdminTagsPage />} />
-            <Route path="accounts" element={<AdminAccountsPage />} />
-            <Route path="audit-logs" element={<AdminAuditPage />} />
-          </Route>
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
-          <Route path="forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="reset-password" element={<ResetPasswordPage />} />
-          <Route path="dang-nhap" element={<LegacyRouteRedirect to={appRoutes.login} />} />
-          <Route path="dang-ky" element={<LegacyRouteRedirect to={appRoutes.register} />} />
-        </Routes>
-      </AuthProvider>
+      <Routes>
+        <Route element={<SiteLayout />}>
+          <Route index element={<HomePage fixedType="Article" showTour title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng TechForum." />} />
+          <Route
+            path="search"
+            element={<HomePage title="Tìm kiếm nội dung" description="Tìm bài viết và câu hỏi công khai trong cộng đồng TechForum." />}
+          />
+          <Route
+            path="articles"
+            element={<HomePage fixedType="Article" title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng." />}
+          />
+          <Route
+            path="questions"
+            element={<HomePage fixedType="Question" title="Hỏi đáp công nghệ" description="Tìm câu hỏi đang cần sự đóng góp từ cộng đồng TechForum." />}
+          />
+          <Route
+            path="discussions"
+            element={<HomePage sort="discussion" title="Thảo luận đang diễn ra" description="Các bài viết và câu hỏi đã có phản hồi, sắp xếp theo hoạt động thảo luận mới nhất." />}
+          />
+          <Route path="topics/:id" element={<TopicDetailPage />} />
+          <Route path="members/:userId" element={<PublicProfilePage />} />
+          <Route path="members/:userId/followers" element={<FollowMembersPage kind="followers" />} />
+          <Route path="members/:userId/following" element={<FollowMembersPage kind="following" />} />
+          <Route
+            path="write"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<div className="route-status">Đang tải trình soạn thảo…</div>}>
+                  <WriteTopicPage />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="topics/:id/edit"
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<div className="route-status">Đang tải trình chỉnh sửa…</div>}>
+                  <WriteTopicPage />
+                </Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="my-topics"
+            element={
+              <ProtectedRoute>
+                <MyTopicsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="saved"
+            element={<ProtectedRoute><SavedTopicsPage /></ProtectedRoute>}
+          />
+          <Route
+            path="account"
+            element={
+              <ProtectedRoute>
+                <AccountPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+          <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
+          <Route path="communities" element={<CommunitiesPage />} />
+          <Route path="skills/:tagId" element={<SkillCommunityPage />} />
+          <Route path="bai-viet" element={<LegacyRouteRedirect to={appRoutes.articles} />} />
+          <Route path="hoi-dap" element={<LegacyRouteRedirect to={appRoutes.questions} />} />
+          <Route path="noi-dung/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.topic(params.id ?? '')} />} />
+          <Route path="thanh-vien/:userId" element={<LegacyRouteRedirect to={(params) => appRoutes.member(params.userId ?? '')} />} />
+          <Route path="viet-bai" element={<LegacyRouteRedirect to={appRoutes.write} />} />
+          <Route path="chinh-sua/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.editTopic(params.id ?? '')} />} />
+          <Route path="noi-dung-cua-toi" element={<LegacyRouteRedirect to={appRoutes.myTopics} />} />
+          <Route path="tai-khoan" element={<LegacyRouteRedirect to={appRoutes.account} />} />
+          <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
+        </Route>
+        <Route path="admin" element={<ProtectedRoute requiredRole="Administrator"><AdminLayout /></ProtectedRoute>}>
+          <Route index element={<AdminOverviewPage />} />
+          <Route path="topics" element={<AdminTopicsPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="categories" element={<AdminCategoriesPage />} />
+          <Route path="tags" element={<AdminTagsPage />} />
+          <Route path="accounts" element={<AdminAccountsPage />} />
+          <Route path="audit-logs" element={<AdminAuditPage />} />
+        </Route>
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="dang-nhap" element={<LegacyRouteRedirect to={appRoutes.login} />} />
+        <Route path="dang-ky" element={<LegacyRouteRedirect to={appRoutes.register} />} />
+      </Routes>
     </BrowserRouter>
   )
 }

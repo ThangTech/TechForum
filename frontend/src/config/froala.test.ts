@@ -7,7 +7,7 @@ describe('createFroalaConfig', () => {
     const onMediaUploaded = vi.fn()
     const onUploadStarted = vi.fn()
     const config = createFroalaConfig({
-      antiforgeryToken: 'csrf-token',
+      getAccessToken: () => 'access-token',
       onMediaInserted,
       onMediaUploaded,
       onUploadStarted,
@@ -32,5 +32,26 @@ describe('createFroalaConfig', () => {
       path: '/media/videos/video.mp4',
     })
     expect(onMediaInserted).toHaveBeenCalledWith(videoElement)
+  })
+
+  it('sets the Bearer header on the editor right before an upload starts', () => {
+    const onUploadStarted = vi.fn()
+    const config = createFroalaConfig({
+      getAccessToken: () => 'access-token',
+      onMediaInserted: vi.fn(),
+      onMediaUploaded: vi.fn(),
+      onUploadStarted,
+      onUploadError: vi.fn(),
+    })
+    const editor = { opts: { requestHeaders: { 'X-Test': '1' } } }
+
+    config.events['image.beforeUpload'].call(editor)
+
+    expect(editor.opts.requestHeaders).toEqual({
+      'X-Test': '1',
+      Authorization: 'Bearer access-token',
+    })
+    expect(onUploadStarted).toHaveBeenCalledOnce()
+    expect(config).not.toHaveProperty('requestHeaders')
   })
 })

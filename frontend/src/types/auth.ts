@@ -7,6 +7,13 @@ export interface CurrentUser {
   roles: string[]
 }
 
+// Returned by login, register and refresh. The refresh token is only in an HttpOnly cookie.
+export interface AuthSession {
+  user: CurrentUser
+  accessToken: string
+  accessTokenExpiresAtUtc: string
+}
+
 export interface LoginInput {
   email: string
   password: string
