@@ -1,3 +1,6 @@
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+
 namespace TechForum.Api.Configuration;
 
 public sealed class JwtOptions
@@ -36,4 +39,20 @@ public sealed class JwtOptions
 
         return null;
     }
+
+    public SymmetricSecurityKey CreateSecurityKey() =>
+        new(Encoding.UTF8.GetBytes(SigningKey));
+
+    // Shared by the JwtBearer middleware and the tests so both check tokens the same way.
+    public TokenValidationParameters CreateValidationParameters() => new()
+    {
+        ValidateIssuer = true,
+        ValidIssuer = Issuer,
+        ValidateAudience = true,
+        ValidAudience = Audience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = CreateSecurityKey(),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
 }
