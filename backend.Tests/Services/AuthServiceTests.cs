@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TechForum.Api.Configuration;
 using TechForum.Api.Constants;
 using TechForum.Api.Data.Repositories;
@@ -197,6 +199,44 @@ public sealed class AuthServiceTests
         Assert.All(refreshTokens.Tokens, token => Assert.NotNull(token.RevokedAtUtc));
         var stolenCopyResult = await service.RefreshAsync(rotated.Tokens!.RefreshToken, CancellationToken.None);
         Assert.Equal(AuthFailureKind.InvalidRefreshToken, stolenCopyResult.Failure);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenOldTokenIsUsedAgain_WritesAWarningWithTheAccountId()
+    {
+        var user = CreateUser();
+        var repository = new FakeAccountRepository();
+        repository.UsersByEmail[user.Email!] = user;
+        var refreshTokens = new FakeRefreshTokenRepository();
+        var logger = new CapturingLogger<AuthService>();
+        var service = CreateService(repository, refreshTokens, logger: logger);
+        var login = await service.LoginAsync(
+            new LoginRequest { Email = user.Email!, Password = "TechForum!2026", RememberMe = true },
+            CancellationToken.None);
+        await service.RefreshAsync(login.Tokens!.RefreshToken, CancellationToken.None);
+
+        await service.RefreshAsync(login.Tokens.RefreshToken, CancellationToken.None);
+
+        var warning = Assert.Single(logger.Entries, entry => entry.Level == LogLevel.Warning);
+        Assert.Contains(user.Id, warning.Message);
+        Assert.DoesNotContain(login.Tokens.RefreshToken, warning.Message);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenTokenIsValid_WritesNoWarning()
+    {
+        var user = CreateUser();
+        var repository = new FakeAccountRepository();
+        repository.UsersByEmail[user.Email!] = user;
+        var logger = new CapturingLogger<AuthService>();
+        var service = CreateService(repository, new FakeRefreshTokenRepository(), logger: logger);
+        var login = await service.LoginAsync(
+            new LoginRequest { Email = user.Email!, Password = "TechForum!2026" },
+            CancellationToken.None);
+
+        await service.RefreshAsync(login.Tokens!.RefreshToken, CancellationToken.None);
+
+        Assert.Empty(logger.Entries);
     }
 
     [Fact]
@@ -407,7 +447,8 @@ public sealed class AuthServiceTests
     private static AuthService CreateService(
         FakeAccountRepository repository,
         FakeRefreshTokenRepository refreshTokens,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        ILogger<AuthService>? logger = null)
     {
         var clock = timeProvider ?? new FixedTimeProvider(CurrentTime);
         var optionsAccessor = Microsoft.Extensions.Options.Options.Create(Options);
@@ -416,6 +457,7 @@ public sealed class AuthServiceTests
             refreshTokens,
             new TokenService(optionsAccessor, clock),
             optionsAccessor,
+            logger ?? NullLogger<AuthService>.Instance,
             clock);
     }
 

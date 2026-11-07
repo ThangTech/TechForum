@@ -13,6 +13,7 @@ public sealed class AuthService(
     IRefreshTokenRepository refreshTokenRepository,
     ITokenService tokenService,
     IOptions<JwtOptions> jwtOptions,
+    ILogger<AuthService> logger,
     TimeProvider timeProvider) : IAuthService
 {
     public async Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
@@ -99,7 +100,10 @@ public sealed class AuthService(
         if (storedToken.RevokedAtUtc is not null)
         {
             // An old token is being used again, so it may have been copied.
-            // Sign the user out on every device.
+            // Sign the user out on every device and write it to the log, because it may be an attack.
+            logger.LogWarning(
+                "Phát hiện refresh token đã thu hồi bị dùng lại; thu hồi mọi phiên của tài khoản {UserId}.",
+                storedToken.UserId);
             await refreshTokenRepository.RevokeAllForUserAsync(storedToken.UserId, now, cancellationToken);
             return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
         }
