@@ -3,7 +3,7 @@ import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import { useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
 import { createAuthUrl, getSafeReturnUrl } from '../auth/returnUrl'
@@ -17,11 +17,22 @@ interface LoginFormValues {
   rememberMe: boolean
 }
 
+// Other pages can send a message to show on the login page, for example after a password change.
+const getNotice = (state: unknown): string | null => {
+  if (typeof state !== 'object' || state === null || !('notice' in state)) {
+    return null
+  }
+
+  return typeof state.notice === 'string' ? state.notice : null
+}
+
 export const LoginPage = () => {
   const { user, login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'))
+  const notice = getNotice(location.state)
   const [error, setError] = useState<string | null>(null)
   const { control, handleSubmit, formState: { isSubmitting } } = useForm<LoginFormValues>({
     defaultValues: { email: '', password: '', rememberMe: false },
@@ -58,6 +69,9 @@ export const LoginPage = () => {
           <p className="auth-form__lead">Đăng nhập để viết bài, đặt câu hỏi và lưu nội dung bạn quan tâm.</p>
         </div>
 
+        {notice && !error && (
+          <div className="border border-green-200 bg-green-50 p-4 text-sm text-green-900" role="status">{notice}</div>
+        )}
         {error && <div className="form-alert" role="alert">{error}</div>}
 
         <FormTextField

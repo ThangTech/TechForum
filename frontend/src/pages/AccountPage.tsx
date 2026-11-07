@@ -2,6 +2,7 @@ import Button from '@mui/material/Button'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
+import { appRoutes } from '../appRoutes'
 import { useAuth } from '../auth/authState'
 import { PasswordForm } from '../components/account/PasswordForm'
 import { ProfileForm } from '../components/account/ProfileForm'
@@ -52,7 +53,16 @@ export const AccountPage = () => {
             displayName={user.displayName}
             onSave={async (displayName, bio) => { await updateProfile({ displayName, bio }) }}
           />
-          <PasswordForm onSave={async (currentPassword, newPassword) => { await changePassword({ currentPassword, newPassword }) }} />
+          <PasswordForm
+            onSave={async (currentPassword, newPassword) => {
+              await changePassword({ currentPassword, newPassword })
+              // The server signed this account out on every device, so the user logs in again.
+              navigate(appRoutes.login, {
+                replace: true,
+                state: { notice: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.' },
+              })
+            }}
+          />
         </div>
 
         <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6">

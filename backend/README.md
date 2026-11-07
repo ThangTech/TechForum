@@ -4,7 +4,7 @@
 
 - `GET /api/topics/following`: cùng bộ lọc/phân trang với `/api/topics`, nhưng
   chỉ lấy nội dung công khai của tác giả đang được tài khoản hiện tại theo dõi.
-  Danh tính lấy từ cookie/claims; khách nhận 401.
+  Danh tính lấy từ JWT; khách nhận 401.
 - `GET /api/topics?sort=weekly`: xếp hoạt động trong 7 ngày gần nhất, kể cả bài
   đăng từ trước. Điểm = sao × 2 + lượt lưu × 2 + trả lời cấp một công khai × 3.
   Không tính hoạt động của tác giả chủ đề, bản ghi tương lai hoặc phản hồi ẩn/xóa;
@@ -19,7 +19,7 @@
   `aroundAnswerId` tìm đúng trang trong cả hai thứ tự. DTO thêm `helpfulCount`
   và `isHelpful` của người đang xem; khách luôn nhận `isHelpful=false`.
 - `PUT`/`DELETE /api/topics/{topicId}/answers/{answerId}/helpful`: trả
-  `{ helpfulCount, isHelpful }`, yêu cầu cookie và CSRF. Khóa chính kép
+  `{ helpfulCount, isHelpful }`, yêu cầu access token. Khóa chính kép
   `(AnswerId, UserId)` chống bình chọn trùng, kể cả hai request đồng thời.
   PUT tự bình chọn trả 409; tài nguyên không công khai/sai chủ đề trả 404.
   Thêm/bỏ lặp lại idempotent và không thay đổi đáp án được chấp nhận.
@@ -67,10 +67,11 @@ ghi địa chỉ hay token vào log. Không bật ghi nội dung request cho hai
 
 `POST /api/auth/reset-password` nhận `{ email, token, newPassword }`, trả 204
 khi thành công hoặc 400 khi token/mật khẩu không hợp lệ. Liên kết có hiệu lực
-30 phút, token nằm trong fragment URL và không dùng lại được. Sau reset, các
-cookie cũ mất hiệu lực ở request tiếp theo; khóa kiểm duyệt vẫn được giữ nguyên.
+30 phút, token nằm trong fragment URL và không dùng lại được. Sau reset, access
+token cũ mất hiệu lực ở request tiếp theo và mọi refresh token bị thu hồi; khóa
+kiểm duyệt vẫn được giữ nguyên.
 Giới hạn theo IP: 5 yêu cầu gửi email và 20 lần đặt lại mật khẩu mỗi 15 phút,
-hai ngân sách độc lập. Hai endpoint vẫn yêu cầu cookie/token CSRF.
+hai ngân sách độc lập.
 
 Cấu hình bằng biến môi trường của tiến trình backend, không commit thông tin SMTP:
 
@@ -150,7 +151,7 @@ khi có bước làm sạch HTML phía server.
   tối đa 5 MB.
 - `POST /api/media/videos`: multipart field `file`, hỗ trợ MP4/WebM, tối đa 50 MB.
 
-Hai endpoint yêu cầu cookie đăng nhập và CSRF header. Backend kiểm tra cả MIME và
+Hai endpoint yêu cầu access token (header `Authorization: Bearer`). Backend kiểm tra cả MIME và
 magic bytes, bỏ tên file client và lưu bằng GUID trong `App_Data/uploads` (đã
 ignore Git). Mỗi upload có bản ghi chủ sở hữu trong `MediaAssets`. Contract trả
 về có dạng
@@ -243,24 +244,43 @@ ghi đã có sẵn trạng thái, người/thời gian xử lý và ghi chú đ�
 
 ## Xác thực P1
 
-Xác thực dùng ASP.NET Core Identity và cookie `TechForum.Auth` HttpOnly. Client
-phải gửi cookie bằng `credentials: include`. Mọi request ghi cần lấy token từ
-`GET /api/auth/antiforgery-token` rồi gửi token trong header `X-CSRF-TOKEN`.
+Xác thực dùng ASP.NET Core Identity để quản lý tài khoản và JWT để đăng nhập.
 
-- `POST /api/auth/register`: đăng ký thành viên và tạo phiên, trả HTTP 201.
-- `POST /api/auth/login`: đăng nhập, trả HTTP 200; sai thông tin là 401; tài
-  khoản bị khóa là 423.
+- Access token (JWT, HS256) sống 15 phút, trả trong JSON và gửi bằng header
+  `Authorization: Bearer <token>`. Token có `sub`, `role` và `stamp` (security
+  stamp của tài khoản).
+- Refresh token là chuỗi ngẫu nhiên nằm trong cookie `TechForum.Refresh`
+  (HttpOnly, SameSite=Strict, path `/api/auth`, Secure khi chạy HTTPS). Database
+  chỉ lưu giá trị băm SHA-256 trong bảng `RefreshTokens`. Sống 7 ngày khi chọn
+  "duy trì đăng nhập", 1 ngày nếu không.
+- Mỗi lần làm mới, refresh token được thay mới. Dùng lại token cũ sẽ thu hồi mọi
+  token của tài khoản đó. Đổi mật khẩu, đặt lại mật khẩu và khóa tài khoản cũng
+  thu hồi mọi refresh token.
+- Middleware kiểm tra khóa tài khoản và security stamp trên mỗi request, nên
+  access token của tài khoản bị khóa hoặc vừa đổi mật khẩu bị từ chối ngay.
+- Cấu hình: `Jwt__SigningKey` (bắt buộc, ít nhất 32 ký tự; backend không chạy
+  nếu thiếu), `Jwt__Issuer`, `Jwt__Audience`, `Jwt__AccessTokenMinutes`,
+  `Jwt__RefreshTokenDays`, `Jwt__ShortRefreshTokenDays`. Key trong
+  `appsettings.Development.json` chỉ dùng khi phát triển.
+
+- `POST /api/auth/register`: đăng ký thành viên và đăng nhập luôn, trả HTTP 201
+  với `{ user, accessToken, accessTokenExpiresAtUtc }` và đặt cookie refresh.
+- `POST /api/auth/login`: đăng nhập, trả HTTP 200 cùng nội dung như đăng ký; sai
+  thông tin là 401; tài khoản bị khóa là 423.
+- `POST /api/auth/refresh`: đọc cookie refresh, trả access token mới và đặt
+  cookie mới. Cookie thiếu, hết hạn hoặc đã thu hồi là 401; tài khoản bị khóa là 423.
 - `GET /api/auth/me`: thông tin của chính tài khoản đang đăng nhập.
 - `PUT /api/auth/profile`: cập nhật tên hiển thị và giới thiệu công khai tối đa
   500 ký tự, sau đó trả phiên người dùng mới.
-- `PUT /api/auth/password`: kiểm tra mật khẩu hiện tại, đổi mật khẩu và làm mới
-  cookie của phiên đang dùng.
+- `PUT /api/auth/password`: kiểm tra mật khẩu hiện tại, đổi mật khẩu và thu hồi
+  mọi refresh token; người dùng phải đăng nhập lại.
 - `POST /api/auth/avatar`: multipart field `file`, chấp nhận PNG/JPEG/WebP hợp
   lệ tối đa 2 MB, lưu tên ngẫu nhiên dưới `/media/avatars` và trả
   `CurrentUserDto` mới.
 - `DELETE /api/auth/avatar`: xóa file avatar hiện tại và trả người dùng với
   `avatarUrl: null`; giao diện dùng chữ cái đầu làm fallback.
-- `POST /api/auth/logout`: kết thúc phiên hiện tại, trả HTTP 204.
+- `POST /api/auth/logout`: thu hồi refresh token trong cookie và xóa cookie, trả
+  HTTP 204. Không cần access token vì token có thể đã hết hạn.
 
 Giới hạn avatar cấu hình bằng `Media__MaxAvatarBytes`. File được kiểm tra chữ ký
 thực thay vì chỉ tin extension/MIME từ client; thay ảnh thành công mới xóa file
@@ -269,10 +289,10 @@ endpoint công khai.
 
 Đăng ký luôn gán role `Member`; client không được gửi hoặc tự chọn role. Sau 5
 lần đăng nhập sai, tài khoản bị khóa 15 phút. Middleware kiểm tra trạng thái khóa
-trên mỗi request có phiên nên cookie cũ không tiếp tục dùng được.
+trên mỗi request có access token nên token cũ không tiếp tục dùng được.
 
 Mật khẩu phát triển phải có ít nhất 8 ký tự, chữ hoa, chữ thường, chữ số và ký
-tự đặc biệt. Không ghi mật khẩu thật hoặc cookie phiên vào source/log.
+tự đặc biệt. Không ghi mật khẩu thật, token hoặc khóa ký JWT vào source/log.
 
 Hồ sơ công khai có danh sách theo dõi phân trang:
 

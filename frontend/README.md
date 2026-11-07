@@ -72,7 +72,7 @@ npm run dev
 Mở `http://localhost:5173`. Backend cần chạy trước bằng launch profile `http` để
 frontend tải danh sách chuyên mục thật.
 
-Frontend dùng cookie phiên HttpOnly nên địa chỉ chạy local phải khớp origin CORS
+Refresh token nằm trong cookie HttpOnly nên địa chỉ chạy local phải khớp origin CORS
 trong backend. Không đổi `localhost` thành `127.0.0.1` nếu chưa cập nhật allowlist.
 
 Các route chính:
@@ -131,8 +131,16 @@ là danh sách Bài viết; không còn mục Trang chủ trùng nghĩa. Giao di
 cho nội dung và Open Sans cho tiêu đề; font được tải từ Google Fonts nên khi máy
 không có mạng sẽ dùng fallback hệ thống.
 
-API client tự lấy antiforgery token trước request ghi và luôn gửi cookie bằng
-`credentials: include`. Không lưu cookie hoặc token xác thực trong localStorage.
+Phiên đăng nhập dùng JWT, được giữ trong store Zustand (`src/auth/authStore.ts`):
+
+- Access token chỉ nằm trong bộ nhớ, không lưu trong localStorage. API client gửi
+  nó bằng header `Authorization: Bearer`.
+- Refresh token nằm trong cookie HttpOnly mà JavaScript không đọc được. Khi tải
+  lại trang, `initializeSession()` gọi `POST /api/auth/refresh` để khôi phục phiên.
+- Khi gặp 401, API client làm mới token một lần rồi gửi lại request. Nhiều request
+  lỗi cùng lúc dùng chung một lần làm mới, và Web Lock giúp các tab không gửi cùng
+  một refresh token.
+- Đổi mật khẩu đăng xuất mọi thiết bị, nên giao diện đưa người dùng về `/login`.
 
 ## Kiểm tra
 

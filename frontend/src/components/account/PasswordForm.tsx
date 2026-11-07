@@ -28,7 +28,7 @@ export const PasswordForm = ({ onSave }: PasswordFormProps) => {
     try {
       await onSave(currentPassword, newPassword)
       reset()
-      setMessage('Đã đổi mật khẩu. Phiên hiện tại vẫn được duy trì an toàn.')
+      setMessage('Đã đổi mật khẩu. Vui lòng đăng nhập lại.')
     } catch (requestError) {
       setError(requestError instanceof ApiError
         ? requestError
