@@ -22,24 +22,17 @@ public sealed class PublicProfileRepository(TechForumDbContext dbContext) : IPub
 
         var topics = dbContext.Topics
             .AsNoTracking()
-            .Where(topic =>
-                topic.AuthorId == userId &&
-                topic.Status == TopicStatus.Published &&
-                topic.PublishedAtUtc != null &&
-                !topic.IsDeleted &&
-                !topic.IsHiddenByModerator);
+            .Where(topic => topic.AuthorId == userId)
+            .Where(TopicVisibility.IsPublic);
 
         var publishedTopicCount = await topics.CountAsync(cancellationToken);
         var publicAnswerCount = await dbContext.Answers.AsNoTracking()
             .Where(AnswerVisibility.IsPublic)
-            .CountAsync(answer =>
-                answer.AuthorId == userId &&
-                answer.Topic.Status == TopicStatus.Published && answer.Topic.PublishedAtUtc != null &&
-                !answer.Topic.IsDeleted && !answer.Topic.IsHiddenByModerator, cancellationToken);
-        var receivedStarCount = await dbContext.TopicStars.AsNoTracking().CountAsync(star =>
-            star.Topic.AuthorId == userId && star.Topic.Status == TopicStatus.Published &&
-            star.Topic.PublishedAtUtc != null && !star.Topic.IsDeleted && !star.Topic.IsHiddenByModerator,
-            cancellationToken);
+            .WhereTopicIsPublic(answer => answer.Topic)
+            .CountAsync(answer => answer.AuthorId == userId, cancellationToken);
+        var receivedStarCount = await dbContext.TopicStars.AsNoTracking()
+            .WhereTopicIsPublic(star => star.Topic)
+            .CountAsync(star => star.Topic.AuthorId == userId, cancellationToken);
         var followerCount = await dbContext.UserFollows.AsNoTracking()
             .CountAsync(follow => follow.FollowingId == userId, cancellationToken);
         var followingCount = await dbContext.UserFollows.AsNoTracking()

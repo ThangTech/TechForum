@@ -57,12 +57,8 @@ public sealed class TopicBookmarkRepository(TechForumDbContext dbContext) : ITop
     {
         var query = dbContext.TopicBookmarks
             .AsNoTracking()
-            .Where(item =>
-                item.UserId == userId &&
-                item.Topic.Status == TopicStatus.Published &&
-                item.Topic.PublishedAtUtc != null &&
-                !item.Topic.IsDeleted &&
-                !item.Topic.IsHiddenByModerator);
+            .Where(item => item.UserId == userId)
+            .WhereTopicIsPublic(item => item.Topic);
         var totalItems = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderByDescending(item => item.CreatedAtUtc)

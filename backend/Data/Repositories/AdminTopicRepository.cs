@@ -28,8 +28,7 @@ public sealed class AdminTopicRepository(TechForumDbContext dbContext) : IAdminT
         }
         topics = query.Visibility?.Trim().ToLowerInvariant() switch
         {
-            "visible" => topics.Where(topic => topic.Status == TopicStatus.Published &&
-                topic.PublishedAtUtc != null && !topic.IsDeleted && !topic.IsHiddenByModerator),
+            "visible" => topics.Where(TopicVisibility.IsPublic),
             "draft" => topics.Where(topic => topic.Status == TopicStatus.Draft && !topic.IsDeleted),
             "hidden" => topics.Where(topic => !topic.IsDeleted && topic.IsHiddenByModerator),
             "deleted" => topics.Where(topic => topic.IsDeleted),

@@ -13,12 +13,8 @@ public sealed class ActivityRepository(TechForumDbContext dbContext) : IActivity
     {
         var topics = dbContext.Topics
             .AsNoTracking()
-            .Where(topic =>
-                topic.AuthorId == userId &&
-                topic.Status == TopicStatus.Published &&
-                topic.PublishedAtUtc != null &&
-                !topic.IsDeleted &&
-                !topic.IsHiddenByModerator)
+            .Where(topic => topic.AuthorId == userId)
+            .Where(TopicVisibility.IsPublic)
             .Select(topic => new
             {
                 Type = "topic-created",
@@ -32,12 +28,8 @@ public sealed class ActivityRepository(TechForumDbContext dbContext) : IActivity
 
         var answers = dbContext.Answers
             .AsNoTracking()
-            .Where(answer =>
-                answer.AuthorId == userId &&
-                answer.Topic.Status == TopicStatus.Published &&
-                answer.Topic.PublishedAtUtc != null &&
-                !answer.Topic.IsDeleted &&
-                !answer.Topic.IsHiddenByModerator)
+            .Where(answer => answer.AuthorId == userId)
+            .WhereTopicIsPublic(answer => answer.Topic)
             .Where(AnswerVisibility.IsPublic)
             .Select(answer => new
             {

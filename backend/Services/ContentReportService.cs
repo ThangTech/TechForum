@@ -208,8 +208,7 @@ public sealed class ContentReportService(
                     (answer.ParentAnswer is { ParentAnswerId: null, IsDeleted: false, IsHiddenByModerator: false } parent &&
                      parent.TopicId == answer.TopicId)));
             // Chỉ liên kết lại tài nguyên còn công khai; không lộ bản nháp hoặc nội dung đã bị ẩn.
-            var isPublic = topic is { Status: TopicStatus.Published, PublishedAtUtc: not null,
-                IsDeleted: false, IsHiddenByModerator: false } && isAnswerPublic;
+            var isPublic = TopicVisibility.IsPublicTopic(topic) && isAnswerPublic;
             return new MyReportDto(report.Id, report.TopicId.HasValue ? "topic" : "answer",
                 report.TopicId ?? report.AnswerId!.Value, isPublic ? topic!.Id : null,
                 isPublic ? topic!.Title : null, report.Reason, report.Details,

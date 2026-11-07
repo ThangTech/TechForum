@@ -280,9 +280,5 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
 
     private IQueryable<Topic> PublicTopics() => dbContext.Topics
         .AsNoTracking()
-        .Where(topic =>
-            topic.Status == TopicStatus.Published &&
-            topic.PublishedAtUtc != null &&
-            !topic.IsDeleted &&
-            !topic.IsHiddenByModerator);
+        .Where(TopicVisibility.IsPublic);
 }

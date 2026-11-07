@@ -128,13 +128,10 @@ public sealed class AdminOverviewRepository(TechForumDbContext dbContext) : IAdm
         return new AdminAuditPage(items, totalItems);
     }
 
-    private IQueryable<Topic> PublicTopics() => dbContext.Topics.AsNoTracking().Where(topic =>
-        topic.Status == TopicStatus.Published && topic.PublishedAtUtc != null &&
-        !topic.IsDeleted && !topic.IsHiddenByModerator);
+    private IQueryable<Topic> PublicTopics() =>
+        dbContext.Topics.AsNoTracking().Where(TopicVisibility.IsPublic);
 
     private IQueryable<Answer> PublicAnswers() => dbContext.Answers.AsNoTracking()
         .Where(AnswerVisibility.IsPublic)
-        .Where(answer =>
-            answer.Topic.Status == TopicStatus.Published && answer.Topic.PublishedAtUtc != null &&
-            !answer.Topic.IsDeleted && !answer.Topic.IsHiddenByModerator);
+        .WhereTopicIsPublic(answer => answer.Topic);
 }

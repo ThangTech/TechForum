@@ -100,8 +100,7 @@ public sealed class AdminOverviewService(
     private static AdminPendingReportDto MapPendingReport(ContentReport report)
     {
         var topic = report.Topic ?? report.Answer?.Topic;
-        var isPublic = topic is { Status: TopicStatus.Published, PublishedAtUtc: not null,
-            IsDeleted: false, IsHiddenByModerator: false };
+        var isPublic = TopicVisibility.IsPublicTopic(topic);
         if (report.Answer is { IsDeleted: true } or { IsHiddenByModerator: true })
         {
             isPublic = false;

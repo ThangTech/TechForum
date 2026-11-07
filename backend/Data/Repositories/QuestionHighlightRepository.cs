@@ -12,12 +12,8 @@ public sealed class QuestionHighlightRepository(TechForumDbContext dbContext) : 
     {
         var questions = dbContext.Topics
             .AsNoTracking()
-            .Where(topic =>
-                topic.Type == TopicType.Question &&
-                topic.Status == TopicStatus.Published &&
-                topic.PublishedAtUtc != null &&
-                !topic.IsDeleted &&
-                !topic.IsHiddenByModerator);
+            .Where(topic => topic.Type == TopicType.Question)
+            .Where(TopicVisibility.IsPublic);
 
         var latest = await questions
             .OrderByDescending(topic => topic.PublishedAtUtc)

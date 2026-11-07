@@ -18,12 +18,9 @@ public sealed class SkillCommunityRepository(TechForumDbContext dbContext) : ISk
             return null;
         }
 
-        var topics = dbContext.TopicTags.AsNoTracking().Where(item =>
-            item.TagId == tagId &&
-            item.Topic.Status == TopicStatus.Published &&
-            item.Topic.PublishedAtUtc != null &&
-            !item.Topic.IsDeleted &&
-            !item.Topic.IsHiddenByModerator);
+        var topics = dbContext.TopicTags.AsNoTracking()
+            .Where(item => item.TagId == tagId)
+            .WhereTopicIsPublic(item => item.Topic);
         var topicCount = await topics.CountAsync(cancellationToken);
         var memberGroups = topics
             .GroupBy(item => new { item.Topic.AuthorId, item.Topic.Author.DisplayName });

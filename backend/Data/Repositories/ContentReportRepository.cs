@@ -19,13 +19,8 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
     public Task<Answer?> GetPublicAnswerAsync(int answerId, CancellationToken cancellationToken) =>
         dbContext.Answers.AsNoTracking().Include(item => item.Topic)
             .Where(AnswerVisibility.IsPublic)
-            .SingleOrDefaultAsync(item =>
-            item.Id == answerId &&
-            item.Topic.Status == TopicStatus.Published &&
-            item.Topic.PublishedAtUtc != null &&
-            !item.Topic.IsDeleted &&
-            !item.Topic.IsHiddenByModerator,
-            cancellationToken);
+            .WhereTopicIsPublic(item => item.Topic)
+            .SingleOrDefaultAsync(item => item.Id == answerId, cancellationToken);
 
     public Task<bool> PendingExistsAsync(
         string reporterId,

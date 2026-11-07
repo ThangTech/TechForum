@@ -67,8 +67,7 @@ public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : IT
     }
 
     private Task<Topic?> GetPublicTopicAsync(int topicId, CancellationToken cancellationToken) =>
-        dbContext.Topics.SingleOrDefaultAsync(topic =>
-            topic.Id == topicId && topic.Status == TopicStatus.Published && topic.PublishedAtUtc != null &&
-            !topic.IsDeleted && !topic.IsHiddenByModerator,
-            cancellationToken);
+        dbContext.Topics
+            .Where(TopicVisibility.IsPublic)
+            .SingleOrDefaultAsync(topic => topic.Id == topicId, cancellationToken);
 }

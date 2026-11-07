@@ -69,12 +69,9 @@ public sealed class UserFollowRepository(TechForumDbContext dbContext) : IUserFo
                 item.User.Id,
                 item.User.DisplayName,
                 item.User.Bio,
-                dbContext.Topics.Count(topic =>
-                    topic.AuthorId == item.User.Id &&
-                    topic.Status == TopicStatus.Published &&
-                    topic.PublishedAtUtc != null &&
-                    !topic.IsDeleted &&
-                    !topic.IsHiddenByModerator),
+                dbContext.Topics
+                    .Where(TopicVisibility.IsPublic)
+                    .Count(topic => topic.AuthorId == item.User.Id),
                 item.CreatedAtUtc))
             .ToListAsync(cancellationToken);
         return new FollowMemberPage(items, totalItems);
