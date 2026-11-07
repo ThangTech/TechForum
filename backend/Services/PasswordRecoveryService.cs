@@ -19,10 +19,16 @@ public sealed class PasswordRecoveryService(
     public async Task<bool> RequestAsync(string email, CancellationToken cancellationToken)
     {
         // URL lấy từ cấu hình tin cậy, không ghép từ Host header của request.
-        if (!emailSender.IsConfigured || !TryGetFrontendUrl(out var frontendUrl)) return false;
+        if (!emailSender.IsConfigured || !TryGetFrontendUrl(out var frontendUrl))
+        {
+            return false;
+        }
 
         var user = await repository.FindByEmailAsync(email.Trim());
-        if (user?.Email is null) return true;
+        if (user?.Email is null)
+        {
+            return true;
+        }
 
         var token = await repository.GenerateTokenAsync(user);
         var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
@@ -56,7 +62,10 @@ public sealed class PasswordRecoveryService(
             return false;
         }
         var user = await repository.FindByEmailAsync(request.Email.Trim());
-        if (user is null) return false;
+        if (user is null)
+        {
+            return false;
+        }
         var result = await repository.ResetAsync(user, token, request.NewPassword);
         if (!result.Succeeded)
         {

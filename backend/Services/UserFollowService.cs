@@ -13,9 +13,14 @@ public sealed class UserFollowService(
         string followingId,
         CancellationToken cancellationToken)
     {
-        if (followerId == followingId) return UserFollowResult.Failed(FollowFailure.SelfFollow);
+        if (followerId == followingId)
+        {
+            return UserFollowResult.Failed(FollowFailure.SelfFollow);
+        }
         if (!await repository.UserExistsAsync(followingId, cancellationToken))
-            return UserFollowResult.Failed(FollowFailure.NotFound);
+        {
+                return UserFollowResult.Failed(FollowFailure.NotFound);
+        }
         await repository.AddIfMissingAsync(new UserFollow
         {
             FollowerId = followerId,
@@ -47,7 +52,10 @@ public sealed class UserFollowService(
     {
         var result = await repository.GetConnectionsAsync(
             userId, followers, page, pageSize, cancellationToken);
-        if (result is null) return null;
+        if (result is null)
+        {
+            return null;
+        }
         var totalPages = result.TotalItems == 0
             ? 0
             : (int)Math.Ceiling(result.TotalItems / (double)pageSize);

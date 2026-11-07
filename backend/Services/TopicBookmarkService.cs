@@ -15,7 +15,10 @@ public sealed class TopicBookmarkService(
         string? userId,
         CancellationToken cancellationToken)
     {
-        if (await topicRepository.GetPublicByIdAsync(topicId, cancellationToken) is null) return null;
+        if (await topicRepository.GetPublicByIdAsync(topicId, cancellationToken) is null)
+        {
+            return null;
+        }
         return await GetStatusCoreAsync(topicId, userId, cancellationToken);
     }
 
@@ -24,7 +27,10 @@ public sealed class TopicBookmarkService(
         string userId,
         CancellationToken cancellationToken)
     {
-        if (await topicRepository.GetPublicByIdAsync(topicId, cancellationToken) is null) return null;
+        if (await topicRepository.GetPublicByIdAsync(topicId, cancellationToken) is null)
+        {
+            return null;
+        }
         await bookmarkRepository.AddAsync(topicId, userId, timeProvider.GetUtcNow(), cancellationToken);
         return await GetStatusCoreAsync(topicId, userId, cancellationToken);
     }
@@ -34,7 +40,10 @@ public sealed class TopicBookmarkService(
         string userId,
         CancellationToken cancellationToken)
     {
-        if (await topicRepository.GetPublicByIdAsync(topicId, cancellationToken) is null) return null;
+        if (await topicRepository.GetPublicByIdAsync(topicId, cancellationToken) is null)
+        {
+            return null;
+        }
         await bookmarkRepository.RemoveAsync(topicId, userId, cancellationToken);
         return await GetStatusCoreAsync(topicId, userId, cancellationToken);
     }
@@ -75,7 +84,9 @@ public sealed class TopicBookmarkService(
     {
         var topic = bookmark.Topic;
         if (topic.PublishedAtUtc is null || topic.Status != TopicStatus.Published)
-            throw new InvalidOperationException("Danh sách lưu chứa chủ đề chưa xuất bản.");
+        {
+                throw new InvalidOperationException("Danh sách lưu chứa chủ đề chưa xuất bản.");
+        }
 
         return new SavedTopicDto(
             topic.Id,

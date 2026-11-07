@@ -11,7 +11,10 @@ public sealed class RelatedTopicService(IRelatedTopicRepository repository) : IR
         CancellationToken cancellationToken)
     {
         var topics = await repository.GetPublicRelatedAsync(topicId, 4, cancellationToken);
-        if (topics is null) return null;
+        if (topics is null)
+        {
+            return null;
+        }
 
         return topics.Select(topic => new RelatedTopicDto(
             topic.Id,

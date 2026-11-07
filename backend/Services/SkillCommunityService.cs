@@ -12,7 +12,10 @@ public sealed class SkillCommunityService(ISkillCommunityRepository repository) 
         CancellationToken cancellationToken)
     {
         var data = await repository.GetAsync(tagId, page, pageSize, cancellationToken);
-        if (data is null) return null;
+        if (data is null)
+        {
+            return null;
+        }
         return new SkillCommunityDto(
             new TagDto(data.Tag.Id, data.Tag.Name, data.Tag.Slug, data.Tag.Description),
             data.TopicCount,

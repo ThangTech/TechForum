@@ -14,7 +14,10 @@ public sealed class TopicStarService(
         CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
-        if (topic is null) return null;
+        if (topic is null)
+        {
+            return null;
+        }
 
         return await GetStatusAsync(topicId, userId, cancellationToken);
     }
@@ -25,7 +28,10 @@ public sealed class TopicStarService(
         CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
-        if (topic is null) return null;
+        if (topic is null)
+        {
+            return null;
+        }
 
         await topicStarRepository.AddAsync(
             topicId,
@@ -41,7 +47,10 @@ public sealed class TopicStarService(
         CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
-        if (topic is null) return null;
+        if (topic is null)
+        {
+            return null;
+        }
 
         await topicStarRepository.RemoveAsync(topicId, userId, cancellationToken);
         return await GetStatusAsync(topicId, userId, cancellationToken);

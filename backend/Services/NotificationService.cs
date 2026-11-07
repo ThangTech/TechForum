@@ -75,7 +75,10 @@ public sealed class NotificationService(
         CancellationToken cancellationToken)
     {
         var notification = await notificationRepository.GetUnreadAsync(id, userId, cancellationToken);
-        if (notification is null) return false;
+        if (notification is null)
+        {
+            return false;
+        }
         notification.ReadAtUtc = timeProvider.GetUtcNow();
         await notificationRepository.SaveChangesAsync(cancellationToken);
         return true;

@@ -41,11 +41,17 @@ public sealed class PublicProfileService(IPublicProfileRepository profileReposit
     {
         var badges = new List<ProfileBadgeDto>();
         if (profile.PublishedTopicCount >= 3)
-            badges.Add(new("contributor", "Người chia sẻ", "Đã đăng ít nhất 3 nội dung công khai."));
+        {
+                badges.Add(new("contributor", "Người chia sẻ", "Đã đăng ít nhất 3 nội dung công khai."));
+        }
         if (profile.PublicAnswerCount >= 5)
-            badges.Add(new("discussant", "Người thảo luận", "Đã đóng góp ít nhất 5 câu trả lời công khai."));
+        {
+                badges.Add(new("discussant", "Người thảo luận", "Đã đóng góp ít nhất 5 câu trả lời công khai."));
+        }
         if (profile.ReceivedStarCount >= 5)
-            badges.Add(new("helpful", "Nội dung hữu ích", "Nội dung đã nhận ít nhất 5 Sao hữu ích."));
+        {
+                badges.Add(new("helpful", "Nội dung hữu ích", "Nội dung đã nhận ít nhất 5 Sao hữu ích."));
+        }
         return badges;
     }
 

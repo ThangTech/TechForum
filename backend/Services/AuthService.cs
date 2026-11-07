@@ -60,7 +60,9 @@ public sealed class AuthService(
         {
             user.LockReason = null;
             if (!(await accountRepository.UpdateAsync(user)).Succeeded)
-                return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+            {
+                    return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+            }
         }
 
         var signInResult = await accountRepository.CheckPasswordAsync(user, request.Password);

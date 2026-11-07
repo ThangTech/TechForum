@@ -31,7 +31,10 @@ public sealed class RecoveryEmailSender(
 
         using var client = new SmtpClient { Timeout = 10000 };
         var security = settings.UseTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None;
-        if (settings.UseTls && settings.Port == 465) security = SecureSocketOptions.SslOnConnect;
+        if (settings.UseTls && settings.Port == 465)
+        {
+            security = SecureSocketOptions.SslOnConnect;
+        }
         await client.ConnectAsync(settings.Host, settings.Port, security, cancellationToken);
         if (!string.IsNullOrWhiteSpace(settings.Username))
         {

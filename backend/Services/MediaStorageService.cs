@@ -61,8 +61,14 @@ public sealed class MediaStorageService : IMediaStorageService
         CancellationToken cancellationToken)
     {
         var mediaAsset = await repository.GetOwnedAsync(id, uploaderId, cancellationToken);
-        if (mediaAsset is null) return MediaDeleteResult.NotFound;
-        if (mediaAsset.TopicId.HasValue) return MediaDeleteResult.Attached;
+        if (mediaAsset is null)
+        {
+            return MediaDeleteResult.NotFound;
+        }
+        if (mediaAsset.TopicId.HasValue)
+        {
+            return MediaDeleteResult.Attached;
+        }
 
         DeleteStoredFile(mediaAsset.RelativePath);
         await repository.DeleteAsync(mediaAsset, cancellationToken);
@@ -130,7 +136,10 @@ public sealed class MediaStorageService : IMediaStorageService
         }
         catch
         {
-            if (File.Exists(filePath)) File.Delete(filePath);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
             throw;
         }
 
@@ -154,7 +163,10 @@ public sealed class MediaStorageService : IMediaStorageService
         }
         catch
         {
-            if (File.Exists(filePath)) File.Delete(filePath);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
             throw;
         }
 
@@ -174,15 +186,26 @@ public sealed class MediaStorageService : IMediaStorageService
             throw new InvalidOperationException("Đường dẫn media nằm ngoài thư mục lưu trữ.");
         }
 
-        if (File.Exists(filePath)) File.Delete(filePath);
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
     }
 
     private static DetectedMedia? DetectImage(byte[] header)
     {
-        if (StartsWith(header, PngSignature)) return new(".png", ["image/png"]);
-        if (StartsWith(header, JpegSignature)) return new(".jpg", ["image/jpeg"]);
+        if (StartsWith(header, PngSignature))
+        {
+            return new(".png", ["image/png"]);
+        }
+        if (StartsWith(header, JpegSignature))
+        {
+            return new(".jpg", ["image/jpeg"]);
+        }
         if (StartsWith(header, Gif87Signature) || StartsWith(header, Gif89Signature))
-            return new(".gif", ["image/gif"]);
+        {
+                return new(".gif", ["image/gif"]);
+        }
         if (StartsWith(header, WebPContainer) && header.Length >= 12 &&
             header.AsSpan(8, 4).SequenceEqual(WebPType))
             return new(".webp", ["image/webp"]);
@@ -192,8 +215,13 @@ public sealed class MediaStorageService : IMediaStorageService
     private static DetectedMedia? DetectVideo(byte[] header)
     {
         if (header.Length >= 8 && header.AsSpan(4, 4).SequenceEqual(Mp4Type))
-            return new(".mp4", ["video/mp4"]);
-        if (StartsWith(header, WebMSignature)) return new(".webm", ["video/webm"]);
+        {
+                return new(".mp4", ["video/mp4"]);
+        }
+        if (StartsWith(header, WebMSignature))
+        {
+            return new(".webm", ["video/webm"]);
+        }
         return null;
     }
 

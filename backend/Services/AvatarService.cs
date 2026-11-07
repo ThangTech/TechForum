@@ -22,16 +22,23 @@ public sealed class AvatarService(
         CancellationToken cancellationToken)
     {
         var user = await accountRepository.FindByIdAsync(userId);
-        if (user is null) return AvatarUpdateResult.Invalid("Phiên đăng nhập không còn hợp lệ.");
+        if (user is null)
+        {
+            return AvatarUpdateResult.Invalid("Phiên đăng nhập không còn hợp lệ.");
+        }
         if (file.Length <= 0 || file.Length > options.MaxAvatarBytes)
-            return AvatarUpdateResult.Invalid("Avatar phải có dung lượng từ 1 byte đến 2 MB.");
+        {
+                return AvatarUpdateResult.Invalid("Avatar phải có dung lượng từ 1 byte đến 2 MB.");
+        }
 
         await using var input = file.OpenReadStream();
         var header = new byte[16];
         var bytesRead = await input.ReadAsync(header.AsMemory(), cancellationToken);
         var extension = DetectExtension(header[..bytesRead], file.ContentType);
         if (extension is null)
-            return AvatarUpdateResult.Invalid("Avatar chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
+        {
+                return AvatarUpdateResult.Invalid("Avatar chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
+        }
 
         var storageRoot = GetStorageRoot();
         var avatarDirectory = Path.Combine(storageRoot, "avatars");
@@ -60,11 +67,17 @@ public sealed class AvatarService(
     public async Task<AvatarUpdateResult> DeleteAsync(string userId, CancellationToken cancellationToken)
     {
         var user = await accountRepository.FindByIdAsync(userId);
-        if (user is null) return AvatarUpdateResult.Invalid("Phiên đăng nhập không còn hợp lệ.");
+        if (user is null)
+        {
+            return AvatarUpdateResult.Invalid("Phiên đăng nhập không còn hợp lệ.");
+        }
         var oldAvatarUrl = user.AvatarUrl;
         user.AvatarUrl = null;
         var updateResult = await accountRepository.UpdateAsync(user);
-        if (!updateResult.Succeeded) return AvatarUpdateResult.Invalid("Không thể xóa avatar lúc này.");
+        if (!updateResult.Succeeded)
+        {
+            return AvatarUpdateResult.Invalid("Không thể xóa avatar lúc này.");
+        }
         DeleteOldAvatar(oldAvatarUrl, GetStorageRoot());
         return AvatarUpdateResult.Success(await MapUserAsync(user));
     }
@@ -75,30 +88,49 @@ public sealed class AvatarService(
 
     private string GetStorageRoot()
     {
-        if (Path.IsPathRooted(options.StoragePath)) throw new InvalidOperationException("Media:StoragePath phải là đường dẫn tương đối.");
+        if (Path.IsPathRooted(options.StoragePath))
+        {
+            throw new InvalidOperationException("Media:StoragePath phải là đường dẫn tương đối.");
+        }
         var contentRoot = Path.GetFullPath(environment.ContentRootPath);
         var storageRoot = Path.GetFullPath(Path.Combine(contentRoot, options.StoragePath));
         if (!storageRoot.StartsWith(contentRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Media:StoragePath không được nằm ngoài backend.");
+        {
+                throw new InvalidOperationException("Media:StoragePath không được nằm ngoài backend.");
+        }
         return storageRoot;
     }
 
     private static string? DetectExtension(ReadOnlySpan<byte> header, string contentType)
     {
-        if (header.StartsWith(PngSignature) && contentType.Equals("image/png", StringComparison.OrdinalIgnoreCase)) return ".png";
-        if (header.StartsWith(JpegSignature) && contentType.Equals("image/jpeg", StringComparison.OrdinalIgnoreCase)) return ".jpg";
-        if (header.Length >= 12 && header[..4].SequenceEqual(WebPContainer) && header.Slice(8, 4).SequenceEqual(WebPType) && contentType.Equals("image/webp", StringComparison.OrdinalIgnoreCase)) return ".webp";
+        if (header.StartsWith(PngSignature) && contentType.Equals("image/png", StringComparison.OrdinalIgnoreCase))
+        {
+            return ".png";
+        }
+        if (header.StartsWith(JpegSignature) && contentType.Equals("image/jpeg", StringComparison.OrdinalIgnoreCase))
+        {
+            return ".jpg";
+        }
+        if (header.Length >= 12 && header[..4].SequenceEqual(WebPContainer) && header.Slice(8, 4).SequenceEqual(WebPType) && contentType.Equals("image/webp", StringComparison.OrdinalIgnoreCase))
+        {
+            return ".webp";
+        }
         return null;
     }
 
     private void DeleteOldAvatar(string? avatarUrl, string storageRoot)
     {
         var prefix = $"/{options.RequestPath.Trim('/')}/avatars/";
-        if (avatarUrl is null || !avatarUrl.StartsWith(prefix, StringComparison.Ordinal)) return;
+        if (avatarUrl is null || !avatarUrl.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return;
+        }
         var fileName = Path.GetFileName(avatarUrl);
         var filePath = Path.GetFullPath(Path.Combine(storageRoot, "avatars", fileName));
         var avatarRoot = Path.GetFullPath(Path.Combine(storageRoot, "avatars"));
         if (filePath.StartsWith(avatarRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && File.Exists(filePath))
-            File.Delete(filePath);
+        {
+                File.Delete(filePath);
+        }
     }
 }

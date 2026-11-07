@@ -39,18 +39,28 @@ public sealed class AdminAccountService(
         var isLocked = request.IsLocked;
         var reason = request.Reason?.Trim();
         if (isLocked && (string.IsNullOrWhiteSpace(reason) || reason.Length > 1000))
-            return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.Validation, "Lý do khóa phải có từ 1 đến 1.000 ký tự.", "reason");
+        {
+                return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.Validation, "Lý do khóa phải có từ 1 đến 1.000 ký tự.", "reason");
+        }
         if (isLocked && request.LockoutEndUtc.HasValue && request.LockoutEndUtc.Value <= timeProvider.GetUtcNow())
-            return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.Validation, "Thời hạn khóa phải ở tương lai.", "lockoutEndUtc");
+        {
+                return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.Validation, "Thời hạn khóa phải ở tương lai.", "lockoutEndUtc");
+        }
         var user = await accountRepository.GetByIdAsync(targetUserId);
         if (user is null)
-            return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.NotFound, "Không tìm thấy tài khoản.");
+        {
+                return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.NotFound, "Không tìm thấy tài khoản.");
+        }
         if (isLocked && targetUserId == administratorId)
-            return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.SelfLock, "Quản trị viên không thể tự khóa tài khoản của mình.");
+        {
+                return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.SelfLock, "Quản trị viên không thể tự khóa tài khoản của mình.");
+        }
 
         var isAdministrator = await accountRepository.IsAdministratorAsync(user);
         if (isLocked && isAdministrator)
-            return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.AdministratorProtected, "Không thể khóa tài khoản quản trị viên từ chức năng này.");
+        {
+                return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.AdministratorProtected, "Không thể khóa tài khoản quản trị viên từ chức năng này.");
+        }
 
         var wasLocked = user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow();
         var result = await accountRepository.SetLockedAsync(user, isLocked, request.LockoutEndUtc, reason,
@@ -66,7 +76,9 @@ public sealed class AdminAccountService(
                 CreatedAtUtc = timeProvider.GetUtcNow()
             }, cancellationToken);
         if (!result.Succeeded)
-            return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.UpdateFailed, "Không thể cập nhật trạng thái khóa tài khoản.");
+        {
+                return AdminAccountWriteResult.Failed(AdminAccountWriteFailure.UpdateFailed, "Không thể cập nhật trạng thái khóa tài khoản.");
+        }
         return AdminAccountWriteResult.Success(Map(user, isAdministrator));
     }
 

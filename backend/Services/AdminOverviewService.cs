@@ -26,11 +26,17 @@ public sealed class AdminOverviewService(
         var end = endDate ?? today;
         var start = startDate ?? DateOnly.FromDayNumber(Math.Max(0, end.DayNumber - 29));
         if (start == DateOnly.MinValue || end == DateOnly.MaxValue)
-            return AdminDashboardResult.ValidationError("startDate", "Khoảng ngày nằm ngoài giới hạn hỗ trợ.");
+        {
+                return AdminDashboardResult.ValidationError("startDate", "Khoảng ngày nằm ngoài giới hạn hỗ trợ.");
+        }
         if (start > end)
-            return AdminDashboardResult.ValidationError("startDate", "Ngày bắt đầu không được sau ngày kết thúc.");
+        {
+                return AdminDashboardResult.ValidationError("startDate", "Ngày bắt đầu không được sau ngày kết thúc.");
+        }
         if (end.DayNumber - start.DayNumber + 1 > 366)
-            return AdminDashboardResult.ValidationError("endDate", "Chỉ thống kê tối đa 366 ngày trong một lần.");
+        {
+                return AdminDashboardResult.ValidationError("endDate", "Chỉ thống kê tối đa 366 ngày trong một lần.");
+        }
 
         var data = await repository.GetDashboardAsync(
             StartOfVietnamDay(start), StartOfVietnamDay(end.AddDays(1)), cancellationToken);
@@ -41,7 +47,9 @@ public sealed class AdminOverviewService(
                 group.Sum(point => point.QuestionCount), group.Sum(point => point.AnswerCount)));
         var activity = new List<AdminActivityPointDto>();
         for (var date = start; date <= end; date = date.AddDays(1))
-            activity.Add(dailyCounts.GetValueOrDefault(date) ?? new AdminActivityPointDto(date, 0, 0, 0, 0));
+        {
+                activity.Add(dailyCounts.GetValueOrDefault(date) ?? new AdminActivityPointDto(date, 0, 0, 0, 0));
+        }
 
         var period = new AdminPeriodDto(
             activity.Sum(point => point.NewMemberCount), activity.Sum(point => point.ArticleCount),
@@ -95,7 +103,9 @@ public sealed class AdminOverviewService(
         var isPublic = topic is { Status: TopicStatus.Published, PublishedAtUtc: not null,
             IsDeleted: false, IsHiddenByModerator: false };
         if (report.Answer is { IsDeleted: true } or { IsHiddenByModerator: true })
-            isPublic = false;
+        {
+                isPublic = false;
+        }
         // Dashboard chỉ đưa nhan đề còn công khai; xem nội dung vi phạm ở màn hình báo cáo riêng.
         var title = isPublic ? topic!.Title : "Nội dung không còn công khai";
         return new AdminPendingReportDto(
