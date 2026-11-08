@@ -58,8 +58,8 @@ export const ExploreNav = ({ currentPath }: ExploreNavProps) => {
   const { user } = useAuth()
 
   return (
-    <nav aria-label="Khám phá TechForum" className="explore-nav surface-card">
-      <h2 className="explore-nav__title">Khám phá</h2>
+    <nav aria-label="Khám phá TechForum" className="explore-nav">
+      <h2 className="sr-only">Khám phá</h2>
       <ul>{renderLinks(exploreLinks, currentPath)}</ul>
       {user && (
         <>

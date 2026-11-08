@@ -13,9 +13,9 @@ import type { TopicType, QuestionStatus, TopicFeedMode } from '../api/topics'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authState'
 import { createAuthUrl } from '../auth/returnUrl'
-import { CategoryPanel } from '../components/CategoryPanel'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../components/TopicFeed'
+import { CategoryChips } from '../components/home/CategoryChips'
 import { ExploreNav } from '../components/home/ExploreNav'
 import { HomeHero } from '../components/home/HomeHero'
 import { HomeTour } from '../components/tour/HomeTour'
@@ -133,22 +133,23 @@ export const HomePage = ({
           <aside className="browse-filters" aria-label="Lọc nội dung">
             <ExploreNav currentPath={location.pathname} />
             <details open={areFiltersOpen} onToggle={(event) => setAreFiltersOpen(event.currentTarget.open)}>
-              <summary>Chuyên mục và thẻ</summary>
-              <Stack spacing={2}>
-                <CategoryPanel categories={categories} error={getErrorMessage(categoriesQuery.error)}
-                  isLoading={isInitialLoading(categoriesQuery)}
-                  onRetry={() => void categoriesQuery.refetch()}
-                  selectedId={categoryId}
-                  onSelect={(id) => updateSearchParams({ categoryId: id, page: undefined })} />
-                <TagPanel tags={tags} error={getErrorMessage(tagsQuery.error)}
-                  isLoading={isInitialLoading(tagsQuery)}
-                  onRetry={() => void tagsQuery.refetch()}
-                  selectedId={tagId}
-                  onSelect={(id) => updateSearchParams({ tagId: id === tagId ? undefined : id, page: undefined })} />
-              </Stack>
+              <summary>Lọc theo thẻ</summary>
+              <TagPanel tags={tags} error={getErrorMessage(tagsQuery.error)}
+                isLoading={isInitialLoading(tagsQuery)}
+                onRetry={() => void tagsQuery.refetch()}
+                selectedId={tagId}
+                onSelect={(id) => updateSearchParams({ tagId: id === tagId ? undefined : id, page: undefined })} />
             </details>
           </aside>
           <Box sx={{ minWidth: 0 }}>
+            <CategoryChips
+              categories={categories}
+              error={getErrorMessage(categoriesQuery.error)}
+              isLoading={isInitialLoading(categoriesQuery)}
+              onRetry={() => void categoriesQuery.refetch()}
+              onSelect={(id) => updateSearchParams({ categoryId: id, page: undefined })}
+              selectedId={categoryId}
+            />
             {!sort && (
               <Tabs
                 aria-label="Bảng tin cộng đồng"
