@@ -1,3 +1,12 @@
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
+import MenuItem from '@mui/material/MenuItem'
+import Stack from '@mui/material/Stack'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import type { TopicType, QuestionStatus, TopicFeedMode } from '../api/topics'
@@ -25,6 +34,12 @@ interface HomePageProps {
   sort?: 'discussion'
   showTour?: boolean
 }
+
+const feedTabs = [
+  ['latest', 'Mới nhất'],
+  ['following', 'Đang theo dõi'],
+  ['weekly', 'Nổi bật tuần'],
+] as const satisfies readonly (readonly [TopicFeedMode, string])[]
 
 const readPositiveInteger = (value: string | null) => {
   const parsed = Number(value)
@@ -119,7 +134,7 @@ export const HomePage = ({
             <ExploreNav currentPath={location.pathname} />
             <details open={areFiltersOpen} onToggle={(event) => setAreFiltersOpen(event.currentTarget.open)}>
               <summary>Chuyên mục và thẻ</summary>
-              <div className="grid gap-4">
+              <Stack spacing={2}>
                 <CategoryPanel categories={categories} error={getErrorMessage(categoriesQuery.error)}
                   isLoading={isInitialLoading(categoriesQuery)}
                   onRetry={() => void categoriesQuery.refetch()}
@@ -130,60 +145,110 @@ export const HomePage = ({
                   onRetry={() => void tagsQuery.refetch()}
                   selectedId={tagId}
                   onSelect={(id) => updateSearchParams({ tagId: id === tagId ? undefined : id, page: undefined })} />
-              </div>
+              </Stack>
             </details>
           </aside>
-          <div className="min-w-0">
-            {!sort && <nav aria-label="Bảng tin cộng đồng" className="mb-4 flex border-b border-slate-300">
-              {([
-                ['latest', 'Mới nhất'],
-                ['following', 'Đang theo dõi'],
-                ['weekly', 'Nổi bật tuần'],
-              ] as const).map(([value, label]) => (
-                <button
-                  aria-pressed={feed === value}
-                  className={`min-w-0 flex-1 border-b-2 px-2 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${feed === value ? 'border-[var(--color-primary)] text-[var(--color-heading)]' : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-heading)]'}`}
-                  key={value}
-                  onClick={() => updateSearchParams({ feed: value === 'latest' ? undefined : value, page: undefined })}
-                  type="button"
-                >{label}</button>
-              ))}
-            </nav>}
-            <div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-              <p>{sort === 'discussion'
+          <Box sx={{ minWidth: 0 }}>
+            {!sort && (
+              <Tabs
+                aria-label="Bảng tin cộng đồng"
+                onChange={(_, value: TopicFeedMode) => updateSearchParams({ feed: value === 'latest' ? undefined : value, page: undefined })}
+                sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
+                value={feed}
+                variant="fullWidth"
+              >
+                {feedTabs.map(([value, label]) => (
+                  <Tab
+                    key={value}
+                    label={label}
+                    sx={{ color: 'text.secondary', '&.Mui-selected': { color: 'text.primary' } }}
+                    value={value}
+                  />
+                ))}
+              </Tabs>
+            )}
+            <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
+              <Typography color="text.secondary" variant="body2">{sort === 'discussion'
                 ? 'Theo phản hồi mới nhất (gồm chỉnh sửa)'
                 : feed === 'weekly'
                   ? 'Các bài được quan tâm qua lượt đánh giá, lưu và trả lời trong 7 ngày gần nhất. Số liệu trên bài là tổng tương tác.'
                   : feed === 'following'
                     ? 'Nội dung công khai từ tác giả bạn theo dõi; bài ghim trước, sau đó mới nhất.'
-                    : 'Bài ghim trước, sau đó mới nhất'}</p>
-              {!fixedType && <label className="flex items-center gap-2">
-                Loại nội dung
-                <select className="rounded border border-slate-300 bg-white p-2" value={selectedType ?? ''} onChange={(event) => updateSearchParams({ type: event.target.value, questionStatus: undefined, page: undefined })}>
-                  <option value="">Tất cả</option>
-                  <option value="Article">Bài viết</option>
-                  <option value="Question">Câu hỏi</option>
-                </select>
-              </label>}
-              {selectedType !== 'Article' && <label className="flex flex-wrap items-center gap-2">
-                Trạng thái hỏi đáp
-                <select className="max-w-full rounded border border-slate-300 bg-white p-2" value={questionStatus ?? ''} onChange={(event) => updateSearchParams({ questionStatus: event.target.value, page: undefined })}>
-                  <option value="">Tất cả</option>
-                  <option value="unanswered">Chưa có trả lời</option>
-                  <option value="unsolved">Có trả lời, chưa giải quyết</option>
-                  <option value="solved">Đã giải quyết</option>
-                </select>
-              </label>}
-            </div>
-            {(categoryId || tagId || keyword || questionStatus) && <div className="mb-3 flex flex-wrap items-center gap-2 text-sm" aria-label="Bộ lọc đang áp dụng">
-              {keyword && <span>Từ khóa: “{keyword}”</span>}
-              {categoryId && <button className="tag-filter" onClick={() => updateSearchParams({ categoryId: undefined, page: undefined })} type="button">Bỏ chuyên mục: {categories.find((item) => item.id === categoryId)?.name ?? categoryId} ×</button>}
-              {tagId && <button className="tag-filter" onClick={() => updateSearchParams({ tagId: undefined, page: undefined })} type="button">Bỏ thẻ: {tags.find((item) => item.id === tagId)?.name ?? tagId} ×</button>}
-              {questionStatus && <button className="tag-filter" onClick={() => updateSearchParams({ questionStatus: undefined, page: undefined })} type="button">Bỏ trạng thái hỏi đáp ×</button>}
-              <button className="font-semibold text-blue-700 underline" onClick={() => {
-                updateSearchParams({ keyword: undefined, categoryId: undefined, tagId: undefined, questionStatus: undefined, page: undefined })
-              }} type="button">Xóa bộ lọc</button>
-            </div>}
+                    : 'Bài ghim trước, sau đó mới nhất'}</Typography>
+              {!fixedType && (
+                <TextField
+                  fullWidth={false}
+                  label="Loại nội dung"
+                  onChange={(event) => updateSearchParams({ type: event.target.value, questionStatus: undefined, page: undefined })}
+                  select
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
+                  sx={{ minWidth: 160 }}
+                  value={selectedType ?? ''}
+                >
+                  <MenuItem value="">Tất cả</MenuItem>
+                  <MenuItem value="Article">Bài viết</MenuItem>
+                  <MenuItem value="Question">Câu hỏi</MenuItem>
+                </TextField>
+              )}
+              {selectedType !== 'Article' && (
+                <TextField
+                  fullWidth={false}
+                  label="Trạng thái hỏi đáp"
+                  onChange={(event) => updateSearchParams({ questionStatus: event.target.value, page: undefined })}
+                  select
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
+                  sx={{ minWidth: 230, maxWidth: '100%' }}
+                  value={questionStatus ?? ''}
+                >
+                  <MenuItem value="">Tất cả</MenuItem>
+                  <MenuItem value="unanswered">Chưa có trả lời</MenuItem>
+                  <MenuItem value="unsolved">Có trả lời, chưa giải quyết</MenuItem>
+                  <MenuItem value="solved">Đã giải quyết</MenuItem>
+                </TextField>
+              )}
+            </Stack>
+            {(categoryId || tagId || keyword || questionStatus) && (
+              <Stack aria-label="Bộ lọc đang áp dụng" direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                {keyword && <Typography component="span" variant="body2">Từ khóa: “{keyword}”</Typography>}
+                {categoryId && (
+                  <Chip
+                    clickable
+                    label={`Bỏ chuyên mục: ${categories.find((item) => item.id === categoryId)?.name ?? categoryId}`}
+                    onClick={() => updateSearchParams({ categoryId: undefined, page: undefined })}
+                    onDelete={() => updateSearchParams({ categoryId: undefined, page: undefined })}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+                {tagId && (
+                  <Chip
+                    clickable
+                    label={`Bỏ thẻ: ${tags.find((item) => item.id === tagId)?.name ?? tagId}`}
+                    onClick={() => updateSearchParams({ tagId: undefined, page: undefined })}
+                    onDelete={() => updateSearchParams({ tagId: undefined, page: undefined })}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+                {questionStatus && (
+                  <Chip
+                    clickable
+                    label="Bỏ trạng thái hỏi đáp"
+                    onClick={() => updateSearchParams({ questionStatus: undefined, page: undefined })}
+                    onDelete={() => updateSearchParams({ questionStatus: undefined, page: undefined })}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+                <Button
+                  onClick={() => updateSearchParams({ keyword: undefined, categoryId: undefined, tagId: undefined, questionStatus: undefined, page: undefined })}
+                  size="small"
+                  sx={{ textDecoration: 'underline' }}
+                >Xóa bộ lọc</Button>
+              </Stack>
+            )}
           <TopicFeed
             key={keyword}
             data={topics}
@@ -199,7 +264,7 @@ export const HomePage = ({
             loginUrl={createAuthUrl('/login', `${location.pathname}${location.search}`)}
             onShowLatest={() => updateSearchParams({ feed: undefined, page: undefined })}
           />
-          </div>
+          </Box>
 
           <aside className="browse-questions" aria-label="Câu hỏi cộng đồng">
             <QuestionHighlightsPanel
