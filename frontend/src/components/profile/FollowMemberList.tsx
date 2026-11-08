@@ -1,6 +1,13 @@
+import Box from '@mui/material/Box'
+import MuiLink from '@mui/material/Link'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { FollowMember } from '../../api/profiles'
 import { appRoutes } from '../../appRoutes'
+import { EmptyPanel } from '../common/EmptyPanel'
+import { Panel } from '../common/Panel'
+import { PanelList } from '../common/PanelList'
 
 interface FollowMemberListProps {
   members: FollowMember[]
@@ -8,25 +15,56 @@ interface FollowMemberListProps {
 
 export const FollowMemberList = ({ members }: FollowMemberListProps) => {
   if (members.length === 0) {
-    return <p className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">Chưa có thành viên nào trong danh sách này.</p>
+    return <EmptyPanel>Chưa có thành viên nào trong danh sách này.</EmptyPanel>
   }
 
   return (
-    <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
-      {members.map((member) => (
-        <li className="p-5 sm:p-6" key={member.id}>
-          <div className="flex items-start gap-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-100 font-extrabold text-blue-700" aria-hidden="true">
-              {member.displayName.slice(0, 1).toLocaleUpperCase('vi-VN')}
-            </span>
-            <div className="min-w-0">
-              <Link className="font-extrabold text-slate-950 hover:text-blue-700" to={appRoutes.member(member.id)}>{member.displayName}</Link>
-              {member.bio && <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">{member.bio}</p>}
-              <p className="mt-2 text-xs text-slate-500">{member.publishedTopicCount} nội dung công khai</p>
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <Panel>
+      <PanelList>
+        {members.map((member) => (
+          <Box component="li" key={member.id} sx={{ p: { xs: 2.5, sm: 3 } }}>
+            <Stack direction="row" sx={{ alignItems: 'flex-start', gap: 2 }}>
+              <Box
+                aria-hidden="true"
+                component="span"
+                sx={{
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  bgcolor: 'primary.light',
+                  color: 'primary.main',
+                  fontWeight: 800,
+                }}
+              >
+                {member.displayName.slice(0, 1).toLocaleUpperCase('vi-VN')}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <MuiLink
+                  component={Link}
+                  sx={{ color: 'var(--color-heading)', fontWeight: 800, '&:hover': { color: 'primary.main' } }}
+                  to={appRoutes.member(member.id)}
+                  underline="none"
+                >
+                  {member.displayName}
+                </MuiLink>
+                {member.bio && (
+                  <Typography
+                    color="text.secondary"
+                    sx={{ mt: 0.5, lineHeight: '1.5rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                    variant="body2"
+                  >
+                    {member.bio}
+                  </Typography>
+                )}
+                <Typography color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>{member.publishedTopicCount} nội dung công khai</Typography>
+              </Box>
+            </Stack>
+          </Box>
+        ))}
+      </PanelList>
+    </Panel>
   )
 }

@@ -1,3 +1,5 @@
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../appRoutes'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
@@ -32,7 +34,9 @@ export const CommunitiesPage = () => {
         />
 
         {!isLoading && !error && tags.length === 0 && (
-          <div className="surface-card p-8 text-center text-sm text-slate-600">Chưa có cộng đồng nào đang hoạt động.</div>
+          <Box className="surface-card" sx={{ p: 4, textAlign: 'center' }}>
+            <Typography color="text.secondary" variant="body2">Chưa có cộng đồng nào đang hoạt động.</Typography>
+          </Box>
         )}
 
         {!isLoading && !error && tags.length > 0 && (

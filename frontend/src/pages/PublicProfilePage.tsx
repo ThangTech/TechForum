@@ -1,10 +1,20 @@
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
+import MuiLink from '@mui/material/Link'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicSummaryItem } from '../components/topics/TopicSummaryItem'
 import { UserAvatar } from '../components/account/UserAvatar'
-import Button from '@mui/material/Button'
+import { BackLink } from '../components/common/BackLink'
+import { PageShell } from '../components/common/PageShell'
+import { Panel } from '../components/common/Panel'
+import { PanelList } from '../components/common/PanelList'
+import { StatTile } from '../components/common/StatTile'
 import { useAuth } from '../auth/authState'
 import { openAuthDialog } from '../auth/authDialogStore'
 import { appRoutes } from '../appRoutes'
@@ -15,6 +25,8 @@ import { isInitialLoading } from '../queries/status'
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
 }).format(new Date(value))
+
+const sectionTitleSx = { color: 'var(--color-heading)', fontSize: '1rem', fontWeight: 700 } as const
 
 export const PublicProfilePage = () => {
   const { userId = '' } = useParams()
@@ -45,69 +57,120 @@ export const PublicProfilePage = () => {
   }
 
   return (
-    <main className="main-area" id="main-content">
-      <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
-        <Link className="text-sm font-semibold text-blue-700 hover:underline" to="/">
-          ← Về danh sách bài viết
-        </Link>
+    <PageShell>
+      <BackLink to="/">← Về danh sách bài viết</BackLink>
 
-        <div className="mt-6">
-          <AsyncStatePanel
-            error={error}
-            isLoading={isLoading}
-            loadingText="Đang tải hồ sơ…"
-            onRetry={() => void profileQuery.refetch()}
-          />
-        </div>
+      <Box sx={{ mt: 3 }}>
+        <AsyncStatePanel
+          error={error}
+          isLoading={isLoading}
+          loadingText="Đang tải hồ sơ…"
+          onRetry={() => void profileQuery.refetch()}
+        />
+      </Box>
 
-        {!isLoading && !error && profile && (
-          <div className="mt-6 space-y-6">
-            <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8" aria-labelledby="profile-title">
-              <div className="flex flex-wrap items-center gap-4">
-                <UserAvatar avatarUrl={profile.avatarUrl} displayName={profile.displayName} size="lg" />
-                <div className="min-w-0 flex-1 basis-44">
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{isOwnProfile ? 'Trang cá nhân của bạn' : 'Hồ sơ công khai'}</p>
-                  <h1 className="mt-1 break-words text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl" id="profile-title">
-                    {profile.displayName}
-                  </h1>
-                  <p className="mt-2 text-sm text-slate-500">Tham gia từ {formatDate(profile.joinedAtUtc)}</p>
-                </div>
-                {isOwnProfile ? (
-                  <div className="flex w-full flex-wrap gap-3 sm:ml-auto sm:w-auto">
-                    <Link className="rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" to={appRoutes.account}>Chỉnh sửa hồ sơ</Link>
-                    <Link className="rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800" to={appRoutes.myTopics}>Nội dung của tôi</Link>
-                  </div>
-                ) : (
-                  <div className="w-full sm:ml-auto sm:w-auto"><Button loading={isFollowBusy} onClick={() => void toggleFollow()} variant={profile.isFollowedByViewer ? 'outlined' : 'contained'}>{profile.isFollowedByViewer ? 'Đang theo dõi' : 'Theo dõi'}</Button></div>
-                )}
-              </div>
-              {profile.bio && <p className="mt-5 max-w-2xl whitespace-pre-line text-sm leading-6 text-slate-700">{profile.bio}</p>}
-              {actionError && <p className="mt-4 text-sm text-red-700" role="alert">{actionError}</p>}
-              <div className="mt-6 grid gap-3 sm:grid-cols-4"><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.publishedTopicCount}</strong> nội dung</div><Link className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700" to={appRoutes.followers(profile.id)}><strong>{profile.followerCount}</strong> người theo dõi</Link><Link className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700" to={appRoutes.following(profile.id)}><strong>{profile.followingCount}</strong> đang theo dõi</Link><div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"><strong className="text-slate-950">{profile.receivedStarCount}</strong> Sao hữu ích</div></div>
-              {profile.badges.length > 0 && <div className="mt-6"><h2 className="text-base font-bold text-slate-950">Danh hiệu</h2><div className="mt-3 flex flex-wrap gap-2">{profile.badges.map((badge) => <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-bold text-amber-800" key={badge.code} title={badge.description}>{badge.name}</span>)}</div></div>}
-              {profile.skills.length > 0 && <div className="mt-6"><h2 className="text-base font-bold text-slate-950">Kỹ năng</h2><div className="mt-3 flex flex-wrap gap-2">{profile.skills.map((skill) => <Link className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-700 hover:bg-blue-100" key={skill.tagId} to={appRoutes.skill(skill.tagId)}>#{skill.name} · {skill.topicCount}</Link>)}</div></div>}
-            </section>
-
-            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-labelledby="recent-topics-title">
-              <div className="border-b border-slate-200 p-5 sm:p-6">
-                <h2 className="text-xl font-bold text-slate-950" id="recent-topics-title">Nội dung gần đây</h2>
-                {isOwnProfile && <p className="mt-2 text-sm text-slate-600">Đây là nội dung công khai của bạn. Xem bản nháp và quản lý bài đăng tại <Link className="font-semibold text-blue-700 hover:underline" to={appRoutes.myTopics}>Nội dung của tôi</Link>.</p>}
-              </div>
-              {profile.recentTopics.length === 0 ? (
-                <p className="p-8 text-center text-sm text-slate-500">Thành viên chưa có nội dung công khai.</p>
+      {!isLoading && !error && profile && (
+        <Stack spacing={3} sx={{ mt: 3 }}>
+          <Panel aria-labelledby="profile-title" component="section" sx={{ p: { xs: 3, sm: 4 } }}>
+            <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+              <UserAvatar avatarUrl={profile.avatarUrl} displayName={profile.displayName} size="lg" />
+              <Box sx={{ minWidth: 0, flex: '1 1 176px' }}>
+                <Typography sx={{ color: 'primary.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  {isOwnProfile ? 'Trang cá nhân của bạn' : 'Hồ sơ công khai'}
+                </Typography>
+                <Typography
+                  component="h1"
+                  id="profile-title"
+                  sx={{ mt: 0.5, color: 'var(--color-heading)', fontSize: { xs: '1.5rem', sm: '1.875rem' }, fontWeight: 800, letterSpacing: '-0.025em', overflowWrap: 'break-word' }}
+                >
+                  {profile.displayName}
+                </Typography>
+                <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">Tham gia từ {formatDate(profile.joinedAtUtc)}</Typography>
+              </Box>
+              {isOwnProfile ? (
+                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1.5, ml: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+                  <Button component={Link} to={appRoutes.account} variant="outlined">Chỉnh sửa hồ sơ</Button>
+                  <Button component={Link} to={appRoutes.myTopics} variant="contained">Nội dung của tôi</Button>
+                </Stack>
               ) : (
-                <ul className="divide-y divide-slate-200">
-                  {profile.recentTopics.map((topic) => (
-                    <li className="p-5 sm:p-6" key={topic.id}>
-                      <TopicSummaryItem showAuthor={false} topic={topic} />
-                    </li>
-                  ))}
-                </ul>
+                <Box sx={{ ml: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
+                  <Button loading={isFollowBusy} onClick={() => void toggleFollow()} variant={profile.isFollowedByViewer ? 'outlined' : 'contained'}>
+                    {profile.isFollowedByViewer ? 'Đang theo dõi' : 'Theo dõi'}
+                  </Button>
+                </Box>
               )}
-            </section>
-          </div>
-        )}
-      </div>
-    </main>
+            </Stack>
+            {profile.bio && (
+              <Typography sx={{ mt: 2.5, maxWidth: 672, color: 'text.primary', lineHeight: '1.5rem', whiteSpace: 'pre-line' }} variant="body2">{profile.bio}</Typography>
+            )}
+            {actionError && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{actionError}</Typography>}
+            <Box sx={{ mt: 3, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(4, 1fr)' } }}>
+              <StatTile><strong>{profile.publishedTopicCount}</strong> nội dung</StatTile>
+              <StatTile to={appRoutes.followers(profile.id)}><strong>{profile.followerCount}</strong> người theo dõi</StatTile>
+              <StatTile to={appRoutes.following(profile.id)}><strong>{profile.followingCount}</strong> đang theo dõi</StatTile>
+              <StatTile><strong>{profile.receivedStarCount}</strong> Sao hữu ích</StatTile>
+            </Box>
+            {profile.badges.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography component="h2" sx={sectionTitleSx}>Danh hiệu</Typography>
+                <Stack direction="row" sx={{ mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                  {profile.badges.map((badge) => (
+                    <Chip
+                      key={badge.code}
+                      label={badge.name}
+                      sx={{ bgcolor: '#fffbeb', color: '#92400e', borderColor: '#fde68a', fontWeight: 700 }}
+                      title={badge.description}
+                      variant="outlined"
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+            {profile.skills.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography component="h2" sx={sectionTitleSx}>Kỹ năng</Typography>
+                <Stack direction="row" sx={{ mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                  {profile.skills.map((skill) => (
+                    <Chip
+                      clickable
+                      color="primary"
+                      component={Link}
+                      key={skill.tagId}
+                      label={`#${skill.name} · ${skill.topicCount}`}
+                      sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}
+                      to={appRoutes.skill(skill.tagId)}
+                      variant="filled"
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </Panel>
+
+          <Panel aria-labelledby="recent-topics-title" component="section">
+            <Box sx={{ p: { xs: 2.5, sm: 3 }, borderBottom: 1, borderColor: 'divider' }}>
+              <Typography component="h2" id="recent-topics-title" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 700 }}>Nội dung gần đây</Typography>
+              {isOwnProfile && (
+                <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+                  Đây là nội dung công khai của bạn. Xem bản nháp và quản lý bài đăng tại{' '}
+                  <MuiLink component={Link} sx={{ fontWeight: 600 }} to={appRoutes.myTopics} underline="hover">Nội dung của tôi</MuiLink>.
+                </Typography>
+              )}
+            </Box>
+            {profile.recentTopics.length === 0 ? (
+              <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }} variant="body2">Thành viên chưa có nội dung công khai.</Typography>
+            ) : (
+              <PanelList>
+                {profile.recentTopics.map((topic) => (
+                  <Box component="li" key={topic.id} sx={{ p: { xs: 2.5, sm: 3 } }}>
+                    <TopicSummaryItem showAuthor={false} topic={topic} />
+                  </Box>
+                ))}
+              </PanelList>
+            )}
+          </Panel>
+        </Stack>
+      )}
+    </PageShell>
   )
 }

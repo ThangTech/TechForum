@@ -1,6 +1,9 @@
-import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
+import { PageShell } from '../components/common/PageShell'
+import { Pager } from '../components/common/Pager'
+import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { SkillMemberList } from '../components/skills/SkillMemberList'
 import { SkillSummary } from '../components/skills/SkillSummary'
 import { getErrorMessage } from '../queries/errorMessage'
@@ -28,13 +31,17 @@ export const SkillCommunityPage = () => {
   const visibleError = isValidId ? error : 'Đường dẫn kỹ năng không hợp lệ.'
   const visibleLoading = isValidId && isInitialLoading(communityQuery)
 
-  return <main className="main-area" id="main-content"><div className="page-content py-10">
-    {visibleLoading && <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">Đang tải kỹ năng…</div>}
-    {!visibleLoading && visibleError && <div className="rounded-xl border border-red-200 bg-white p-8 text-center" role="alert"><p className="text-sm text-red-700">{visibleError}</p>{isValidId && <div className="mt-4"><Button onClick={retry} variant="outlined">Thử lại</Button></div>}</div>}
-    {!visibleLoading && !visibleError && data && <div className="space-y-6">
-      <SkillSummary community={data} />
-      <SkillMemberList members={data.members} />
-      {data.totalPages > 1 && <div className="flex items-center justify-between"><Button disabled={data.page <= 1} onClick={() => changePage(data.page - 1)} variant="outlined">Trang trước</Button><span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span><Button disabled={data.page >= data.totalPages} onClick={() => changePage(data.page + 1)} variant="outlined">Trang sau</Button></div>}
-    </div>}
-  </div></main>
+  return (
+    <PageShell compact maxWidth={1240}>
+      {/* The retry button only makes sense when the address is valid. */}
+      <AsyncStatePanel error={visibleError} isLoading={visibleLoading} loadingText="Đang tải kỹ năng…" onRetry={isValidId ? retry : undefined} />
+      {!visibleLoading && !visibleError && data && (
+        <Stack spacing={3}>
+          <SkillSummary community={data} />
+          <SkillMemberList members={data.members} />
+          <Pager onChange={changePage} page={data.page} totalPages={data.totalPages} />
+        </Stack>
+      )}
+    </PageShell>
+  )
 }

@@ -7,7 +7,8 @@ interface AsyncStatePanelProps {
   error: string | null
   isLoading: boolean
   loadingText: string
-  onRetry: () => void
+  // Without it the panel shows the error but no retry button.
+  onRetry?: () => void
 }
 
 const panelSx = {
@@ -36,7 +37,7 @@ export const AsyncStatePanel = ({
     return (
       <Stack role="alert" spacing={2} sx={{ ...panelSx, alignItems: 'center', borderColor: '#fecaca' }}>
         <Typography color="error" variant="body2">{error}</Typography>
-        <Button onClick={onRetry} variant="outlined">Thử lại</Button>
+        {onRetry && <Button onClick={onRetry} variant="outlined">Thử lại</Button>}
       </Stack>
     )
   }

@@ -1,29 +1,39 @@
+import Box from '@mui/material/Box'
+import MuiLink from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { SkillMember } from '../../api/skills'
 import { appRoutes } from '../../appRoutes'
+import { Panel } from '../common/Panel'
+import { PanelList } from '../common/PanelList'
 
 interface SkillMemberListProps {
   members: SkillMember[]
 }
 
 export const SkillMemberList = ({ members }: SkillMemberListProps) => (
-  <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-    <div className="border-b border-slate-200 p-5">
-      <h2 className="text-xl font-bold text-slate-950">Thành viên có kỹ năng này</h2>
-    </div>
+  <Panel component="section">
+    <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider' }}>
+      <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 700 }}>Thành viên có kỹ năng này</Typography>
+    </Box>
     {members.length === 0 ? (
-      <p className="p-8 text-center text-sm text-slate-500">Chưa có nội dung công khai dùng thẻ này.</p>
+      <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }} variant="body2">Chưa có nội dung công khai dùng thẻ này.</Typography>
     ) : (
-      <ul className="divide-y divide-slate-200">
+      <PanelList>
         {members.map((member) => (
-          <li className="flex items-center justify-between gap-4 p-5" key={member.id}>
-            <Link className="font-bold text-slate-900 hover:text-blue-700" to={appRoutes.member(member.id)}>
+          <Box component="li" key={member.id} sx={{ p: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <MuiLink
+              component={Link}
+              sx={{ color: 'text.primary', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
+              to={appRoutes.member(member.id)}
+              underline="none"
+            >
               {member.displayName}
-            </Link>
-            <span className="text-sm text-slate-500">{member.topicCount} nội dung</span>
-          </li>
+            </MuiLink>
+            <Typography color="text.secondary" component="span" variant="body2">{member.topicCount} nội dung</Typography>
+          </Box>
         ))}
-      </ul>
+      </PanelList>
     )}
-  </section>
+  </Panel>
 )

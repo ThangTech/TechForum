@@ -1,31 +1,38 @@
+import Box from '@mui/material/Box'
+import MuiLink from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { SkillCommunity } from '../../api/skills'
 import { appRoutes } from '../../appRoutes'
+import { Panel } from '../common/Panel'
+import { StatTile } from '../common/StatTile'
 
 interface SkillSummaryProps {
   community: SkillCommunity
 }
 
 export const SkillSummary = ({ community }: SkillSummaryProps) => (
-  <section className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8">
+  <Panel component="section" sx={{ p: { xs: 3, sm: 4 } }}>
     <p className="eyebrow">Kỹ năng cộng đồng</p>
-    <h1 className="text-3xl font-extrabold text-slate-950">#{community.tag.name}</h1>
-    {community.tag.description && <p className="mt-3 text-slate-600">{community.tag.description}</p>}
-    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-      <div className="rounded-lg bg-slate-50 p-4">
-        <strong className="text-xl text-slate-950">{community.topicCount}</strong>
-        <span className="ml-2 text-sm text-slate-600">nội dung công khai</span>
-      </div>
-      <div className="rounded-lg bg-slate-50 p-4">
-        <strong className="text-xl text-slate-950">{community.memberCount}</strong>
-        <span className="ml-2 text-sm text-slate-600">thành viên sử dụng</span>
-      </div>
-    </div>
-    <Link
-      className="mt-5 inline-block text-sm font-bold text-blue-700 hover:underline"
+    <Typography component="h1" sx={{ color: 'var(--color-heading)', fontSize: '1.875rem', fontWeight: 800 }}>#{community.tag.name}</Typography>
+    {community.tag.description && <Typography color="text.secondary" sx={{ mt: 1.5 }}>{community.tag.description}</Typography>}
+    <Box sx={{ mt: 3, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' } }}>
+      <StatTile size="large">
+        <Typography component="strong" sx={{ fontSize: '1.25rem' }}>{community.topicCount}</Typography>
+        <Typography color="text.secondary" component="span" sx={{ ml: 1 }} variant="body2">nội dung công khai</Typography>
+      </StatTile>
+      <StatTile size="large">
+        <Typography component="strong" sx={{ fontSize: '1.25rem' }}>{community.memberCount}</Typography>
+        <Typography color="text.secondary" component="span" sx={{ ml: 1 }} variant="body2">thành viên sử dụng</Typography>
+      </StatTile>
+    </Box>
+    <MuiLink
+      component={Link}
+      sx={{ display: 'inline-block', mt: 2.5, fontSize: '0.875rem', fontWeight: 700 }}
       to={`${appRoutes.home}?tagId=${community.tag.id}`}
+      underline="hover"
     >
       Xem bài viết gắn thẻ này →
-    </Link>
-  </section>
+    </MuiLink>
+  </Panel>
 )
