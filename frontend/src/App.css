@@ -387,14 +387,14 @@
 }
 
 .explore-nav__link--active {
-  color: var(--color-heading);
-  background: var(--color-loading);
+  color: var(--color-primary-dark);
+  background: var(--color-primary-soft);
   font-weight: 700;
 }
 
 .explore-nav__link--active:hover {
-  color: var(--color-heading);
-  background: var(--color-loading);
+  color: var(--color-primary-dark);
+  background: var(--color-primary-soft);
 }
 
 /* Điện thoại đã có thanh điều hướng ở header nên ẩn khối này để danh sách lên sớm hơn. */

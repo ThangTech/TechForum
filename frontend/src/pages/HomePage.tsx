@@ -162,7 +162,7 @@ export const HomePage = ({
                   <Tab
                     key={value}
                     label={label}
-                    sx={{ color: 'text.secondary', '&.Mui-selected': { color: 'text.primary' } }}
+                    sx={{ color: 'text.secondary', '&.Mui-selected': { color: 'primary.main' } }}
                     value={value}
                   />
                 ))}

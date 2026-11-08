@@ -19,9 +19,9 @@ const chipSx = (isSelected: boolean) => ({
   borderRadius: '6px',
   px: 0.5,
   fontWeight: isSelected ? 600 : 500,
-  bgcolor: isSelected ? 'var(--color-heading)' : '#f1f3f6',
+  bgcolor: isSelected ? 'primary.main' : '#f1f3f6',
   color: isSelected ? '#fff' : 'text.primary',
-  '&:hover': { bgcolor: isSelected ? 'var(--color-heading)' : '#e6e9ee' },
+  '&:hover': { bgcolor: isSelected ? 'primary.dark' : '#e6e9ee' },
 })
 
 // A row of category buttons above the topic list: "Tất cả" and one button for each category.
