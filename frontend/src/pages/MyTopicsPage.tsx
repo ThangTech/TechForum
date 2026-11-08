@@ -1,6 +1,10 @@
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { TopicType } from '../api/topics'
+import { PageHeading } from '../components/common/PageHeading'
+import { PageShell } from '../components/common/PageShell'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { ConfirmDialog } from '../components/feedback/ConfirmDialog'
 import { OwnTopicFilters } from '../components/topics/OwnTopicFilters'
@@ -59,45 +63,41 @@ export const MyTopicsPage = () => {
   }
 
   return (
-    <main className="main-area" id="main-content">
-      <div className="mx-auto w-[min(920px,calc(100%-40px))] py-10 sm:py-14">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Không gian cá nhân</p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Nội dung của tôi</h1>
-            <p className="mt-3 text-sm text-slate-600">Quản lý bản nháp và theo dõi trạng thái nội dung đã xuất bản.</p>
-          </div>
-          <Link className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to={appRoutes.write}>Viết nội dung</Link>
-        </div>
+    <PageShell>
+      <PageHeading
+        actions={<Button component={Link} to={appRoutes.write} variant="contained">Viết nội dung</Button>}
+        description="Quản lý bản nháp và theo dõi trạng thái nội dung đã xuất bản."
+        eyebrow="Không gian cá nhân"
+        title="Nội dung của tôi"
+      />
 
-        <div className="mt-6">
-          <OwnTopicFilters
-            key={`${keyword}-${type ?? 'all'}`}
-            initialKeyword={keyword}
-            initialType={type}
-            onApply={(nextKeyword, nextType) => updateParams({ keyword: nextKeyword || undefined, type: nextType, page: undefined })}
-          />
-        </div>
+      <Box sx={{ mt: 3 }}>
+        <OwnTopicFilters
+          key={`${keyword}-${type ?? 'all'}`}
+          initialKeyword={keyword}
+          initialType={type}
+          onApply={(nextKeyword, nextType) => updateParams({ keyword: nextKeyword || undefined, type: nextType, page: undefined })}
+        />
+      </Box>
 
-        <div className="mt-6">
-          <AsyncStatePanel
-            error={error}
-            isLoading={isLoading}
-            loadingText="Đang tải nội dung của bạn…"
-            onRetry={() => {
-              setDeleteError(null)
-              void topicsQuery.refetch()
-            }}
+      <Box sx={{ mt: 3 }}>
+        <AsyncStatePanel
+          error={error}
+          isLoading={isLoading}
+          loadingText="Đang tải nội dung của bạn…"
+          onRetry={() => {
+            setDeleteError(null)
+            void topicsQuery.refetch()
+          }}
+        />
+        {!isLoading && !error && data && (
+          <OwnTopicList
+            data={data}
+            onDelete={setDeletingId}
+            onPageChange={(nextPage) => updateParams({ page: nextPage <= 1 ? undefined : nextPage })}
           />
-          {!isLoading && !error && data && (
-            <OwnTopicList
-              data={data}
-              onDelete={setDeletingId}
-              onPageChange={(nextPage) => updateParams({ page: nextPage <= 1 ? undefined : nextPage })}
-            />
-          )}
-        </div>
-      </div>
+        )}
+      </Box>
       <ConfirmDialog
         confirmLabel="Xóa nội dung"
         description="Nội dung chưa có câu trả lời sẽ được xóa mềm và không còn xuất hiện công khai. Nội dung đã có đóng góp cộng đồng không thể tự xóa; bạn cần liên hệ quản trị viên khi cần xử lý."
@@ -107,6 +107,6 @@ export const MyTopicsPage = () => {
         onConfirm={() => void confirmDelete()}
         title="Xóa nội dung này?"
       />
-    </main>
+    </PageShell>
   )
 }

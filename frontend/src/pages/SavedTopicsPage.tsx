@@ -1,6 +1,13 @@
-import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
+import MuiLink from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
 import { Link, useSearchParams } from 'react-router-dom'
 import { appRoutes } from '../appRoutes'
+import { EmptyPanel } from '../components/common/EmptyPanel'
+import { PageHeading } from '../components/common/PageHeading'
+import { PageShell } from '../components/common/PageShell'
+import { Pager } from '../components/common/Pager'
+import { Panel } from '../components/common/Panel'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/topics/TopicTypeBadge'
 import { useSavedTopics } from '../queries/bookmarks'
@@ -28,42 +35,42 @@ export const SavedTopicsPage = () => {
   }
 
   return (
-    <main className="main-area" id="main-content">
-      <div className="page-content py-10 sm:py-14">
-        <p className="eyebrow">Thư viện cá nhân</p>
-        <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Nội dung đã lưu</h1>
-        <p className="mt-2 text-slate-600">Các bài viết và câu hỏi bạn muốn đọc lại.</p>
-        <div className="mt-7">
-          <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải nội dung đã lưu…" onRetry={() => void savedQuery.refetch()} />
-          {!isLoading && !error && data?.items.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <h2 className="font-bold text-slate-900">Bạn chưa lưu nội dung nào</h2>
-              <Link className="mt-3 inline-block font-bold text-blue-700 hover:underline" to={appRoutes.home}>Khám phá nội dung</Link>
-            </div>
-          )}
-          {!isLoading && !error && data && data.items.length > 0 && (
-            <>
-              <div className="grid gap-4">
-                {data.items.map((topic) => (
-                  <article className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6" key={topic.id}>
-                    <TopicTypeBadge type={topic.type} />
-                    <Link className="mt-3 block text-xl font-bold text-slate-950 hover:text-blue-700" to={appRoutes.topic(topic.id)}>{topic.title}</Link>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p>
-                    <p className="mt-4 text-xs text-slate-500">{topic.author.displayName} · {topic.category.name} · Lưu {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(topic.savedAtUtc))}</p>
-                  </article>
-                ))}
-              </div>
-              {data.totalPages > 1 && (
-                <nav className="mt-6 flex items-center justify-between" aria-label="Phân trang nội dung đã lưu">
-                  <Button disabled={page <= 1} onClick={() => changePage(page - 1)} variant="outlined">Trang trước</Button>
-                  <span className="text-sm text-slate-600">Trang {page}/{data.totalPages}</span>
-                  <Button disabled={page >= data.totalPages} onClick={() => changePage(page + 1)} variant="outlined">Trang sau</Button>
-                </nav>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </main>
+    <PageShell maxWidth={1240}>
+      <PageHeading description="Các bài viết và câu hỏi bạn muốn đọc lại." eyebrow="Thư viện cá nhân" title="Nội dung đã lưu" />
+      <Box sx={{ mt: 3.5 }}>
+        <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải nội dung đã lưu…" onRetry={() => void savedQuery.refetch()} />
+        {!isLoading && !error && data?.items.length === 0 && (
+          <EmptyPanel title="Bạn chưa lưu nội dung nào">
+            <MuiLink component={Link} sx={{ display: 'inline-block', mt: 1.5, fontWeight: 700 }} to={appRoutes.home} underline="hover">Khám phá nội dung</MuiLink>
+          </EmptyPanel>
+        )}
+        {!isLoading && !error && data && data.items.length > 0 && (
+          <>
+            <Box sx={{ display: 'grid', gap: 2 }}>
+              {data.items.map((topic) => (
+                <Panel component="article" key={topic.id} sx={{ p: { xs: 2.5, sm: 3 } }}>
+                  <TopicTypeBadge type={topic.type} />
+                  <MuiLink
+                    component={Link}
+                    sx={{ display: 'block', mt: 1.5, color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
+                    to={appRoutes.topic(topic.id)}
+                    underline="none"
+                  >
+                    {topic.title}
+                  </MuiLink>
+                  <Typography color="text.secondary" sx={{ mt: 1, lineHeight: '1.5rem' }} variant="body2">{topic.summary}</Typography>
+                  <Typography color="text.secondary" sx={{ mt: 2, fontSize: '0.75rem' }}>
+                    {topic.author.displayName} · {topic.category.name} · Lưu {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(topic.savedAtUtc))}
+                  </Typography>
+                </Panel>
+              ))}
+            </Box>
+            <Box sx={{ mt: 1.5 }}>
+              <Pager label="Phân trang nội dung đã lưu" onChange={changePage} page={page} totalPages={data.totalPages} />
+            </Box>
+          </>
+        )}
+      </Box>
+    </PageShell>
   )
 }

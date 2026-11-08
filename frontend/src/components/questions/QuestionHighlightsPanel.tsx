@@ -1,7 +1,11 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import MuiLink from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { QuestionHighlight, QuestionHighlights } from '../../api/questionHighlights'
 import { appRoutes } from '../../appRoutes'
+import { PanelList } from '../common/PanelList'
 
 interface QuestionHighlightsPanelProps {
   data: QuestionHighlights | null
@@ -10,15 +14,67 @@ interface QuestionHighlightsPanelProps {
   onRetry: () => void
 }
 
+// The grey strip that names a group of questions.
+const groupTitleSx = {
+  px: 2.5,
+  py: 1,
+  bgcolor: 'var(--color-subtle)',
+  color: 'text.secondary',
+  fontSize: '0.75rem',
+  fontWeight: 700,
+  letterSpacing: '0.025em',
+  textTransform: 'uppercase',
+} as const
+
 const QuestionList = ({ items }: { items: QuestionHighlight[] }) => items.length === 0
-  ? <p className="px-5 py-5 text-sm text-slate-500">Chưa có câu hỏi phù hợp.</p>
-  : <ol className="divide-y divide-slate-100">{items.map((item) => <li className="px-5 py-4" key={item.id}><Link className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 hover:text-blue-700" to={appRoutes.topic(item.id)}>{item.title}</Link><span className="mt-1 block text-xs text-slate-500">{item.answerCount} câu trả lời</span></li>)}</ol>
+  ? <Typography color="text.secondary" sx={{ px: 2.5, py: 2.5 }} variant="body2">Chưa có câu hỏi phù hợp.</Typography>
+  : (
+    <PanelList ordered>
+      {items.map((item) => (
+        <Box component="li" key={item.id} sx={{ px: 2.5, py: 2 }}>
+          <MuiLink
+            component={Link}
+            sx={{
+              color: 'text.primary',
+              fontSize: '0.875rem',
+              fontWeight: 700,
+              lineHeight: '1.25rem',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              '&:hover': { color: 'primary.main' },
+            }}
+            to={appRoutes.topic(item.id)}
+            underline="none"
+          >
+            {item.title}
+          </MuiLink>
+          <Typography color="text.secondary" component="span" sx={{ display: 'block', mt: 0.5, fontSize: '0.75rem' }}>{item.answerCount} câu trả lời</Typography>
+        </Box>
+      ))}
+    </PanelList>
+  )
 
 export const QuestionHighlightsPanel = ({ data, error, isLoading, onRetry }: QuestionHighlightsPanelProps) => (
-  <section className="surface-card" aria-labelledby="question-highlights-title">
-    <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-950" id="question-highlights-title">Câu hỏi cộng đồng</h2></div>
-    {isLoading && <p className="px-5 py-8 text-center text-sm text-slate-500" role="status">Đang tải câu hỏi…</p>}
-    {!isLoading && error && <div className="px-5 py-6 text-center" role="alert"><p className="text-sm text-red-700">{error}</p><div className="mt-3"><Button onClick={onRetry} variant="outlined">Thử lại</Button></div></div>}
-    {!isLoading && !error && data && <><div className="bg-slate-50 px-5 py-2 text-xs font-bold uppercase tracking-wide text-slate-600">Mới nhất</div><QuestionList items={data.latest} /><div className="border-t border-slate-200 bg-slate-50 px-5 py-2 text-xs font-bold uppercase tracking-wide text-slate-600">Nhiều câu trả lời · {data.periodDays} ngày</div><QuestionList items={data.mostAnswered} /></>}
-  </section>
+  <Box aria-labelledby="question-highlights-title" className="surface-card" component="section">
+    <Box sx={{ px: 2.5, py: 2, borderBottom: 1, borderColor: 'divider' }}>
+      <Typography component="h2" id="question-highlights-title" sx={{ color: 'var(--color-heading)', fontWeight: 700 }}>Câu hỏi cộng đồng</Typography>
+    </Box>
+    {isLoading && <Typography color="text.secondary" role="status" sx={{ px: 2.5, py: 4, textAlign: 'center' }} variant="body2">Đang tải câu hỏi…</Typography>}
+    {!isLoading && error && (
+      <Box role="alert" sx={{ px: 2.5, py: 3, textAlign: 'center' }}>
+        <Typography color="error" variant="body2">{error}</Typography>
+        <Box sx={{ mt: 1.5 }}><Button onClick={onRetry} variant="outlined">Thử lại</Button></Box>
+      </Box>
+    )}
+    {!isLoading && !error && data && (
+      <>
+        <Box sx={groupTitleSx}>Mới nhất</Box>
+        <QuestionList items={data.latest} />
+        <Box sx={{ ...groupTitleSx, borderTop: 1, borderColor: 'divider' }}>Nhiều câu trả lời · {data.periodDays} ngày</Box>
+        <QuestionList items={data.mostAnswered} />
+      </>
+    )}
+  </Box>
 )

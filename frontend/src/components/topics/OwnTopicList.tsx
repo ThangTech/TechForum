@@ -1,7 +1,14 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
+import MuiLink from '@mui/material/Link'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { OwnTopicPage } from '../../api/topics'
 import { appRoutes } from '../../appRoutes'
+import { Panel } from '../common/Panel'
+import { PanelList } from '../common/PanelList'
 import { TopicTypeBadge } from './TopicTypeBadge'
 
 interface OwnTopicListProps {
@@ -14,70 +21,70 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'medium',
 }).format(new Date(value))
 
+const titleSx = { display: 'block', mt: 1.5, color: 'var(--color-heading)', fontSize: '1.125rem', fontWeight: 700 } as const
+
 export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps) => {
   if (data.items.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
-        <p className="text-sm text-slate-600">Bạn chưa có nội dung phù hợp với bộ lọc.</p>
-        <Link className="mt-4 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to={appRoutes.write}>
-          Viết nội dung đầu tiên
-        </Link>
-      </div>
+      <Panel sx={{ p: 5, textAlign: 'center' }}>
+        <Typography color="text.secondary" variant="body2">Bạn chưa có nội dung phù hợp với bộ lọc.</Typography>
+        <Button component={Link} sx={{ mt: 2 }} to={appRoutes.write} variant="contained">Viết nội dung đầu tiên</Button>
+      </Panel>
     )
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white" aria-label="Danh sách nội dung của tôi">
-      <ul className="divide-y divide-slate-200">
+    <Panel aria-label="Danh sách nội dung của tôi" component="section">
+      <PanelList>
         {data.items.map((topic) => (
-          <li className="p-5 sm:p-6" key={topic.id}>
-            <div className="flex flex-wrap items-center gap-2">
+          <Box component="li" key={topic.id} sx={{ p: { xs: 2.5, sm: 3 } }}>
+            <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
               <TopicTypeBadge type={topic.type} />
-              <span className={topic.status === 'published'
-                ? 'rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800'
-                : 'rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700'}>
-                {topic.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
-              </span>
-              {topic.isHiddenByModerator && <span className="text-xs font-bold text-red-700">Đã bị ẩn bởi quản trị viên</span>}
-              {topic.isDiscussionLocked && <span className="text-xs font-semibold text-slate-500">Đã khóa thảo luận</span>}
-            </div>
+              <Chip
+                label={topic.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
+                size="small"
+                sx={topic.status === 'published'
+                  ? { bgcolor: 'success.light', color: 'success.main', fontWeight: 700 }
+                  : { bgcolor: '#f1f5f9', color: 'text.primary', fontWeight: 700 }}
+              />
+              {topic.isHiddenByModerator && <Typography color="error" component="span" sx={{ fontSize: '0.75rem', fontWeight: 700 }}>Đã bị ẩn bởi quản trị viên</Typography>}
+              {topic.isDiscussionLocked && <Typography color="text.secondary" component="span" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>Đã khóa thảo luận</Typography>}
+            </Stack>
             {topic.status === 'published' && !topic.isHiddenByModerator ? (
-              <Link className="mt-3 block text-lg font-bold text-slate-950 hover:text-blue-700" to={appRoutes.topic(topic.id)}>
+              <MuiLink component={Link} sx={{ ...titleSx, '&:hover': { color: 'primary.main' } }} to={appRoutes.topic(topic.id)} underline="none">
                 {topic.title}
-              </Link>
+              </MuiLink>
             ) : (
-              <h2 className="mt-3 text-lg font-bold text-slate-950">{topic.title}</h2>
+              <Typography component="h2" sx={titleSx}>{topic.title}</Typography>
             )}
-            <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p>
-            <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 text-xs text-slate-500">
+            <Typography color="text.secondary" sx={{ mt: 1, lineHeight: '1.5rem' }} variant="body2">{topic.summary}</Typography>
+            <Stack direction="row" sx={{ mt: 2, flexWrap: 'wrap', columnGap: 1.5, rowGap: 1, color: 'text.secondary', fontSize: '0.75rem' }}>
               <span>{topic.category.name}</span>
               <span aria-hidden="true">·</span>
               <span>Tạo {formatDate(topic.createdAtUtc)}</span>
               {topic.updatedAtUtc && <span>· Cập nhật {formatDate(topic.updatedAtUtc)}</span>}
-            </div>
+            </Stack>
             {topic.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <Stack direction="row" sx={{ mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
                 {topic.tags.map((tag) => (
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600" key={tag.id}>#{tag.name}</span>
+                  <Chip key={tag.id} label={`#${tag.name}`} size="small" sx={{ bgcolor: '#f1f5f9', color: 'text.secondary', fontWeight: 600 }} />
                 ))}
-              </div>
+              </Stack>
             )}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-400 hover:text-blue-700" to={appRoutes.editTopic(topic.id)}>
-                Chỉnh sửa
-              </Link>
+            <Stack direction="row" sx={{ mt: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Button component={Link} to={appRoutes.editTopic(topic.id)} variant="outlined">Chỉnh sửa</Button>
               <Button onClick={() => onDelete(topic.id)} variant="text">Xóa</Button>
-            </div>
-          </li>
+            </Stack>
+          </Box>
         ))}
-      </ul>
-      <div className="flex items-center justify-between border-t border-slate-200 p-4 text-sm text-slate-600">
+      </PanelList>
+      <Stack direction="row" sx={{ p: 2, alignItems: 'center', justifyContent: 'space-between', borderTop: 1, borderColor: 'divider', color: 'text.secondary', fontSize: '0.875rem' }}>
         <span>Trang {data.page} / {Math.max(data.totalPages, 1)} · {data.totalItems} nội dung</span>
-        <div className="flex gap-2">
+        <Stack direction="row" spacing={1}>
           <Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button>
           <Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button>
-        </div>
-      </div>
-    </section>
+        </Stack>
+      </Stack>
+    </Panel>
   )
 }

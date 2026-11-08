@@ -1,6 +1,11 @@
+import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { OwnTopic } from '../../api/topics'
 import { appRoutes } from '../../appRoutes'
+import { PageShell } from '../common/PageShell'
+import { Panel } from '../common/Panel'
 
 interface TopicCreatedPanelProps {
   actionLabel?: string
@@ -9,25 +14,19 @@ interface TopicCreatedPanelProps {
 }
 
 export const TopicCreatedPanel = ({ actionLabel = 'Soạn nội dung khác', topic, onReset }: TopicCreatedPanelProps) => (
-  <main className="main-area" id="main-content">
-    <div className="mx-auto w-[min(720px,calc(100%-40px))] py-12">
-      <section className="rounded-xl border border-green-200 bg-white p-8 text-center" role="status">
-        <p className="text-xs font-bold uppercase tracking-widest text-green-700">Đã lưu thành công</p>
-        <h1 className="mt-2 text-2xl font-extrabold text-slate-950">{topic.title}</h1>
-        <p className="mt-3 text-sm text-slate-600">
-          {topic.status === 'published' ? 'Nội dung đã được xuất bản.' : 'Bản nháp chỉ bạn mới có thể quản lý.'}
-        </p>
-        <div className="mt-6 flex justify-center gap-3">
-          {topic.status === 'published' && (
-            <Link className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white" to={appRoutes.topic(topic.id)}>
-              Xem nội dung
-            </Link>
-          )}
-          <button className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700" onClick={onReset} type="button">
-            {actionLabel}
-          </button>
-        </div>
-      </section>
-    </div>
-  </main>
+  <PageShell compact maxWidth={720}>
+    <Panel component="section" role="status" sx={{ p: 4, textAlign: 'center' }} tone="success">
+      <Typography sx={{ color: 'success.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Đã lưu thành công</Typography>
+      <Typography component="h1" sx={{ mt: 1, color: 'var(--color-heading)', fontSize: '1.5rem', fontWeight: 800 }}>{topic.title}</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="body2">
+        {topic.status === 'published' ? 'Nội dung đã được xuất bản.' : 'Bản nháp chỉ bạn mới có thể quản lý.'}
+      </Typography>
+      <Stack direction="row" sx={{ mt: 3, justifyContent: 'center', gap: 1.5 }}>
+        {topic.status === 'published' && (
+          <Button component={Link} to={appRoutes.topic(topic.id)} variant="contained">Xem nội dung</Button>
+        )}
+        <Button onClick={onReset} type="button" variant="outlined">{actionLabel}</Button>
+      </Stack>
+    </Panel>
+  </PageShell>
 )
