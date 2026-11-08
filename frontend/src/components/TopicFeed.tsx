@@ -5,6 +5,8 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { TopicFeedMode, TopicPage, TopicType } from '../api/topics'
+import { Panel } from './common/Panel'
+import { PanelList } from './common/PanelList'
 import { TopicSummaryItem } from './topics/TopicSummaryItem'
 
 interface TopicFeedProps {
@@ -22,9 +24,6 @@ interface TopicFeedProps {
   onShowLatest?: () => void
 }
 
-// Card padding: 20px on phones, 24px from the "sm" width.
-const cardPadding = { xs: 2.5, sm: 3 }
-
 export const TopicFeed = ({
   data,
   error,
@@ -41,16 +40,12 @@ export const TopicFeed = ({
 }: TopicFeedProps) => {
   return (
   <Stack aria-labelledby="topic-feed-title" component="section" data-tour="content-feed" spacing={1.5}>
-    <Box className="surface-card" sx={{ p: cardPadding }}>
-      <Typography
-        sx={{ color: 'primary.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}
-      >
-        {isDiscussion ? 'Đang có trao đổi' : 'Khám phá nội dung'}
-      </Typography>
-      <Typography component="h2" id="topic-feed-title" sx={{ mt: 0.5, color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 700 }}>
+    <Stack direction="row" sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 2 }}>
+      <Typography component="h2" id="topic-feed-title" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 700 }}>
         {selectedType === 'article' ? 'Bài viết' : selectedType === 'question' ? 'Câu hỏi' : 'Bài viết và câu hỏi'}
       </Typography>
-    </Box>
+      {isDiscussion && <Typography color="text.secondary" sx={{ fontSize: '0.8125rem' }}>Đang có trao đổi</Typography>}
+    </Stack>
 
     {isLoading && (
       <Box className="surface-card" role="status" sx={{ p: 4, textAlign: 'center' }}>
@@ -92,18 +87,24 @@ export const TopicFeed = ({
     )}
     {!isLoading && !requiresLogin && !error && data && data.items.length > 0 && (
       <>
-        <Stack component="ul" spacing={1.5} sx={{ m: 0, p: 0, listStyle: 'none' }}>
-          {data.items.map((topic) => (
-            <Box
-              className={`surface-card topic-card topic-card--${topic.type}${topic.isPinned ? ' topic-card--pinned' : ''}`}
-              component="li"
-              key={topic.id}
-              sx={{ p: cardPadding }}
-            >
-              <TopicSummaryItem onFilter={onFilter} topic={topic} isDiscussion={isDiscussion} />
-            </Box>
-          ))}
-        </Stack>
+        <Panel>
+          <PanelList>
+            {data.items.map((topic) => (
+              <Box
+                component="li"
+                key={topic.id}
+                sx={{
+                  px: { xs: 2, sm: 2.5 },
+                  py: 2,
+                  bgcolor: topic.isPinned ? '#f5f9ff' : undefined,
+                  '&:hover': { bgcolor: topic.isPinned ? '#edf4ff' : 'var(--color-subtle)' },
+                }}
+              >
+                <TopicSummaryItem onFilter={onFilter} topic={topic} isDiscussion={isDiscussion} />
+              </Box>
+            ))}
+          </PanelList>
+        </Panel>
         <Stack
           aria-label="Phân trang nội dung"
           className="surface-card"

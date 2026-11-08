@@ -14,7 +14,7 @@ import { BackLink } from '../components/common/BackLink'
 import { PageShell } from '../components/common/PageShell'
 import { Panel } from '../components/common/Panel'
 import { PanelList } from '../components/common/PanelList'
-import { StatTile } from '../components/common/StatTile'
+import { InlineStats } from '../components/common/InlineStats'
 import { useAuth } from '../auth/authState'
 import { openAuthDialog } from '../auth/authDialogStore'
 import { appRoutes } from '../appRoutes'
@@ -104,12 +104,16 @@ export const PublicProfilePage = () => {
               <Typography sx={{ mt: 2.5, maxWidth: 672, color: 'text.primary', lineHeight: '1.5rem', whiteSpace: 'pre-line' }} variant="body2">{profile.bio}</Typography>
             )}
             {actionError && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{actionError}</Typography>}
-            <Box sx={{ mt: 3, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(4, 1fr)' } }}>
-              <StatTile><strong>{profile.publishedTopicCount}</strong> nội dung</StatTile>
-              <StatTile to={appRoutes.followers(profile.id)}><strong>{profile.followerCount}</strong> người theo dõi</StatTile>
-              <StatTile to={appRoutes.following(profile.id)}><strong>{profile.followingCount}</strong> đang theo dõi</StatTile>
-              <StatTile><strong>{profile.receivedStarCount}</strong> Sao hữu ích</StatTile>
-            </Box>
+            <InlineStats
+              items={[
+                { value: profile.publishedTopicCount, label: 'nội dung' },
+                { value: profile.followerCount, label: 'người theo dõi', to: appRoutes.followers(profile.id) },
+                { value: profile.followingCount, label: 'đang theo dõi', to: appRoutes.following(profile.id) },
+                { value: profile.receivedStarCount, label: 'Sao hữu ích' },
+              ]}
+              label="Thống kê hồ sơ"
+              sx={{ mt: 2.5 }}
+            />
             {profile.badges.length > 0 && (
               <Box sx={{ mt: 3 }}>
                 <Typography component="h2" sx={sectionTitleSx}>Danh hiệu</Typography>

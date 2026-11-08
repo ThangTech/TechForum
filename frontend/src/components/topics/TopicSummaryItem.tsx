@@ -1,13 +1,10 @@
 import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
 import MuiLink from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { TopicSummary } from '../../api/topics'
 import { appRoutes } from '../../appRoutes'
-import { TopicTypeBadge } from './TopicTypeBadge'
-import { topicTagChipSx } from './topicTagChipSx'
 import { UserAvatar } from '../account/UserAvatar'
 import { BookmarkIcon, CommentIcon, StarIcon, ViewIcon } from '../common/StatIcons'
 
@@ -30,8 +27,19 @@ const getAnswerBoxColors = (answerCount: number, hasAcceptedAnswer: boolean) => 
   return { border: 'var(--color-border-strong)', background: 'transparent', text: 'text.secondary' }
 }
 
-const metaRowSx = { flexWrap: 'wrap', alignItems: 'center', columnGap: 1.5, rowGap: 1, color: 'text.secondary', fontSize: '0.75rem' } as const
-const statLinkSx = { fontWeight: 600 } as const
+// The small grey line under the summary: kind, author, date, category and tags on the left, the counters on the right.
+const metaRowSx = {
+  mt: 1,
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  columnGap: 1.5,
+  rowGap: 0.5,
+  color: '#8a93a5',
+  fontSize: '0.75rem',
+} as const
+
+const quietLinkSx = { color: 'inherit', '&:hover': { color: 'primary.main' } } as const
+
 export const TopicSummaryItem = ({
   topic,
   showAuthor = true,
@@ -56,58 +64,56 @@ export const TopicSummaryItem = ({
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            width: 64,
-            height: 56,
+            width: 56,
+            height: 48,
             textAlign: 'center',
             border: 1,
             borderColor: answerColors.border,
-            borderRadius: '6px',
+            borderRadius: '4px',
             bgcolor: answerColors.background,
           }}
           to={discussionUrl}
           underline="none"
         >
-          <Typography component="span" sx={{ color: answerColors.text, fontSize: '1.125rem', fontWeight: 700, lineHeight: '1.25rem' }}>
+          <Typography component="span" sx={{ color: answerColors.text, fontSize: '1rem', fontWeight: 700, lineHeight: '1.125rem' }}>
             {topic.discussion.answerCount}
           </Typography>
-          <Typography component="span" sx={{ color: answerColors.text, fontSize: '0.7rem' }}>
+          <Typography component="span" sx={{ color: answerColors.text, fontSize: '0.6875rem' }}>
             {topic.discussion.hasAcceptedAnswer ? 'đã giải' : 'trả lời'}
           </Typography>
         </MuiLink>
       )}
       <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
-          <TopicTypeBadge type={topic.type} />
-          {topic.isPinned && <Chip color="primary" label="Đã ghim" size="small" sx={{ fontWeight: 600 }} variant="outlined" />}
-          {topic.isDiscussionLocked && (
-            <Typography component="span" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 600 }}>
-              Đã khóa thảo luận
-            </Typography>
-          )}
-          {isQuestion && topic.discussion?.hasAcceptedAnswer && (
-            <Chip label="✓ Đã có lời giải" size="small" sx={{ bgcolor: 'success.light', color: 'success.main', fontWeight: 700 }} />
-          )}
-        </Stack>
         <MuiLink
           component={Link}
           sx={{
-            display: 'block',
-            mt: 1.5,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
             color: 'var(--color-heading)',
-            fontSize: '1.125rem',
+            fontSize: '1.0625rem',
             fontWeight: 700,
-            lineHeight: '1.75rem',
+            lineHeight: '1.5rem',
             '&:hover': { color: 'primary.main' },
           }}
           to={appRoutes.topic(topic.id)}
           underline="none"
         >
+          {topic.isPinned && (
+            <Box
+              component="span"
+              sx={{ mr: 1, px: 0.75, py: '1px', border: 1, borderColor: 'primary.main', borderRadius: '3px', color: 'primary.main', fontSize: '0.6875rem', fontWeight: 600, verticalAlign: 'middle' }}
+            >
+              Ghim
+            </Box>
+          )}
           {topic.title}
         </MuiLink>
         {!isDiscussion && (
           <Typography
             sx={{
-              mt: 1,
+              mt: 0.5,
               color: 'text.secondary',
               lineHeight: '1.5rem',
               display: '-webkit-box',
@@ -120,71 +126,81 @@ export const TopicSummaryItem = ({
             {topic.summary}
           </Typography>
         )}
-        <Stack direction="row" sx={{ ...metaRowSx, mt: 2 }}>
+        <Stack direction="row" sx={metaRowSx}>
+          <Box component="span" sx={{ color: isQuestion ? 'var(--color-question)' : 'primary.main', fontWeight: 600 }}>
+            {isQuestion ? 'Câu hỏi' : 'Bài viết'}
+          </Box>
+          {isQuestion && topic.discussion?.hasAcceptedAnswer && (
+            <Box component="span" sx={{ color: 'success.main', fontWeight: 600 }}>✓ Đã có lời giải</Box>
+          )}
+          {topic.isDiscussionLocked && <span>Đã khóa thảo luận</span>}
           {showAuthor && (
-            <>
-              <MuiLink
-                component={Link}
-                sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.primary', fontWeight: 600, '&:hover': { color: 'primary.main' } }}
-                to={appRoutes.member(topic.author.id)}
-                underline="none"
-              >
-                {/* Danh sách chủ đề chưa trả về ảnh đại diện nên hiển thị chữ cái đầu của tên. */}
-                <UserAvatar avatarUrl={null} displayName={topic.author.displayName} size="xs" />
-                {topic.author.displayName}
-              </MuiLink>
-              <span aria-hidden="true">·</span>
-            </>
+            <MuiLink
+              component={Link}
+              sx={{ ...quietLinkSx, display: 'flex', alignItems: 'center', gap: 0.75 }}
+              to={appRoutes.member(topic.author.id)}
+              underline="none"
+            >
+              {/* Danh sách chủ đề chưa trả về ảnh đại diện nên hiển thị chữ cái đầu của tên. */}
+              <UserAvatar avatarUrl={null} displayName={topic.author.displayName} size="xs" />
+              {topic.author.displayName}
+            </MuiLink>
           )}
           <span>{formatDate(topic.publishedAtUtc)}</span>
-          <span aria-hidden="true">·</span>
           {onFilter ? (
             <MuiLink
               component="button"
               onClick={() => onFilter('categoryId', topic.category.id)}
-              sx={{ fontSize: 'inherit', fontWeight: 600, verticalAlign: 'baseline' }}
+              sx={{ ...quietLinkSx, fontSize: 'inherit', verticalAlign: 'baseline' }}
               type="button"
-              underline="hover"
+              underline="none"
             >
               {topic.category.name}
             </MuiLink>
           ) : (
             <span>{topic.category.name}</span>
           )}
-        </Stack>
-        <Stack className="topic-card__stats" direction="row" sx={{ ...metaRowSx, mt: 1.5, columnGap: 2 }}>
-          <span className="topic-stat" title="Lượt xem"><ViewIcon />{topic.viewCount}<span className="sr-only"> lượt xem</span></span>
-          {topic.discussion && <>
+          {topic.tags.map((tag) => onFilter ? (
             <MuiLink
-              component={Link}
-              sx={{
-                ...statLinkSx,
-                display: { xs: 'inline-flex', sm: isQuestion ? 'none' : 'inline-flex' },
-                alignItems: 'center',
-                gap: '5px',
-              }}
-              title={isQuestion ? 'Câu trả lời và phản hồi' : 'Phản hồi'}
-              to={discussionUrl}
-              underline="hover"
+              component="button"
+              key={tag.id}
+              onClick={() => onFilter('tagId', tag.id)}
+              sx={{ ...quietLinkSx, fontSize: 'inherit', verticalAlign: 'baseline' }}
+              type="button"
+              underline="none"
             >
-              <CommentIcon />{topic.discussion.answerCount}
-              <span className="sr-only"> {isQuestion ? 'câu trả lời và phản hồi' : 'phản hồi'}</span>
+              #{tag.name}
             </MuiLink>
-            <span className="topic-stat" title="Sao hữu ích"><StarIcon />{topic.discussion.starCount}<span className="sr-only"> sao hữu ích</span></span>
-            <span className="topic-stat" title="Lượt lưu"><BookmarkIcon />{topic.discussion.bookmarkCount}<span className="sr-only"> lượt lưu</span></span>
-            {isDiscussion && topic.discussion.lastActivityAtUtc && <time dateTime={topic.discussion.lastActivityAtUtc}>
-              Trao đổi gần nhất: {new Date(topic.discussion.lastActivityAtUtc).toLocaleString('vi-VN')}
-            </time>}
-          </>}
-        </Stack>
-        {topic.tags.length > 0 && (
-          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
-            {topic.tags.map((tag) => onFilter ? (
-              <Chip key={tag.id} label={`#${tag.name}`} onClick={() => onFilter('tagId', tag.id)} size="small" sx={topicTagChipSx} variant="outlined" />
-            ) : (
-              <Chip key={tag.id} label={`#${tag.name}`} size="small" sx={topicTagChipSx} variant="outlined" />
-            ))}
+          ) : (
+            <span key={tag.id}>#{tag.name}</span>
+          ))}
+          <Stack direction="row" sx={{ ml: 'auto', alignItems: 'center', columnGap: 1.75, fontVariantNumeric: 'tabular-nums' }}>
+            <span className="topic-stat" title="Lượt xem"><ViewIcon />{topic.viewCount}<span className="sr-only"> lượt xem</span></span>
+            {topic.discussion && <>
+              <MuiLink
+                component={Link}
+                sx={{
+                  ...quietLinkSx,
+                  display: { xs: 'inline-flex', sm: isQuestion ? 'none' : 'inline-flex' },
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+                title={isQuestion ? 'Câu trả lời và phản hồi' : 'Phản hồi'}
+                to={discussionUrl}
+                underline="none"
+              >
+                <CommentIcon />{topic.discussion.answerCount}
+                <span className="sr-only"> {isQuestion ? 'câu trả lời và phản hồi' : 'phản hồi'}</span>
+              </MuiLink>
+              <span className="topic-stat" title="Sao hữu ích"><StarIcon />{topic.discussion.starCount}<span className="sr-only"> sao hữu ích</span></span>
+              <span className="topic-stat" title="Lượt lưu"><BookmarkIcon />{topic.discussion.bookmarkCount}<span className="sr-only"> lượt lưu</span></span>
+            </>}
           </Stack>
+        </Stack>
+        {isDiscussion && topic.discussion?.lastActivityAtUtc && (
+          <Typography component="time" dateTime={topic.discussion.lastActivityAtUtc} sx={{ display: 'block', mt: 0.5, color: '#8a93a5', fontSize: '0.75rem' }}>
+            Trao đổi gần nhất: {new Date(topic.discussion.lastActivityAtUtc).toLocaleString('vi-VN')}
+          </Typography>
         )}
       </Box>
     </Stack>
