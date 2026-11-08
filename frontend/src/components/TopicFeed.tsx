@@ -1,4 +1,8 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import MuiLink from '@mui/material/Link'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { TopicFeedMode, TopicPage, TopicType } from '../api/topics'
 import { TopicSummaryItem } from './topics/TopicSummaryItem'
@@ -18,6 +22,9 @@ interface TopicFeedProps {
   onShowLatest?: () => void
 }
 
+// Card padding: 20px on phones, 24px from the "sm" width.
+const cardPadding = { xs: 2.5, sm: 3 }
+
 export const TopicFeed = ({
   data,
   error,
@@ -33,54 +40,85 @@ export const TopicFeed = ({
   onShowLatest,
 }: TopicFeedProps) => {
   return (
-  <section aria-labelledby="topic-feed-title" className="grid gap-3" data-tour="content-feed">
-    <div className="surface-card p-5 sm:p-6">
-      <p className="text-xs font-bold uppercase tracking-widest text-blue-700">{isDiscussion ? 'Đang có trao đổi' : 'Khám phá nội dung'}</p>
-      <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950" id="topic-feed-title">
+  <Stack aria-labelledby="topic-feed-title" component="section" data-tour="content-feed" spacing={1.5}>
+    <Box className="surface-card" sx={{ p: cardPadding }}>
+      <Typography
+        sx={{ color: 'primary.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}
+      >
+        {isDiscussion ? 'Đang có trao đổi' : 'Khám phá nội dung'}
+      </Typography>
+      <Typography component="h2" id="topic-feed-title" sx={{ mt: 0.5, color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 700 }}>
         {selectedType === 'article' ? 'Bài viết' : selectedType === 'question' ? 'Câu hỏi' : 'Bài viết và câu hỏi'}
-      </h2>
-    </div>
+      </Typography>
+    </Box>
 
-    {isLoading && <div className="surface-card p-8 text-center text-sm text-slate-500" role="status">Đang tải nội dung…</div>}
-    {!isLoading && requiresLogin && <div className="surface-card space-y-3 p-6 text-center text-sm text-slate-600">
-      <p>Đăng nhập để xem nội dung từ những tác giả bạn đang theo dõi.</p>
-      <Link className="inline-block border border-blue-700 bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800" to={loginUrl}>Đăng nhập</Link>
-    </div>}
+    {isLoading && (
+      <Box className="surface-card" role="status" sx={{ p: 4, textAlign: 'center' }}>
+        <Typography color="text.secondary" variant="body2">Đang tải nội dung…</Typography>
+      </Box>
+    )}
+    {!isLoading && requiresLogin && (
+      <Stack className="surface-card" spacing={1.5} sx={{ p: 3, alignItems: 'center', textAlign: 'center' }}>
+        <Typography color="text.secondary" variant="body2">Đăng nhập để xem nội dung từ những tác giả bạn đang theo dõi.</Typography>
+        <Button component={Link} to={loginUrl} variant="contained">Đăng nhập</Button>
+      </Stack>
+    )}
     {!isLoading && !requiresLogin && error && (
-      <div className="surface-card space-y-4 p-8 text-center" role="alert">
-        <p className="text-sm text-red-700">{error}</p>
+      <Stack className="surface-card" role="alert" spacing={2} sx={{ p: 4, alignItems: 'center', textAlign: 'center' }}>
+        <Typography color="error" variant="body2">{error}</Typography>
         <Button onClick={onRetry} variant="outlined">Thử lại</Button>
-      </div>
+      </Stack>
     )}
     {!isLoading && !requiresLogin && !error && data?.items.length === 0 && (
-      <div className="surface-card space-y-3 p-6 text-center text-sm text-slate-600">
-        <p>{feed === 'following'
+      <Stack className="surface-card" spacing={1.5} sx={{ p: 3, alignItems: 'center', textAlign: 'center' }}>
+        <Typography color="text.secondary" variant="body2">{feed === 'following'
           ? 'Chưa có nội dung phù hợp từ những người bạn đang theo dõi. Hãy theo dõi tác giả trên trang cá nhân hoặc thử bỏ bớt bộ lọc.'
           : feed === 'weekly'
             ? 'Chưa có nội dung phù hợp nhận tương tác trong 7 ngày qua.'
-            : 'Không tìm thấy nội dung phù hợp.'}</p>
-        {feed !== 'latest' && <button className="font-semibold text-blue-700 underline" onClick={onShowLatest} type="button">Xem Mới nhất</button>}
-        {data.totalItems > 0 && <button className="font-semibold text-blue-700 underline" onClick={() => onPageChange(Math.max(1, data.totalPages))} type="button">Về trang cuối có nội dung</button>}
-      </div>
+            : 'Không tìm thấy nội dung phù hợp.'}</Typography>
+        {feed !== 'latest' && (
+          <MuiLink component="button" onClick={onShowLatest} sx={{ fontWeight: 600 }} type="button" underline="always">Xem Mới nhất</MuiLink>
+        )}
+        {data.totalItems > 0 && (
+          <MuiLink
+            component="button"
+            onClick={() => onPageChange(Math.max(1, data.totalPages))}
+            sx={{ fontWeight: 600 }}
+            type="button"
+            underline="always"
+          >Về trang cuối có nội dung</MuiLink>
+        )}
+      </Stack>
     )}
     {!isLoading && !requiresLogin && !error && data && data.items.length > 0 && (
       <>
-        <ul className="grid gap-3">
+        <Stack component="ul" spacing={1.5} sx={{ m: 0, p: 0, listStyle: 'none' }}>
           {data.items.map((topic) => (
-            <li className={`surface-card topic-card topic-card--${topic.type}${topic.isPinned ? ' topic-card--pinned' : ''} p-5 sm:p-6`} key={topic.id}>
+            <Box
+              className={`surface-card topic-card topic-card--${topic.type}${topic.isPinned ? ' topic-card--pinned' : ''}`}
+              component="li"
+              key={topic.id}
+              sx={{ p: cardPadding }}
+            >
               <TopicSummaryItem onFilter={onFilter} topic={topic} isDiscussion={isDiscussion} />
-            </li>
+            </Box>
           ))}
-        </ul>
-        <nav aria-label="Phân trang nội dung" className="surface-card flex flex-wrap items-center justify-between gap-3 p-4 text-sm text-slate-600">
+        </Stack>
+        <Stack
+          aria-label="Phân trang nội dung"
+          className="surface-card"
+          component="nav"
+          direction="row"
+          sx={{ p: 2, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, color: 'text.secondary', fontSize: '0.875rem' }}
+        >
           <span>Trang {data.page} / {Math.max(data.totalPages, 1)} · {data.totalItems} nội dung</span>
-          <div className="flex gap-2">
+          <Stack direction="row" spacing={1}>
             <Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button>
             <Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button>
-          </div>
-        </nav>
+          </Stack>
+        </Stack>
       </>
     )}
-  </section>
+  </Stack>
 )
 }
