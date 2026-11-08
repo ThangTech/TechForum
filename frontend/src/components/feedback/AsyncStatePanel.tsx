@@ -1,4 +1,7 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 
 interface AsyncStatePanelProps {
   error: string | null
@@ -6,6 +9,14 @@ interface AsyncStatePanelProps {
   loadingText: string
   onRetry: () => void
 }
+
+const panelSx = {
+  p: 5,
+  textAlign: 'center',
+  border: 1,
+  borderRadius: 2,
+  bgcolor: 'background.paper',
+} as const
 
 export const AsyncStatePanel = ({
   error,
@@ -15,18 +26,18 @@ export const AsyncStatePanel = ({
 }: AsyncStatePanelProps) => {
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">
-        {loadingText}
-      </div>
+      <Box role="status" sx={{ ...panelSx, borderColor: 'divider' }}>
+        <Typography color="text.secondary" variant="body2">{loadingText}</Typography>
+      </Box>
     )
   }
 
   if (error) {
     return (
-      <div className="space-y-4 rounded-xl border border-red-200 bg-white p-10 text-center" role="alert">
-        <p className="text-sm text-red-700">{error}</p>
+      <Stack role="alert" spacing={2} sx={{ ...panelSx, alignItems: 'center', borderColor: '#fecaca' }}>
+        <Typography color="error" variant="body2">{error}</Typography>
         <Button onClick={onRetry} variant="outlined">Thử lại</Button>
-      </div>
+      </Stack>
     )
   }
 

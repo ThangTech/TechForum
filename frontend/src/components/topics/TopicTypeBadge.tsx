@@ -1,3 +1,4 @@
+import Chip from '@mui/material/Chip'
 import type { TopicType } from '../../api/topics'
 
 interface TopicTypeBadgeProps {
@@ -5,9 +6,11 @@ interface TopicTypeBadgeProps {
 }
 
 export const TopicTypeBadge = ({ type }: TopicTypeBadgeProps) => (
-  <span className={type === 'question'
-    ? 'rounded-full bg-[var(--color-question-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-question)]'
-    : 'rounded-full bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-bold text-[var(--color-primary-dark)]'}>
-    {type === 'question' ? 'Câu hỏi' : 'Bài viết'}
-  </span>
+  <Chip
+    label={type === 'question' ? 'Câu hỏi' : 'Bài viết'}
+    size="small"
+    sx={type === 'question'
+      ? { bgcolor: 'var(--color-question-soft)', color: 'var(--color-question)', fontWeight: 700 }
+      : { bgcolor: 'var(--color-primary-soft)', color: 'var(--color-primary-dark)', fontWeight: 700 }}
+  />
 )

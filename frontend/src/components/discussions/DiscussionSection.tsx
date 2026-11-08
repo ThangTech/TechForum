@@ -1,4 +1,11 @@
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
+import MenuItem from '@mui/material/MenuItem'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -153,55 +160,49 @@ export const DiscussionSection = ({
   }
 
   return (
-    <section className="mt-8 scroll-mt-6" aria-labelledby="discussion-title">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Thảo luận</p>
-          <h2 className="mt-1 text-2xl font-extrabold text-slate-950" id="discussion-title">
+    <Box aria-labelledby="discussion-title" component="section" sx={{ mt: 4, scrollMarginTop: '24px' }}>
+      <Stack direction="row" sx={{ mb: 2.5, flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 1.5 }}>
+        <Box>
+          <Typography sx={{ color: 'primary.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Thảo luận</Typography>
+          <Typography component="h2" id="discussion-title" sx={{ mt: 0.5, color: 'var(--color-heading)', fontSize: '1.5rem', fontWeight: 800 }}>
             {data ? `${data.totalItems} ${topicType === 'question' ? 'câu trả lời và phản hồi' : 'phản hồi'}` : 'Trao đổi'}
-          </h2>
-        </div>
-        <label className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-          Sắp xếp phản hồi
-          <select
-            className="min-h-10 border border-slate-300 bg-white px-3 py-2 text-slate-800"
-            onChange={(event) => changeSort(event.target.value === 'helpful' ? 'helpful' : 'oldest')}
-            value={sort}
-          >
-            <option value="oldest">Cũ nhất trước</option>
-            <option value="helpful">Hữu ích nhất</option>
-          </select>
-        </label>
+          </Typography>
+        </Box>
+        <TextField
+          fullWidth={false}
+          label="Sắp xếp phản hồi"
+          onChange={(event) => changeSort(event.target.value === 'helpful' ? 'helpful' : 'oldest')}
+          select
+          size="small"
+          sx={{ minWidth: 190 }}
+          value={sort}
+        >
+          <MenuItem value="oldest">Cũ nhất trước</MenuItem>
+          <MenuItem value="helpful">Hữu ích nhất</MenuItem>
+        </TextField>
         {isLocked && (
-          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
-            Đã khóa thảo luận
-          </span>
+          <Chip label="Đã khóa thảo luận" size="small" sx={{ bgcolor: '#e2e8f0', color: 'text.secondary', fontWeight: 700 }} />
         )}
-      </div>
+      </Stack>
 
       {!isLocked && user && <AnswerForm onCreated={handleCreated} topicId={topicId} />}
 
       {!isLocked && !user && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
-          <p className="text-sm leading-6 text-slate-700">Đăng nhập để đóng góp câu trả lời cho chủ đề này.</p>
-          <div className="mt-4 sm:mt-0">
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          sx={{ p: 2.5, gap: 2.5, alignItems: { sm: 'center' }, justifyContent: 'space-between', border: 1, borderColor: '#bcd3f7', borderRadius: 2, bgcolor: 'primary.light' }}
+        >
+          <Typography sx={{ color: 'text.primary', fontSize: '0.875rem', lineHeight: '1.5rem' }}>Đăng nhập để đóng góp câu trả lời cho chủ đề này.</Typography>
+          <Box>
             <Button onClick={() => openAuthDialog()} variant="contained">Viết câu trả lời</Button>
-          </div>
-        </div>
+          </Box>
+        </Stack>
       )}
 
-      {successMessage && (
-        <p className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
-          {successMessage}
-        </p>
-      )}
-      {actionError && (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-          {actionError}
-        </p>
-      )}
+      {successMessage && <Alert role="status" severity="success" sx={{ mt: 2 }}>{successMessage}</Alert>}
+      {actionError && <Alert role="alert" severity="error" sx={{ mt: 2 }}>{actionError}</Alert>}
 
-      <div className="mt-5">
+      <Box sx={{ mt: 2.5 }}>
         <AsyncStatePanel
           error={error}
           isLoading={isLoading}
@@ -209,9 +210,9 @@ export const DiscussionSection = ({
           onRetry={() => void answersQuery.refetch()}
         />
         {!isLoading && isTargetUnavailable && (
-          <div className="mt-3">
+          <Box sx={{ mt: 1.5 }}>
             <Button onClick={() => changePage(1)} variant="outlined">Xem các câu trả lời</Button>
-          </div>
+          </Box>
         )}
         {!isLoading && !error && data && (
           <AnswerList
@@ -244,8 +245,7 @@ export const DiscussionSection = ({
             }}
           />
         )}
-      </div>
-
-    </section>
+      </Box>
+    </Box>
   )
 }

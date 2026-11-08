@@ -1,5 +1,10 @@
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { updateAnswer, type Answer } from '../../api/answers'
 import { ApiError } from '../../api/client'
@@ -22,12 +27,24 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
   }
   return (
     <Dialog open onClose={() => !isSaving && onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': "Sửa câu trả lời", sx: { width: 560, maxWidth: 'calc(100% - 32px)' } } }}>
-      <div className="p-6"><h2 className="text-xl font-extrabold text-slate-950">Sửa câu trả lời</h2>
-        <textarea className="mt-5 min-h-44 w-full resize-y rounded-lg border border-slate-300 px-4 py-3 text-sm leading-6 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200" disabled={isSaving} maxLength={20000} onChange={(event) => setContent(event.target.value)} value={content} />
-        <p className="mt-2 text-right text-xs text-slate-500">{content.length.toLocaleString('vi-VN')}/20.000</p>
-        {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}
-        <div className="mt-6 flex justify-end gap-3"><Button disabled={isSaving} onClick={onClose} variant="outlined">Hủy</Button><Button disabled={isSaving} loading={isSaving} onClick={() => void save()} variant="contained">{isSaving ? 'Đang lưu…' : 'Lưu thay đổi'}</Button></div>
-      </div>
+      <DialogTitle sx={{ px: 3, pt: 3, pb: 0, color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Sửa câu trả lời</DialogTitle>
+      <DialogContent sx={{ px: 3, pt: 2.5, pb: 0 }}>
+        <TextField
+          disabled={isSaving}
+          minRows={7}
+          multiline
+          onChange={(event) => setContent(event.target.value)}
+          slotProps={{ htmlInput: { maxLength: 20000, 'aria-label': 'Nội dung câu trả lời' } }}
+          sx={{ mt: 1 }}
+          value={content}
+        />
+        <Typography color="text.secondary" sx={{ mt: 1, textAlign: 'right', fontSize: '0.75rem' }}>{content.length.toLocaleString('vi-VN')}/20.000</Typography>
+        {error && <Typography color="error" role="alert" sx={{ mt: 1.5 }} variant="body2">{error}</Typography>}
+      </DialogContent>
+      <DialogActions sx={{ p: 3, gap: 1.5 }}>
+        <Button disabled={isSaving} onClick={onClose} variant="outlined">Hủy</Button>
+        <Button disabled={isSaving} loading={isSaving} onClick={() => void save()} variant="contained">{isSaving ? 'Đang lưu…' : 'Lưu thay đổi'}</Button>
+      </DialogActions>
     </Dialog>
   )
 }

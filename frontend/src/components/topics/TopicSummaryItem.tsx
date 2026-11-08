@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import type { TopicSummary } from '../../api/topics'
 import { appRoutes } from '../../appRoutes'
 import { TopicTypeBadge } from './TopicTypeBadge'
+import { topicTagChipSx } from './topicTagChipSx'
 import { UserAvatar } from '../account/UserAvatar'
 import { BookmarkIcon, CommentIcon, StarIcon, ViewIcon } from '../common/StatIcons'
 
@@ -31,14 +32,6 @@ const getAnswerBoxColors = (answerCount: number, hasAcceptedAnswer: boolean) => 
 
 const metaRowSx = { flexWrap: 'wrap', alignItems: 'center', columnGap: 1.5, rowGap: 1, color: 'text.secondary', fontSize: '0.75rem' } as const
 const statLinkSx = { fontWeight: 600 } as const
-const tagChipSx = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: '0.75rem',
-  color: 'text.secondary',
-  bgcolor: 'var(--color-subtle)',
-  borderColor: 'divider',
-} as const
-
 export const TopicSummaryItem = ({
   topic,
   showAuthor = true,
@@ -187,9 +180,9 @@ export const TopicSummaryItem = ({
         {topic.tags.length > 0 && (
           <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
             {topic.tags.map((tag) => onFilter ? (
-              <Chip key={tag.id} label={`#${tag.name}`} onClick={() => onFilter('tagId', tag.id)} size="small" sx={tagChipSx} variant="outlined" />
+              <Chip key={tag.id} label={`#${tag.name}`} onClick={() => onFilter('tagId', tag.id)} size="small" sx={topicTagChipSx} variant="outlined" />
             ) : (
-              <Chip key={tag.id} label={`#${tag.name}`} size="small" sx={tagChipSx} variant="outlined" />
+              <Chip key={tag.id} label={`#${tag.name}`} size="small" sx={topicTagChipSx} variant="outlined" />
             ))}
           </Stack>
         )}

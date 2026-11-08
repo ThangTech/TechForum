@@ -1,4 +1,8 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { createAnswer, type Answer } from '../../api/answers'
@@ -15,6 +19,8 @@ export const AnswerForm = ({ parentAnswer, topicId, onCreated, onCancel }: Answe
   const [content, setContent] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const fieldId = parentAnswer ? `reply-content-${parentAnswer.id}` : 'answer-content'
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -43,27 +49,33 @@ export const AnswerForm = ({ parentAnswer, topicId, onCreated, onCancel }: Answe
   }
 
   return (
-    <form className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6" onSubmit={handleSubmit}>
-      <label className="block text-sm font-bold text-slate-800" htmlFor={parentAnswer ? `reply-content-${parentAnswer.id}` : 'answer-content'}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ p: { xs: 2.5, sm: 3 }, border: 1, borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}
+    >
+      <Typography component="label" htmlFor={fieldId} sx={{ display: 'block', color: 'text.primary', fontSize: '0.875rem', fontWeight: 700 }}>
         {parentAnswer ? `Phản hồi ${parentAnswer.author.displayName}` : 'Câu trả lời của bạn'}
-      </label>
-      <textarea
-        className="mt-3 min-h-36 w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+      </Typography>
+      <TextField
         disabled={isSubmitting}
-        id={parentAnswer ? `reply-content-${parentAnswer.id}` : 'answer-content'}
-        maxLength={20_000}
+        id={fieldId}
+        minRows={6}
+        multiline
         onChange={(event) => setContent(event.target.value)}
         placeholder={parentAnswer ? 'Viết phản hồi rõ ràng và tôn trọng cộng đồng…' : 'Chia sẻ câu trả lời rõ ràng và tôn trọng cộng đồng…'}
+        slotProps={{ htmlInput: { maxLength: 20_000 } }}
+        sx={{ mt: 1.5 }}
         value={content}
       />
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs text-slate-500">{content.length.toLocaleString('vi-VN')}/20.000 ký tự</span>
-        <div className="flex gap-2">
+      <Stack direction="row" sx={{ mt: 1, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+        <Typography color="text.secondary" sx={{ fontSize: '0.75rem' }}>{content.length.toLocaleString('vi-VN')}/20.000 ký tự</Typography>
+        <Stack direction="row" spacing={1}>
           {onCancel && <Button disabled={isSubmitting} onClick={onCancel} type="button" variant="text">Hủy</Button>}
           <Button disabled={isSubmitting} loading={isSubmitting} type="submit" variant="contained">{parentAnswer ? 'Gửi phản hồi' : 'Gửi câu trả lời'}</Button>
-        </div>
-      </div>
-      {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}
-    </form>
+        </Stack>
+      </Stack>
+      {error && <Typography color="error" role="alert" sx={{ mt: 1.5 }} variant="body2">{error}</Typography>}
+    </Box>
   )
 }

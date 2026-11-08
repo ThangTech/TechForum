@@ -1,4 +1,10 @@
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
+import MuiLink from '@mui/material/Link'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { deleteAnswer, setAnswerHelpful, type Answer, type AnswerHelpfulState, type AnswerPage } from '../../api/answers'
@@ -29,11 +35,23 @@ const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   timeStyle: 'short',
 }).format(new Date(value))
 
-const answerBorderClass = (answer: Answer) => {
-  if (answer.isAccepted) return 'border-green-400'
-  if (answer.parentAnswerId) return 'border-blue-200'
-  return 'border-slate-200'
+// Border colour of an answer card: green when accepted, light blue for a reply, grey otherwise.
+const getAnswerBorderColor = (answer: Answer) => {
+  if (answer.isAccepted) return '#4ade80'
+  if (answer.parentAnswerId) return '#bcd3f7'
+  return 'divider'
 }
+
+// Style of the answer text. The HTML comes from the server, so its links and paragraphs are styled from here.
+const answerBodySx = {
+  mt: 2,
+  color: 'text.primary',
+  fontSize: '0.875rem',
+  lineHeight: '1.75rem',
+  '& a': { color: 'primary.main', textDecoration: 'underline' },
+  '& p': { mb: 1.5 },
+  '& p:last-child': { mb: 0 },
+} as const
 
 export const AnswerList = ({
   acceptingAnswerId,
@@ -81,54 +99,77 @@ export const AnswerList = ({
   }
   if (data.items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
-        <h3 className="font-bold text-slate-900">Chưa có câu trả lời</h3>
-        <p className="mt-2 text-sm text-slate-500">
+      <Box sx={{ px: 3, py: 5, textAlign: 'center', border: 1, borderStyle: 'dashed', borderColor: '#cbd5e1', borderRadius: 2, bgcolor: 'background.paper' }}>
+        <Typography component="h3" sx={{ color: 'text.primary', fontWeight: 700 }}>Chưa có câu trả lời</Typography>
+        <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
           {isLocked
             ? 'Thảo luận này đã khóa trước khi có phản hồi.'
             : 'Hãy là người đầu tiên đóng góp cho thảo luận này.'}
-        </p>
-      </div>
+        </Typography>
+      </Box>
     )
   }
 
   return (
     <>
-      {actionError && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{actionError}</p>}
-      <div className="grid gap-4">
+      {actionError && <Alert role="alert" severity="error" sx={{ mb: 2 }}>{actionError}</Alert>}
+      <Box sx={{ display: 'grid', gap: 2 }}>
         {data.items.map((answer) => (
-          <article className={`min-w-0 scroll-mt-32 rounded-xl border bg-white p-5 sm:p-6 ${answerBorderClass(answer)} ${answer.parentAnswerId ? 'ml-3 sm:ml-8' : ''}`} id={`answer-${answer.id}`} key={answer.id}>
-            <header className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
-              <Link className="font-bold text-slate-800 hover:text-blue-700" to={appRoutes.member(answer.author.id)}>
+          <Box
+            component="article"
+            id={`answer-${answer.id}`}
+            key={answer.id}
+            sx={{
+              minWidth: 0,
+              scrollMarginTop: '128px',
+              p: { xs: 2.5, sm: 3 },
+              border: 1,
+              borderColor: getAnswerBorderColor(answer),
+              borderRadius: 2,
+              bgcolor: 'background.paper',
+              ml: answer.parentAnswerId ? { xs: 1.5, sm: 4 } : 0,
+            }}
+          >
+            <Stack component="header" direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', columnGap: 1, rowGap: 0.5, color: 'text.secondary', fontSize: '0.875rem' }}>
+              <MuiLink
+                component={Link}
+                sx={{ color: 'text.primary', fontWeight: 700, '&:hover': { color: 'primary.main' } }}
+                to={appRoutes.member(answer.author.id)}
+                underline="none"
+              >
                 {answer.author.displayName}
-              </Link>
+              </MuiLink>
               <span aria-hidden="true">·</span>
               <time dateTime={answer.createdAtUtc}>{formatDateTime(answer.createdAtUtc)}</time>
-              {answer.updatedAtUtc && <span className="text-xs" title={formatDateTime(answer.updatedAtUtc)}>· Đã chỉnh sửa</span>}
+              {answer.updatedAtUtc && <Typography component="span" sx={{ fontSize: '0.75rem' }} title={formatDateTime(answer.updatedAtUtc)}>· Đã chỉnh sửa</Typography>}
               {answer.isAccepted && (
-                <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800">
-                  Câu trả lời được chấp nhận
-                </span>
+                <Chip label="Câu trả lời được chấp nhận" size="small" sx={{ bgcolor: 'success.light', color: 'success.main', fontWeight: 700 }} />
               )}
-              {answer.replyingTo && <span className="text-xs text-slate-500">đang trả lời {answer.replyingTo.displayName}</span>}
-            </header>
-            <div
-              className="fr-view reading-content mt-4 text-sm leading-7 text-slate-800 [&_a]:text-blue-700 [&_a]:underline [&_p]:mb-3 [&_p:last-child]:mb-0"
+              {answer.replyingTo && <Typography component="span" sx={{ fontSize: '0.75rem' }}>đang trả lời {answer.replyingTo.displayName}</Typography>}
+            </Stack>
+            <Box
+              className="fr-view reading-content"
               dangerouslySetInnerHTML={{ __html: answer.bodyHtml }}
+              sx={answerBodySx}
             />
-            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
-              <button
-                aria-label={`${answer.isHelpful ? 'Bỏ đánh giá hữu ích' : 'Đánh giá hữu ích'}: ${answer.helpfulCount} lượt`}
-                aria-pressed={answer.isHelpful}
-                className={`inline-flex min-h-10 items-center gap-2 border px-3 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-60 ${answer.isHelpful ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-700'}`}
-                disabled={votingAnswerId !== null || user?.id === answer.author.id}
-                onClick={() => void toggleHelpful(answer)}
-                title={user?.id === answer.author.id ? 'Bạn không thể tự đánh giá câu trả lời của mình.' : undefined}
-                type="button"
-              >
-                <svg aria-hidden="true" fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="16"><path d="M7 10v11H3V10h4Zm0 0 5-7c1.8 0 2.5 1.2 2 3l-1 4h5a3 3 0 0 1 3 3l-1 6a2 2 0 0 1-2 2H7" /></svg>
-                {votingAnswerId === answer.id ? 'Đang lưu…' : `Hữu ích · ${answer.helpfulCount}`}
-              </button>
+            <Stack direction="row" sx={{ mt: 2, pt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 1.5, borderTop: 1, borderColor: 'divider' }}>
+              {/* The span keeps the tooltip working while the button is disabled. */}
+              <span title={user?.id === answer.author.id ? 'Bạn không thể tự đánh giá câu trả lời của mình.' : undefined}>
+                <Button
+                  aria-label={`${answer.isHelpful ? 'Bỏ đánh giá hữu ích' : 'Đánh giá hữu ích'}: ${answer.helpfulCount} lượt`}
+                  aria-pressed={answer.isHelpful}
+                  disabled={votingAnswerId !== null || user?.id === answer.author.id}
+                  onClick={() => void toggleHelpful(answer)}
+                  startIcon={<svg aria-hidden="true" fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="16"><path d="M7 10v11H3V10h4Zm0 0 5-7c1.8 0 2.5 1.2 2 3l-1 4h5a3 3 0 0 1 3 3l-1 6a2 2 0 0 1-2 2H7" /></svg>}
+                  sx={answer.isHelpful
+                    ? { minHeight: 40, bgcolor: 'primary.light', borderColor: '#93c5fd', color: 'primary.dark' }
+                    : { minHeight: 40, borderColor: 'divider', color: 'text.secondary', '&:hover': { borderColor: '#93c5fd', color: 'primary.main' } }}
+                  type="button"
+                  variant="outlined"
+                >
+                  {votingAnswerId === answer.id ? 'Đang lưu…' : `Hữu ích · ${answer.helpfulCount}`}
+                </Button>
+              </span>
               {canAcceptAnswers && answer.parentAnswerId === null && !answer.isAccepted && (
                 <Button disabled={acceptingAnswerId !== null} loading={acceptingAnswerId === answer.id} onClick={() => onAccept(answer.id)} variant="outlined">Chấp nhận câu trả lời</Button>
               )}
@@ -138,18 +179,18 @@ export const AnswerList = ({
                 <Button onClick={() => setEditing(answer)} variant="text">Sửa</Button>
                 <Button onClick={() => setDeleting(answer)} variant="text">Xóa</Button>
               </>}
-            </div>
-            {replyingTo?.id === answer.id && <div className="mt-4"><AnswerForm parentAnswer={answer} topicId={answer.topicId} onCancel={() => setReplyingTo(null)} onCreated={(created) => { setReplyingTo(null); onReplyCreated(created) }} /></div>}
-          </article>
+            </Stack>
+            {replyingTo?.id === answer.id && <Box sx={{ mt: 2 }}><AnswerForm parentAnswer={answer} topicId={answer.topicId} onCancel={() => setReplyingTo(null)} onCreated={(created) => { setReplyingTo(null); onReplyCreated(created) }} /></Box>}
+          </Box>
         ))}
-      </div>
+      </Box>
 
       {data.totalPages > 1 && (
-        <nav className="mt-5 flex flex-wrap items-center justify-between gap-4" aria-label="Phân trang câu trả lời">
+        <Stack aria-label="Phân trang câu trả lời" component="nav" direction="row" sx={{ mt: 2.5, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
           <Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button>
-          <span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span>
+          <Typography color="text.secondary" component="span" variant="body2">Trang {data.page}/{data.totalPages}</Typography>
           <Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button>
-        </nav>
+        </Stack>
       )}
       {editing && <AnswerEditDialog answer={editing} onClose={() => setEditing(null)} onUpdated={(answer) => { onUpdated(answer); setEditing(null) }} />}
       <ConfirmDialog confirmLabel="Xóa câu trả lời" description="Câu trả lời sẽ không còn hiển thị công khai. Nếu đang được chấp nhận, trạng thái chấp nhận cũng sẽ được gỡ." isBusy={isDeleting} isOpen={deleting !== null} onCancel={() => setDeleting(null)} onConfirm={() => void confirmDelete()} title="Xóa câu trả lời?" />

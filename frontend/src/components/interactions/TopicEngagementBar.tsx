@@ -1,4 +1,7 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
@@ -49,14 +52,14 @@ export const TopicEngagementBar = ({ title, topicId }: TopicEngagementBarProps) 
   }
 
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+    <Box sx={{ width: '100%' }}>
+      <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 1.5, color: 'text.secondary', fontSize: '0.875rem' }}>
         <span aria-label={`${engagement.viewCount} lượt xem`}>Lượt xem · {engagement.viewCount}</span>
         <span aria-label={`${engagement.shareCount} lượt chia sẻ`}>Chia sẻ · {engagement.shareCount}</span>
         <Button disabled={isSharing} loading={isSharing} onClick={() => void share()} variant="text">Chia sẻ</Button>
-      </div>
-      {success && <p className="mt-2 text-sm text-green-700" role="status">{success}</p>}
-      {error && <p className="mt-2 text-sm text-red-700" role="alert">{error}</p>}
-    </div>
+      </Stack>
+      {success && <Typography color="success" role="status" sx={{ mt: 1 }} variant="body2">{success}</Typography>}
+      {error && <Typography color="error" role="alert" sx={{ mt: 1 }} variant="body2">{error}</Typography>}
+    </Box>
   )
 }

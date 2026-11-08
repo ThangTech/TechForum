@@ -1,5 +1,9 @@
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
 
 interface ConfirmDialogProps {
   confirmLabel: string
@@ -21,13 +25,13 @@ export const ConfirmDialog = ({
   title,
 }: ConfirmDialogProps) => (
   <Dialog open={isOpen} onClose={() => !isBusy && onCancel()} maxWidth={false} slotProps={{ paper: { 'aria-label': title, sx: { width: 440, maxWidth: 'calc(100% - 32px)' } } }}>
-    <div className="p-6">
-      <h2 className="text-xl font-extrabold text-slate-950">{title}</h2>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
-      <div className="mt-6 flex justify-end gap-3">
-        <Button disabled={isBusy} onClick={onCancel} variant="outlined">Hủy</Button>
-        <Button disabled={isBusy} onClick={onConfirm} variant="contained">{isBusy ? 'Đang xóa…' : confirmLabel}</Button>
-      </div>
-    </div>
+    <DialogTitle sx={{ px: 3, pt: 3, pb: 0, color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>{title}</DialogTitle>
+    <DialogContent sx={{ px: 3, pt: 1.5, pb: 0 }}>
+      <DialogContentText sx={{ mt: 1.5, fontSize: '0.875rem', lineHeight: '1.5rem' }}>{description}</DialogContentText>
+    </DialogContent>
+    <DialogActions sx={{ p: 3, pt: 3, gap: 1.5 }}>
+      <Button disabled={isBusy} onClick={onCancel} variant="outlined">Hủy</Button>
+      <Button disabled={isBusy} onClick={onConfirm} variant="contained">{isBusy ? 'Đang xóa…' : confirmLabel}</Button>
+    </DialogActions>
   </Dialog>
 )

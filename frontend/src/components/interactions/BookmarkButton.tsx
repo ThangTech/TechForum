@@ -1,4 +1,6 @@
 import Button from '@mui/material/Button'
+import MuiLink from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { useBookmarkStatus, useToggleBookmark } from '../../queries/bookmarks'
@@ -36,7 +38,11 @@ export const BookmarkButton = ({ topicId }: { topicId: number }) => {
   return (
     <div>
       <Button disabled={isLoading || !status || isSaving} loading={isLoading || isSaving} onClick={() => void toggle()} variant={status?.hasBookmark ? 'contained' : 'outlined'}>{status?.hasBookmark ? `Bỏ lưu · ${status.count}` : `Lưu bài · ${status?.count ?? 0}`}</Button>
-      {error && <p className="mt-2 text-sm text-red-700" role="alert">{error} <button className="font-bold underline" onClick={retry} type="button">Thử lại</button></p>}
+      {error && (
+        <Typography color="error" role="alert" sx={{ mt: 1 }} variant="body2">
+          {error} <MuiLink component="button" onClick={retry} sx={{ fontSize: 'inherit', fontWeight: 700, verticalAlign: 'baseline' }} type="button" underline="always">Thử lại</MuiLink>
+        </Typography>
+      )}
     </div>
   )
 }
