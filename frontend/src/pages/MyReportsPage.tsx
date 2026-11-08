@@ -1,6 +1,19 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import MenuItem from '@mui/material/MenuItem'
+import MuiLink from '@mui/material/Link'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { ReportReason, ReportStatus } from '../api/reports'
+import { StatusBadge, type BadgeTone } from '../components/admin/StatusBadge'
+import { EmptyPanel } from '../components/common/EmptyPanel'
+import { PageHeading } from '../components/common/PageHeading'
+import { PageShell } from '../components/common/PageShell'
+import { Pager } from '../components/common/Pager'
+import { Panel } from '../components/common/Panel'
+import { PanelList } from '../components/common/PanelList'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useMyReports } from '../queries/reports'
@@ -11,10 +24,10 @@ const statusLabels: Record<ReportStatus, string> = {
   accepted: 'Được chấp nhận',
   rejected: 'Không chấp nhận',
 }
-const statusStyles: Record<ReportStatus, string> = {
-  pending: 'border-amber-200 bg-amber-50 text-amber-800',
-  accepted: 'border-green-200 bg-green-50 text-green-800',
-  rejected: 'border-slate-200 bg-slate-50 text-slate-600',
+const statusTones: Record<ReportStatus, BadgeTone> = {
+  pending: 'amber',
+  accepted: 'green',
+  rejected: 'neutral',
 }
 const reasonLabels: Record<ReportReason, string> = {
   spam: 'Spam / quảng cáo',
@@ -28,6 +41,9 @@ const formatDate = (value: string) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
+
+// Long texts typed by members keep their line breaks and wrap instead of overflowing.
+const longTextSx = { lineHeight: '1.5rem', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' } as const
 
 export const MyReportsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -51,105 +67,98 @@ export const MyReportsPage = () => {
   }
 
   return (
-    <main className="main-area" id="main-content">
-      <div className="page-content py-10">
-        <p className="eyebrow">Tài khoản cá nhân</p>
-        <h1 className="mt-1 text-2xl font-extrabold text-slate-950">Báo cáo của tôi</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Theo dõi báo cáo bạn đã gửi và lý do xử lý từ quản trị viên.
-        </p>
-        <div className="my-6 flex flex-wrap items-center justify-between gap-4">
-          <label className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-            Trạng thái
-            <select
-              className="border border-slate-300 bg-white px-3 py-2 font-normal"
-              value={status}
-              onChange={(event) => setSearchParams(event.target.value ? { status: event.target.value } : {})}
-            >
-              <option value="">Tất cả</option>
-              <option value="pending">Chờ xử lý</option>
-              <option value="accepted">Được chấp nhận</option>
-              <option value="rejected">Không chấp nhận</option>
-            </select>
-          </label>
-          <Link className="text-sm font-semibold text-blue-700 hover:underline" to="/notifications">
-            Xem thông báo
-          </Link>
-        </div>
-        <AsyncStatePanel
-          error={error}
-          isLoading={isLoading}
-          loadingText="Đang tải báo cáo…"
-          onRetry={() => void reportsQuery.refetch()}
-        />
-        {!isLoading && !error && data && (
-          <>
-            <p className="mb-3 text-sm text-slate-500">{data.totalItems} báo cáo</p>
-            {data.items.length === 0 ? (
-              <div className="border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-                Chưa có báo cáo phù hợp với bộ lọc.
-              </div>
-            ) : (
-              <ul className="divide-y divide-slate-200 border border-slate-200 bg-white">
+    <PageShell compact maxWidth={1240}>
+      <PageHeading
+        description="Theo dõi báo cáo bạn đã gửi và lý do xử lý từ quản trị viên."
+        eyebrow="Tài khoản cá nhân"
+        size="medium"
+        title="Báo cáo của tôi"
+      />
+      <Stack direction="row" sx={{ my: 3, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+        <TextField
+          fullWidth={false}
+          label="Trạng thái"
+          onChange={(event) => setSearchParams(event.target.value ? { status: event.target.value } : {})}
+          select
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          sx={{ minWidth: 200 }}
+          value={status}
+        >
+          <MenuItem value="">Tất cả</MenuItem>
+          <MenuItem value="pending">Chờ xử lý</MenuItem>
+          <MenuItem value="accepted">Được chấp nhận</MenuItem>
+          <MenuItem value="rejected">Không chấp nhận</MenuItem>
+        </TextField>
+        <MuiLink component={Link} sx={{ fontSize: '0.875rem', fontWeight: 600 }} to="/notifications" underline="hover">
+          Xem thông báo
+        </MuiLink>
+      </Stack>
+      <AsyncStatePanel
+        error={error}
+        isLoading={isLoading}
+        loadingText="Đang tải báo cáo…"
+        onRetry={() => void reportsQuery.refetch()}
+      />
+      {!isLoading && !error && data && (
+        <>
+          <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">{data.totalItems} báo cáo</Typography>
+          {data.items.length === 0 ? (
+            <EmptyPanel>Chưa có báo cáo phù hợp với bộ lọc.</EmptyPanel>
+          ) : (
+            <Panel>
+              <PanelList>
                 {data.items.map((item) => (
-                  <li className="p-5 sm:p-6" key={item.id}>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h2 className="font-bold text-slate-900">
+                  <Box component="li" key={item.id} sx={{ p: { xs: 2.5, sm: 3 } }}>
+                    <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+                      <Typography component="h2" sx={{ color: 'text.primary', fontWeight: 700 }}>
                         Báo cáo #{item.id} · {item.targetType === 'topic' ? 'Chủ đề' : 'Câu trả lời'}
-                      </h2>
-                      <span className={`border px-2 py-1 text-xs font-semibold ${statusStyles[item.status]}`}>
-                        {statusLabels[item.status]}
-                      </span>
-                    </div>
+                      </Typography>
+                      <StatusBadge tone={statusTones[item.status]}>{statusLabels[item.status]}</StatusBadge>
+                    </Stack>
                     {item.topicId && item.targetTitle ? (
-                      <Link
-                        className="mt-3 inline-block text-sm font-semibold text-blue-700 hover:underline"
+                      <MuiLink
+                        component={Link}
+                        sx={{ display: 'inline-block', mt: 1.5, fontSize: '0.875rem', fontWeight: 600 }}
                         to={`/topics/${item.topicId}${item.targetType === 'answer' ? `#answer-${item.targetId}` : ''}`}
+                        underline="hover"
                       >
                         {item.targetTitle}
-                      </Link>
+                      </MuiLink>
                     ) : (
-                      <p className="mt-3 text-sm text-slate-500">Nội dung không còn công khai.</p>
+                      <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="body2">Nội dung không còn công khai.</Typography>
                     )}
-                    <p className="mt-3 text-sm text-slate-700">
+                    <Typography sx={{ mt: 1.5, color: 'text.primary' }} variant="body2">
                       <strong>Lý do báo cáo:</strong> {reasonLabels[item.reason]}
-                    </p>
+                    </Typography>
                     {item.details && (
-                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
-                        {item.details}
-                      </p>
+                      <Typography color="text.secondary" sx={{ ...longTextSx, mt: 0.5 }} variant="body2">{item.details}</Typography>
                     )}
-                    <p className="mt-3 text-xs text-slate-500">Gửi lúc {formatDate(item.createdAtUtc)}</p>
+                    <Typography color="text.secondary" sx={{ mt: 1.5, fontSize: '0.75rem' }}>Gửi lúc {formatDate(item.createdAtUtc)}</Typography>
                     {item.resolutionNote && (
-                      <div className="mt-4 border-l-2 border-blue-600 bg-slate-50 p-4">
-                        <h3 className="text-sm font-bold text-slate-900">Kết quả xử lý</h3>
-                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
-                          {item.resolutionNote}
-                        </p>
+                      <Box sx={{ mt: 2, p: 2, borderLeft: 2, borderColor: 'primary.main', bgcolor: 'var(--color-subtle)' }}>
+                        <Typography component="h3" sx={{ color: 'text.primary', fontSize: '0.875rem', fontWeight: 700 }}>Kết quả xử lý</Typography>
+                        <Typography sx={{ ...longTextSx, mt: 0.5, color: 'text.primary' }} variant="body2">{item.resolutionNote}</Typography>
                         {item.resolvedAtUtc && (
-                          <p className="mt-2 text-xs text-slate-500">
-                            Xử lý lúc {formatDate(item.resolvedAtUtc)}
-                          </p>
+                          <Typography color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>Xử lý lúc {formatDate(item.resolvedAtUtc)}</Typography>
                         )}
-                      </div>
+                      </Box>
                     )}
-                  </li>
+                  </Box>
                 ))}
-              </ul>
-            )}
-            {page > Math.max(1, data.totalPages) && <div className="mt-5"><Button onClick={() => changePage(Math.max(1, data.totalPages))} variant="outlined">Về trang có dữ liệu</Button></div>}
-            {data.totalPages > 1 && page <= data.totalPages && (
-              <nav aria-label="Phân trang báo cáo" className="mt-5 flex items-center justify-between gap-3">
-                <Button disabled={page <= 1} onClick={() => changePage(page - 1)} variant="outlined">Trang trước</Button>
-                <span className="text-sm text-slate-600">
-                  Trang {page}/{data.totalPages}
-                </span>
-                <Button disabled={page >= data.totalPages} onClick={() => changePage(page + 1)} variant="outlined">Trang sau</Button>
-              </nav>
-            )}
-          </>
-        )}
-      </div>
-    </main>
+              </PanelList>
+            </Panel>
+          )}
+          {page > Math.max(1, data.totalPages) && (
+            <Box sx={{ mt: 2.5 }}>
+              <Button onClick={() => changePage(Math.max(1, data.totalPages))} variant="outlined">Về trang có dữ liệu</Button>
+            </Box>
+          )}
+          {page <= data.totalPages && (
+            <Pager label="Phân trang báo cáo" onChange={changePage} page={page} totalPages={data.totalPages} />
+          )}
+        </>
+      )}
+    </PageShell>
   )
 }

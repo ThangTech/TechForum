@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { AdminReport } from '../../api/reports'
 import { appRoutes } from '../../appRoutes'
-import { AdminDialog } from './AdminDialog'
+import { DialogFrame } from '../feedback/DialogFrame'
 import { reportReasonLabels, reportStatusLabels } from './reportLabels'
 import { StatusBadge } from './StatusBadge'
 
@@ -23,7 +23,7 @@ export const ReportPreviewDialog = ({
   onClose: () => void
   onResolve: (report: AdminReport, decision: 'accepted' | 'rejected') => void
 }) => (
-  <AdminDialog
+  <DialogFrame
     actions={
       <>
         <Button onClick={onClose} variant="outlined">Đóng</Button>
@@ -102,5 +102,5 @@ export const ReportPreviewDialog = ({
         </MuiLink>
       )}
     </Stack>
-  </AdminDialog>
+  </DialogFrame>
 )

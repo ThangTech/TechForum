@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import { useState } from 'react'
 import type { AdminCategory, SaveCategoryInput } from '../../api/adminCategories'
-import { AdminDialog } from './AdminDialog'
+import { DialogFrame } from '../feedback/DialogFrame'
 
 interface CategoryFormDialogProps {
   category: AdminCategory | null
@@ -50,7 +50,7 @@ export const CategoryFormDialog = ({
   }
 
   return (
-    <AdminDialog
+    <DialogFrame
       actions={
         <>
           <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
@@ -68,6 +68,6 @@ export const CategoryFormDialog = ({
         <TextField disabled={isBusy} id="category-description" label="Mô tả" minRows={3} multiline onChange={(event) => setDescription(event.target.value)} slotProps={{ htmlInput: { maxLength: 500 } }} value={description} />
         <TextField disabled={isBusy} id="category-order" label="Thứ tự hiển thị" onChange={(event) => setDisplayOrder(event.target.value)} slotProps={{ htmlInput: { max: 10000, min: 0 } }} type="number" value={displayOrder} />
       </Stack>
-    </AdminDialog>
+    </DialogFrame>
   )
 }

@@ -6,7 +6,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import type { ReactNode } from 'react'
 
-interface AdminDialogProps {
+interface DialogFrameProps {
   title: string
   // Width of the dialog in pixels. It never gets wider than the screen.
   width?: number
@@ -21,8 +21,8 @@ interface AdminDialogProps {
   children: ReactNode
 }
 
-// The shared frame of the admin dialogs: title, content, error message and buttons.
-export const AdminDialog = ({
+// The shared frame of the dialogs: title, content, error message and buttons.
+export const DialogFrame = ({
   title,
   width = 480,
   open = true,
@@ -31,7 +31,7 @@ export const AdminDialog = ({
   error,
   actions,
   children,
-}: AdminDialogProps) => (
+}: DialogFrameProps) => (
   <Dialog
     maxWidth={false}
     onClose={() => onClose()}

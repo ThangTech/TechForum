@@ -4,7 +4,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState, type FormEvent } from 'react'
 import type { AdminAccount } from '../../api/adminAccounts'
-import { AdminDialog } from './AdminDialog'
+import { DialogFrame } from '../feedback/DialogFrame'
 
 export const AccountLockDialog = ({
   account,
@@ -45,7 +45,7 @@ export const AccountLockDialog = ({
     )
   }
   return (
-    <AdminDialog
+    <DialogFrame
       actions={
         <>
           <Button disabled={isBusy} onClick={onClose} variant="outlined">Hủy</Button>
@@ -93,6 +93,6 @@ export const AccountLockDialog = ({
           </>
         )}
       </form>
-    </AdminDialog>
+    </DialogFrame>
   )
 }

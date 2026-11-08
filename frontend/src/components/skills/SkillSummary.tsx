@@ -18,11 +18,11 @@ export const SkillSummary = ({ community }: SkillSummaryProps) => (
     {community.tag.description && <Typography color="text.secondary" sx={{ mt: 1.5 }}>{community.tag.description}</Typography>}
     <Box sx={{ mt: 3, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' } }}>
       <StatTile size="large">
-        <Typography component="strong" sx={{ fontSize: '1.25rem' }}>{community.topicCount}</Typography>
+        <Typography component="strong" sx={{ fontSize: '1.25rem', fontWeight: 700 }}>{community.topicCount}</Typography>
         <Typography color="text.secondary" component="span" sx={{ ml: 1 }} variant="body2">nội dung công khai</Typography>
       </StatTile>
       <StatTile size="large">
-        <Typography component="strong" sx={{ fontSize: '1.25rem' }}>{community.memberCount}</Typography>
+        <Typography component="strong" sx={{ fontSize: '1.25rem', fontWeight: 700 }}>{community.memberCount}</Typography>
         <Typography color="text.secondary" component="span" sx={{ ml: 1 }} variant="body2">thành viên sử dụng</Typography>
       </StatTile>
     </Box>

@@ -1,5 +1,12 @@
-import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
+import ButtonBase from '@mui/material/ButtonBase'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import type { NotificationPage } from '../../api/notifications'
+import { EmptyPanel } from '../common/EmptyPanel'
+import { Pager } from '../common/Pager'
+import { Panel } from '../common/Panel'
+import { PanelList } from '../common/PanelList'
 
 interface NotificationListProps {
   data: NotificationPage
@@ -15,39 +22,34 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 
 export const NotificationList = ({ data, busyId, onOpen, onPageChange }: NotificationListProps) => {
   if (data.items.length === 0) {
-    return <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">Bạn chưa có thông báo nào.</div>
+    return <EmptyPanel>Bạn chưa có thông báo nào.</EmptyPanel>
   }
 
   return (
     <>
-      <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        {data.items.map((item) => (
-          <li className={`p-5 sm:p-6 ${item.readAtUtc ? '' : 'bg-blue-50/60'}`} key={item.id}>
-            <button
-              className="w-full text-left disabled:opacity-60"
-              disabled={busyId === item.id}
-              onClick={() => onOpen(item.id, item.link, item.readAtUtc !== null)}
-              type="button"
-            >
-              <span className="flex items-start justify-between gap-4">
-                <span className="min-w-0 flex-1">
-                  <strong className="block text-sm text-slate-950">{item.title}</strong>
-                  <span className="mt-1 block whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">{item.message}</span>
-                </span>
-                {!item.readAtUtc && <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-600" aria-label="Chưa đọc" />}
-              </span>
-              <time className="mt-3 block text-xs text-slate-500" dateTime={item.createdAtUtc}>{formatDate(item.createdAtUtc)}</time>
-            </button>
-          </li>
-        ))}
-      </ul>
-      {data.totalPages > 1 && (
-        <div className="mt-5 flex items-center justify-between gap-4">
-          <Button disabled={data.page <= 1} onClick={() => onPageChange(data.page - 1)} variant="outlined">Trang trước</Button>
-          <span className="text-sm text-slate-600">Trang {data.page}/{data.totalPages}</span>
-          <Button disabled={data.page >= data.totalPages} onClick={() => onPageChange(data.page + 1)} variant="outlined">Trang sau</Button>
-        </div>
-      )}
+      <Panel>
+        <PanelList>
+          {data.items.map((item) => (
+            <Box component="li" key={item.id} sx={{ bgcolor: item.readAtUtc ? undefined : 'rgba(234, 242, 255, 0.6)' }}>
+              <ButtonBase
+                disabled={busyId === item.id}
+                onClick={() => onOpen(item.id, item.link, item.readAtUtc !== null)}
+                sx={{ display: 'block', width: '100%', p: { xs: 2.5, sm: 3 }, textAlign: 'left', '&.Mui-disabled': { opacity: 0.6 } }}
+              >
+                <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+                  <Box component="span" sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography component="strong" sx={{ display: 'block', color: 'var(--color-heading)', fontSize: '0.875rem', fontWeight: 700 }}>{item.title}</Typography>
+                    <Typography color="text.secondary" component="span" sx={{ display: 'block', mt: 0.5, lineHeight: '1.5rem', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }} variant="body2">{item.message}</Typography>
+                  </Box>
+                  {!item.readAtUtc && <Box aria-label="Chưa đọc" component="span" role="img" sx={{ mt: 0.5, width: 10, height: 10, flexShrink: 0, borderRadius: '50%', bgcolor: 'primary.main' }} />}
+                </Stack>
+                <Typography color="text.secondary" component="time" dateTime={item.createdAtUtc} sx={{ display: 'block', mt: 1.5, fontSize: '0.75rem' }}>{formatDate(item.createdAtUtc)}</Typography>
+              </ButtonBase>
+            </Box>
+          ))}
+        </PanelList>
+      </Panel>
+      <Pager onChange={onPageChange} page={data.page} totalPages={data.totalPages} />
     </>
   )
 }

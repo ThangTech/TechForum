@@ -8,7 +8,7 @@ import { useAdminTopicDetail } from '../../queries/admin'
 import { getErrorMessage } from '../../queries/errorMessage'
 import { isInitialLoading } from '../../queries/status'
 import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
-import { AdminDialog } from './AdminDialog'
+import { DialogFrame } from '../feedback/DialogFrame'
 import { StatusBadge } from './StatusBadge'
 
 export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onClose: () => void }) => {
@@ -17,7 +17,7 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
   const isLoading = isInitialLoading(detailQuery)
   const error = getErrorMessage(detailQuery.error, 'Không thể tải nội dung xem trước.')
   return (
-    <AdminDialog
+    <DialogFrame
       actions={
         <>
           {data &&
@@ -62,6 +62,6 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
           />
         </>
       )}
-    </AdminDialog>
+    </DialogFrame>
   )
 }

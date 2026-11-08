@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import type { ModerationAction } from '../../api/adminTopics'
 import type { Category } from '../../api/categories'
-import { AdminDialog } from './AdminDialog'
+import { DialogFrame } from '../feedback/DialogFrame'
 
 interface TopicModerationDialogProps {
   action: ModerationAction
@@ -32,7 +32,7 @@ export const TopicModerationDialog = ({ action, categories, isBusy, onClose, onC
     onConfirm(reason.trim(), categoryId ? Number(categoryId) : undefined)
   }
   return (
-    <AdminDialog
+    <DialogFrame
       actions={
         <>
           <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
@@ -70,6 +70,6 @@ export const TopicModerationDialog = ({ action, categories, isBusy, onClose, onC
           value={reason}
         />
       </Stack>
-    </AdminDialog>
+    </DialogFrame>
   )
 }

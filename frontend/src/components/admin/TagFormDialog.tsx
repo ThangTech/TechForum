@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import { useState } from 'react'
 import type { AdminTag, SaveTagInput } from '../../api/adminTags'
-import { AdminDialog } from './AdminDialog'
+import { DialogFrame } from '../feedback/DialogFrame'
 
 interface TagFormDialogProps {
   isBusy: boolean
@@ -32,7 +32,7 @@ export const TagFormDialog = ({ isBusy, onClose, onSubmit, requestError, tag }: 
   }
 
   return (
-    <AdminDialog
+    <DialogFrame
       actions={
         <>
           <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
@@ -49,6 +49,6 @@ export const TagFormDialog = ({ isBusy, onClose, onSubmit, requestError, tag }: 
         <TextField disabled={isBusy} id="tag-slug" label="Đường dẫn" onChange={(event) => setSlug(event.target.value)} placeholder="react" slotProps={{ htmlInput: { maxLength: 60 } }} value={slug} />
         <TextField disabled={isBusy} id="tag-description" label="Mô tả" minRows={3} multiline onChange={(event) => setDescription(event.target.value)} slotProps={{ htmlInput: { maxLength: 300 } }} value={description} />
       </Stack>
-    </AdminDialog>
+    </DialogFrame>
   )
 }

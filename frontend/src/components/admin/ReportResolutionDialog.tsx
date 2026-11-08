@@ -2,7 +2,7 @@ import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
-import { AdminDialog } from './AdminDialog'
+import { DialogFrame } from '../feedback/DialogFrame'
 
 interface ReportResolutionDialogProps {
   decision: 'accepted' | 'rejected' | null
@@ -40,7 +40,7 @@ export const ReportResolutionDialog = ({
 
   const isAccepted = decision === 'accepted'
   return (
-    <AdminDialog
+    <DialogFrame
       actions={
         <>
           <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
@@ -67,6 +67,6 @@ export const ReportResolutionDialog = ({
         sx={{ mt: 2.5 }}
         value={note}
       />
-    </AdminDialog>
+    </DialogFrame>
   )
 }

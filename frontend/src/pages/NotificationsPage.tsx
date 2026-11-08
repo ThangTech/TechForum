@@ -1,7 +1,14 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import MuiLink from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
+import { PageHeading } from '../components/common/PageHeading'
+import { PageShell } from '../components/common/PageShell'
+import { Panel } from '../components/common/Panel'
+import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { NotificationList } from '../components/notifications/NotificationList'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useMarkNotificationRead, useNotifications } from '../queries/notifications'
@@ -57,25 +64,33 @@ export const NotificationsPage = () => {
   }
 
   return (
-    <main className="main-area" id="main-content">
-      <div className="page-content py-10">
-        <header className="mb-6">
-          <p className="eyebrow">Tài khoản cá nhân</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-slate-950">Thông báo</h1>
-          {data && <p className="mt-2 text-sm text-slate-600">{data.unreadCount} thông báo chưa đọc</p>}
-          <Link className="mt-3 inline-block text-sm font-semibold text-blue-700 hover:underline" to="/reports">Theo dõi báo cáo của tôi</Link>
-        </header>
-        {openedNotification && (
-          <section aria-labelledby="notification-detail-heading" className="mb-6 border border-blue-200 bg-blue-50 p-5" role="region">
-            <h2 className="font-bold text-slate-950" id="notification-detail-heading">{openedNotification.title}</h2>
-            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{openedNotification.message}</p>
-            <div className="mt-4"><Button onClick={() => setOpenedId(null)} variant="outlined">Đóng chi tiết</Button></div>
-          </section>
-        )}
-        {isLoading && <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500" role="status">Đang tải thông báo…</div>}
-        {!isLoading && error && <div className="rounded-xl border border-red-200 bg-white p-8 text-center" role="alert"><p className="text-sm text-red-700">{error}</p><div className="mt-4"><Button onClick={retry} variant="outlined">Thử lại</Button></div></div>}
-        {!isLoading && !error && data && <NotificationList busyId={busyId} data={data} onOpen={(id, link, isRead) => void openNotification(id, link, isRead)} onPageChange={changePage} />}
-      </div>
-    </main>
+    <PageShell compact maxWidth={1240}>
+      <Box sx={{ mb: 3 }}>
+        <PageHeading
+          description={data ? `${data.unreadCount} thông báo chưa đọc` : undefined}
+          eyebrow="Tài khoản cá nhân"
+          size="medium"
+          title="Thông báo"
+        />
+        <MuiLink component={Link} sx={{ display: 'inline-block', mt: 1.5, fontSize: '0.875rem', fontWeight: 600 }} to="/reports" underline="hover">
+          Theo dõi báo cáo của tôi
+        </MuiLink>
+      </Box>
+      {openedNotification && (
+        <Panel
+          aria-labelledby="notification-detail-heading"
+          component="section"
+          role="region"
+          sx={{ mb: 3, p: 2.5, bgcolor: 'primary.light' }}
+          tone="info"
+        >
+          <Typography component="h2" id="notification-detail-heading" sx={{ color: 'var(--color-heading)', fontWeight: 700 }}>{openedNotification.title}</Typography>
+          <Typography sx={{ mt: 1, color: 'text.primary', lineHeight: '1.5rem', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }} variant="body2">{openedNotification.message}</Typography>
+          <Box sx={{ mt: 2 }}><Button onClick={() => setOpenedId(null)} variant="outlined">Đóng chi tiết</Button></Box>
+        </Panel>
+      )}
+      <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải thông báo…" onRetry={retry} />
+      {!isLoading && !error && data && <NotificationList busyId={busyId} data={data} onOpen={(id, link, isRead) => void openNotification(id, link, isRead)} onPageChange={changePage} />}
+    </PageShell>
   )
 }
