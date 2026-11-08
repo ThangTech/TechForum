@@ -2,6 +2,7 @@ import type { AdminReport } from '../../api/reports'
 import { reportReasonLabels, reportStatusLabels } from './reportLabels'
 import { StatusBadge, type BadgeTone } from './StatusBadge'
 import TableCell from '@mui/material/TableCell'
+import Typography from '@mui/material/Typography'
 import TableRow from '@mui/material/TableRow'
 
 const getReportTone = (status: AdminReport['status']): BadgeTone => {
@@ -22,7 +23,7 @@ export const ReportReviewCard = ({
   <TableRow>
     <TableCell>
       <button
-        className="admin-table-primary text-left hover:text-blue-700"
+        className="admin-table-primary admin-table-link"
         onClick={() => onPreview(report)}
         type="button"
       >
@@ -34,16 +35,23 @@ export const ReportReviewCard = ({
     </TableCell>
     <TableCell>
       {reportReasonLabels[report.reason]}
-      {report.details && <p className="admin-table-secondary max-w-60 line-clamp-2">{report.details}</p>}
+      {report.details && (
+        <Typography
+          className="admin-table-secondary"
+          sx={{ maxWidth: 240, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+        >
+          {report.details}
+        </Typography>
+      )}
     </TableCell>
-    <TableCell className="whitespace-nowrap">{report.reporter.displayName}</TableCell>
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reporter.displayName}</TableCell>
     <TableCell>
       <StatusBadge tone={getReportTone(report.status)}>
         {reportStatusLabels[report.status]}
       </StatusBadge>
       {report.resolvedBy && <span className="admin-table-secondary">{report.resolvedBy.displayName}</span>}
     </TableCell>
-    <TableCell className="whitespace-nowrap">
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>
       {new Date(report.createdAtUtc).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
     </TableCell>
     <TableCell>

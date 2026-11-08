@@ -7,6 +7,9 @@ import { AdminPagination } from '../components/admin/AdminPagination'
 import { ReportPreviewDialog } from '../components/admin/ReportPreviewDialog'
 import { ReportReviewCard } from '../components/admin/ReportReviewCard'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { AdminEmptyState } from '../components/admin/AdminEmptyState'
+import { AdminFeedback } from '../components/admin/AdminFeedback'
+import { AdminPageHeading } from '../components/admin/AdminPageHeading'
 import { useAdminReports, useResolveReport } from '../queries/admin'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
@@ -17,6 +20,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Typography from '@mui/material/Typography'
 
 const PAGE_SIZE = 10
 const statuses: { label: string; value: ReportStatus }[] = [
@@ -84,14 +88,14 @@ export const AdminReportsPage = () => {
   return (
     <section className="admin-page">
       <div>
-        <p className="eyebrow">Quản trị nội dung</p>
-        <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Báo cáo cộng đồng</h1>
-        <p className="mt-2 text-slate-600">
-          Xem nội dung bị báo cáo và lưu quyết định xử lý có lý do rõ ràng.
-        </p>
+        <AdminPageHeading
+          description="Xem nội dung bị báo cáo và lưu quyết định xử lý có lý do rõ ràng."
+          eyebrow="Quản trị nội dung"
+          title="Báo cáo cộng đồng"
+        />
 
         <div className="admin-toolbar" role="group" aria-label="Lọc trạng thái báo cáo">
-          <span className="text-xs font-semibold text-slate-500 mr-2">Trạng thái:</span>
+          <Typography color="text.secondary" component="span" sx={{ mr: 1, fontSize: '0.75rem', fontWeight: 600 }}>Trạng thái:</Typography>
           <ToggleButtonGroup
             exclusive
             onChange={(_, value: typeof status | null) => value !== null && updateFilters(value)}
@@ -106,22 +110,7 @@ export const AdminReportsPage = () => {
           </ToggleButtonGroup>
         </div>
 
-        {actionError && (
-          <p
-            className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-            role="alert"
-          >
-            {actionError}
-          </p>
-        )}
-        {successMessage && (
-          <p
-            className="mt-5 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
-            role="status"
-          >
-            {successMessage}
-          </p>
-        )}
+        <AdminFeedback error={actionError} success={successMessage} />
 
         <div>
           <AsyncStatePanel
@@ -131,9 +120,7 @@ export const AdminReportsPage = () => {
             onRetry={() => void reportsQuery.refetch()}
           />
           {!isLoading && !error && data?.items.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">
-              Không có báo cáo ở trạng thái này.
-            </div>
+            <AdminEmptyState>Không có báo cáo ở trạng thái này.</AdminEmptyState>
           )}
           {!isLoading && !error && data && data.items.length > 0 && (
             <>

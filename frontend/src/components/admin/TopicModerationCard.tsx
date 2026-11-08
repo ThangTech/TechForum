@@ -1,5 +1,6 @@
 import type { AdminTopic, ModerationAction } from '../../api/adminTopics'
 import { StatusBadge, type BadgeTone } from './StatusBadge'
+import Stack from '@mui/material/Stack'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 
@@ -27,7 +28,7 @@ export const TopicModerationCard = ({
 }) => (
   <TableRow>
     <TableCell>
-      <button className="admin-table-primary text-left hover:text-blue-700" onClick={onPreview} type="button">
+      <button className="admin-table-primary admin-table-link" onClick={onPreview} type="button">
         {topic.title}
       </button>
       <span className="admin-table-secondary">
@@ -39,17 +40,17 @@ export const TopicModerationCard = ({
         {topic.type === 'article' ? 'Bài viết' : 'Câu hỏi'}
       </StatusBadge>
     </TableCell>
-    <TableCell className="whitespace-nowrap">{topic.author.displayName}</TableCell>
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>{topic.author.displayName}</TableCell>
     <TableCell>
-      <div className="flex flex-wrap gap-1 min-w-28">
+      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5, minWidth: 112 }}>
         <StatusBadge tone={getTopicStatusTone(topic)}>
           {getTopicStatusLabel(topic)}
         </StatusBadge>
         {topic.isDiscussionLocked && <StatusBadge>Khóa thảo luận</StatusBadge>}
         {topic.isPinned && <StatusBadge tone="blue">Đã ghim</StatusBadge>}
-      </div>
+      </Stack>
     </TableCell>
-    <TableCell className="whitespace-nowrap">
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>
       {topic.publishedAtUtc ? (
         new Date(topic.publishedAtUtc).toLocaleDateString('vi-VN')
       ) : (
@@ -62,7 +63,7 @@ export const TopicModerationCard = ({
       )}
     </TableCell>
     <TableCell>
-      <div className="admin-table-actions min-w-56">
+      <div className="admin-table-actions admin-table-actions--wide">
         <button onClick={onPreview} type="button">
           Xem trước
         </button>

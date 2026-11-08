@@ -1,4 +1,6 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
@@ -7,6 +9,7 @@ import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Typography from '@mui/material/Typography'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { LineChart } from '@mui/x-charts/LineChart'
 import { PieChart } from '@mui/x-charts/PieChart'
@@ -17,6 +20,8 @@ import { appRoutes } from '../appRoutes'
 import { AuditLogList } from '../components/admin/AuditLogList'
 import { StatusBadge } from '../components/admin/StatusBadge'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { AdminEmptyState } from '../components/admin/AdminEmptyState'
+import { AdminFeedback } from '../components/admin/AdminFeedback'
 import { useAdminDashboard } from '../queries/admin'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
@@ -153,7 +158,7 @@ export const AdminOverviewPage = () => {
       <div className="admin-dashboard-header">
         <div>
           <p className="eyebrow">TechForum / Điều hành</p>
-          <h1 className="font-extrabold">Tổng quan diễn đàn</h1>
+          <Typography component="h1" sx={{ fontWeight: 800 }}>Tổng quan diễn đàn</Typography>
           <p className="admin-page-description">Theo dõi đóng góp của cộng đồng và công việc cần xử lý.</p>
         </div>
         <form className="admin-date-toolbar" key={`${startDate}-${endDate}`} onSubmit={applyRange}>
@@ -188,19 +193,15 @@ export const AdminOverviewPage = () => {
           <Button type="submit" variant="outlined">Áp dụng</Button>
         </form>
       </div>
-      {validationError && (
-        <p className="admin-message admin-message-error" role="alert">
-          {validationError}
-        </p>
-      )}
-      <div className="mt-6">
+      <AdminFeedback error={validationError} />
+      <Box sx={{ mt: 3 }}>
         <AsyncStatePanel
           error={error}
           isLoading={isLoading}
           loadingText="Đang tải dữ liệu tổng quan…"
           onRetry={() => void dashboardQuery.refetch()}
         />
-      </div>
+      </Box>
       {!isLoading && !error && dashboard && (
         <>
           <section aria-label="Số liệu diễn đàn" className="admin-stats-grid">
@@ -226,11 +227,11 @@ export const AdminOverviewPage = () => {
               </article>
             ))}
           </section>
-          <p className="mt-3 text-[10px] text-slate-500">
+          <Typography color="text.secondary" sx={{ mt: 1.5, fontSize: '10px' }}>
             Tổng số tính tại thời điểm hiện tại. Đóng góp trong kỳ tính từ{' '}
             {startDate.split('-').reverse().join('/')} đến {endDate.split('-').reverse().join('/')} (giờ Việt
             Nam), chỉ gồm nội dung còn công khai.
-          </p>
+          </Typography>
           <div className="admin-dashboard-grid">
             <section aria-labelledby="activity-title" className="admin-panel">
               <div className="admin-panel-heading">
@@ -284,16 +285,16 @@ export const AdminOverviewPage = () => {
                 )}
                 {questionSlices.map((item) => (
                   <div className="admin-question-row" key={item.id}>
-                    <span className="flex items-center gap-2">
-                      <span aria-hidden="true" className="inline-block size-2.5 rounded-sm" style={{ background: item.color }} />
+                    <Stack component="span" direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+                      <Box aria-hidden="true" component="span" sx={{ display: 'inline-block', width: 10, height: 10, borderRadius: '2px', bgcolor: item.color }} />
                       {item.label}
-                    </span>
+                    </Stack>
                     <strong>{numberFormat.format(item.value)}</strong>
                   </div>
                 ))}
-                <p className="text-[10px] leading-5 text-slate-500">
+                <Typography color="text.secondary" sx={{ fontSize: '10px', lineHeight: '1.25rem' }}>
                   Mỗi câu hỏi thuộc đúng một trạng thái. Bản nháp và nội dung bị ẩn/xóa không được tính.
-                </p>
+                </Typography>
               </div>
             </section>
             <section aria-labelledby="reports-title" className="admin-panel">
@@ -307,7 +308,7 @@ export const AdminOverviewPage = () => {
                 <Link to={appRoutes.adminReports}>Xem tất cả →</Link>
               </div>
               {dashboard.pendingReports.oldest.length === 0 ? (
-                <p className="admin-empty !border-0">Không có báo cáo đang chờ xử lý.</p>
+                <AdminEmptyState flat>Không có báo cáo đang chờ xử lý.</AdminEmptyState>
               ) : (
                 <div className="admin-table-scroll">
                   <Table className="admin-table" size="small">
@@ -332,7 +333,7 @@ export const AdminOverviewPage = () => {
                             </span>
                           </TableCell>
                           <TableCell>{report.reporter.displayName}</TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
                             {new Date(report.createdAtUtc).toLocaleDateString('vi-VN')}
                           </TableCell>
                         </TableRow>
@@ -350,7 +351,7 @@ export const AdminOverviewPage = () => {
                 </div>
               </div>
               {dashboard.categories.length === 0 ? (
-                <p className="admin-empty !border-0">Chưa có đóng góp trong khoảng thời gian này.</p>
+                <AdminEmptyState flat>Chưa có đóng góp trong khoảng thời gian này.</AdminEmptyState>
               ) : (
                 <div className="admin-chart-body">
                   <BarChart
@@ -368,7 +369,7 @@ export const AdminOverviewPage = () => {
               )}
             </section>
           </div>
-          <section aria-labelledby="audit-title" className="admin-panel mt-5">
+          <Box aria-labelledby="audit-title" className="admin-panel" component="section" sx={{ mt: 2.5 }}>
             <div className="admin-panel-heading">
               <div>
                 <h2 id="audit-title">Hoạt động quản trị gần đây</h2>
@@ -379,9 +380,9 @@ export const AdminOverviewPage = () => {
             {dashboard.recentAuditLogs.length ? (
               <AuditLogList items={dashboard.recentAuditLogs} />
             ) : (
-              <p className="admin-empty !border-0">Chưa có thao tác quản trị.</p>
+              <AdminEmptyState flat>Chưa có thao tác quản trị.</AdminEmptyState>
             )}
-          </section>
+          </Box>
         </>
       )}
     </section>

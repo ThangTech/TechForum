@@ -1,6 +1,7 @@
 import type { AdminTag } from '../../api/adminTags'
 import { StatusBadge } from './StatusBadge'
 import TableCell from '@mui/material/TableCell'
+import Typography from '@mui/material/Typography'
 import TableRow from '@mui/material/TableRow'
 
 export const TagAdminCard = ({
@@ -18,7 +19,7 @@ export const TagAdminCard = ({
     <TableCell>
       <strong className="admin-table-primary">#{tag.name}</strong>
       <span className="admin-table-secondary">/{tag.slug}</span>
-      {tag.description && <p className="mt-2 max-w-96 text-xs">{tag.description}</p>}
+      {tag.description && <Typography sx={{ mt: 1, maxWidth: 384, fontSize: '0.75rem' }}>{tag.description}</Typography>}
     </TableCell>
     <TableCell>{tag.topicCount}</TableCell>
     <TableCell>

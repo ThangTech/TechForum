@@ -7,6 +7,9 @@ import { AccountAdminCard } from '../components/admin/AccountAdminCard'
 import { AccountLockDialog } from '../components/admin/AccountLockDialog'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { AdminEmptyState } from '../components/admin/AdminEmptyState'
+import { AdminFeedback } from '../components/admin/AdminFeedback'
+import { AdminPageHeading } from '../components/admin/AdminPageHeading'
 import { useAdminAccounts, useSetAccountLocked } from '../queries/admin'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
@@ -71,11 +74,11 @@ export const AdminAccountsPage = () => {
   }
   return (
     <section className="admin-page">
-      <p className="eyebrow">Quản trị thành viên</p>
-      <h1 className="font-extrabold">Tài khoản</h1>
-      <p className="admin-page-description">
-        Tra cứu thành viên, vai trò và trạng thái truy cập. Tài khoản quản trị được bảo vệ khỏi thao tác khóa.
-      </p>
+      <AdminPageHeading
+        description="Tra cứu thành viên, vai trò và trạng thái truy cập. Tài khoản quản trị được bảo vệ khỏi thao tác khóa."
+        eyebrow="Quản trị thành viên"
+        title="Tài khoản"
+      />
       <form className="admin-toolbar" key={`${keyword}-${status}-${role}`} onSubmit={filter} role="search">
         <TextField size="small" label="Tìm tài khoản" defaultValue={keyword} name="keyword" placeholder="Tên hoặc email thành viên" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
         <TextField size="small" label="Trạng thái" defaultValue={status} name="status" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
@@ -91,16 +94,7 @@ export const AdminAccountsPage = () => {
         <Button type="submit" variant="contained">Tìm kiếm</Button>
         <Button onClick={() => setParams({})} variant="text">Xóa lọc</Button>
       </form>
-      {actionError && !selected && (
-        <p className="admin-message admin-message-error" role="alert">
-          {actionError}
-        </p>
-      )}
-      {success && (
-        <p className="admin-message admin-message-success" role="status">
-          {success}
-        </p>
-      )}
+      <AdminFeedback error={selected ? null : actionError} success={success} />
       <AsyncStatePanel
         error={error}
         isLoading={isLoading}
@@ -138,7 +132,7 @@ export const AdminAccountsPage = () => {
               </Table>
             </div>
           ) : (
-            <p className="admin-empty">Không tìm thấy tài khoản phù hợp.</p>
+            <AdminEmptyState>Không tìm thấy tài khoản phù hợp.</AdminEmptyState>
           )}
           <AdminPagination {...data} onChange={changePage} />
         </>

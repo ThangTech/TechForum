@@ -1,8 +1,9 @@
 import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
 import { useState } from 'react'
 import type { AdminCategory, SaveCategoryInput } from '../../api/adminCategories'
-import TextField from '@mui/material/TextField'
+import { AdminDialog } from './AdminDialog'
 
 interface CategoryFormDialogProps {
   category: AdminCategory | null
@@ -49,21 +50,24 @@ export const CategoryFormDialog = ({
   }
 
   return (
-    <Dialog open onClose={() => close()} maxWidth={false} slotProps={{ paper: { 'aria-label': category ? 'Sửa chuyên mục' : 'Tạo chuyên mục', sx: { width: 520, maxWidth: 'calc(100% - 32px)' } } }}>
-      <div className="p-6">
-        <h2 className="text-xl font-extrabold text-slate-950">{category ? 'Sửa chuyên mục' : 'Tạo chuyên mục'}</h2>
-        <div className="mt-5 grid gap-4">
-          <TextField disabled={isBusy} id="category-name" label="Tên chuyên mục" onChange={(event) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 100 } }} value={name} />
-          <TextField disabled={isBusy} id="category-slug" label="Đường dẫn" onChange={(event) => setSlug(event.target.value)} placeholder="vi-du-chuyen-muc" slotProps={{ htmlInput: { maxLength: 100 } }} value={slug} />
-          <TextField disabled={isBusy} id="category-description" label="Mô tả" minRows={3} multiline onChange={(event) => setDescription(event.target.value)} slotProps={{ htmlInput: { maxLength: 500 } }} value={description} />
-          <TextField disabled={isBusy} id="category-order" label="Thứ tự hiển thị" onChange={(event) => setDisplayOrder(event.target.value)} slotProps={{ htmlInput: { max: 10000, min: 0 } }} type="number" value={displayOrder} />
-        </div>
-        {(validationError || requestError) && <p className="mt-4 text-sm text-red-700" role="alert">{validationError || requestError}</p>}
-        <div className="mt-6 flex justify-end gap-3">
+    <AdminDialog
+      actions={
+        <>
           <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
           <Button disabled={isBusy} loading={isBusy} onClick={submit} variant="contained">{isBusy ? 'Đang lưu…' : 'Lưu chuyên mục'}</Button>
-        </div>
-      </div>
-    </Dialog>
+        </>
+      }
+      error={validationError || requestError}
+      onClose={close}
+      title={category ? 'Sửa chuyên mục' : 'Tạo chuyên mục'}
+      width={520}
+    >
+      <Stack spacing={2}>
+        <TextField disabled={isBusy} id="category-name" label="Tên chuyên mục" onChange={(event) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 100 } }} value={name} />
+        <TextField disabled={isBusy} id="category-slug" label="Đường dẫn" onChange={(event) => setSlug(event.target.value)} placeholder="vi-du-chuyen-muc" slotProps={{ htmlInput: { maxLength: 100 } }} value={slug} />
+        <TextField disabled={isBusy} id="category-description" label="Mô tả" minRows={3} multiline onChange={(event) => setDescription(event.target.value)} slotProps={{ htmlInput: { maxLength: 500 } }} value={description} />
+        <TextField disabled={isBusy} id="category-order" label="Thứ tự hiển thị" onChange={(event) => setDisplayOrder(event.target.value)} slotProps={{ htmlInput: { max: 10000, min: 0 } }} type="number" value={displayOrder} />
+      </Stack>
+    </AdminDialog>
   )
 }

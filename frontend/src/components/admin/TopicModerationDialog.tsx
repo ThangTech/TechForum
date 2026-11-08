@@ -1,9 +1,11 @@
 import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import type { ModerationAction } from '../../api/adminTopics'
 import type { Category } from '../../api/categories'
-import TextField from '@mui/material/TextField'
+import { AdminDialog } from './AdminDialog'
 
 interface TopicModerationDialogProps {
   action: ModerationAction
@@ -30,13 +32,21 @@ export const TopicModerationDialog = ({ action, categories, isBusy, onClose, onC
     onConfirm(reason.trim(), categoryId ? Number(categoryId) : undefined)
   }
   return (
-    <Dialog open onClose={() => close()} maxWidth={false} slotProps={{ paper: { 'aria-label': actionLabels[action], sx: { width: 480, maxWidth: 'calc(100% - 32px)' } } }}>
-      <div className="p-6">
-        <h2 className="text-xl font-extrabold text-slate-950">{actionLabels[action]}</h2>
-        <p className="mt-2 text-sm text-slate-600">Hành động, người thực hiện, thời điểm và lý do sẽ được lưu vào nhật ký quản trị.</p>
+    <AdminDialog
+      actions={
+        <>
+          <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
+          <Button disabled={isBusy} loading={isBusy} onClick={confirm} variant="contained">{isBusy ? 'Đang xử lý…' : 'Xác nhận'}</Button>
+        </>
+      }
+      error={validationError || requestError}
+      onClose={close}
+      title={actionLabels[action]}
+    >
+      <Typography color="text.secondary" variant="body2">Hành động, người thực hiện, thời điểm và lý do sẽ được lưu vào nhật ký quản trị.</Typography>
+      <Stack spacing={2.5} sx={{ mt: 2.5 }}>
         {action === 'move' && (
           <TextField
-            className="mt-5"
             disabled={isBusy}
             id="moderation-category"
             label="Chuyên mục đích"
@@ -50,7 +60,6 @@ export const TopicModerationDialog = ({ action, categories, isBusy, onClose, onC
           </TextField>
         )}
         <TextField
-          className="mt-5"
           disabled={isBusy}
           id="moderation-reason"
           label="Lý do"
@@ -60,12 +69,7 @@ export const TopicModerationDialog = ({ action, categories, isBusy, onClose, onC
           slotProps={{ htmlInput: { maxLength: 1000 } }}
           value={reason}
         />
-        {(validationError || requestError) && <p className="mt-3 text-sm text-red-700" role="alert">{validationError || requestError}</p>}
-        <div className="mt-6 flex justify-end gap-3">
-          <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
-          <Button disabled={isBusy} loading={isBusy} onClick={confirm} variant="contained">{isBusy ? 'Đang xử lý…' : 'Xác nhận'}</Button>
-        </div>
-      </div>
-    </Dialog>
+      </Stack>
+    </AdminDialog>
   )
 }

@@ -1,6 +1,7 @@
 import type { AdminCategory } from '../../api/adminCategories'
 import { StatusBadge } from './StatusBadge'
 import TableCell from '@mui/material/TableCell'
+import Typography from '@mui/material/Typography'
 import TableRow from '@mui/material/TableRow'
 
 export const CategoryAdminCard = ({
@@ -18,7 +19,7 @@ export const CategoryAdminCard = ({
     <TableCell>
       <strong className="admin-table-primary">{category.name}</strong>
       <span className="admin-table-secondary">/{category.slug}</span>
-      {category.description && <p className="mt-2 max-w-96 text-xs">{category.description}</p>}
+      {category.description && <Typography sx={{ mt: 1, maxWidth: 384, fontSize: '0.75rem' }}>{category.description}</Typography>}
     </TableCell>
     <TableCell>{category.displayOrder}</TableCell>
     <TableCell>{category.topicCount}</TableCell>

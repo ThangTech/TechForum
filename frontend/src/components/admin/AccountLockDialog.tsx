@@ -1,8 +1,10 @@
 import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useState, type FormEvent } from 'react'
 import type { AdminAccount } from '../../api/adminAccounts'
-import TextField from '@mui/material/TextField'
+import { AdminDialog } from './AdminDialog'
 
 export const AccountLockDialog = ({
   account,
@@ -43,19 +45,28 @@ export const AccountLockDialog = ({
     )
   }
   return (
-    <Dialog open onClose={() => !isBusy && onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': account.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản', sx: { width: 500, maxWidth: 'calc(100% - 32px)' } } }}>
-      <form className="p-6" onSubmit={submit}>
-        <h2 className="text-xl font-extrabold text-slate-950">
-          {account.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
+    <AdminDialog
+      actions={
+        <>
+          <Button disabled={isBusy} onClick={onClose} variant="outlined">Hủy</Button>
+          {/* The button is outside the form, so the "form" attribute connects it to the form. */}
+          <Button disabled={isBusy} form="account-lock-form" loading={isBusy} type="submit" variant="contained">{account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}</Button>
+        </>
+      }
+      error={validationError || requestError}
+      onClose={() => !isBusy && onClose()}
+      title={account.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+      width={500}
+    >
+      <form id="account-lock-form" onSubmit={submit}>
+        <Typography color="text.secondary" sx={{ lineHeight: '1.5rem' }} variant="body2">
           {account.isLocked
             ? `Khôi phục quyền truy cập của ${account.displayName}.`
             : `Khóa quyền truy cập của ${account.displayName}. Phiên đăng nhập hiện tại sẽ mất hiệu lực ở yêu cầu tiếp theo.`}
-        </p>
+        </Typography>
         {!account.isLocked && (
           <>
-            <div className="mt-5 grid gap-4">
+            <Stack spacing={2} sx={{ mt: 2.5 }}>
               <TextField
                 disabled={isBusy}
                 id="account-lock-reason"
@@ -75,22 +86,13 @@ export const AccountLockDialog = ({
                 slotProps={{ inputLabel: { shrink: true } }}
                 type="datetime-local"
               />
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
+            </Stack>
+            <Typography color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
               Để trống nếu khóa vô thời hạn. Thời điểm theo giờ trên thiết bị của bạn.
-            </p>
+            </Typography>
           </>
         )}
-        {(validationError || requestError) && (
-          <p className="mt-4 text-sm text-red-700" role="alert">
-            {validationError || requestError}
-          </p>
-        )}
-        <div className="mt-6 flex justify-end gap-3">
-          <Button disabled={isBusy} onClick={onClose} variant="outlined">Hủy</Button>
-          <Button disabled={isBusy} loading={isBusy} type="submit" variant="contained">{account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}</Button>
-        </div>
       </form>
-    </Dialog>
+    </AdminDialog>
   )
 }

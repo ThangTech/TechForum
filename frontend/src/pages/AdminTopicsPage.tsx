@@ -4,6 +4,9 @@ import { useSearchParams } from 'react-router-dom'
 import type { AdminTopic, ModerationAction, TopicVisibility } from '../api/adminTopics'
 import { ApiError } from '../api/client'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { AdminEmptyState } from '../components/admin/AdminEmptyState'
+import { AdminFeedback } from '../components/admin/AdminFeedback'
+import { AdminPageHeading } from '../components/admin/AdminPageHeading'
 import { TopicModerationCard } from '../components/admin/TopicModerationCard'
 import { AdminPagination } from '../components/admin/AdminPagination'
 import { TopicPreviewDialog } from '../components/admin/TopicPreviewDialog'
@@ -98,11 +101,11 @@ export const AdminTopicsPage = () => {
   return (
     <section className="admin-page">
       <div>
-        <p className="eyebrow">Quản trị nội dung</p>
-        <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Kiểm duyệt nội dung</h1>
-        <p className="admin-page-description mt-2">
-          Xem trước nội dung và ghi lý do cho mỗi thao tác kiểm duyệt.
-        </p>
+        <AdminPageHeading
+          description="Xem trước nội dung và ghi lý do cho mỗi thao tác kiểm duyệt."
+          eyebrow="Quản trị nội dung"
+          title="Kiểm duyệt nội dung"
+        />
         <form
           className="admin-toolbar"
           key={`${keyword}-${type}-${visibility}-${categoryId ?? ''}`}
@@ -135,22 +138,7 @@ export const AdminTopicsPage = () => {
           <Button type="submit" variant="contained">Lọc nội dung</Button>
           <Button onClick={() => setParams({})} variant="text">Xóa lọc</Button>
         </form>
-        {actionError && !selected && (
-          <p
-            className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-            role="alert"
-          >
-            {actionError}
-          </p>
-        )}
-        {success && (
-          <p
-            className="mt-5 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
-            role="status"
-          >
-            {success}
-          </p>
-        )}
+        <AdminFeedback error={selected ? null : actionError} success={success} />
         <div>
           <AsyncStatePanel
             error={error}
@@ -159,9 +147,7 @@ export const AdminTopicsPage = () => {
             onRetry={retry}
           />
           {!isLoading && !error && data?.items.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">
-              Không có nội dung phù hợp.
-            </div>
+            <AdminEmptyState>Không có nội dung phù hợp.</AdminEmptyState>
           )}
           {!isLoading && !error && data && data.items.length > 0 && (
             <div className="admin-table-scroll">

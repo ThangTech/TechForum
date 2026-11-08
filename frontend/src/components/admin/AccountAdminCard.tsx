@@ -3,6 +3,7 @@ import type { AdminAccount } from '../../api/adminAccounts'
 import { appRoutes } from '../../appRoutes'
 import { StatusBadge } from './StatusBadge'
 import TableCell from '@mui/material/TableCell'
+import Typography from '@mui/material/Typography'
 import TableRow from '@mui/material/TableRow'
 
 export const AccountAdminCard = ({
@@ -37,11 +38,11 @@ export const AccountAdminCard = ({
               ? `Đến ${new Date(account.lockoutEndUtc).toLocaleString('vi-VN')}`
               : 'Vô thời hạn'}
           </span>
-          {account.lockReason && <p className="mt-1 max-w-64 break-words text-xs">{account.lockReason}</p>}
+          {account.lockReason && <Typography sx={{ mt: 0.5, maxWidth: 256, overflowWrap: 'break-word', fontSize: '0.75rem' }}>{account.lockReason}</Typography>}
         </>
       )}
     </TableCell>
-    <TableCell className="whitespace-nowrap">{new Date(account.createdAtUtc).toLocaleDateString('vi-VN')}</TableCell>
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>{new Date(account.createdAtUtc).toLocaleDateString('vi-VN')}</TableCell>
     <TableCell>
       <div className="admin-table-actions">
         <button

@@ -5,6 +5,9 @@ import { AdminPagination } from '../components/admin/AdminPagination'
 import { AuditLogList } from '../components/admin/AuditLogList'
 import { auditActionLabels } from '../components/admin/auditActionLabels'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { AdminEmptyState } from '../components/admin/AdminEmptyState'
+import { AdminFeedback } from '../components/admin/AdminFeedback'
+import { AdminPageHeading } from '../components/admin/AdminPageHeading'
 import { useAdminAuditLogs, useAdministrators } from '../queries/admin'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
@@ -58,12 +61,11 @@ export const AdminAuditPage = () => {
   }
   return (
     <section className="admin-page">
-      <p className="eyebrow">Theo dõi quản trị</p>
-      <h1 className="font-extrabold">Nhật ký thao tác</h1>
-      <p className="admin-page-description">
-        Đối chiếu người thực hiện, lý do và trạng thái trước / sau mỗi thao tác. Thời gian lọc theo giờ Việt
-        Nam.
-      </p>
+      <AdminPageHeading
+        description="Đối chiếu người thực hiện, lý do và trạng thái trước / sau mỗi thao tác. Thời gian lọc theo giờ Việt Nam."
+        eyebrow="Theo dõi quản trị"
+        title="Nhật ký thao tác"
+      />
       <form
         className="admin-toolbar"
         key={`${keyword}-${action}-${administratorId}-${from}-${to}`}
@@ -102,16 +104,7 @@ export const AdminAuditPage = () => {
           Xóa lọc
         </Button>
       </form>
-      {administratorError && (
-        <p className="admin-message" role="status">
-          {administratorError}
-        </p>
-      )}
-      {validationError && (
-        <p className="admin-message admin-message-error" role="alert">
-          {validationError}
-        </p>
-      )}
+      <AdminFeedback error={validationError} info={administratorError} />
       <AsyncStatePanel
         error={error}
         isLoading={isLoading}
@@ -123,7 +116,7 @@ export const AdminAuditPage = () => {
           {data.items.length ? (
             <AuditLogList items={data.items} />
           ) : (
-            <p className="admin-empty">Không có thao tác phù hợp với bộ lọc.</p>
+            <AdminEmptyState>Không có thao tác phù hợp với bộ lọc.</AdminEmptyState>
           )}
           <AdminPagination {...data} onChange={changePage} />
         </>

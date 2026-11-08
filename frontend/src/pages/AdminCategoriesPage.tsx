@@ -7,6 +7,9 @@ import { ApiError } from '../api/client'
 import { CategoryAdminCard } from '../components/admin/CategoryAdminCard'
 import { CategoryFormDialog } from '../components/admin/CategoryFormDialog'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
+import { AdminEmptyState } from '../components/admin/AdminEmptyState'
+import { AdminFeedback } from '../components/admin/AdminFeedback'
+import { AdminPageHeading } from '../components/admin/AdminPageHeading'
 import { useAdminCategories, useSaveAdminCategory, useToggleAdminCategory } from '../queries/admin'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
@@ -113,14 +116,12 @@ export const AdminCategoriesPage = () => {
   return (
     <section className="admin-page">
       <div>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow">Quản trị phân loại</p>
-            <h1 className="mt-2 text-3xl font-extrabold text-slate-950">Chuyên mục</h1>
-            <p className="mt-2 text-slate-600">Chuyên mục ngừng sử dụng vẫn được giữ cho các chủ đề cũ.</p>
-          </div>
-          <Button onClick={openCreate} variant="contained">Tạo chuyên mục</Button>
-        </div>
+        <AdminPageHeading
+          actions={<Button onClick={openCreate} variant="contained">Tạo chuyên mục</Button>}
+          description="Chuyên mục ngừng sử dụng vẫn được giữ cho các chủ đề cũ."
+          eyebrow="Quản trị phân loại"
+          title="Chuyên mục"
+        />
 
         <form className="admin-toolbar" key={`${keyword}-${status}`} onSubmit={filter} role="search">
           <TextField size="small" label="Tìm kiếm" defaultValue={keyword} name="keyword" placeholder="Tìm theo tên hoặc đường dẫn" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
@@ -133,22 +134,7 @@ export const AdminCategoriesPage = () => {
           <Button onClick={() => setParams({})} variant="text">Xóa lọc</Button>
         </form>
 
-        {actionError && !isFormOpen && (
-          <p
-            className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-            role="alert"
-          >
-            {actionError}
-          </p>
-        )}
-        {successMessage && (
-          <p
-            className="mt-5 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
-            role="status"
-          >
-            {successMessage}
-          </p>
-        )}
+        <AdminFeedback error={isFormOpen ? null : actionError} success={successMessage} />
 
         <div>
           <AsyncStatePanel
@@ -158,9 +144,7 @@ export const AdminCategoriesPage = () => {
             onRetry={() => void categoriesQuery.refetch()}
           />
           {!isLoading && !error && filtered.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">
-              Không có chuyên mục phù hợp.
-            </div>
+            <AdminEmptyState>Không có chuyên mục phù hợp.</AdminEmptyState>
           )}
           {!isLoading && !error && filtered.length > 0 && (
             <div className="admin-table-scroll">

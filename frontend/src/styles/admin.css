@@ -271,6 +271,16 @@
   font-size: 13px;
   overflow-wrap: anywhere;
 }
+/* A table title that is a button: left aligned, turns blue on hover. */
+.admin-table-link {
+  text-align: left;
+}
+.admin-table-link:hover {
+  color: var(--color-primary);
+}
+.admin-table-actions--wide {
+  min-width: 224px;
+}
 .admin-table-secondary {
   display: block;
   font-size: 12px;
@@ -346,30 +356,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-.admin-empty {
-  padding: 44px 20px;
-  text-align: center;
-  background: #fff;
-  border: 1px solid #dce2ea;
-  color: #728198;
-  line-height: 1.8;
-}
-.admin-message {
-  padding: 12px 15px;
-  margin-top: 18px;
-  border: 1px solid #cbd5e1;
-  font-size: 12px;
-}
-.admin-message-error {
-  background: #fff3f2;
-  border-color: #f1cdca;
-  color: #a43532;
-}
-.admin-message-success {
-  background: #eff9f2;
-  border-color: #c9e6d1;
-  color: #28673c;
 }
 .admin-stats-grid {
   display: grid;
