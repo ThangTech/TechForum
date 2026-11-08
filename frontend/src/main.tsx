@@ -16,9 +16,9 @@ import { theme } from './theme.ts'
 initializeSession()
 
 createRoot(document.getElementById('root')!).render(
-  // enableCssLayer đặt CSS của MUI vào layer "mui": thấp hơn App.css và Tailwind utilities nên các class Tailwind vẫn ghi đè được.
+  // enableCssLayer đặt CSS của MUI vào layer "mui": thấp hơn App.css (layer components) nên các class trong App.css vẫn ghi đè được.
   <StyledEngineProvider enableCssLayer>
-    <GlobalStyles styles="@layer reset, theme, base, mui, components, utilities;" />
+    <GlobalStyles styles="@layer base, mui, components;" />
     <ThemeProvider theme={theme}>
       <AppErrorBoundary>
         <QueryClientProvider client={queryClient}>

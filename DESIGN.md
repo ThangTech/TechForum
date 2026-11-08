@@ -137,10 +137,10 @@ Quy tắc: chữ trên `*-soft` dùng màu đậm tương ứng để đạt tư
 
 ## 7. Cách làm việc với stack hiện có
 
-- UI dùng React + Tailwind 4 (class tiện ích) + MUI (`@mui/material`, theme trong `frontend/src/theme.ts`) + React Hook Form + `App.css` cho các lớp dùng chung. Thư viện Astryx cũ đã được gỡ.
+- UI dùng React + MUI (`@mui/material`, theme trong `frontend/src/theme.ts`, kiểu dáng viết bằng `sx`) + React Hook Form + `App.css` cho các lớp dùng chung. Tailwind và thư viện Astryx cũ đã được gỡ; bộ reset trình duyệt nằm ở `frontend/src/styles/reset.css`.
 - Token đặt tại `frontend/src/index.css` (`:root`). Sửa giá trị ở đó, không rải mã màu hex trong component.
-- Ưu tiên tái sử dụng token và lớp có sẵn; chỉ thêm lớp mới trong `App.css` khi Tailwind không diễn đạt được (ví dụ vạch nhấn bên trái khi hover).
-- Thứ tự layer CSS: `reset, theme, base, mui, components, utilities`. MUI nằm trong layer `mui` (bật bằng `StyledEngineProvider enableCssLayer` ở `main.tsx`), nên `App.css` (layer `components`) và Tailwind utilities ghi đè được MUI. Mọi luật toàn cục trong `index.css` phải nằm trong `@layer base`; luật ngoài layer sẽ thắng MUI và phá kiểu dáng (đã từng làm ô nhập bị xẹp và link bị chữ đen).
+- Ưu tiên tái sử dụng token và lớp có sẵn; chỉ thêm lớp mới trong `App.css` khi `sx` hoặc theme của MUI không diễn đạt được (ví dụ vạch nhấn bên trái khi hover).
+- Thứ tự layer CSS: `base, mui, components`. MUI nằm trong layer `mui` (bật bằng `StyledEngineProvider enableCssLayer` ở `main.tsx`), nên `App.css` (layer `components`) ghi đè được MUI; `reset.css` và các luật toàn cục nằm ở layer `base`. Mọi luật toàn cục trong `index.css` phải nằm trong `@layer base`; luật ngoài layer sẽ thắng MUI và phá kiểu dáng (đã từng làm ô nhập bị xẹp và link bị chữ đen).
 - Màu, font, bo góc của MUI chỉ khai báo ở `theme.ts`; khi đổi token trong `index.css` phải đổi cả `theme.ts`.
 
 ## 8. Ý tưởng từ diễn đàn Trung Quốc (chưa làm)

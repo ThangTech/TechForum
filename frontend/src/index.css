@@ -1,11 +1,9 @@
-@layer reset, theme, base, mui, components, utilities;
+@layer base, mui, components;
 
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/preflight.css" layer(base);
+@import "./styles/reset.css" layer(base);
 @import "./App.css" layer(components);
-@import "tailwindcss/utilities.css" layer(utilities);
 
-/* Đặt các luật toàn cục vào layer base để style của MUI (layer mui) và Tailwind utilities ghi đè được. */
+/* Đặt các luật toàn cục vào layer base để style của MUI (layer mui) và App.css (layer components) ghi đè được. */
 @layer base {
   :root {
     font-family: var(--font-sans);
