@@ -126,7 +126,7 @@ từ thẻ của nội dung công khai và danh hiệu theo ngưỡng dữ liệ
 có thể theo dõi/bỏ theo dõi người khác; khách dùng modal đăng nhập chung.
 
 Header desktop đặt Bài viết/Hỏi đáp/Thảo luận cạnh logo, sau đó mới tới tìm kiếm.
-Nút bút dùng menu Astryx với hai lựa chọn `Viết bài` và `Đặt câu hỏi`. Trang `/`
+Nút bút dùng menu MUI với hai lựa chọn `Viết bài` và `Đặt câu hỏi`. Trang `/`
 là danh sách Bài viết; không còn mục Trang chủ trùng nghĩa. Giao diện dùng Roboto
 cho nội dung và Open Sans cho tiêu đề; font được tải từ Google Fonts nên khi máy
 không có mạng sẽ dùng fallback hệ thống.

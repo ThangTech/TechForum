@@ -17,7 +17,7 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 }).format(new Date(value))
 
 // Ô số trả lời kiểu hỏi đáp: viền xám khi chưa có trả lời, viền xanh lá khi đã có, nền xanh lá khi đã có lời giải.
-// Màu chữ đặt trên thẻ span vì style của thẻ <a> trong Astryx ghi đè màu chữ đặt trên chính Link.
+// Màu chữ đặt trên thẻ span để không bị style mặc định của thẻ <a> ghi đè.
 const getAnswerBoxClasses = (answerCount: number, hasAcceptedAnswer: boolean) => {
   if (hasAcceptedAnswer) return { box: 'border-[var(--color-solved)] bg-[var(--color-solved)]', text: 'text-[#fff]' }
   if (answerCount > 0) return { box: 'border-[var(--color-solved)]', text: 'text-[var(--color-solved)]' }
