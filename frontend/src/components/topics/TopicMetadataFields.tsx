@@ -1,4 +1,5 @@
 import Autocomplete from '@mui/material/Autocomplete'
+import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import type { Category } from '../../api/categories'
 import type { Tag } from '../../api/tags'
@@ -56,7 +57,7 @@ export const TopicMetadataFields = ({
   const selectedTags = tags.filter((tag) => tagIds.includes(tag.id))
 
   return (
-    <div className="grid gap-5">
+    <Stack spacing={2.5}>
       <TextField
         error={Boolean(firstError('categoryId'))}
         helperText={firstError('categoryId')}
@@ -98,6 +99,6 @@ export const TopicMetadataFields = ({
         slotProps={{ htmlInput: { maxLength: 500 } }}
         value={summary}
       />
-    </div>
+    </Stack>
   )
 }

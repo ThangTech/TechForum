@@ -1,6 +1,10 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { useState, type ChangeEvent } from 'react'
 import { ApiError } from '../../api/client'
+import { Panel } from '../common/Panel'
 import { UserAvatar } from './UserAvatar'
 
 interface AvatarFormProps {
@@ -35,18 +39,19 @@ export const AvatarForm = ({ avatarUrl, displayName, onDelete, onUpload }: Avata
   }
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-extrabold text-slate-950">Avatar</h2>
-      <div className="mt-4 flex flex-wrap items-center gap-4">
+    <Panel component="section" sx={{ p: 3 }}>
+      <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Avatar</Typography>
+      <Stack direction="row" sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
         <UserAvatar avatarUrl={avatarUrl} displayName={displayName} size="lg" />
-        <label className="cursor-pointer rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800">
+        {/* The file input is hidden but still reachable with the keyboard; the button is the label of the input. */}
+        <Button component="label" disabled={isBusy} variant="contained">
           {isBusy ? 'Đang xử lý…' : 'Chọn ảnh'}
-          <input accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={isBusy} onChange={(event) => void upload(event)} type="file" />
-        </label>
+          <Box accept="image/png,image/jpeg,image/webp" className="sr-only" component="input" disabled={isBusy} onChange={(event: ChangeEvent<HTMLInputElement>) => void upload(event)} type="file" />
+        </Button>
         {avatarUrl && <Button disabled={isBusy} onClick={() => void remove()} variant="outlined">Xóa ảnh</Button>}
-      </div>
-      <p className="mt-3 text-xs text-slate-500">PNG, JPEG hoặc WebP; tối đa 2 MB. Nếu không có ảnh, TechForum dùng chữ cái đầu tên.</p>
-      {error && <p className="mt-3 text-sm text-red-700" role="alert">{error}</p>}
-    </section>
+      </Stack>
+      <Typography color="text.secondary" sx={{ mt: 1.5, fontSize: '0.75rem' }}>PNG, JPEG hoặc WebP; tối đa 2 MB. Nếu không có ảnh, TechForum dùng chữ cái đầu tên.</Typography>
+      {error && <Typography color="error" role="alert" sx={{ mt: 1.5 }} variant="body2">{error}</Typography>}
+    </Panel>
   )
 }

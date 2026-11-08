@@ -14,6 +14,8 @@ const toneBorders: Record<PanelTone, string> = {
 
 type PanelProps = BoxProps & {
   tone?: PanelTone
+  // Only used when the panel is a form (component="form"): turns off the browser's own checks.
+  noValidate?: boolean
 }
 
 // A white bordered box with rounded corners. It is the base of the cards on the personal pages.

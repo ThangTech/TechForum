@@ -1,3 +1,4 @@
+import Avatar from '@mui/material/Avatar'
 import { apiBaseUrl } from '../../api/client'
 
 interface UserAvatarProps {
@@ -6,25 +7,25 @@ interface UserAvatarProps {
   size?: 'xs' | 'sm' | 'lg'
 }
 
-const avatarSizeClasses = {
-  xs: 'size-6 text-xs',
-  sm: 'size-9 text-sm',
-  lg: 'size-16 text-2xl',
+const avatarSizes = {
+  xs: { size: 24, fontSize: '0.75rem' },
+  sm: { size: 36, fontSize: '0.875rem' },
+  lg: { size: 64, fontSize: '1.5rem' },
 }
 
 export const UserAvatar = ({ avatarUrl, displayName, size = 'sm' }: UserAvatarProps) => {
-  const sizeClass = avatarSizeClasses[size]
+  const { size: pixels, fontSize } = avatarSizes[size]
   const fallback = displayName.slice(0, 1).toLocaleUpperCase('vi-VN')
 
   return avatarUrl ? (
-    <img
+    <Avatar
       alt={`Avatar của ${displayName}`}
-      className={`${sizeClass} shrink-0 rounded-full border border-slate-200 object-cover`}
       src={`${apiBaseUrl}${avatarUrl}`}
+      sx={{ width: pixels, height: pixels, flexShrink: 0, border: 1, borderColor: 'divider' }}
     />
   ) : (
-    <span className={`${sizeClass} grid shrink-0 place-items-center rounded-full bg-blue-100 font-extrabold text-blue-700`} aria-hidden="true">
+    <Avatar aria-hidden="true" sx={{ width: pixels, height: pixels, flexShrink: 0, fontSize, fontWeight: 800, bgcolor: 'primary.light', color: 'primary.main' }}>
       {fallback}
-    </span>
+    </Avatar>
   )
 }

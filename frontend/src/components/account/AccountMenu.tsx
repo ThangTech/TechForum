@@ -1,3 +1,5 @@
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { ActionMenu, type ActionMenuItem } from '../common/ActionMenu'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -58,7 +60,7 @@ export const AccountMenu = () => {
   ]
 
   return (
-    <div className="grid justify-items-end gap-1">
+    <Stack sx={{ alignItems: 'flex-end', gap: 0.5 }}>
       <ActionMenu
         icon={<UserAvatar avatarUrl={user.avatarUrl} displayName={user.displayName} />}
         isIconOnly
@@ -66,7 +68,7 @@ export const AccountMenu = () => {
         label={`Tài khoản của ${user.displayName}`}
         menuWidth={220}
       />
-      {error && <span className="max-w-56 text-right text-xs text-red-700" role="alert">{error}</span>}
-    </div>
+      {error && <Typography color="error" component="span" role="alert" sx={{ maxWidth: 224, textAlign: 'right', fontSize: '0.75rem' }}>{error}</Typography>}
+    </Stack>
   )
 }

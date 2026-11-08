@@ -1,6 +1,8 @@
+import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import MuiLink from '@mui/material/Link'
 import { useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -69,9 +71,7 @@ export const LoginPage = () => {
           <p className="auth-form__lead">Đăng nhập để viết bài, đặt câu hỏi và lưu nội dung bạn quan tâm.</p>
         </div>
 
-        {notice && !error && (
-          <div className="border border-green-200 bg-green-50 p-4 text-sm text-green-900" role="status">{notice}</div>
-        )}
+        {notice && !error && <Alert role="status" severity="success">{notice}</Alert>}
         {error && <div className="form-alert" role="alert">{error}</div>}
 
         <FormTextField
@@ -103,7 +103,7 @@ export const LoginPage = () => {
             />
           )}
         />
-        <Link className="text-sm font-semibold text-blue-700 underline" to={appRoutes.forgotPassword}>Quên mật khẩu?</Link>
+        <MuiLink component={Link} sx={{ fontSize: '0.875rem', fontWeight: 600 }} to={appRoutes.forgotPassword} underline="always">Quên mật khẩu?</MuiLink>
         <Button loading={isSubmitting} type="submit" variant="contained" fullWidth>Đăng nhập</Button>
 
         <p className="auth-form__switch">

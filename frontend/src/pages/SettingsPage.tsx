@@ -1,24 +1,26 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import { useNavigate } from 'react-router-dom'
 import { appRoutes } from '../appRoutes'
+import { PageShell } from '../components/common/PageShell'
+import { Panel } from '../components/common/Panel'
 
 export const SettingsPage = () => {
   const navigate = useNavigate()
 
   return (
-    <main className="main-area" id="main-content">
-      <div className="page-content py-10">
-        <section className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 sm:p-8">
-          <p className="eyebrow">Tùy chỉnh</p>
-          <h1 className="mt-1 text-2xl font-extrabold text-slate-950">Trải nghiệm TechForum</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Xem lại hướng dẫn ngắn về tìm kiếm, duyệt nội dung, viết bài và quản lý tài khoản.
-          </p>
-          <div className="mt-6">
-            <Button onClick={() => navigate(`${appRoutes.home}?tour=1`)} variant="contained">Chạy lại hướng dẫn</Button>
-          </div>
-        </section>
-      </div>
-    </main>
+    <PageShell compact maxWidth={1240}>
+      <Panel component="section" sx={{ mx: 'auto', maxWidth: 672, p: { xs: 3, sm: 4 } }}>
+        <p className="eyebrow">Tùy chỉnh</p>
+        <Typography component="h1" sx={{ mt: 0.5, color: 'var(--color-heading)', fontSize: '1.5rem', fontWeight: 800 }}>Trải nghiệm TechForum</Typography>
+        <Typography color="text.secondary" sx={{ mt: 1.5, lineHeight: '1.5rem' }} variant="body2">
+          Xem lại hướng dẫn ngắn về tìm kiếm, duyệt nội dung, viết bài và quản lý tài khoản.
+        </Typography>
+        <Box sx={{ mt: 3 }}>
+          <Button onClick={() => navigate(`${appRoutes.home}?tour=1`)} variant="contained">Chạy lại hướng dẫn</Button>
+        </Box>
+      </Panel>
+    </PageShell>
   )
 }

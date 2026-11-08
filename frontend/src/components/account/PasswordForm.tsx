@@ -1,9 +1,12 @@
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { ApiError } from '../../api/client'
 import { getFieldError } from '../../api/fieldErrors'
 import { FormTextField } from '../common/FormTextField'
+import { Panel } from '../common/Panel'
 
 interface PasswordFormValues {
   currentPassword: string
@@ -40,10 +43,10 @@ export const PasswordForm = ({ onSave }: PasswordFormProps) => {
   const newPasswordError = getFieldError(error, 'newPassword')
 
   return (
-    <form className="rounded-xl border border-slate-200 bg-white p-6" onSubmit={handleSubmit(submitPassword)} noValidate>
-      <h2 className="text-xl font-extrabold text-slate-950">Đổi mật khẩu</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">Mật khẩu mới cần ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</p>
-      <div className="mt-5 grid gap-4">
+    <Panel component="form" noValidate onSubmit={handleSubmit(submitPassword)} sx={{ p: 3, overflow: 'visible' }}>
+      <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Đổi mật khẩu</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1, lineHeight: '1.5rem' }} variant="body2">Mật khẩu mới cần ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</Typography>
+      <Stack spacing={2} sx={{ mt: 2.5 }}>
         <FormTextField
           autoComplete="current-password"
           control={control}
@@ -76,12 +79,12 @@ export const PasswordForm = ({ onSave }: PasswordFormProps) => {
           }}
           type="password"
         />
-      </div>
-      {error && !currentPasswordError && !newPasswordError && <p className="mt-4 text-sm text-red-700" role="alert">{error.message}</p>}
-      {message && <p className="mt-4 text-sm text-green-700" role="status">{message}</p>}
-      <div className="mt-5">
+      </Stack>
+      {error && !currentPasswordError && !newPasswordError && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{error.message}</Typography>}
+      {message && <Typography color="success" role="status" sx={{ mt: 2 }} variant="body2">{message}</Typography>}
+      <Stack direction="row" sx={{ mt: 2.5 }}>
         <Button loading={isSubmitting} type="submit" variant="contained">Đổi mật khẩu</Button>
-      </div>
-    </form>
+      </Stack>
+    </Panel>
   )
 }

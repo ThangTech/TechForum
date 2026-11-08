@@ -1,4 +1,8 @@
+import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
+import MuiLink from '@mui/material/Link'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation } from 'react-router-dom'
@@ -66,11 +70,7 @@ export const ForgotPasswordPage = () => {
             {error}
           </div>
         )}
-        {message && (
-          <div className="border border-green-200 bg-green-50 p-4 text-sm text-green-900" role="status">
-            {message}
-          </div>
-        )}
+        {message && <Alert role="status" severity="success">{message}</Alert>}
         <FormTextField
           autoComplete="email"
           control={control}
@@ -129,27 +129,27 @@ export const ResetPasswordPage = () => {
         </div>
         {isComplete ? (
           <>
-            <p className="border border-green-200 bg-green-50 p-4 text-green-900" role="status">
+            <Alert role="status" severity="success">
               Đã đổi mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới. Các phiên đăng nhập trước đã mất hiệu
               lực.
-            </p>
-            <Link className="font-semibold text-blue-700 underline" to={appRoutes.login}>
+            </Alert>
+            <MuiLink component={Link} sx={{ fontWeight: 600 }} to={appRoutes.login} underline="always">
               Đăng nhập
-            </Link>
+            </MuiLink>
           </>
         ) : !email || !token ? (
           <div role="alert">
             <p>Liên kết khôi phục chưa hợp lệ.</p>
-            <Link className="font-semibold text-blue-700 underline" to={appRoutes.forgotPassword}>
+            <MuiLink component={Link} sx={{ fontWeight: 600 }} to={appRoutes.forgotPassword} underline="always">
               Yêu cầu liên kết mới
-            </Link>
+            </MuiLink>
           </div>
         ) : (
-          <form className="grid gap-5" onSubmit={handleSubmit(submit)} noValidate>
-            <p className="break-all text-sm text-slate-600">Tài khoản: {email}</p>
-            <p className="text-sm text-slate-600">
+          <Stack component="form" noValidate onSubmit={handleSubmit(submit)} spacing={2.5}>
+            <Typography color="text.secondary" sx={{ wordBreak: 'break-all' }} variant="body2">Tài khoản: {email}</Typography>
+            <Typography color="text.secondary" variant="body2">
               Mật khẩu cần 8–100 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
-            </p>
+            </Typography>
             {error && (
               <div className="form-alert" role="alert">
                 {error}
@@ -180,10 +180,10 @@ export const ResetPasswordPage = () => {
               type="password"
             />
             <Button loading={isSubmitting} type="submit" variant="contained" fullWidth>Lưu mật khẩu mới</Button>
-            <Link className="text-sm font-semibold text-blue-700 underline" to={appRoutes.forgotPassword}>
+            <MuiLink component={Link} sx={{ fontSize: '0.875rem', fontWeight: 600 }} to={appRoutes.forgotPassword} underline="always">
               Yêu cầu liên kết mới
-            </Link>
-          </form>
+            </MuiLink>
+          </Stack>
         )}
       </div>
     </AuthPageLayout>

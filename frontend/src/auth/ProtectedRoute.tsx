@@ -1,6 +1,9 @@
+import Typography from '@mui/material/Typography'
 import { useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
+import { PageShell } from '../components/common/PageShell'
+import { Panel } from '../components/common/Panel'
 import { useAuth } from './authState'
 
 interface ProtectedRouteProps {
@@ -23,14 +26,12 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
 
   if (user) {
     return (
-      <main className="main-area" id="main-content">
-        <div className="page-content py-14">
-          <div className="rounded-xl border border-amber-200 bg-white p-8 text-center">
-            <h1 className="text-xl font-extrabold text-slate-950">Bạn không có quyền truy cập</h1>
-            <p className="mt-2 text-sm text-slate-600">Khu vực này chỉ dành cho quản trị viên TechForum.</p>
-          </div>
-        </div>
-      </main>
+      <PageShell maxWidth={1240}>
+        <Panel sx={{ p: 4, textAlign: 'center' }} tone="warning">
+          <Typography component="h1" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Bạn không có quyền truy cập</Typography>
+          <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">Khu vực này chỉ dành cho quản trị viên TechForum.</Typography>
+        </Panel>
+      </PageShell>
     )
   }
 

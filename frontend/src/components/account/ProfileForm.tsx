@@ -1,9 +1,13 @@
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { ApiError } from '../../api/client'
 import { getFieldError } from '../../api/fieldErrors'
 import { FormTextField } from '../common/FormTextField'
+import { Panel } from '../common/Panel'
 
 interface ProfileFormValues {
   displayName: string
@@ -42,10 +46,10 @@ export const ProfileForm = ({ displayName, bio, onSave }: ProfileFormProps) => {
   const displayNameError = getFieldError(error, 'displayName')
 
   return (
-    <form className="rounded-xl border border-slate-200 bg-white p-6" onSubmit={handleSubmit(submitProfile)} noValidate>
-      <h2 className="text-xl font-extrabold text-slate-950">Hồ sơ</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">Tên này xuất hiện trên bài viết, câu trả lời và hồ sơ công khai.</p>
-      <div className="mt-5">
+    <Panel component="form" noValidate onSubmit={handleSubmit(submitProfile)} sx={{ p: 3, overflow: 'visible' }}>
+      <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Hồ sơ</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1, lineHeight: '1.5rem' }} variant="body2">Tên này xuất hiện trên bài viết, câu trả lời và hồ sơ công khai.</Typography>
+      <Box sx={{ mt: 2.5 }}>
         <FormTextField
           autoComplete="name"
           control={control}
@@ -55,8 +59,8 @@ export const ProfileForm = ({ displayName, bio, onSave }: ProfileFormProps) => {
           rules={{ required: 'Vui lòng nhập tên hiển thị.' }}
           serverError={displayNameError}
         />
-      </div>
-      <div className="mt-4">
+      </Box>
+      <Box sx={{ mt: 2 }}>
         <FormTextField
           control={control}
           id="profile-bio"
@@ -67,13 +71,13 @@ export const ProfileForm = ({ displayName, bio, onSave }: ProfileFormProps) => {
           placeholder="Chia sẻ ngắn về kinh nghiệm và lĩnh vực bạn quan tâm."
           slotProps={{ htmlInput: { maxLength: 500 } }}
         />
-        <p className="mt-1 text-right text-xs text-slate-500">{bioValue.length}/500</p>
-      </div>
-      {error && !displayNameError && <p className="mt-4 text-sm text-red-700" role="alert">{error.message}</p>}
-      {message && <p className="mt-4 text-sm text-green-700" role="status">{message}</p>}
-      <div className="mt-5">
+        <Typography color="text.secondary" sx={{ mt: 0.5, textAlign: 'right', fontSize: '0.75rem' }}>{bioValue.length}/500</Typography>
+      </Box>
+      {error && !displayNameError && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{error.message}</Typography>}
+      {message && <Typography color="success" role="status" sx={{ mt: 2 }} variant="body2">{message}</Typography>}
+      <Stack direction="row" sx={{ mt: 2.5 }}>
         <Button loading={isSubmitting} type="submit" variant="contained">Lưu hồ sơ</Button>
-      </div>
-    </form>
+      </Stack>
+    </Panel>
   )
 }

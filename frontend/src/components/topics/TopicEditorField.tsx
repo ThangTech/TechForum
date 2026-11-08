@@ -1,3 +1,5 @@
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import FroalaEditorModule from 'react-froala-wysiwyg'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import 'froala-editor/css/froala_editor.pkgd.min.css'
@@ -83,15 +85,15 @@ export const TopicEditorField = ({
   }), [handleUploadError, startUpload, syncInsertedMedia, uploadedMedia])
 
   return (
-    <div className="grid gap-2">
-      <span className="text-sm font-bold text-slate-800">Nội dung</span>
+    <Stack spacing={1}>
+      <Typography component="span" sx={{ color: 'text.primary', fontSize: '0.875rem', fontWeight: 700 }}>Nội dung</Typography>
       <FroalaEditorComponent config={config} model={value} onModelChange={handleChange} tag="textarea" />
       {pendingUploadCount > 0 && (
-        <p className="text-sm text-blue-700" role="status">Đang tải media lên, vui lòng chờ hoàn tất…</p>
+        <Typography color="primary" role="status" variant="body2">Đang tải media lên, vui lòng chờ hoàn tất…</Typography>
       )}
-      {uploadError && <p className="text-sm text-amber-700" role="status">{uploadError}</p>}
-      {error && <p className="text-sm text-red-700">{error}</p>}
-    </div>
+      {uploadError && <Typography color="warning" role="status" variant="body2">{uploadError}</Typography>}
+      {error && <Typography color="error" variant="body2">{error}</Typography>}
+    </Stack>
   )
 }
 
