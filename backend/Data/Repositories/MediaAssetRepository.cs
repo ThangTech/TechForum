@@ -47,7 +47,9 @@ public sealed class MediaAssetRepository(TechForumDbContext dbContext) : IMediaA
         int take,
         CancellationToken cancellationToken) =>
         await dbContext.MediaAssets
-            .Where(item => item.TopicId == null && item.CreatedAtUtc < threshold)
+            // A picture that a draft still uses is not an orphan: the member may come back to the draft later.
+            .Where(item => item.TopicId == null && item.CreatedAtUtc < threshold &&
+                !dbContext.Drafts.Any(draft => draft.MediaIds.Contains(item.Id)))
             .OrderBy(item => item.CreatedAtUtc)
             .Take(take)
             .ToListAsync(cancellationToken);

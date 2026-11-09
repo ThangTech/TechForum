@@ -144,6 +144,8 @@ builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddHostedService<MediaCleanupBackgroundService>();
 builder.Services.AddScoped<IRefreshTokenCleanupService, RefreshTokenCleanupService>();
 builder.Services.AddScoped<IBannerRepository, BannerRepository>();
+builder.Services.AddScoped<IDraftRepository, DraftRepository>();
+builder.Services.AddScoped<IDraftService, DraftService>();
 builder.Services.AddSingleton<IBannerImageStorage, BannerImageStorage>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddHostedService<RefreshTokenCleanupBackgroundService>();

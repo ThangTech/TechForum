@@ -13,6 +13,7 @@ namespace TechForum.Api.Services;
 public sealed partial class TopicService(
     ITopicRepository topicRepository,
     IMediaAssetRepository mediaAssetRepository,
+    IDraftRepository draftRepository,
     IContentSanitizer contentSanitizer,
     TimeProvider timeProvider) : ITopicService
 {
@@ -132,6 +133,8 @@ public sealed partial class TopicService(
                 "Không thể tạo đường dẫn riêng cho tiêu đề này lúc này. Vui lòng thử lại.");
         }
 
+        // The topic is saved, so the automatic draft of the new topic is not needed any more.
+        await draftRepository.DeleteForTargetAsync(authorId, null, cancellationToken);
         return CreateTopicResult.Success(MapSavedTopic(topic, values));
     }
 
@@ -208,6 +211,7 @@ public sealed partial class TopicService(
         }
 
         await topicRepository.SaveChangesAsync(cancellationToken);
+        await draftRepository.DeleteForTargetAsync(authorId, topic.Id, cancellationToken);
         return CreateTopicResult.Success(MapSavedTopic(topic, values));
     }
 
@@ -230,6 +234,7 @@ public sealed partial class TopicService(
         topic.IsDeleted = true;
         topic.UpdatedAtUtc = timeProvider.GetUtcNow();
         await topicRepository.SaveChangesAsync(cancellationToken);
+        await draftRepository.DeleteForTargetAsync(authorId, id, cancellationToken);
         return SoftDeleteTopicResult.Success();
     }
 

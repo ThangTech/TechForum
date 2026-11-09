@@ -26,6 +26,8 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
 
     public DbSet<TopicStar> TopicStars => Set<TopicStar>();
 
+    public DbSet<Draft> Drafts => Set<Draft>();
+
     public DbSet<TopicBookmark> TopicBookmarks => Set<TopicBookmark>();
 
     public DbSet<ContentReport> ContentReports => Set<ContentReport>();
@@ -92,6 +94,27 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         topic.HasOne(item => item.Author)
             .WithMany()
             .HasForeignKey(item => item.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        var draft = modelBuilder.Entity<Draft>();
+        draft.ToTable("Drafts");
+        draft.HasKey(item => item.Id);
+        draft.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        draft.Property(item => item.Title).HasMaxLength(200).IsRequired();
+        draft.Property(item => item.Summary).HasMaxLength(500).IsRequired();
+        draft.Property(item => item.BodyHtml).IsRequired();
+        draft.Property(item => item.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
+        // One draft for each member and target: a new topic (TopicId is null) or a topic that is edited.
+        // The index has no filter, so the NULL of a new topic also counts as one value and a member cannot
+        // have two drafts of a new topic.
+        draft.HasIndex(item => new { item.UserId, item.TopicId }).IsUnique().HasFilter(null);
+        draft.HasOne(item => item.User)
+            .WithMany()
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        draft.HasOne(item => item.Topic)
+            .WithMany()
+            .HasForeignKey(item => item.TopicId)
             .OnDelete(DeleteBehavior.Restrict);
 
         var banner = modelBuilder.Entity<Banner>();

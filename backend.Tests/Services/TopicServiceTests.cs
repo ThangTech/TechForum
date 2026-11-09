@@ -7,6 +7,7 @@ using TechForum.Api.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using TechForum.Api.Tests.Fakes;
 using Xunit;
 
 namespace TechForum.Api.Tests.Services;
@@ -614,6 +615,71 @@ public sealed class TopicServiceTests
         Assert.True(repository.SavedChanges);
     }
 
+    [Fact]
+    public async Task CreateAsync_RemovesTheAutomaticDraftOfANewTopic()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" },
+            Tags = []
+        };
+        var drafts = new FakeDraftRepository();
+        drafts.Drafts.Add(new Draft { Id = Guid.NewGuid(), UserId = "member-a", TopicId = null, Title = "Viết dở", Summary = "", BodyHtml = "<p>x</p>" });
+        var request = new CreateTopicRequest(
+            "Tiêu đề đủ dài để xuất bản", "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.", "<p>Nội dung</p>", "article", 2, [], [], true);
+
+        var result = await CreateService(repository, draftRepository: drafts).CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal([("member-a", (int?)null)], drafts.DeletedTargets);
+        Assert.Empty(drafts.Drafts);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenTheFormIsInvalid_KeepsTheAutomaticDraft()
+    {
+        var repository = new FakeTopicRepository { Category = null };
+        var drafts = new FakeDraftRepository();
+        drafts.Drafts.Add(new Draft { Id = Guid.NewGuid(), UserId = "member-a", TopicId = null, Title = "Viết dở", Summary = "", BodyHtml = "<p>x</p>" });
+        var request = new CreateTopicRequest("Ngắn", "Ngắn", "<p>x</p>", "article", 2, [], [], true);
+
+        var result = await CreateService(repository, draftRepository: drafts).CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Empty(drafts.DeletedTargets);
+        Assert.Single(drafts.Drafts);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RemovesTheAutomaticDraftOfThatTopicOnly()
+    {
+        var existing = CreateTopic();
+        var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category };
+        var drafts = new FakeDraftRepository();
+        drafts.Drafts.Add(new Draft { Id = Guid.NewGuid(), UserId = "member-a", TopicId = existing.Id, Title = "Sửa dở", Summary = "", BodyHtml = "<p>x</p>" });
+        drafts.Drafts.Add(new Draft { Id = Guid.NewGuid(), UserId = "member-a", TopicId = null, Title = "Bài mới dở", Summary = "", BodyHtml = "<p>y</p>" });
+        var request = new UpdateTopicRequest(
+            "Tiêu đề đã được cập nhật", "Tóm tắt mới hợp lệ có nhiều hơn hai mươi ký tự.", "<p>Nội dung sau khi chỉnh sửa.</p>", "article", existing.CategoryId, [], [], false);
+
+        var result = await CreateService(repository, draftRepository: drafts).UpdateAsync(existing.Id, "member-a", request, CancellationToken.None);
+
+        Assert.True(result!.Succeeded);
+        Assert.Equal([("member-a", (int?)existing.Id)], drafts.DeletedTargets);
+        Assert.Null(Assert.Single(drafts.Drafts).TopicId);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_RemovesTheAutomaticDraftOfThatTopic()
+    {
+        var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };
+        var drafts = new FakeDraftRepository();
+
+        var result = await CreateService(repository, draftRepository: drafts).SoftDeleteAsync(10, "member-a", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal([("member-a", (int?)10)], drafts.DeletedTargets);
+    }
+
     private static CreateTopicRequest CreateRequest() => new(
         "Tiêu đề kiểm tra đường dẫn trùng",
         "Tóm tắt hợp lệ cho kiểm thử đường dẫn bị trùng.",
@@ -626,8 +692,9 @@ public sealed class TopicServiceTests
 
     private static TopicService CreateService(
         FakeTopicRepository repository,
-        FakeMediaAssetRepository? mediaRepository = null) =>
-        new(repository, mediaRepository ?? new FakeMediaAssetRepository(), new ContentSanitizer(), TimeProvider.System);
+        FakeMediaAssetRepository? mediaRepository = null,
+        FakeDraftRepository? draftRepository = null) =>
+        new(repository, mediaRepository ?? new FakeMediaAssetRepository(), draftRepository ?? new FakeDraftRepository(), new ContentSanitizer(), TimeProvider.System);
 
     private sealed class FakeTopicRepository : ITopicRepository
     {
