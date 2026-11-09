@@ -1,8 +1,8 @@
-import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
+import { RichHtml } from '../common/RichHtml'
 import { appRoutes } from '../../appRoutes'
 import { useAdminTopicDetail } from '../../queries/admin'
 import { getErrorMessage } from '../../queries/errorMessage'
@@ -56,9 +56,9 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
               <StatusBadge tone="amber">Đang bị ẩn</StatusBadge>
             )}
           </Stack>
-          <Box
+          <RichHtml
             className="admin-preview fr-view reading-content"
-            dangerouslySetInnerHTML={{ __html: data.bodyHtml }}
+            html={data.bodyHtml}
             sx={{ mt: 2.5 }}
           />
         </>

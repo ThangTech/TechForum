@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
+import { RichHtml } from '../common/RichHtml'
 import { deleteAnswer, setAnswerHelpful, type Answer, type AnswerHelpfulState, type AnswerPage } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
@@ -149,9 +150,9 @@ export const AnswerList = ({
               )}
               {answer.replyingTo && <Typography component="span" sx={{ fontSize: '0.75rem' }}>đang trả lời {answer.replyingTo.displayName}</Typography>}
             </Stack>
-            <Box
+            <RichHtml
               className="fr-view reading-content"
-              dangerouslySetInnerHTML={{ __html: answer.bodyHtml }}
+              html={answer.bodyHtml}
               sx={answerBodySx}
             />
             <Stack direction="row" sx={{ mt: 2, pt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 1.5, borderTop: 1, borderColor: 'divider' }}>

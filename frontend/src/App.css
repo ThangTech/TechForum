@@ -253,6 +253,64 @@
   background: var(--color-subtle);
 }
 
+/* Colours of the code blocks (class names of highlight.js, colours of the GitHub dark theme). The block has a dark
+   background in the light and in the dark mode, so one palette is enough. */
+.reading-content pre .hljs-keyword,
+.reading-content pre .hljs-doctag,
+.reading-content pre .hljs-template-tag,
+.reading-content pre .hljs-type {
+  color: #ff7b72;
+}
+
+.reading-content pre .hljs-title,
+.reading-content pre .hljs-title.function_,
+.reading-content pre .hljs-title.class_ {
+  color: #d2a8ff;
+}
+
+.reading-content pre .hljs-attr,
+.reading-content pre .hljs-attribute,
+.reading-content pre .hljs-literal,
+.reading-content pre .hljs-number,
+.reading-content pre .hljs-operator,
+.reading-content pre .hljs-selector-class,
+.reading-content pre .hljs-selector-id,
+.reading-content pre .hljs-variable.constant_ {
+  color: #79c0ff;
+}
+
+.reading-content pre .hljs-string,
+.reading-content pre .hljs-regexp,
+.reading-content pre .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+
+.reading-content pre .hljs-built_in,
+.reading-content pre .hljs-symbol,
+.reading-content pre .hljs-bullet,
+.reading-content pre .hljs-params,
+.reading-content pre .hljs-variable,
+.reading-content pre .hljs-template-variable {
+  color: #ffa657;
+}
+
+.reading-content pre .hljs-name,
+.reading-content pre .hljs-tag,
+.reading-content pre .hljs-selector-tag {
+  color: #7ee787;
+}
+
+.reading-content pre .hljs-comment,
+.reading-content pre .hljs-quote,
+.reading-content pre .hljs-meta {
+  color: #8b949e;
+}
+
+.reading-content pre .hljs-comment,
+.reading-content pre .hljs-quote {
+  font-style: italic;
+}
+
 .reading-content img,
 .reading-content video,
 .reading-content iframe {

@@ -4,6 +4,7 @@ import MuiLink from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
+import { RichHtml } from '../common/RichHtml'
 import type { AdminReport } from '../../api/reports'
 import { appRoutes } from '../../appRoutes'
 import { DialogFrame } from '../feedback/DialogFrame'
@@ -58,17 +59,17 @@ export const ReportPreviewDialog = ({
         <Box component="summary" sx={{ ...smallTextSx, cursor: 'pointer', fontWeight: 700 }}>
           Ngữ cảnh: câu trả lời gốc
         </Box>
-        <Box
+        <RichHtml
           className="fr-view reading-content admin-preview"
-          dangerouslySetInnerHTML={{ __html: report.parentAnswerBodyHtml }}
+          html={report.parentAnswerBodyHtml}
           sx={{ mt: 1.5 }}
         />
       </Box>
     )}
     <Typography component="h4" sx={{ mt: 2.5, fontSize: '0.875rem', fontWeight: 700 }}>Nội dung bị báo cáo</Typography>
-    <Box
+    <RichHtml
       className="admin-preview fr-view reading-content"
-      dangerouslySetInnerHTML={{ __html: report.targetBodyHtml }}
+      html={report.targetBodyHtml}
       sx={{ mt: 1.5 }}
     />
     {report.status !== 'pending' && (

@@ -3,6 +3,7 @@ import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { RichHtml } from '../components/common/RichHtml'
 import { ApiError } from '../api/client'
 import type { Category } from '../api/categories'
 import type { Tag } from '../api/tags'
@@ -224,9 +225,9 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
                 Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
               </p>
               {isPreviewOpen && (
-                <div
+                <RichHtml
                   className="fr-view reading-content write-preview"
-                  dangerouslySetInnerHTML={{ __html: toDisplayMediaHtml(bodyHtml) }}
+                  html={toDisplayMediaHtml(bodyHtml)}
                 />
               )}
             </div>

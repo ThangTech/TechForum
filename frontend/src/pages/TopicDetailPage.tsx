@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useEffect, useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
+import { RichHtml } from '../components/common/RichHtml'
 import { ApiError } from '../api/client'
 import { toDisplayMediaHtml } from '../api/media'
 import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
@@ -161,9 +162,9 @@ export const TopicDetailPage = () => {
                   )}
                 </Box>
 
-                <Box
+                <RichHtml
                   className="fr-view reading-content"
-                  dangerouslySetInnerHTML={{ __html: readingContent.html }}
+                  html={readingContent.html}
                   sx={{
                     p: { xs: 3, sm: 4 },
                     color: 'text.primary',
