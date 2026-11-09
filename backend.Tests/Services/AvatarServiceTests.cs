@@ -100,8 +100,10 @@ public sealed class AvatarServiceTests : IDisposable
         cloud.Fails = true;
         var failed = await CreateService().UpdateAsync(UserId, CreateFile(Png, "image/png"), default);
 
-        Assert.Contains("Cloudinary", notConfigured.Error);
-        Assert.Contains("Cloudinary", failed.Error);
+        Assert.False(notConfigured.Succeeded);
+        Assert.False(failed.Succeeded);
+        Assert.DoesNotContain("cloudinary", notConfigured.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cloudinary", failed.Error, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(OldCloudAvatar, accounts.User.AvatarUrl);
     }
 
@@ -114,7 +116,7 @@ public sealed class AvatarServiceTests : IDisposable
         var result = await CreateService().UpdateAsync(UserId, CreateFile(Png, "image/png"), default);
 
         Assert.False(result.Succeeded);
-        Assert.Contains("không đọc được tệp", result.Error);
+        Assert.Contains("Không đọc được tệp", result.Error);
         Assert.Equal(OldCloudAvatar, accounts.User.AvatarUrl);
         Assert.Empty(cloud.Deleted);
     }

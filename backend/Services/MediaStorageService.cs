@@ -159,7 +159,9 @@ public sealed class MediaStorageService : IMediaStorageService
 
         if (!cloud.IsConfigured)
         {
-            return MediaUploadResult.Unavailable("Chưa cấu hình lưu trữ Cloudinary nên chưa thể tải tệp lên.");
+            // The member only sees a general sentence; the owner reads the reason in the log.
+            logger.LogError("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret) nên không thể tải media lên.");
+            return MediaUploadResult.Unavailable("Chưa thể lưu tệp lúc này. Vui lòng thử lại sau.");
         }
 
         var id = Guid.NewGuid();
@@ -179,14 +181,15 @@ public sealed class MediaStorageService : IMediaStorageService
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được media lên Cloudinary.");
-            return MediaUploadResult.Unavailable("Không thể tải tệp lên Cloudinary lúc này. Vui lòng thử lại.");
+            return MediaUploadResult.Unavailable("Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
 
         // An address that the rules do not know would be removed from the topic by the sanitizer, so it is refused now.
         if (!rules.IsTopicMediaUrl(url))
         {
+            logger.LogWarning("Cloudinary trả về địa chỉ media không đúng quy tắc: {Url}", url);
             await TryDeleteFromCloudAsync(url, cancellationToken);
-            return MediaUploadResult.Unavailable("Cloudinary trả về địa chỉ không hợp lệ.");
+            return MediaUploadResult.Unavailable("Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
 
         var mediaAsset = new MediaAsset

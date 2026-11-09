@@ -56,8 +56,10 @@ public sealed class BannerImageStorageTests : IDisposable
         cloud.Fails = true;
         var failed = await CreateStorage().SaveAsync(CreateFile(Png, "image/png"), default);
 
-        Assert.Contains("Cloudinary", notConfigured.Error);
-        Assert.Contains("Cloudinary", failed.Error);
+        Assert.False(notConfigured.Succeeded);
+        Assert.False(failed.Succeeded);
+        Assert.DoesNotContain("cloudinary", notConfigured.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cloudinary", failed.Error, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(cloud.Uploads);
     }
 

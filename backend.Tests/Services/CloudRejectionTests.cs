@@ -27,14 +27,25 @@ public sealed class CloudRejectionTests
     [InlineData("Unsupported file format")]
     public void ToMessage_NamesAFileThatIsNotAReadablePicture(string cloudinary)
     {
-        Assert.Contains("không đọc được tệp", CloudRejection.ToMessage(cloudinary));
+        Assert.Contains("Không đọc được tệp", CloudRejection.ToMessage(cloudinary));
+    }
+
+    [Theory]
+    [InlineData("File size too large. Got 10847345. Maximum is 10485760.")]
+    [InlineData("Image dimensions too many megapixels")]
+    [InlineData("Failed to ping image")]
+    [InlineData("Something new happened at cloudinary")]
+    public void ToMessage_NeverShowsTheNameOfTheStorageServiceOrItsOwnSentence(string cloudinary)
+    {
+        var message = CloudRejection.ToMessage(cloudinary);
+
+        Assert.DoesNotContain("cloudinary", message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("something new happened", message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void ToMessage_KeepsTheSentenceOfCloudinaryWhenItIsNotKnown()
+    public void ToMessage_GivesAGeneralSentenceWhenTheCauseIsNotKnown()
     {
-        var message = CloudRejection.ToMessage("Something new happened");
-
-        Assert.Contains("Something new happened", message);
+        Assert.Contains("Không thể lưu tệp", CloudRejection.ToMessage("Something new happened"));
     }
 }

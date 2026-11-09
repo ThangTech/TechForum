@@ -70,7 +70,8 @@ public sealed class BannerImageStorage : IBannerImageStorage
 
         if (!cloud.IsConfigured)
         {
-            return BannerImageResult.Invalid("Chưa cấu hình lưu trữ Cloudinary nên chưa thể tải ảnh banner lên.");
+            logger.LogError("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret) nên không thể tải ảnh banner lên.");
+            return BannerImageResult.Invalid("Chưa thể lưu ảnh lúc này. Vui lòng thử lại sau.");
         }
 
         var id = Guid.NewGuid();
@@ -86,7 +87,7 @@ public sealed class BannerImageStorage : IBannerImageStorage
 
             logger.LogWarning("Cloudinary trả về địa chỉ banner không đúng quy tắc: {Url}", url);
             await TryDeleteFromCloudAsync(url, cancellationToken);
-            return BannerImageResult.Invalid("Cloudinary trả về địa chỉ không hợp lệ.");
+            return BannerImageResult.Invalid("Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
         catch (CloudMediaRejectedException exception)
         {
@@ -97,7 +98,7 @@ public sealed class BannerImageStorage : IBannerImageStorage
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được ảnh banner lên Cloudinary.");
-            return BannerImageResult.Invalid("Không thể tải ảnh lên Cloudinary lúc này. Vui lòng thử lại.");
+            return BannerImageResult.Invalid("Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
     }
 

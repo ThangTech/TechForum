@@ -52,7 +52,8 @@ public sealed class AvatarService(
 
         if (!cloud.IsConfigured)
         {
-            return AvatarUpdateResult.Invalid("Chưa cấu hình lưu trữ Cloudinary nên chưa thể đổi avatar.");
+            logger.LogError("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret) nên không thể đổi avatar.");
+            return AvatarUpdateResult.Invalid("Chưa thể đổi avatar lúc này. Vui lòng thử lại sau.");
         }
 
         var (newAvatarUrl, uploadError) = await UploadAsync(file, extension, cancellationToken);
@@ -146,7 +147,7 @@ public sealed class AvatarService(
 
             logger.LogWarning("Cloudinary trả về địa chỉ avatar không đúng quy tắc: {Url}", url);
             await DeleteFromCloudAsync(url, cancellationToken);
-            return (null, "Cloudinary trả về địa chỉ không hợp lệ.");
+            return (null, "Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
         catch (CloudMediaRejectedException exception)
         {
@@ -157,7 +158,7 @@ public sealed class AvatarService(
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được avatar lên Cloudinary.");
-            return (null, "Không thể tải avatar lên Cloudinary lúc này. Vui lòng thử lại.");
+            return (null, "Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
     }
 

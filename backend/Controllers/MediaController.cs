@@ -50,7 +50,7 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
             {
                 Status = StatusCodes.Status503ServiceUnavailable,
                 Title = "Chưa xóa được media",
-                Detail = "Không thể xóa tệp trên Cloudinary lúc này. Vui lòng thử lại sau."
+                Detail = "Không thể xóa tệp lúc này. Vui lòng thử lại sau."
             }),
             _ => NotFound(new ProblemDetails
             {

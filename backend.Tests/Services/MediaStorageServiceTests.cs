@@ -104,7 +104,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         var result = await CreateService().StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
         Assert.True(result.IsUnavailable);
-        Assert.Contains("Cloudinary", result.Error);
+        Assert.DoesNotContain("cloudinary", result.Error, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(repository.Items);
     }
 
@@ -141,7 +141,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         var result = await CreateService().StoreVideoAsync(UserId, CreateFile(Mp4, "clip.mp4", "video/mp4"), default);
 
         Assert.False(result.IsUnavailable);
-        Assert.Contains("không đọc được tệp", result.Error);
+        Assert.Contains("Không đọc được tệp", result.Error);
     }
 
     [Fact]
