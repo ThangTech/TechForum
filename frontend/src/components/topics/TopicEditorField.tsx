@@ -1,5 +1,6 @@
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import FroalaEditorBase from 'froala-editor'
 import FroalaEditorModule from 'react-froala-wysiwyg'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import 'froala-editor/css/froala_editor.pkgd.min.css'
@@ -8,11 +9,13 @@ import 'froala-editor/js/plugins.pkgd.min.js'
 import 'froala-editor/js/languages/vi.js'
 import { parseUploadedMedia, type UploadedMedia } from '../../api/media'
 import { useAuthStore } from '../../auth/authStore'
-import { createFroalaConfig } from '../../config/froala'
+import { createFroalaConfig, fixVietnameseTranslation } from '../../config/froala'
 import { useThemeMode } from '../../theme/themeModeState'
 import { resolveModuleDefault } from '../../utils/moduleInterop'
 
 const FroalaEditorComponent = resolveModuleDefault<typeof FroalaEditorModule>(FroalaEditorModule)
+// The Vietnamese file was loaded above; this corrects its word for the character counter.
+fixVietnameseTranslation(resolveModuleDefault<Parameters<typeof fixVietnameseTranslation>[0]>(FroalaEditorBase))
 
 interface TopicEditorFieldProps {
   error?: string

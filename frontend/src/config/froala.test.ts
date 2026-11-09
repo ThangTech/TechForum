@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createFroalaConfig } from './froala'
+import { createFroalaConfig, fixVietnameseTranslation } from './froala'
 
 describe('createFroalaConfig', () => {
   it('tracks a video from upload start through editor insertion', () => {
@@ -67,5 +67,20 @@ describe('createFroalaConfig', () => {
     expect(createFroalaConfig({ ...options, theme: 'dark' })).toHaveProperty('theme', 'dark')
     expect(createFroalaConfig({ ...options, theme: 'light' })).not.toHaveProperty('theme')
     expect(createFroalaConfig(options)).not.toHaveProperty('theme')
+  })
+})
+
+describe('fixVietnameseTranslation', () => {
+  it('calls the character counter "Ký tự" and keeps the other words', () => {
+    const froala = { LANGUAGE: { vi: { translation: { Characters: 'Nhân vật', Words: 'Từ' } } } }
+
+    fixVietnameseTranslation(froala)
+
+    expect(froala.LANGUAGE.vi.translation).toEqual({ Characters: 'Ký tự', Words: 'Từ' })
+  })
+
+  it('does nothing when the Vietnamese file is not loaded', () => {
+    expect(() => fixVietnameseTranslation({})).not.toThrow()
+    expect(() => fixVietnameseTranslation({ LANGUAGE: {} })).not.toThrow()
   })
 })

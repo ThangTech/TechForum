@@ -1,6 +1,18 @@
 import { apiBaseUrl } from '../api/client'
 import { parseUploadedMedia, type UploadedMedia } from '../api/media'
 
+// The part of the Froala class that holds its translations.
+interface FroalaTranslations {
+  LANGUAGE?: Record<string, { translation?: Record<string, string> } | undefined>
+}
+
+// Froala's Vietnamese file calls the counter "Characters" at the bottom of the editor "Nhân vật", which
+// means characters of a story. The counter counts letters, so it is called "Ký tự".
+export const fixVietnameseTranslation = (froala: FroalaTranslations): void => {
+  const vietnamese = froala.LANGUAGE?.vi
+  if (vietnamese?.translation) vietnamese.translation.Characters = 'Ký tự'
+}
+
 export const hasFroalaKey = Boolean(import.meta.env.VITE_FROALA_KEY?.trim())
 
 // The part of the Froala editor object that the upload handlers use.
