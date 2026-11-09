@@ -479,6 +479,12 @@
   outline-offset: 3px;
 }
 
+/* A MUI text field already shows its focus on the border around it, so the line above must not draw a second one on the input inside. */
+.MuiInputBase-input:focus-visible,
+.admin-shell .MuiInputBase-input:focus-visible {
+  outline: 0;
+}
+
 .coming-soon {
   padding: 24px;
 }
