@@ -145,6 +145,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IBannedWordRepository, BannedWordRepository>();
 builder.Services.AddScoped<IBannedWordService, BannedWordService>();
 builder.Services.AddScoped<IBannedWordSeeder, BannedWordSeeder>();
+builder.Services.AddScoped<IContentCheckService, ContentCheckService>();
 builder.Services.AddSingleton<IBannedWordLoader, BannedWordLoader>();
 builder.Services.AddSingleton<IProfanityFilter, ProfanityFilter>();
 builder.Services.AddHostedService<BannedWordWarmupService>();

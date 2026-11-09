@@ -403,8 +403,21 @@ Quản trị viên (role `Administrator`) quản lý danh sách:
 - `DELETE /api/admin/banned-words/{id}`: `204`, hoặc `404` khi không có.
 
 Thêm và xóa đều ghi nhật ký quản trị (`banned-word-added`, `banned-word-removed`).
+
+Thành viên đã đăng nhập hỏi trước xem bộ lọc sẽ đổi gì, để cảnh báo ngay khi đang viết:
+
+- `POST /api/moderation/check` (cần đăng nhập), body `{ "title": "...", "summary": "...", "bodyHtml": "..." }`
+  (trường nào cũng có thể bỏ). Trả `{ hasProfanity, title, summary, bodyHtml }`: mỗi trường chỉ có
+  giá trị (văn bản đã thay bằng `***`) khi bị đổi, còn lại là `null`. Dùng đúng bộ lọc lúc lưu bài nên
+  kết quả khớp với những gì sẽ xảy ra khi đăng. Không lưu gì. Giới hạn: tiêu đề 300, tóm tắt 1.000,
+  nội dung 100.000 ký tự (quá thì `400`); chưa đăng nhập thì `401`. Endpoint không gắn
+  `[ProfanityFilter]` vì attribute đó sẽ làm sạch request trước và kết quả không bao giờ thấy thay đổi.
+  Frontend không chứa danh sách từ cấm nào: nó chỉ hỏi endpoint này.
 Bộ lọc chỉ áp dụng cho nội dung mới; nội dung đã đăng không bị đổi. Bản nháp tự lưu
 cũng chưa lọc, nhưng khi xuất bản bản nháp đi qua API tạo/sửa bài nên vẫn bị lọc.
+Danh sách thật có thể gộp thêm từ các nguồn mở (ví dụ kho `blue-eyes-vn/vietnamese-offensive-words`, giấy phép MIT,
+ghi nguồn trong báo cáo); mục có số/ký hiệu, chỉ 1-2 chữ cái hoặc không dấu và rất ngắn nên được duyệt tay
+(`banned-words.review.txt`, cũng không lên Git) vì dễ trùng chữ thường.
 Các test dùng từ giả; một test đọc file danh sách thật khi nó có trên máy để kiểm tra từng
 từ trong đó (và để câu tiếng Việt bình thường không bị chặn nhầm).
 

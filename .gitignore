@@ -14,6 +14,7 @@ TestResults/
 backend/App_Data/uploads/
 # Danh sách từ cấm thật: chỉ nằm ở máy, không đưa lên Git (file mẫu: banned-words.example.txt)
 backend/Data/Seed/banned-words.txt
+backend/Data/Seed/banned-words.review.txt
 backend/TechForum.Api.sln
 *.user
 *.suo
