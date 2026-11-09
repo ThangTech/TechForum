@@ -139,6 +139,9 @@ builder.Services.AddScoped<IPublicProfileService, PublicProfileService>();
 builder.Services.AddScoped<IUserFollowRepository, UserFollowRepository>();
 builder.Services.AddScoped<IUserFollowService, UserFollowService>();
 builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
+builder.Services.Configure<CloudinaryOptions>(
+    builder.Configuration.GetSection(CloudinaryOptions.SectionName));
+builder.Services.AddSingleton<MediaUrlRules>();
 builder.Services.AddSingleton<IContentSanitizer, ContentSanitizer>();
 builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddHostedService<MediaCleanupBackgroundService>();

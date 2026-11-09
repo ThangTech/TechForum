@@ -15,6 +15,7 @@ public sealed partial class TopicService(
     IMediaAssetRepository mediaAssetRepository,
     IDraftRepository draftRepository,
     IContentSanitizer contentSanitizer,
+    MediaUrlRules mediaUrlRules,
     TimeProvider timeProvider) : ITopicService
 {
     private const int MaxSlugAttempts = 5;
@@ -115,7 +116,7 @@ public sealed partial class TopicService(
             Slug = slug,
             Summary = values.Summary,
             BodyHtml = values.SanitizedBody,
-            CoverImageUrl = TopicCoverImage.Extract(values.SanitizedBody),
+            CoverImageUrl = mediaUrlRules.FindFirstImageUrl(values.SanitizedBody),
             Type = values.Type,
             Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft,
             CategoryId = values.Category.Id,
@@ -178,7 +179,7 @@ public sealed partial class TopicService(
         topic.Title = values.Title;
         topic.Summary = values.Summary;
         topic.BodyHtml = values.SanitizedBody;
-        topic.CoverImageUrl = TopicCoverImage.Extract(values.SanitizedBody);
+        topic.CoverImageUrl = mediaUrlRules.FindFirstImageUrl(values.SanitizedBody);
         topic.Type = values.Type;
         if (values.Type == TopicType.Article)
         {
@@ -360,8 +361,7 @@ public sealed partial class TopicService(
                     : "Một hoặc nhiều media không hợp lệ hoặc không thuộc tài khoản này.");
         }
 
-        var embeddedMediaUrls = MediaUrl().Matches(sanitizedBody)
-            .Select(match => match.Value)
+        var embeddedMediaUrls = mediaUrlRules.FindTopicMediaUrls(sanitizedBody)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
         if (embeddedMediaUrls.Length != mediaAssets.Count ||
@@ -449,10 +449,10 @@ public sealed partial class TopicService(
         return string.IsNullOrWhiteSpace(slug) ? "noi-dung" : slug[..Math.Min(slug.Length, 180)].TrimEnd('-');
     }
 
-    private static bool HasMeaningfulContent(string html)
+    private bool HasMeaningfulContent(string html)
     {
         var text = WebUtility.HtmlDecode(HtmlTags().Replace(html, string.Empty)).Trim();
-        return !string.IsNullOrWhiteSpace(text) || MediaUrl().IsMatch(html);
+        return !string.IsNullOrWhiteSpace(text) || mediaUrlRules.FindTopicMediaUrls(html).Count > 0;
     }
 
     private static bool TryParseType(string? value, out TopicType type)
@@ -478,9 +478,6 @@ public sealed partial class TopicService(
 
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTags();
-
-    [GeneratedRegex(@"/media/(?:images|videos)/[a-f0-9]{32}\.(?:png|jpg|gif|webp|mp4|webm)", RegexOptions.IgnoreCase)]
-    private static partial Regex MediaUrl();
 
     private static TopicSummaryDto MapSummary(Topic topic) => new(
         topic.Id,

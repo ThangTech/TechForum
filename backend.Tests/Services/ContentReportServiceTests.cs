@@ -3,6 +3,7 @@ using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
 using TechForum.Api.Models;
 using TechForum.Api.Services;
+using TechForum.Api.Tests.Fakes;
 using Xunit;
 
 namespace TechForum.Api.Tests.Services;
@@ -175,7 +176,7 @@ public sealed class ContentReportServiceTests
     }
 
     private static ContentReportService Service(FakeReports repository) =>
-        new(repository, new UnusedTopics(), new ContentSanitizer(), TimeProvider.System);
+        new(repository, new UnusedTopics(), TestMediaRules.CreateSanitizer(), TimeProvider.System);
 
     private static ContentReport CreateReport()
     {

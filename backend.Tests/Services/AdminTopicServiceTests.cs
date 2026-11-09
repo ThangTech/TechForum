@@ -3,6 +3,7 @@ using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
 using TechForum.Api.Models;
 using TechForum.Api.Services;
+using TechForum.Api.Tests.Fakes;
 using Xunit;
 
 namespace TechForum.Api.Tests.Services;
@@ -13,7 +14,7 @@ public sealed class AdminTopicServiceTests
     public async Task Hide_RepeatedActionDoesNotNotifyAgain()
     {
         var repository = new FakeTopics();
-        var service = new AdminTopicService(repository, new ContentSanitizer(), TimeProvider.System);
+        var service = new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System);
         var first = await service.ModerateAsync(1, "admin", new("hide", null, "Quảng cáo lặp lại"), default);
         var second = await service.ModerateAsync(1, "admin", new("hide", null, "Quảng cáo lặp lại"), default);
 
@@ -30,7 +31,7 @@ public sealed class AdminTopicServiceTests
     public async Task Moderate_ConcurrentChangeReturnsConflict()
     {
         var repository = new FakeTopics { CanSave = false };
-        var result = await new AdminTopicService(repository, new ContentSanitizer(), TimeProvider.System)
+        var result = await new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System)
             .ModerateAsync(1, "admin", new("lock", null, "Tạm dừng thảo luận"), default);
         Assert.Equal(AdminTopicWriteFailure.Conflict, result.Failure);
         Assert.Empty(repository.Notifications);
@@ -40,7 +41,7 @@ public sealed class AdminTopicServiceTests
     public async Task Moderate_ReasonRequiredBeforeChangingContent()
     {
         var repository = new FakeTopics();
-        var result = await new AdminTopicService(repository, new ContentSanitizer(), TimeProvider.System)
+        var result = await new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System)
             .ModerateAsync(1, "admin", new("hide", null, "  "), default);
         Assert.Equal(AdminTopicWriteFailure.Validation, result.Failure);
         Assert.Equal(0, repository.SaveCount);

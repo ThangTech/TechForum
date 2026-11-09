@@ -6,7 +6,7 @@ public sealed class ContentSanitizer : IContentSanitizer
 {
     private readonly HtmlSanitizer sanitizer;
 
-    public ContentSanitizer()
+    public ContentSanitizer(MediaUrlRules mediaUrlRules)
     {
         var options = new HtmlSanitizerOptions();
         options.AllowedTags.Clear();
@@ -29,7 +29,7 @@ public sealed class ContentSanitizer : IContentSanitizer
         sanitizer.FilterUrl += (_, eventArgs) =>
         {
             if (eventArgs.Tag.LocalName is "img" or "video" or "source" &&
-                !IsInternalMediaUrl(eventArgs.OriginalUrl))
+                !mediaUrlRules.IsTopicMediaUrl(eventArgs.OriginalUrl))
             {
                 eventArgs.SanitizedUrl = null;
             }
@@ -37,10 +37,6 @@ public sealed class ContentSanitizer : IContentSanitizer
     }
 
     public string Sanitize(string html) => sanitizer.Sanitize(html);
-
-    private static bool IsInternalMediaUrl(string url) =>
-        url.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) ||
-        url.StartsWith("/media/videos/", StringComparison.OrdinalIgnoreCase);
 
     private static void AddAll(ISet<string> target, IEnumerable<string> values)
     {

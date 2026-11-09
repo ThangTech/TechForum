@@ -201,7 +201,7 @@ public sealed class DraftServiceTests
     }
 
     private static DraftService CreateService(FakeDraftRepository? drafts = null, FakeMediaRepository? media = null) =>
-        new(drafts ?? new FakeDraftRepository(), media ?? new FakeMediaRepository(), new ContentSanitizer(), TimeProvider.System);
+        new(drafts ?? new FakeDraftRepository(), media ?? new FakeMediaRepository(), TestMediaRules.CreateSanitizer(), TimeProvider.System);
 
     private static SaveDraftRequest Request(
         string? title = null,

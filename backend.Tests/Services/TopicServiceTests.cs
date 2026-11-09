@@ -694,7 +694,7 @@ public sealed class TopicServiceTests
         FakeTopicRepository repository,
         FakeMediaAssetRepository? mediaRepository = null,
         FakeDraftRepository? draftRepository = null) =>
-        new(repository, mediaRepository ?? new FakeMediaAssetRepository(), draftRepository ?? new FakeDraftRepository(), new ContentSanitizer(), TimeProvider.System);
+        new(repository, mediaRepository ?? new FakeMediaAssetRepository(), draftRepository ?? new FakeDraftRepository(), TestMediaRules.CreateSanitizer(), TestMediaRules.Create(), TimeProvider.System);
 
     private sealed class FakeTopicRepository : ITopicRepository
     {
