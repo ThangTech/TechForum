@@ -32,7 +32,7 @@ public sealed class PublicProfileService(IPublicProfileRepository profileReposit
             profile.FollowingCount,
             profile.IsFollowedByViewer,
             profile.Skills.Select(skill => new ProfileSkillDto(
-                skill.TagId, skill.Name, skill.Slug, skill.TopicCount)).ToList(),
+                skill.TagId, skill.Name, skill.Slug, skill.TopicCount, skill.IsChosen)).ToList(),
             CreateBadges(profile),
             profile.RecentTopics.Select(MapTopic).ToList());
     }

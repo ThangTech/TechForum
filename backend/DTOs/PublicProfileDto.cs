@@ -16,7 +16,7 @@ public sealed record PublicProfileDto(
     IReadOnlyList<ProfileBadgeDto> Badges,
     IReadOnlyList<TopicSummaryDto> RecentTopics);
 
-public sealed record ProfileSkillDto(int TagId, string Name, string Slug, int TopicCount);
+public sealed record ProfileSkillDto(int TagId, string Name, string Slug, int TopicCount, bool IsChosen);
 
 public sealed record ProfileBadgeDto(string Code, string Name, string Description);
 

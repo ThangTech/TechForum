@@ -15,7 +15,8 @@ public sealed class PublicProfileServiceTests
         var repository = new FakePublicProfileRepository
         {
             Profile = new PublicProfileData(user, 3, 5, 7, 2, 1, true,
-                [new ProfileSkillData(1, "React", "react", 3)], [CreateTopic(user)])
+                [new ProfileSkillData(1, "React", "react", 3, true), new ProfileSkillData(2, "SQL Server", "sql-server", 1)],
+                [CreateTopic(user)])
         };
         var service = new PublicProfileService(repository);
 
@@ -28,7 +29,10 @@ public sealed class PublicProfileServiceTests
         Assert.Equal(3, result.PublishedTopicCount);
         Assert.Equal(3, result.Badges.Count);
         Assert.True(result.IsFollowedByViewer);
-        Assert.Single(result.Skills);
+        Assert.Equal(2, result.Skills.Count);
+        // A skill the member chose is marked; one found from their content is not.
+        Assert.True(result.Skills[0].IsChosen);
+        Assert.False(result.Skills[1].IsChosen);
         Assert.Single(result.RecentTopics);
         Assert.Equal("article", result.RecentTopics[0].Type);
         Assert.DoesNotContain("email", System.Text.Json.JsonSerializer.Serialize(result).ToLowerInvariant());

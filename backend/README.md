@@ -342,6 +342,19 @@ Hồ sơ công khai có danh sách theo dõi phân trang:
 Hai endpoint chỉ trả ID, tên hiển thị, giới thiệu, số nội dung công khai và thời
 điểm theo dõi; không trả email hoặc dữ liệu tài khoản riêng tư.
 
+Kỹ năng trên hồ sơ do thành viên tự chọn từ các thẻ đã có (bảng `UserSkills`,
+khóa chính `UserId + TagId`, tối đa 12 kỹ năng mỗi người):
+
+- `GET /api/profiles/me/skills` (cần đăng nhập): các kỹ năng đã chọn, chỉ gồm thẻ còn hoạt động.
+- `PUT /api/profiles/me/skills` (cần đăng nhập), body `{ "tagIds": [1, 2] }`:
+  thay toàn bộ danh sách; thẻ không có trong danh sách bị bỏ. Gửi `[]` để xóa hết.
+  Trả `400` khi có thẻ không tồn tại hoặc đã tắt, hoặc khi vượt 12 kỹ năng; khi
+  lỗi, danh sách cũ giữ nguyên. Cùng một thẻ gửi nhiều lần chỉ tính một.
+
+Hồ sơ công khai (`GET /api/profiles/{userId}`) trả kỹ năng đã chọn trước (`isChosen: true`,
+xếp theo tên), rồi mới tới các thẻ xuất hiện nhiều nhất trong nội dung công khai
+của thành viên (`isChosen: false`) cho đủ 12 chỗ, nên người chưa chọn gì vẫn có kỹ năng như trước.
+
 ## Kiểm thử backend
 
 Thông báo được tạo khi người khác trả lời chủ đề và khi câu trả lời được chấp

@@ -10,8 +10,40 @@ namespace TechForum.Api.Controllers;
 [Route("api/profiles")]
 public sealed class ProfilesController(
     IPublicProfileService profileService,
-    IUserFollowService followService) : ControllerBase
+    IUserFollowService followService,
+    IUserSkillService skillService) : ControllerBase
 {
+    // The skills that the signed-in member chose for their own profile.
+    [Authorize]
+    [HttpGet("me/skills")]
+    public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> GetMySkills(CancellationToken cancellationToken) =>
+        Ok(await skillService.GetAsync(User.GetRequiredUserId(), cancellationToken));
+
+    // Replaces the whole list: what is not in the request is removed. Only tags that already exist can be chosen.
+    [Authorize]
+    [HttpPut("me/skills")]
+    [ProducesResponseType<IReadOnlyList<SkillTagDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> SaveMySkills(
+        SaveSkillsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await skillService.ReplaceAsync(User.GetRequiredUserId(), request.TagIds!, cancellationToken);
+        return result.Failure switch
+        {
+            SkillFailure.None => Ok(result.Skills),
+            SkillFailure.TooMany => BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                ["tagIds"] = [$"Mỗi thành viên chọn tối đa {IUserSkillService.MaxSkills} kỹ năng."]
+            })),
+            SkillFailure.UnknownTag => BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                ["tagIds"] = ["Có thẻ không tồn tại hoặc đã bị tắt. Hãy tải lại danh sách thẻ."]
+            })),
+            _ => throw new InvalidOperationException("Kết quả kỹ năng không được hỗ trợ.")
+        };
+    }
+
     [HttpGet("{userId}")]
     [ProducesResponseType<PublicProfileDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

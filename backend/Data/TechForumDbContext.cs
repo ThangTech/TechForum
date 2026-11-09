@@ -35,6 +35,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<TopicView> TopicViews => Set<TopicView>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+    public DbSet<UserSkill> UserSkills => Set<UserSkill>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -300,6 +301,14 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         userFollow.HasIndex(item => new { item.FollowingId, item.CreatedAtUtc });
         userFollow.HasOne(item => item.Follower).WithMany().HasForeignKey(item => item.FollowerId).OnDelete(DeleteBehavior.Restrict);
         userFollow.HasOne(item => item.Following).WithMany().HasForeignKey(item => item.FollowingId).OnDelete(DeleteBehavior.Restrict);
+
+        var userSkill = modelBuilder.Entity<UserSkill>();
+        userSkill.ToTable("UserSkills");
+        userSkill.HasKey(item => new { item.UserId, item.TagId });
+        userSkill.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        userSkill.HasIndex(item => item.TagId);
+        userSkill.HasOne(item => item.User).WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
+        userSkill.HasOne(item => item.Tag).WithMany().HasForeignKey(item => item.TagId).OnDelete(DeleteBehavior.Cascade);
 
         var refreshToken = modelBuilder.Entity<RefreshToken>();
         refreshToken.ToTable("RefreshTokens");
