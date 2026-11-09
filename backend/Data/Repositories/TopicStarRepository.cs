@@ -47,6 +47,30 @@ public sealed class TopicStarRepository(TechForumDbContext dbContext) : ITopicSt
         }
     }
 
+    public async Task<StarPage> GetPageAsync(
+        string userId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.TopicStars
+            .AsNoTracking()
+            .Where(item => item.UserId == userId)
+            .WhereTopicIsPublic(item => item.Topic);
+        var totalItems = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(item => item.CreatedAtUtc)
+            .ThenByDescending(item => item.TopicId)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Include(item => item.Topic).ThenInclude(topic => topic.Category)
+            .Include(item => item.Topic).ThenInclude(topic => topic.Author)
+            .Include(item => item.Topic).ThenInclude(topic => topic.TopicTags).ThenInclude(item => item.Tag)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+        return new StarPage(items, totalItems);
+    }
+
     public Task RemoveAsync(
         int topicId,
         string userId,

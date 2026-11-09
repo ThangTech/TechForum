@@ -62,7 +62,7 @@ public sealed class TopicBookmarkService(
             ? 0
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
         return new PagedResultDto<SavedTopicDto>(
-            page.Items.Select(MapSavedTopic).ToList(),
+            page.Items.Select(bookmark => SavedTopicMapper.Map(bookmark.Topic, bookmark.CreatedAtUtc)).ToList(),
             query.Page,
             query.PageSize,
             page.TotalItems,
@@ -78,29 +78,5 @@ public sealed class TopicBookmarkService(
         var hasBookmark = !string.IsNullOrWhiteSpace(userId) &&
             await bookmarkRepository.ExistsAsync(topicId, userId, cancellationToken);
         return new BookmarkStatusDto(count, hasBookmark);
-    }
-
-    private static SavedTopicDto MapSavedTopic(TopicBookmark bookmark)
-    {
-        var topic = bookmark.Topic;
-        if (topic.PublishedAtUtc is null || topic.Status != TopicStatus.Published)
-        {
-            throw new InvalidOperationException("Danh sách lưu chứa chủ đề chưa xuất bản.");
-        }
-
-        return new SavedTopicDto(
-            topic.Id,
-            topic.Title,
-            topic.Summary,
-            topic.Type == TopicType.Article ? "article" : "question",
-            new TopicCategoryDto(topic.Category.Id, topic.Category.Name, topic.Category.Slug),
-            new TopicAuthorDto(topic.Author.Id, topic.Author.DisplayName),
-            topic.TopicTags
-                .Where(item => item.Tag.IsActive)
-                .OrderBy(item => item.Tag.Name)
-                .Select(item => new TopicTagDto(item.TagId, item.Tag.Name, item.Tag.Slug))
-                .ToList(),
-            topic.PublishedAtUtc.Value,
-            bookmark.CreatedAtUtc);
     }
 }

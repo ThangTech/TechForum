@@ -41,6 +41,21 @@ public sealed class TopicStarService(
         return await GetStatusAsync(topicId, userId, cancellationToken);
     }
 
+    public async Task<PagedResultDto<SavedTopicDto>> GetStarredPageAsync(
+        string userId,
+        BookmarkQuery query,
+        CancellationToken cancellationToken)
+    {
+        var page = await topicStarRepository.GetPageAsync(userId, query.Page, query.PageSize, cancellationToken);
+        var totalPages = page.TotalItems == 0 ? 0 : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
+        return new PagedResultDto<SavedTopicDto>(
+            page.Items.Select(star => SavedTopicMapper.Map(star.Topic, star.CreatedAtUtc)).ToList(),
+            query.Page,
+            query.PageSize,
+            page.TotalItems,
+            totalPages);
+    }
+
     public async Task<TopicStarDto?> RemoveAsync(
         int topicId,
         string userId,
