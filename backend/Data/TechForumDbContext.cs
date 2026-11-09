@@ -12,6 +12,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<Category> Categories => Set<Category>();
 
     public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<Banner> Banners => Set<Banner>();
 
     public DbSet<Topic> Topics => Set<Topic>();
 
@@ -91,6 +92,15 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
             .WithMany()
             .HasForeignKey(item => item.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        var banner = modelBuilder.Entity<Banner>();
+        banner.ToTable("Banners");
+        banner.HasKey(item => item.Id);
+        banner.Property(item => item.Title).HasMaxLength(120).IsRequired();
+        banner.Property(item => item.ImageUrl).HasMaxLength(300).IsRequired();
+        banner.Property(item => item.LinkUrl).HasMaxLength(500);
+        banner.Property(item => item.IsActive).IsRequired();
+        banner.HasIndex(item => new { item.IsActive, item.DisplayOrder });
 
         var topicTag = modelBuilder.Entity<TopicTag>();
         topicTag.ToTable("TopicTags");

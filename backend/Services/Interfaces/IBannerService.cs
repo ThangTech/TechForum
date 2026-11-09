@@ -1,0 +1,20 @@
+using TechForum.Api.Dtos;
+
+namespace TechForum.Api.Services;
+
+public interface IBannerService
+{
+    Task<IReadOnlyList<BannerDto>> GetShownAsync(CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<AdminBannerDto>> GetAdminAsync(CancellationToken cancellationToken);
+
+    Task<BannerWriteResult> CreateAsync(string administratorId, SaveBannerRequest request, CancellationToken cancellationToken);
+
+    Task<BannerWriteResult> UpdateAsync(string administratorId, int id, SaveBannerRequest request, CancellationToken cancellationToken);
+
+    Task<BannerWriteResult> SetActiveAsync(string administratorId, int id, bool isActive, CancellationToken cancellationToken);
+
+    Task<BannerWriteResult> DeleteAsync(string administratorId, int id, CancellationToken cancellationToken);
+
+    Task<BannerImageResult> UploadImageAsync(IFormFile file, CancellationToken cancellationToken);
+}
