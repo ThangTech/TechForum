@@ -17,4 +17,9 @@ export const auditActionLabels: Record<string, string> = {
   'tag-updated': 'Sửa thẻ',
   'tag-activated': 'Kích hoạt thẻ',
   'tag-deactivated': 'Ngừng sử dụng thẻ',
+  'banner-created': 'Tạo banner',
+  'banner-updated': 'Sửa banner',
+  'banner-activated': 'Bật banner',
+  'banner-deactivated': 'Tắt banner',
+  'banner-deleted': 'Xóa banner',
 }

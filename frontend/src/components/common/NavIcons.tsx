@@ -59,6 +59,10 @@ export const TagIcon = () => (
   <svg {...iconProps}><path d="M3 12V4h8l10 10-8 8z" /><circle cx="7.5" cy="8.5" r="1" /></svg>
 )
 
+export const BannerIcon = () => (
+  <svg {...iconProps}><rect height="14" rx="2" width="18" x="3" y="5" /><circle cx="9" cy="10" r="1.5" /><path d="m21 16-5-5-8 8" /></svg>
+)
+
 export const ClipboardIcon = () => (
   <svg {...iconProps}><rect height="18" rx="2" width="14" x="5" y="3" /><path d="M9 3v2h6V3M9 11h6M9 15h6" /></svg>
 )

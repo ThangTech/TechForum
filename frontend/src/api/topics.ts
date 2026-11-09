@@ -31,6 +31,8 @@ export interface TopicSummary {
   viewCount: number
   shareCount: number
   discussion?: TopicDiscussion | null
+  // Address of the first picture of the topic (for example /media/images/abc.png), empty when it has none.
+  coverImageUrl?: string | null
 }
 
 export interface TopicDetail extends TopicSummary {
@@ -136,6 +138,7 @@ export const isTopicSummary = (value: unknown): value is TopicSummary => {
     typeof value.isDiscussionLocked === 'boolean' &&
     typeof value.viewCount === 'number' &&
     typeof value.shareCount === 'number' &&
+    (value.coverImageUrl == null || typeof value.coverImageUrl === 'string') &&
     (value.discussion == null || (
       isRecord(value.discussion) &&
       Number.isInteger(value.discussion.answerCount) && Number(value.discussion.answerCount) >= 0 &&

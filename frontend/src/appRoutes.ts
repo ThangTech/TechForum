@@ -16,6 +16,7 @@ export const appRoutes = {
   adminReports: '/admin/reports',
   adminCategories: '/admin/categories',
   adminTags: '/admin/tags',
+  adminBanners: '/admin/banners',
   adminAccounts: '/admin/accounts',
   adminTopics: '/admin/topics',
   adminOverview: '/admin',

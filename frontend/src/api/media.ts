@@ -32,6 +32,9 @@ export const parseUploadedMedia = (response: unknown): UploadedMedia => {
   return { id: data.id, link: data.link, path: data.path }
 }
 
+// A picture or file of the media storage is served by the API, so its address starts with the API address.
+export const toMediaUrl = (path: string): string => `${apiBaseUrl}${path}`
+
 export const toStoredMediaHtml = (html: string, mediaItems: UploadedMedia[]): string =>
   mediaItems.reduce(
     (result, media) => result.split(media.link).join(media.path),

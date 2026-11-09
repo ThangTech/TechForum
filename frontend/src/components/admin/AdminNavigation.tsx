@@ -7,6 +7,7 @@ import { NavLink } from 'react-router-dom'
 import { appRoutes } from '../../appRoutes'
 import {
   ArticleIcon,
+  BannerIcon,
   ClipboardIcon,
   CommunityIcon,
   DashboardIcon,
@@ -23,6 +24,7 @@ const iconByRoute: Record<string, ReactNode> = {
   [appRoutes.adminAccounts]: <CommunityIcon />,
   [appRoutes.adminCategories]: <FolderIcon />,
   [appRoutes.adminTags]: <TagIcon />,
+  [appRoutes.adminBanners]: <BannerIcon />,
   [appRoutes.adminAudit]: <ClipboardIcon />,
 }
 

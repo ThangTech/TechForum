@@ -51,6 +51,7 @@ export const AuditLogList = ({ items }: { items: AdminAuditLog[] }) => (
                   report: 'Báo cáo',
                   category: 'Chuyên mục',
                   tag: 'Thẻ',
+                  banner: 'Banner',
                 } as Record<string, string>
               )[item.targetType.toLowerCase()] ?? item.targetType}
               <span className="admin-table-secondary" style={{ maxWidth: 192 }}>#{item.targetId}</span>
