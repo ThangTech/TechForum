@@ -355,6 +355,59 @@ Hồ sơ công khai (`GET /api/profiles/{userId}`) trả kỹ năng đã chọn 
 xếp theo tên), rồi mới tới các thẻ xuất hiện nhiều nhất trong nội dung công khai
 của thành viên (`isChosen: false`) cho đủ 12 chỗ, nên người chưa chọn gì vẫn có kỹ năng như trước.
 
+## Lọc từ ngữ không phù hợp
+
+Bảng `BannedWords` (migration `AddBannedWords`, tạo bảng trống) lưu các từ hoặc cụm từ bị
+cấm. **Danh sách từ thật không nằm trong Git.** Nó ở file `backend/Data/Seed/banned-words.txt`
+(có trong `.gitignore`); repo chỉ có file mẫu `banned-words.example.txt` với từ giả.
+
+Khi ứng dụng khởi động, `BannedWordWarmupService` làm hai việc:
+
+1. Nếu bảng `BannedWords` còn **trống** và file `banned-words.txt` có trên máy, nạp các từ trong
+   file vào bảng (mỗi dòng một từ hoặc cụm từ; dòng bắt đầu bằng `#` là ghi chú). Khi bảng đã
+   có dữ liệu thì không đọc lại, nên từ mà quản trị viên đã xóa không quay lại. Có thể đổi đường
+   dẫn file bằng cấu hình `BannedWords:SeedFile`. Máy mới cần chép file này sang, hoặc nhập từ
+   ở trang quản trị.
+2. Nạp bảng vào `IMemoryCache` (`ProfanityFilter`, singleton). Cache hết hạn sau 10 phút và được
+   nạp lại ngay sau mỗi thay đổi của quản trị viên. Nếu SQL Server chưa sẵn sàng, bộ lọc ghi log
+   lỗi, cho nội dung đi qua và thử lại sau 1 phút; hai bước này không bao giờ làm ứng dụng không khởi động được.
+
+`[ProfanityFilter]` (`ActionFilterAttribute`) gắn trên `TopicsController` và
+`AnswersController`. Trước khi action chạy, nó đọc body request và thay từ cấm bằng
+`***` ở các thuộc tính đánh dấu `[property: FilterProfanity]`: tiêu đề, tóm tắt, nội
+dung bài viết (tạo và sửa) và nội dung câu trả lời (tạo và sửa). Bộ lọc làm hai bước
+(`ProfanityFilterSet`):
+
+1. **Từ viết đúng như trong danh sách:** chỉ khớp nguyên từ ("category" không bị coi là "cat"),
+   không phân biệt chữ hoa/thường, **có phân biệt dấu** (bỏ dấu sẽ biến từ thường như "cáp"
+   thành từ cấm "cặp"; muốn chặn cả dạng không dấu thì thêm riêng dạng đó). Cụm từ khớp cả khi
+   có nhiều khoảng trắng và từ dài nhất được ưu tiên ("dịp này" trước "dịp").
+2. **Chống lách luật** (`EvasionPattern`): tìm từ bị che giấu như chữ tách rời (`f.o.o.b.a.r`,
+   `f o o b a r`), chữ lặp (`foooobar`), ký tự thay chữ (`f0ob4r`, `b@zqux`) và dấu `*` thay chữ
+   (`fo*bar`, `f**bar`). Chỉ tính là lách luật khi có gì đó bị che: chữ thuần không dấu ("cap" cho
+   "cặp") hoặc từ hai chữ cái lặp chữ ("đỏỏỏ", vì "do" không dấu là từ rất thường) thì để nguyên;
+   từ hai chữ cái chỉ bị bắt khi có dấu chấm, gạch ngang hoặc gạch dưới xen giữa. `***` và biểu
+   thức như `a * b` không bị coi là từ cấm. Hạn chế đã biết: chữ tách rời mà lại lặp
+   (`f.o.o.o.b.a.r`) và cách viết bằng phím dấu của Telex (thêm riêng dạng đó vào danh sách).
+
+Với HTML chỉ đổi phần chữ giữa các thẻ, không đổi thẻ, thuộc tính hay thực thể (`&nbsp;`):
+địa chỉ liên kết và `alt` của ảnh giữ nguyên. Một văn bản quá dài khiến regex quá 1 giây
+được để nguyên thay vì chặn việc đăng.
+
+Quản trị viên (role `Administrator`) quản lý danh sách:
+
+- `GET /api/admin/banned-words`
+- `POST /api/admin/banned-words`, body `{ "word": "..." }`: lưu dạng chữ thường, một khoảng
+  trắng giữa các từ; `400` khi dưới 2 hoặc trên 60 ký tự, không có chữ/số hoặc có `<` `>`;
+  `409` khi từ đã có (không phân biệt hoa/thường).
+- `DELETE /api/admin/banned-words/{id}`: `204`, hoặc `404` khi không có.
+
+Thêm và xóa đều ghi nhật ký quản trị (`banned-word-added`, `banned-word-removed`).
+Bộ lọc chỉ áp dụng cho nội dung mới; nội dung đã đăng không bị đổi. Bản nháp tự lưu
+cũng chưa lọc, nhưng khi xuất bản bản nháp đi qua API tạo/sửa bài nên vẫn bị lọc.
+Các test dùng từ giả; một test đọc file danh sách thật khi nó có trên máy để kiểm tra từng
+từ trong đó (và để câu tiếng Việt bình thường không bị chặn nhầm).
+
 ## Kiểm thử backend
 
 Thông báo được tạo khi người khác trả lời chủ đề và khi câu trả lời được chấp

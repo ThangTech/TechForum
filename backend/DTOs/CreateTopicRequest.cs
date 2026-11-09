@@ -1,9 +1,11 @@
+using TechForum.Api.Filters;
+
 namespace TechForum.Api.Dtos;
 
 public sealed record CreateTopicRequest(
-    string? Title,
-    string? Summary,
-    string? BodyHtml,
+    [property: FilterProfanity] string? Title,
+    [property: FilterProfanity] string? Summary,
+    [property: FilterProfanity(IsHtml = true)] string? BodyHtml,
     string? Type,
     int CategoryId,
     IReadOnlyList<int>? TagIds,

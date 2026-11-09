@@ -140,6 +140,14 @@ builder.Services.AddScoped<IUserFollowRepository, UserFollowRepository>();
 builder.Services.AddScoped<IUserFollowService, UserFollowService>();
 builder.Services.AddScoped<IUserSkillRepository, UserSkillRepository>();
 builder.Services.AddScoped<IUserSkillService, UserSkillService>();
+// Banned words: read from SQL Server into IMemoryCache when the application starts; [ProfanityFilter] uses the cache.
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IBannedWordRepository, BannedWordRepository>();
+builder.Services.AddScoped<IBannedWordService, BannedWordService>();
+builder.Services.AddScoped<IBannedWordSeeder, BannedWordSeeder>();
+builder.Services.AddSingleton<IBannedWordLoader, BannedWordLoader>();
+builder.Services.AddSingleton<IProfanityFilter, ProfanityFilter>();
+builder.Services.AddHostedService<BannedWordWarmupService>();
 builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
 builder.Services.Configure<CloudinaryOptions>(
     builder.Configuration.GetSection(CloudinaryOptions.SectionName));

@@ -1,3 +1,5 @@
+using TechForum.Api.Filters;
+
 namespace TechForum.Api.Dtos;
 
 public sealed record AnswerDto(
@@ -15,7 +17,7 @@ public sealed record AnswerDto(
 
 public sealed record AnswerHelpfulDto(int HelpfulCount, bool IsHelpful);
 
-public sealed record CreateAnswerRequest(string? BodyHtml, int? ParentAnswerId = null);
+public sealed record CreateAnswerRequest([property: FilterProfanity(IsHtml = true)] string? BodyHtml, int? ParentAnswerId = null);
 
 public sealed class AnswerQuery
 {

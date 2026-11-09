@@ -1,0 +1,7 @@
+# Mẫu cho file banned-words.txt (file thật không nằm trong Git, xem .gitignore).
+# Mỗi dòng một từ hoặc cụm từ; dòng bắt đầu bằng # là ghi chú; dòng trống được bỏ qua.
+# Chép file này thành banned-words.txt rồi thay các dòng dưới bằng danh sách của bạn.
+# Chữ hoa/thường không quan trọng, nhưng DẤU thì quan trọng ("cặp" khác "cáp").
+# Các dòng sau chỉ là từ giả để thử:
+foobar
+bazqux

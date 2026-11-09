@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Extensions;
+using TechForum.Api.Filters;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
 
 [ApiController]
+[ProfanityFilter]
 [Route("api/topics/{topicId:int}/answers")]
 public sealed class AnswersController(IAnswerService answerService) : ControllerBase
 {

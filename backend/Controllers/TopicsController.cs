@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
 using TechForum.Api.Extensions;
+using TechForum.Api.Filters;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
 
 [ApiController]
+[ProfanityFilter]
 [Route("api/topics")]
 public sealed class TopicsController(ITopicService topicService) : ControllerBase
 {

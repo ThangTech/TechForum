@@ -36,6 +36,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
     public DbSet<UserSkill> UserSkills => Set<UserSkill>();
+    public DbSet<BannedWord> BannedWords => Set<BannedWord>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -309,6 +310,13 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         userSkill.HasIndex(item => item.TagId);
         userSkill.HasOne(item => item.User).WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
         userSkill.HasOne(item => item.Tag).WithMany().HasForeignKey(item => item.TagId).OnDelete(DeleteBehavior.Cascade);
+
+        var bannedWord = modelBuilder.Entity<BannedWord>();
+        bannedWord.ToTable("BannedWords");
+        bannedWord.HasKey(item => item.Id);
+        bannedWord.Property(item => item.Word).HasMaxLength(60).IsRequired();
+        // SQL Server compares text without the case, so "Foo" and "foo" are one word.
+        bannedWord.HasIndex(item => item.Word).IsUnique();
 
         var refreshToken = modelBuilder.Entity<RefreshToken>();
         refreshToken.ToTable("RefreshTokens");
