@@ -355,6 +355,14 @@ Hồ sơ công khai (`GET /api/profiles/{userId}`) trả kỹ năng đã chọn 
 xếp theo tên), rồi mới tới các thẻ xuất hiện nhiều nhất trong nội dung công khai
 của thành viên (`isChosen: false`) cho đủ 12 chỗ, nên người chưa chọn gì vẫn có kỹ năng như trước.
 
+## Câu trả lời được chấp nhận
+
+Tác giả của một Câu hỏi chọn (hoặc đổi) câu trả lời đúng bằng `PUT /api/topics/{id}/answers/{answerId}/accepted`
+(người khác nhận `404`; chỉ chọn được câu trả lời gốc). Câu được chọn luôn đứng **đầu danh sách**
+ở cả hai kiểu sắp xếp (cũ nhất, hữu ích nhất); các câu còn lại giữ nguyên thứ tự. Việc ghim nằm trong
+`AnswerRepository`, và tham số `aroundAnswerId` vẫn tìm đúng trang khi có câu được ghim. Câu bị xóa hoặc bị
+ẩn thì không được ghim; Bài viết (không phải Câu hỏi) không có câu được chọn.
+
 ## Lọc từ ngữ không phù hợp
 
 Bảng `BannedWords` (migration `AddBannedWords`, tạo bảng trống) lưu các từ hoặc cụm từ bị

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
+using TechForum.Api.Enums;
 using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
@@ -16,6 +17,12 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
     {
         var answers = PublicAnswers(topicId);
 
+        // The answer that the author of a question chose is shown first in every order. 0 means there is none (an
+        // answer id is never 0), so the comparisons below simply never match.
+        var pinnedId = await GetPinnedAnswerIdAsync(topicId, answers, cancellationToken);
+        var hasPinned = pinnedId != 0;
+        var unpinned = answers.Where(answer => answer.Id != pinnedId);
+
         if (aroundAnswerId.HasValue)
         {
             var target = await answers
@@ -28,25 +35,27 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
             }
 
             // Dùng đúng thứ tự của danh sách để tìm trang, không tải các trang trước đó.
-            var precedingCount = sort == "helpful"
-                ? await answers.CountAsync(answer =>
+            // The pinned answer is before all the others; if it is the one that is looked for, it is the first.
+            var precedingCount = target.Id == pinnedId ? 0 : (hasPinned ? 1 : 0) + (sort == "helpful"
+                ? await unpinned.CountAsync(answer =>
                     answer.HelpfulVotes.Count > target.HelpfulCount ||
                     (answer.HelpfulVotes.Count == target.HelpfulCount &&
                         (answer.CreatedAtUtc < target.CreatedAtUtc ||
                         (answer.CreatedAtUtc == target.CreatedAtUtc && answer.Id < target.Id))),
                     cancellationToken)
-                : await answers.CountAsync(answer =>
+                : await unpinned.CountAsync(answer =>
                     answer.CreatedAtUtc < target.CreatedAtUtc ||
                     (answer.CreatedAtUtc == target.CreatedAtUtc && answer.Id < target.Id),
-                    cancellationToken);
+                    cancellationToken));
             page = precedingCount / pageSize + 1;
         }
 
         var totalItems = await answers.CountAsync(cancellationToken);
+        var pinnedFirst = answers.OrderByDescending(answer => answer.Id == pinnedId);
         var orderedAnswers = sort == "helpful"
-            ? answers.OrderByDescending(answer => answer.HelpfulVotes.Count)
+            ? pinnedFirst.ThenByDescending(answer => answer.HelpfulVotes.Count)
                 .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id)
-            : answers.OrderBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id);
+            : pinnedFirst.ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id);
         var items = await orderedAnswers
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -56,6 +65,21 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
             .ToListAsync(cancellationToken);
 
         return new AnswerPage(items, totalItems, page);
+    }
+
+    // The accepted answer of a question, when it can be seen by everyone; 0 when there is none. An article has no accepted
+    // answer, and an answer that was deleted or hidden is not in the list, so it cannot be pinned.
+    private async Task<int> GetPinnedAnswerIdAsync(
+        int topicId,
+        IQueryable<Answer> visibleAnswers,
+        CancellationToken cancellationToken)
+    {
+        var acceptedId = await dbContext.Topics.AsNoTracking()
+            .Where(topic => topic.Id == topicId && topic.Type == TopicType.Question)
+            .Select(topic => topic.AcceptedAnswerId)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (acceptedId is null) return 0;
+        return await visibleAnswers.AnyAsync(answer => answer.Id == acceptedId.Value, cancellationToken) ? acceptedId.Value : 0;
     }
 
     public async Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
