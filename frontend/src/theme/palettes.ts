@@ -32,6 +32,11 @@ export interface ColorTokens {
   loading: string // skeletons and empty picture frames
   pinned: string // background of a pinned topic row
   pinnedHover: string
+  footer: string // background of the footer, dark in both modes
+  onFooter: string // main text of the footer
+  footerMuted: string // links and small text of the footer
+  footerBorder: string
+  footerAccent: string // links on hover and focus rings in the footer
 }
 
 export const lightColors: ColorTokens = {
@@ -63,6 +68,11 @@ export const lightColors: ColorTokens = {
   loading: '#edf0f4',
   pinned: '#f5f9ff',
   pinnedHover: '#edf4ff',
+  footer: '#0e1b33',
+  onFooter: '#f1f5fb',
+  footerMuted: '#a3b3cf',
+  footerBorder: 'rgba(255, 255, 255, 0.12)',
+  footerAccent: '#7db0ff',
 }
 
 export const darkColors: ColorTokens = {
@@ -94,6 +104,11 @@ export const darkColors: ColorTokens = {
   loading: '#232b38',
   pinned: '#192334',
   pinnedHover: '#1e2a3d',
+  footer: '#0a0f16',
+  onFooter: '#e6ebf3',
+  footerMuted: '#8d99ad',
+  footerBorder: 'rgba(255, 255, 255, 0.1)',
+  footerAccent: '#8bb8fb',
 }
 
 export const colorPalettes: Record<ThemeMode, ColorTokens> = {
