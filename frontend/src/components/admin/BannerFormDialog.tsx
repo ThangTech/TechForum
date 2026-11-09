@@ -150,11 +150,13 @@ export const BannerFormDialog = ({
     >
       <Stack spacing={2}>
         <Box>
+          {/* Same 3:1 frame as the slider on the home page, so the admin sees how the picture will be cut. */}
           <Box
             sx={{
+              position: 'relative',
               display: 'grid',
               placeItems: 'center',
-              height: 140,
+              aspectRatio: '3 / 1',
               overflow: 'hidden',
               border: 1,
               borderStyle: previewSrc ? 'solid' : 'dashed',
@@ -165,7 +167,7 @@ export const BannerFormDialog = ({
             }}
           >
             {previewSrc
-              ? <Box alt="Ảnh banner" component="img" src={previewSrc} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ? <Box alt="Ảnh banner" component="img" src={previewSrc} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
               : <Typography variant="body2">Chưa có ảnh</Typography>}
           </Box>
           <Stack direction="row" sx={{ mt: 1, alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>

@@ -47,25 +47,39 @@ const Chevron = ({ direction }: { direction: 'left' | 'right' }) => (
   </svg>
 )
 
+const PauseIcon = () => (
+  <svg aria-hidden="true" fill="currentColor" height="12" viewBox="0 0 24 24" width="12"><rect height="16" rx="1" width="5" x="5" y="4" /><rect height="16" rx="1" width="5" x="14" y="4" /></svg>
+)
+
+const PlayIcon = () => (
+  <svg aria-hidden="true" fill="currentColor" height="12" viewBox="0 0 24 24" width="12"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" /></svg>
+)
+
 // The pictures at the top of the home page. They change every 5 seconds, stop while the pointer is over
-// them or a part of them has the keyboard focus, and do not move by themselves when the visitor asked
-// the system for less motion. Dots, arrows and a swipe on a touch screen move them by hand.
+// them or a part of them has the keyboard focus, and the visitor can stop them with the pause button. When the
+// system asks for less motion they still change, only without the sliding effect.
+// Dots, arrows and a swipe on a touch screen move them by hand.
 export const BannerSlider = () => {
   const bannersQuery = useBanners()
   const banners = bannersQuery.data ?? []
   const count = banners.length
   const [index, setIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  // Set by the pause button; unlike isPaused (pointer or keyboard focus) it stays until the visitor presses play.
+  const [isStopped, setIsStopped] = useState(false)
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   // The list can get shorter while the slider is shown (a banner is turned off).
   const current = count === 0 ? 0 : index % count
 
+  // The slider keeps changing by itself even when the system asks for less motion: that setting only removes the
+  // sliding effect below (many Windows computers have animations turned off, and the slider would never move).
+  // The visitor can stop it with the pause button.
   useEffect(() => {
-    if (count < 2 || isPaused || prefersReducedMotion) return undefined
+    if (count < 2 || isPaused || isStopped) return undefined
     const timer = window.setInterval(() => setIndex((value) => stepIndex(value, count, 1)), AUTOPLAY_MS)
     return () => window.clearInterval(timer)
-  }, [count, isPaused, prefersReducedMotion])
+  }, [count, isPaused, isStopped])
 
   const move = (step: number) => setIndex(stepIndex(current, count, step))
 
@@ -117,14 +131,18 @@ export const BannerSlider = () => {
             sx={{ flex: '0 0 100%', minWidth: 0 }}
           >
             <BannerLink banner={banner} isCurrent={position === current}>
-              <Box
-                alt={banner.title}
-                component="img"
-                draggable={false}
-                loading={position === 0 ? 'eager' : 'lazy'}
-                src={toMediaUrl(banner.imageUrl)}
-                sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+              {/* The picture is placed over the slide, so its own size never changes the size of the slider:
+                  it is always stretched to cover the frame and the extra part is cut. */}
+              <Box sx={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+                <Box
+                  alt={banner.title}
+                  component="img"
+                  draggable={false}
+                  loading={position === 0 ? 'eager' : 'lazy'}
+                  src={toMediaUrl(banner.imageUrl)}
+                  sx={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </Box>
             </BannerLink>
           </Box>
         ))}
@@ -134,7 +152,14 @@ export const BannerSlider = () => {
         <>
           <IconButton aria-label="Banner trước" onClick={() => move(-1)} sx={arrowSx('left')}><Chevron direction="left" /></IconButton>
           <IconButton aria-label="Banner sau" onClick={() => move(1)} sx={arrowSx('right')}><Chevron direction="right" /></IconButton>
-          <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 10, display: 'flex', justifyContent: 'center', gap: 0.75 }}>
+          <IconButton
+            aria-label={isStopped ? 'Tiếp tục tự chuyển banner' : 'Tạm dừng tự chuyển banner'}
+            onClick={() => setIsStopped((value) => !value)}
+            sx={{ ...arrowSx('right'), top: 'auto', bottom: 6, right: 8, transform: 'none', width: 28, height: 28, opacity: isStopped ? 1 : 0 }}
+          >
+            {isStopped ? <PlayIcon /> : <PauseIcon />}
+          </IconButton>
+          <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 10, display: 'flex', justifyContent: 'center', gap: 0.75, pointerEvents: 'none', '& > *': { pointerEvents: 'auto' } }}>
             {banners.map((banner, position) => (
               <Box
                 aria-current={position === current}

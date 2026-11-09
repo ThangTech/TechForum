@@ -87,6 +87,10 @@ export const createFroalaConfig = ({
       'formatOL', 'formatUL', 'quote', 'insertLink', 'insertImage', 'insertVideo',
       'insertHR', 'html',
     ],
+    // A picture or a video starts with a fixed width in the editor and does not fill the screen
+    // (the largest size is also limited by App.css, for the editor and for the published post).
+    imageDefaultWidth: 400,
+    videoDefaultWidth: 560,
     videoAllowedTypes: ['mp4', 'webm'],
     videoMaxSize: 50 * 1024 * 1024,
     videoUpload: true,

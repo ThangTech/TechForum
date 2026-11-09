@@ -317,14 +317,33 @@
   max-width: 100%;
 }
 
-.reading-content img {
+/* The same limits apply to a published post, the preview and the editor (.fr-element), so a picture or a video
+   never fills the whole screen: they have a fixed largest size and the picture inside is never stretched. */
+.reading-content img,
+.fr-element img {
   height: auto;
+  max-height: 480px;
+  object-fit: contain;
 }
 
-.reading-content video {
+/* Froala has its own rule for the size of a video (.fr-view .fr-video > video), so the limits use !important. */
+.reading-content video,
+.fr-element video,
+.fr-element .fr-video > video {
   display: block;
   width: 100%;
-  max-height: 70vh;
+  max-width: 640px !important;
+  height: auto;
+  max-height: 360px !important;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #000;
+}
+
+/* The box that Froala puts around a video must not be wider than the video. */
+.reading-content .fr-video,
+.fr-element .fr-video {
+  max-width: 100%;
 }
 
 .page-content {
