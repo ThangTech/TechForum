@@ -40,7 +40,7 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route element={<SiteLayout />}>
-          <Route index element={<HomePage fixedType="Article" showTour title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng TechForum." />} />
+          <Route index element={<HomePage fixedType="Article" showHighlights showTour title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng TechForum." />} />
           <Route
             path="search"
             element={<HomePage title="Tìm kiếm nội dung" description="Tìm bài viết và câu hỏi công khai trong cộng đồng TechForum." />}

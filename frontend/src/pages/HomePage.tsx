@@ -15,9 +15,11 @@ import { useAuth } from '../auth/authState'
 import { createAuthUrl } from '../auth/returnUrl'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../components/TopicFeed'
+import { BannerSlider } from '../components/home/BannerSlider'
 import { CategoryChips } from '../components/home/CategoryChips'
 import { ExploreNav } from '../components/home/ExploreNav'
 import { HomeHero } from '../components/home/HomeHero'
+import { TechNewsSection } from '../components/home/TechNewsSection'
 import { HomeTour } from '../components/tour/HomeTour'
 import { QuestionHighlightsPanel } from '../components/questions/QuestionHighlightsPanel'
 import { useCategories } from '../queries/categories'
@@ -33,6 +35,8 @@ interface HomePageProps {
   description?: string
   sort?: 'discussion'
   showTour?: boolean
+  // Shows the banner slider and the technology news above the list (only on the first page without filters).
+  showHighlights?: boolean
 }
 
 const feedTabs = [
@@ -52,6 +56,7 @@ export const HomePage = ({
   description = 'Khám phá các bài viết và câu hỏi mới nhất từ cộng đồng TechForum.',
   sort,
   showTour = false,
+  showHighlights = false,
 }: HomePageProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
@@ -67,6 +72,9 @@ export const HomePage = ({
   const statusParam = searchParams.get('questionStatus')
   const questionStatus: QuestionStatus | undefined = selectedType !== 'Article' &&
     (statusParam === 'unanswered' || statusParam === 'unsolved' || statusParam === 'solved') ? statusParam : undefined
+
+  const areHighlightsShown = showHighlights && feed === 'latest' && page === 1 &&
+    !categoryId && !tagId && !keyword && !questionStatus
 
   const [areFiltersOpen, setAreFiltersOpen] = useState(() => window.matchMedia('(min-width: 761px)').matches)
 
@@ -142,6 +150,12 @@ export const HomePage = ({
             </details>
           </aside>
           <Box sx={{ minWidth: 0 }}>
+            {areHighlightsShown && (
+              <>
+                <BannerSlider />
+                <TechNewsSection />
+              </>
+            )}
             <CategoryChips
               categories={categories}
               error={getErrorMessage(categoriesQuery.error)}
