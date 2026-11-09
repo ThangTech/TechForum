@@ -156,6 +156,8 @@ export const HomePage = ({
                 <TechNewsSection />
               </>
             )}
+            {/* The anchor of the list: footer links such as "/articles?categoryId=1#topic-list" scroll here. */}
+            <Box id="topic-list" sx={{ scrollMarginTop: '16px' }} />
             <CategoryChips
               categories={categories}
               error={getErrorMessage(categoriesQuery.error)}

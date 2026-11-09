@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AuthRequiredDialogHost } from './components/AuthRequiredDialogHost'
+import { ScrollManager } from './components/ScrollManager'
 import { SiteLayout } from './components/SiteLayout'
 import { AccountPage } from './pages/AccountPage'
 import { HomePage } from './pages/HomePage'
@@ -38,6 +39,7 @@ const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module)
 const App = () => {
   return (
     <BrowserRouter>
+      <ScrollManager />
       <Routes>
         <Route element={<SiteLayout />}>
           <Route index element={<HomePage fixedType="Article" showHighlights showTour title="Bài viết công nghệ" description="Kiến thức và kinh nghiệm thực tế được chia sẻ bởi cộng đồng TechForum." />} />

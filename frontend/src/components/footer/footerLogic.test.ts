@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { exploreLinks, formatCount, getAccountLinks, getSystemState, takeFirst } from './footerLogic'
+import { exploreLinks, getAccountLinks, takeFirst, toTopicList } from './footerLogic'
 
 describe('getAccountLinks', () => {
   it('gives a guest the way in and no page of a member', () => {
@@ -17,18 +17,21 @@ describe('getAccountLinks', () => {
 })
 
 describe('exploreLinks', () => {
-  it('points every link to a different page of the site', () => {
+  it('points every link to a different place', () => {
     const paths = exploreLinks.map((link) => link.to)
     expect(new Set(paths).size).toBe(paths.length)
-    expect(paths.every((path) => path.startsWith('/'))).toBe(true)
+  })
+
+  it('sends the search link to the search box of the header and the others to pages of the site', () => {
+    const search = exploreLinks.find((link) => link.label === 'Tìm kiếm')
+    expect(search?.to).toBe('#header-search')
+    expect(exploreLinks.filter((link) => link !== search).every((link) => link.to.startsWith('/'))).toBe(true)
   })
 })
 
-describe('getSystemState', () => {
-  it('turns the state of the request into the state of the system', () => {
-    expect(getSystemState('pending')).toBe('checking')
-    expect(getSystemState('success')).toBe('ok')
-    expect(getSystemState('error')).toBe('down')
+describe('toTopicList', () => {
+  it('opens a page at its list', () => {
+    expect(toTopicList('/articles', 'categoryId=2')).toBe('/articles?categoryId=2#topic-list')
   })
 })
 
@@ -37,12 +40,5 @@ describe('takeFirst', () => {
     expect(takeFirst([1, 2, 3, 4], 2)).toEqual([1, 2])
     expect(takeFirst([1], 5)).toEqual([1])
     expect(takeFirst(undefined, 3)).toEqual([])
-  })
-})
-
-describe('formatCount', () => {
-  it('groups the thousands the Vietnamese way', () => {
-    expect(formatCount(1234)).toBe('1.234')
-    expect(formatCount(0)).toBe('0')
   })
 })

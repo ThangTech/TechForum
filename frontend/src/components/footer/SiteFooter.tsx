@@ -5,22 +5,9 @@ import { Link } from 'react-router-dom'
 import { appRoutes } from '../../appRoutes'
 import { useAuth } from '../../auth/authState'
 import { useCategories } from '../../queries/categories'
-import { usePublicStatistics } from '../../queries/statistics'
 import { useTags } from '../../queries/tags'
-import { CodeIcon } from '../common/ActionIcons'
 import { BackToTopButton } from './BackToTopButton'
-import {
-  exploreLinks,
-  formatCount,
-  getAccountLinks,
-  getSystemState,
-  systemStateLabels,
-  takeFirst,
-  type FooterLink,
-  type SystemState,
-} from './footerLogic'
-
-const REPOSITORY_URL = 'https://github.com/ThangTech/TechForum'
+import { exploreLinks, getAccountLinks, takeFirst, toTopicList, type FooterLink } from './footerLogic'
 
 const linkSx = {
   color: 'var(--color-footer-muted)',
@@ -50,34 +37,12 @@ const LinkList = ({ links }: { links: FooterLink[] }) => (
   </Box>
 )
 
-const statusColors: Record<SystemState, string> = {
-  checking: 'var(--color-footer-muted)',
-  ok: '#4ade80',
-  down: '#f97066',
-}
-
-const SystemStatus = ({ state }: { state: SystemState }) => (
-  <Box role="status" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, color: 'var(--color-footer-muted)', fontSize: '0.8125rem' }}>
-    <Box aria-hidden="true" component="span" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: statusColors[state] }} />
-    {systemStateLabels[state]}
-  </Box>
-)
-
-// The footer: who we are with live numbers of the community, the main places of the site, the pages of the
-// member, the categories and tags that exist right now, and whether the server answers.
+// The footer: who we are, the main places of the site, the pages of the member, and the categories and tags
+// that exist right now. A link with a "#id" takes the visitor to that part of the page (see ScrollManager).
 export const SiteFooter = () => {
   const { user } = useAuth()
-  const statistics = usePublicStatistics()
   const categories = takeFirst(useCategories().data, 8)
   const tags = takeFirst(useTags().data, 12)
-  const systemState = getSystemState(statistics.status)
-  const counts = statistics.data
-    ? [
-        { label: 'Thành viên', value: formatCount(statistics.data.memberCount) },
-        { label: 'Bài viết', value: formatCount(statistics.data.articleCount) },
-        { label: 'Câu hỏi', value: formatCount(statistics.data.questionCount) },
-      ]
-    : []
 
   return (
     <>
@@ -111,16 +76,6 @@ export const SiteFooter = () => {
               >
                 {'> học · chia sẻ · làm chủ công nghệ'}<span className="footer-cursor" />
               </Box>
-              {counts.length > 0 && (
-                <Box aria-label="Số liệu cộng đồng" component="dl" sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mt: 3, mb: 0 }}>
-                  {counts.map((item) => (
-                    <Box key={item.label}>
-                      <Box component="dd" sx={{ m: 0, color: 'var(--color-on-footer)', fontSize: '1.375rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>{item.value}</Box>
-                      <Box component="dt" sx={{ color: 'var(--color-footer-muted)', fontSize: '0.75rem' }}>{item.label}</Box>
-                    </Box>
-                  ))}
-                </Box>
-              )}
             </Box>
 
             <FooterColumn title="Khám phá"><LinkList links={exploreLinks} /></FooterColumn>
@@ -130,7 +85,7 @@ export const SiteFooter = () => {
             <Box sx={{ display: 'grid', gap: 3, alignContent: 'start', gridColumn: { xs: '1 / -1', md: 'auto' } }}>
               {categories.length > 0 && (
                 <FooterColumn title="Chuyên mục">
-                  <LinkList links={categories.map((category) => ({ label: category.name, to: `${appRoutes.articles}?categoryId=${category.id}` }))} />
+                  <LinkList links={categories.map((category) => ({ label: category.name, to: toTopicList(appRoutes.articles, `categoryId=${category.id}`) }))} />
                 </FooterColumn>
               )}
               {tags.length > 0 && (
@@ -152,7 +107,7 @@ export const SiteFooter = () => {
                           '&:hover, &:focus-visible': { borderColor: 'var(--color-footer-accent)', color: 'var(--color-footer-accent)' },
                           '&:focus-visible': { outlineColor: 'var(--color-footer-accent)' },
                         }}
-                        to={`${appRoutes.search}?tagId=${tag.id}`}
+                        to={toTopicList(appRoutes.search, `tagId=${tag.id}`)}
                       >
                         #{tag.name}
                       </Box>
@@ -168,7 +123,6 @@ export const SiteFooter = () => {
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
-              justifyContent: 'space-between',
               gap: 2,
               py: 3,
               // Keeps the last link away from the round "back to top" button, which sits over the corner of the page.
@@ -181,18 +135,6 @@ export const SiteFooter = () => {
             }}
           >
             <span>© {new Date().getFullYear()} TechForum · Nơi kiến thức được sẻ chia</span>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3 }}>
-              <SystemStatus state={systemState} />
-              <Box
-                component="a"
-                href={REPOSITORY_URL}
-                rel="noopener noreferrer"
-                sx={{ ...linkSx, display: 'inline-flex', alignItems: 'center', gap: 0.75, fontSize: '0.8125rem' }}
-                target="_blank"
-              >
-                <CodeIcon size={16} />Mã nguồn
-              </Box>
-            </Box>
           </Box>
         </div>
       </Box>

@@ -74,10 +74,6 @@ export const ArrowUpIcon = (props: IconProps) => (
   <Icon {...props}><path d="M12 19V5M5 12l7-7 7 7" /></Icon>
 )
 
-export const CodeIcon = (props: IconProps) => (
-  <Icon {...props}><path d="m16 18 6-6-6-6M8 6l-6 6 6 6" /></Icon>
-)
-
 export const EyeIcon = (props: IconProps) => (
   <Icon {...props}><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></Icon>
 )

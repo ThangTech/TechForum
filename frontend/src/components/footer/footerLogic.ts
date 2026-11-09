@@ -11,7 +11,8 @@ export const exploreLinks: FooterLink[] = [
   { label: 'Hỏi đáp', to: appRoutes.questions },
   { label: 'Thảo luận', to: appRoutes.discussions },
   { label: 'Cộng đồng', to: appRoutes.communities },
-  { label: 'Tìm kiếm', to: appRoutes.search },
+  // Not a page: it takes the visitor to the search box in the header, wherever they are (the id is in HeaderSearch).
+  { label: 'Tìm kiếm', to: '#header-search' },
 ]
 
 // The "Của bạn" column: a member gets the pages of their own, a guest gets the way in.
@@ -31,19 +32,8 @@ export const getAccountLinks = (isSignedIn: boolean): FooterLink[] =>
         { label: 'Quên mật khẩu', to: appRoutes.forgotPassword },
       ]
 
-export type SystemState = 'checking' | 'ok' | 'down'
-
-// The answer of the statistics request tells whether the server can be reached.
-export const getSystemState = (queryStatus: 'pending' | 'success' | 'error'): SystemState =>
-  queryStatus === 'success' ? 'ok' : queryStatus === 'error' ? 'down' : 'checking'
-
-export const systemStateLabels: Record<SystemState, string> = {
-  checking: 'Đang kiểm tra hệ thống…',
-  ok: 'Hệ thống hoạt động bình thường',
-  down: 'Không kết nối được máy chủ',
-}
+// A link to the list of a page: the list has the id "topic-list", so the page opens at the list and not at its title.
+export const toTopicList = (path: string, search: string): string => `${path}?${search}#topic-list`
 
 // Shows the first few items of a long list so that the footer does not grow with the data.
 export const takeFirst = <T>(items: readonly T[] | undefined, count: number): T[] => (items ?? []).slice(0, count)
-
-export const formatCount = (value: number): string => new Intl.NumberFormat('vi-VN').format(value)
