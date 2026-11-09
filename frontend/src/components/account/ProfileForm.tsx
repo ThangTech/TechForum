@@ -8,6 +8,7 @@ import { ApiError } from '../../api/client'
 import { getFieldError } from '../../api/fieldErrors'
 import { FormTextField } from '../common/FormTextField'
 import { Panel } from '../common/Panel'
+import { useToast } from '../feedback/toastState'
 
 interface ProfileFormValues {
   displayName: string
@@ -22,7 +23,7 @@ interface ProfileFormProps {
 
 export const ProfileForm = ({ displayName, bio, onSave }: ProfileFormProps) => {
   const [error, setError] = useState<ApiError | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const { showToast } = useToast()
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<ProfileFormValues>({
     defaultValues: { displayName, bio: bio ?? '' },
   })
@@ -30,12 +31,11 @@ export const ProfileForm = ({ displayName, bio, onSave }: ProfileFormProps) => {
 
   const submitProfile = async (values: ProfileFormValues) => {
     setError(null)
-    setMessage(null)
     try {
       const trimmedBio = values.bio.trim()
       await onSave(values.displayName, trimmedBio || null)
       reset({ displayName: values.displayName.trim(), bio: trimmedBio })
-      setMessage('Đã cập nhật tên hiển thị.')
+      showToast('Đã lưu hồ sơ.')
     } catch (requestError) {
       setError(requestError instanceof ApiError
         ? requestError
@@ -74,7 +74,6 @@ export const ProfileForm = ({ displayName, bio, onSave }: ProfileFormProps) => {
         <Typography color="text.secondary" sx={{ mt: 0.5, textAlign: 'right', fontSize: '0.75rem' }}>{bioValue.length}/500</Typography>
       </Box>
       {error && !displayNameError && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{error.message}</Typography>}
-      {message && <Typography color="success" role="status" sx={{ mt: 2 }} variant="body2">{message}</Typography>}
       <Stack direction="row" sx={{ mt: 2.5 }}>
         <Button loading={isSubmitting} type="submit" variant="contained">Lưu hồ sơ</Button>
       </Stack>

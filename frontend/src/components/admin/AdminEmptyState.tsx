@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box'
 import type { ReactNode } from 'react'
+import { EmptyStateIcon } from '../common/EmptyStateIcon'
 
 interface AdminEmptyStateProps {
   children: ReactNode
@@ -21,6 +22,7 @@ export const AdminEmptyState = ({ children, flat = false }: AdminEmptyStateProps
       borderColor: 'var(--color-border)',
     }}
   >
+    <EmptyStateIcon size={flat ? 34 : 40} />
     {children}
   </Box>
 )

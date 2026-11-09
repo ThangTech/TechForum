@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography'
 import { useState, type ChangeEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { Panel } from '../common/Panel'
+import { useToast } from '../feedback/toastState'
 import { UserAvatar } from './UserAvatar'
 
 interface AvatarFormProps {
@@ -17,6 +18,7 @@ interface AvatarFormProps {
 export const AvatarForm = ({ avatarUrl, displayName, onDelete, onUpload }: AvatarFormProps) => {
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { showToast } = useToast()
 
   const upload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -24,7 +26,7 @@ export const AvatarForm = ({ avatarUrl, displayName, onDelete, onUpload }: Avata
     if (!file || isBusy) return
     setIsBusy(true)
     setError(null)
-    try { await onUpload(file) }
+    try { await onUpload(file); showToast('Đã đổi ảnh đại diện.') }
     catch (requestError) { setError(requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật avatar.') }
     finally { setIsBusy(false) }
   }
@@ -33,7 +35,7 @@ export const AvatarForm = ({ avatarUrl, displayName, onDelete, onUpload }: Avata
     if (isBusy) return
     setIsBusy(true)
     setError(null)
-    try { await onDelete() }
+    try { await onDelete(); showToast('Đã xóa ảnh đại diện.') }
     catch (requestError) { setError(requestError instanceof ApiError ? requestError.message : 'Không thể xóa avatar.') }
     finally { setIsBusy(false) }
   }

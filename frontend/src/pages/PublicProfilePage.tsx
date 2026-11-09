@@ -14,6 +14,7 @@ import { BackLink } from '../components/common/BackLink'
 import { PageShell } from '../components/common/PageShell'
 import { Panel } from '../components/common/Panel'
 import { PanelList } from '../components/common/PanelList'
+import { EmptyStateIcon } from '../components/common/EmptyStateIcon'
 import { InlineStats } from '../components/common/InlineStats'
 import { useAuth } from '../auth/authState'
 import { openAuthDialog } from '../auth/authDialogStore'
@@ -140,7 +141,7 @@ export const PublicProfilePage = () => {
                       color="primary"
                       component={Link}
                       key={skill.tagId}
-                      label={`#${skill.name} · ${skill.topicCount}`}
+                      label={skill.topicCount > 0 ? `#${skill.name} · ${skill.topicCount}` : `#${skill.name}`}
                       sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}
                       to={appRoutes.skill(skill.tagId)}
                       variant="filled"
@@ -162,7 +163,13 @@ export const PublicProfilePage = () => {
               )}
             </Box>
             {profile.recentTopics.length === 0 ? (
-              <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }} variant="body2">Thành viên chưa có nội dung công khai.</Typography>
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <EmptyStateIcon />
+                <Typography color="text.secondary" variant="body2">
+                  {isOwnProfile ? 'Bạn chưa có nội dung công khai. Hãy viết bài đầu tiên của bạn.' : 'Thành viên chưa có nội dung công khai.'}
+                </Typography>
+                {isOwnProfile && <Button component={Link} sx={{ mt: 2 }} to={appRoutes.write} variant="contained">Viết bài</Button>}
+              </Box>
             ) : (
               <PanelList>
                 {profile.recentTopics.map((topic) => (

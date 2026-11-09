@@ -18,7 +18,12 @@ export interface PublicProfile {
   recentTopics: TopicSummary[]
 }
 
-export interface ProfileSkill { tagId: number; name: string; slug: string; topicCount: number }
+// isChosen: the member picked this skill; otherwise it was found from the tags of their public content.
+export interface ProfileSkill { tagId: number; name: string; slug: string; topicCount: number; isChosen: boolean }
+// A skill the member chose, as the personal page edits it (a tag that already exists).
+export interface SkillTag { tagId: number; name: string; slug: string }
+// The most skills a member can choose (the same limit as the API).
+export const maxChosenSkills = 12
 export interface ProfileBadge { code: string; name: string; description: string }
 export interface FollowStatus { isFollowing: boolean; followerCount: number }
 export interface FollowMember { id: string; displayName: string; bio: string | null; publishedTopicCount: number; followedAtUtc: string }
@@ -47,7 +52,7 @@ export const getPublicProfile = async (
     typeof data.isFollowedByViewer !== 'boolean' ||
     !Array.isArray(data.skills) || !data.skills.every((skill) => isRecord(skill) &&
       typeof skill.tagId === 'number' && typeof skill.name === 'string' &&
-      typeof skill.slug === 'string' && typeof skill.topicCount === 'number') ||
+      typeof skill.slug === 'string' && typeof skill.topicCount === 'number' && typeof skill.isChosen === 'boolean') ||
     !Array.isArray(data.badges) || !data.badges.every((badge) => isRecord(badge) &&
       typeof badge.code === 'string' && typeof badge.name === 'string' && typeof badge.description === 'string') ||
     !Array.isArray(data.recentTopics) ||
@@ -59,7 +64,25 @@ export const getPublicProfile = async (
   return data as unknown as PublicProfile
 }
 
-const parseFollowStatus = (data: unknown): FollowStatus => {
+const isSkillTag = (value: unknown): value is SkillTag =>
+  isRecord(value) && typeof value.tagId === 'number' && typeof value.name === 'string' && typeof value.slug === 'string'
+
+const parseSkillTags = (data: unknown): SkillTag[] => {
+  if (!Array.isArray(data) || !data.every(isSkillTag)) {
+    throw new ApiError(500, 'Danh sách kỹ năng từ API không đúng định dạng.')
+  }
+  return data
+}
+
+// The skills that the signed-in member chose.
+export const getMySkills = async (signal?: AbortSignal): Promise<SkillTag[]> =>
+  parseSkillTags(await apiRequest<unknown>('/api/profiles/me/skills', { signal }))
+
+// Replaces the whole list: a skill that is not in tagIds is removed.
+export const saveMySkills = async (tagIds: number[]): Promise<SkillTag[]> =>
+  parseSkillTags(await apiRequest<unknown>('/api/profiles/me/skills', { method: 'PUT', body: JSON.stringify({ tagIds }) }))
+
+const parseFollowStatus =(data: unknown): FollowStatus => {
   if (!isRecord(data) || typeof data.isFollowing !== 'boolean' || typeof data.followerCount !== 'number')
     throw new ApiError(500, 'Trạng thái theo dõi không đúng định dạng.')
   return data as unknown as FollowStatus

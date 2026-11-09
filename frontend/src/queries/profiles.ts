@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   followMember,
   getFollowMembers,
+  getMySkills,
   getPublicProfile,
+  saveMySkills,
   unfollowMember,
   type PublicProfile,
 } from '../api/profiles'
@@ -33,6 +35,31 @@ export const useFollowMembers = (userId: string, kind: 'followers' | 'following'
     queryKey: profileKeys.membersPage(userId, kind, page),
     queryFn: ({ signal }) => getFollowMembers(userId, kind, page, signal),
   })
+
+// The skills that the signed-in member chose. They belong to one account, so they are stored per user.
+export const useMySkills = () => {
+  const { scope, isReady } = useUserScope()
+
+  return useQuery({
+    queryKey: userKey(scope, 'profiles', 'my-skills'),
+    queryFn: ({ signal }) => getMySkills(signal),
+    enabled: isReady,
+  })
+}
+
+export const useSaveMySkills = () => {
+  const queryClient = useQueryClient()
+  const { scope } = useUserScope()
+
+  return useMutation({
+    mutationFn: (tagIds: number[]) => saveMySkills(tagIds),
+    onSuccess: (skills) => {
+      queryClient.setQueryData(userKey(scope, 'profiles', 'my-skills'), skills)
+      // The public profile shows these skills too.
+      void queryClient.invalidateQueries({ queryKey: userKey(scope, 'profiles') })
+    },
+  })
+}
 
 // Pass the current value of isFollowedByViewer: true unfollows, false follows.
 export const useToggleFollow = (userId: string) => {

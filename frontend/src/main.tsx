@@ -9,6 +9,7 @@ import './intro-overrides.css'
 import App from './App.tsx'
 import { initializeSession } from './auth/session.ts'
 import { AppErrorBoundary } from './components/common/AppErrorBoundary.tsx'
+import { ToastProvider } from './components/feedback/ToastProvider.tsx'
 import { queryClient } from './queries/queryClient.ts'
 import { ThemeModeProvider } from './theme/ThemeModeProvider.tsx'
 
@@ -22,7 +23,9 @@ createRoot(document.getElementById('root')!).render(
     <ThemeModeProvider>
       <AppErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </QueryClientProvider>
       </AppErrorBoundary>
     </ThemeModeProvider>

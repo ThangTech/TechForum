@@ -121,9 +121,23 @@ từ backend; mở một thông báo chưa đọc sẽ đánh dấu đã đọc 
 Cột phải trang duyệt gọi `/api/question-highlights` để hiển thị câu hỏi mới và
 câu hỏi nhiều phản hồi trong 30 ngày; không dùng số liệu tĩnh.
 
-Hồ sơ công khai hiển thị người theo dõi, Sao hữu ích nhận được, kỹ năng suy ra
-từ thẻ của nội dung công khai và danh hiệu theo ngưỡng dữ liệu thật. Thành viên
-có thể theo dõi/bỏ theo dõi người khác; khách dùng modal đăng nhập chung.
+Hồ sơ công khai hiển thị người theo dõi, Sao hữu ích nhận được, kỹ năng và danh
+hiệu theo ngưỡng dữ liệu thật. Kỹ năng gồm các thẻ thành viên tự chọn (sửa/xóa
+tại `/account`, ô **Kỹ năng**, chọn từ thẻ có sẵn, tối đa 12) và các thẻ dùng nhiều
+nhất trong nội dung công khai. Thành viên có thể theo dõi/bỏ theo dõi người khác;
+khách dùng modal đăng nhập chung.
+
+Trang `/account` chia hai cột độc lập (Avatar + Hồ sơ | Kỹ năng + Đổi mật khẩu +
+Phiên đăng nhập) để thẻ ngắn không bị kéo giãn theo thẻ bên cạnh. Kết quả lưu
+(hồ sơ, avatar, kỹ năng) hiện bằng thông báo nổi `ToastProvider` (MUI Snackbar + Alert,
+tự tắt sau 4 giây); danh sách rỗng dùng biểu tượng hòm thư (`EmptyStateIcon`).
+
+Slider banner trang chủ tự chuyển sau 5 giây, kể cả khi hệ điều hành bật "giảm
+chuyển động" (khi đó chỉ bỏ hiệu ứng trượt); có nút tạm dừng/tiếp tục. Ảnh banner
+luôn phủ kín khung tỉ lệ 3:1 (`object-fit: cover`, ảnh đặt tuyệt đối nên kích thước
+gốc không làm phình khung). Ảnh và video trong bài viết, bản xem trước và editor có
+cỡ tối đa cố định (video 640×360, ảnh cao tối đa 480px). Bài không có ảnh (ví dụ chỉ
+có video) hiện nền theo thẻ đầu tiên ở mục "Tin công nghệ" (`TagCover`).
 
 Header desktop đặt Bài viết/Hỏi đáp/Thảo luận cạnh logo, sau đó mới tới tìm kiếm.
 Nút bút dùng menu MUI với hai lựa chọn `Viết bài` và `Đặt câu hỏi`. Trang `/`

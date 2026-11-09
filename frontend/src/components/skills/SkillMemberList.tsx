@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import type { SkillMember } from '../../api/skills'
 import { appRoutes } from '../../appRoutes'
+import { EmptyStateIcon } from '../common/EmptyStateIcon'
 import { Panel } from '../common/Panel'
 import { PanelList } from '../common/PanelList'
 
@@ -17,7 +18,10 @@ export const SkillMemberList = ({ members }: SkillMemberListProps) => (
       <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 700 }}>Thành viên có kỹ năng này</Typography>
     </Box>
     {members.length === 0 ? (
-      <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }} variant="body2">Chưa có nội dung công khai dùng thẻ này.</Typography>
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <EmptyStateIcon />
+        <Typography color="text.secondary" variant="body2">Chưa có nội dung công khai dùng thẻ này.</Typography>
+      </Box>
     ) : (
       <PanelList>
         {members.map((member) => (
