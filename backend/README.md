@@ -145,30 +145,66 @@ bản và `id` giảm dần. DTO tác giả chỉ có `id` và `displayName`, kh
 lập. HTML seed là nội dung development tin cậy; endpoint ghi ở P3 chỉ được mở sau
 khi có bước làm sạch HTML phía server.
 
-## Upload media P3
+## Upload media (Cloudinary)
 
-- `POST /api/media/images`: multipart field `file`, hỗ trợ PNG/JPEG/GIF/WebP,
-  tối đa 5 MB.
+Ảnh và video được lưu trên **Cloudinary**; cơ sở dữ liệu chỉ giữ địa chỉ https mà
+Cloudinary trả về (cột `PublicUrl` của `MediaAssets`) và id của tệp trên Cloudinary
+(cột `RelativePath`). Avatar và ảnh banner cũng lưu cùng nơi (thư mục `avatars`,
+`banners`). Backend nhận tệp, tự kiểm tra rồi mới đẩy lên Cloudinary; khóa API không
+bao giờ gửi cho trình duyệt.
+
+### Cấu hình (bắt buộc để tải tệp lên)
+
+Lấy `Cloud name`, `API Key`, `API Secret` ở trang Dashboard của Cloudinary rồi đặt bằng
+user secrets (không commit vào file):
+
+```powershell
+cd backend
+dotnet user-secrets set "Cloudinary:CloudName" "<cloud name>"
+dotnet user-secrets set "Cloudinary:ApiKey" "<api key>"
+dotnet user-secrets set "Cloudinary:ApiSecret" "<api secret>"
+```
+
+Hoặc biến môi trường `Cloudinary__CloudName`, `Cloudinary__ApiKey`, `Cloudinary__ApiSecret`.
+`Cloudinary:Folder` (mặc định `techforum`) là thư mục chứa mọi tệp của site; đặt tên khác
+cho môi trường khác (ví dụ `techforum-dev`). Khi chưa cấu hình, API vẫn chạy và hiển thị
+nội dung cũ, nhưng các endpoint tải tệp lên trả **503** kèm lời giải thích.
+
+### Endpoint
+
+- `POST /api/media/images`: multipart field `file`, hỗ trợ PNG/JPEG/GIF/WebP, tối đa 5 MB.
 - `POST /api/media/videos`: multipart field `file`, hỗ trợ MP4/WebM, tối đa 50 MB.
 
-Hai endpoint yêu cầu access token (header `Authorization: Bearer`). Backend kiểm tra cả MIME và
-magic bytes, bỏ tên file client và lưu bằng GUID trong `App_Data/uploads` (đã
-ignore Git). Mỗi upload có bản ghi chủ sở hữu trong `MediaAssets`. Contract trả
-về có dạng
-`{ "id": "guid", "link": "http://localhost:5045/media/images/{guid}.png", "path": "/media/images/{guid}.png" }`.
-`link` là URL tuyệt đối để Froala hiển thị khi FE/BE khác origin; `path` là đường
-dẫn nội bộ phải được gửi trong HTML khi tạo nội dung.
+Hai endpoint yêu cầu access token. Backend kiểm tra kích thước, MIME và magic bytes,
+bỏ tên tệp của client và đặt id ngẫu nhiên `{folder}/images|videos/{guid}`. Mỗi upload
+có bản ghi chủ sở hữu trong `MediaAssets`. Contract trả về:
+`{ "id": "guid", "link": "https://res.cloudinary.com/{cloud}/image/upload/v123/techforum/images/{guid}.png", "path": "<cùng địa chỉ>" }`.
+Với tệp cũ lưu trên đĩa (`/media/...`) `link` là địa chỉ tuyệt đối của API còn `path` là
+đường dẫn nội bộ. Địa chỉ phải được gửi nguyên trong `bodyHtml` khi tạo nội dung.
 
-- `DELETE /api/media/{id}`: chỉ chủ sở hữu được xóa media chưa gắn vào nội dung;
-  trả 404 nếu không tồn tại/không thuộc tài khoản và 409 nếu đã được sử dụng.
+- `DELETE /api/media/{id}`: chỉ chủ sở hữu được xóa media chưa gắn vào nội dung; xóa cả tệp
+  trên Cloudinary. 404 nếu không tồn tại/không thuộc tài khoản, 409 nếu đã được sử dụng, 503
+  nếu Cloudinary không xóa được lúc này (bản ghi được giữ để thử lại).
+- Mã lỗi khi tải lên: 400 tệp không hợp lệ, 503 chưa cấu hình hoặc Cloudinary không phản hồi.
 
-Có thể đổi giới hạn bằng `Media__MaxImageBytes` và `Media__MaxVideoBytes`; không
-đặt `Media__StoragePath` ra ngoài thư mục backend. Media chưa gắn vào chủ đề được
-dọn sau 24 giờ theo mặc định; cấu hình bằng `Media__OrphanRetentionHours`,
-`Media__CleanupIntervalMinutes` và `Media__CleanupBatchSize`.
+### Quy tắc địa chỉ
 
-Editor chưa bật media cho tới khi luồng gắn ownership vào chủ đề và allowlist URL
-`/media/` trong sanitizer hoàn tất.
+`MediaUrlRules` là nơi duy nhất quyết định địa chỉ nào thuộc site: đúng cloud name, đúng
+thư mục, đúng loại (`image`/`video`), `https`, không query, không biến đổi. Bộ làm sạch HTML
+chỉ giữ ảnh/video có địa chỉ như vậy (và địa chỉ `/media/images|videos/` của tệp cũ), nên
+không thể chèn ảnh từ tài khoản Cloudinary khác vào bài viết. Việc xóa tệp cũng chỉ đụng
+tới tệp nằm trong thư mục của site.
+
+### Tệp cũ trên đĩa
+
+Tệp lưu trước khi chuyển sang Cloudinary vẫn nằm ở `App_Data/uploads` và được phục vụ ở
+`/media` để bài cũ không mất ảnh; chúng chỉ bị xóa khỏi đĩa khi gỡ/thay thế. Tệp mới không
+ghi lên đĩa nữa.
+
+Media chưa gắn vào chủ đề được dọn sau 24 giờ theo mặc định (xóa cả trên Cloudinary; tệp lỗi
+được thử lại ở lần sau); cấu hình bằng `Media__OrphanRetentionHours`,
+`Media__CleanupIntervalMinutes` và `Media__CleanupBatchSize`. Tệp đang được một bản nháp tự
+lưu sử dụng không bị dọn.
 
 Khi tạo chủ đề, client gửi thêm `mediaIds` chứa ID media thực sự xuất hiện trong
 `bodyHtml`. Backend chỉ nhận media chưa dùng của chính tác giả, đối chiếu URL sau

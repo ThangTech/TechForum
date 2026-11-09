@@ -5,6 +5,9 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
+// Checks a picture or a video that a member uploads (size, real type, owner) and keeps it in the Cloudinary account.
+// The database keeps only the address that Cloudinary gives back. Files that were stored on the disk before the move
+// to Cloudinary are still found and deleted from the disk.
 public sealed class MediaStorageService : IMediaStorageService
 {
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
@@ -17,19 +20,29 @@ public sealed class MediaStorageService : IMediaStorageService
     private static readonly byte[] WebMSignature = [0x1A, 0x45, 0xDF, 0xA3];
 
     private readonly MediaOptions options;
+    // The folder of the old files on the disk.
     private readonly string storageRoot;
     private readonly IMediaAssetRepository repository;
+    private readonly ICloudMediaClient cloud;
+    private readonly MediaUrlRules rules;
     private readonly TimeProvider timeProvider;
+    private readonly ILogger<MediaStorageService> logger;
 
     public MediaStorageService(
         IWebHostEnvironment environment,
         IOptions<MediaOptions> optionsAccessor,
         IMediaAssetRepository repository,
-        TimeProvider timeProvider)
+        ICloudMediaClient cloud,
+        MediaUrlRules rules,
+        TimeProvider timeProvider,
+        ILogger<MediaStorageService> logger)
     {
         options = optionsAccessor.Value;
         this.repository = repository;
+        this.cloud = cloud;
+        this.rules = rules;
         this.timeProvider = timeProvider;
+        this.logger = logger;
         if (Path.IsPathRooted(options.StoragePath))
         {
             throw new InvalidOperationException("Media:StoragePath phải là đường dẫn tương đối trong backend.");
@@ -47,13 +60,13 @@ public sealed class MediaStorageService : IMediaStorageService
         string uploaderId,
         IFormFile file,
         CancellationToken cancellationToken) =>
-        StoreAsync(uploaderId, file, "images", options.MaxImageBytes, DetectImage, cancellationToken);
+        StoreAsync(uploaderId, file, "images", CloudResourceType.Image, options.MaxImageBytes, DetectImage, cancellationToken);
 
     public Task<MediaUploadResult> StoreVideoAsync(
         string uploaderId,
         IFormFile file,
         CancellationToken cancellationToken) =>
-        StoreAsync(uploaderId, file, "videos", options.MaxVideoBytes, DetectVideo, cancellationToken);
+        StoreAsync(uploaderId, file, "videos", CloudResourceType.Video, options.MaxVideoBytes, DetectVideo, cancellationToken);
 
     public async Task<MediaDeleteResult> DeleteUnusedAsync(
         string uploaderId,
@@ -70,7 +83,17 @@ public sealed class MediaStorageService : IMediaStorageService
             return MediaDeleteResult.Attached;
         }
 
-        DeleteStoredFile(mediaAsset.RelativePath);
+        try
+        {
+            await DeleteStoredFileAsync(mediaAsset, cancellationToken);
+        }
+        catch (CloudMediaException exception)
+        {
+            // The record stays, so the file can be deleted later by the member or by the clean up.
+            logger.LogWarning(exception, "Không xóa được media {MediaId} trên Cloudinary.", id);
+            return MediaDeleteResult.Unavailable;
+        }
+
         await repository.DeleteAsync(mediaAsset, cancellationToken);
         return MediaDeleteResult.Deleted;
     }
@@ -85,19 +108,32 @@ public sealed class MediaStorageService : IMediaStorageService
             batchSize,
             cancellationToken);
 
+        var deleted = 0;
         foreach (var orphan in orphans)
         {
-            DeleteStoredFile(orphan.RelativePath);
+            try
+            {
+                await DeleteStoredFileAsync(orphan, cancellationToken);
+            }
+            catch (CloudMediaException exception)
+            {
+                // One file that cannot be deleted now must not stop the others; it is tried again at the next run.
+                logger.LogWarning(exception, "Không dọn được media {MediaId} trên Cloudinary.", orphan.Id);
+                continue;
+            }
+
             await repository.DeleteAsync(orphan, cancellationToken);
+            deleted++;
         }
 
-        return orphans.Count;
+        return deleted;
     }
 
     private async Task<MediaUploadResult> StoreAsync(
         string uploaderId,
         IFormFile file,
-        string folder,
+        string kind,
+        CloudResourceType resourceType,
         long maxBytes,
         Func<byte[], DetectedMedia?> detect,
         CancellationToken cancellationToken)
@@ -107,51 +143,53 @@ public sealed class MediaStorageService : IMediaStorageService
             return MediaUploadResult.Invalid($"Tệp phải có dung lượng từ 1 byte đến {maxBytes / 1024 / 1024} MB.");
         }
 
-        await using var input = file.OpenReadStream();
-        var header = new byte[16];
-        var bytesRead = await input.ReadAsync(header.AsMemory(), cancellationToken);
-        var media = detect(header[..bytesRead]);
+        // The real type is read from the first bytes of the file, not from its name or the type that the browser says.
+        DetectedMedia? media;
+        await using (var input = file.OpenReadStream())
+        {
+            var header = new byte[16];
+            var bytesRead = await input.ReadAsync(header.AsMemory(), cancellationToken);
+            media = detect(header[..bytesRead]);
+        }
+
         if (media is null || !media.ContentTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
         {
             return MediaUploadResult.Invalid("Loại tệp hoặc nội dung tệp không được hỗ trợ.");
         }
 
-        var id = Guid.NewGuid();
-        var directory = Path.Combine(storageRoot, folder);
-        Directory.CreateDirectory(directory);
-        var fileName = $"{id:N}{media.Extension}";
-        var filePath = Path.Combine(directory, fileName);
+        if (!cloud.IsConfigured)
+        {
+            return MediaUploadResult.Unavailable("Chưa cấu hình lưu trữ Cloudinary nên chưa thể tải tệp lên.");
+        }
 
+        var id = Guid.NewGuid();
+        var publicId = rules.CreatePublicId(kind, id);
+        string url;
         try
         {
-            await using var output = new FileStream(
-                filePath,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None,
-                81920,
-                FileOptions.Asynchronous);
-            await output.WriteAsync(header.AsMemory(0, bytesRead), cancellationToken);
-            await input.CopyToAsync(output, cancellationToken);
+            await using var content = file.OpenReadStream();
+            url = await cloud.UploadAsync(content, $"{id:N}{media.Extension}", resourceType, publicId, cancellationToken);
         }
-        catch
+        catch (CloudMediaException exception)
         {
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
-            throw;
+            logger.LogWarning(exception, "Không tải được media lên Cloudinary.");
+            return MediaUploadResult.Unavailable("Không thể tải tệp lên Cloudinary lúc này. Vui lòng thử lại.");
         }
 
-        var relativePath = Path.Combine(folder, fileName);
-        var requestRoot = "/" + options.RequestPath.Trim('/');
-        var publicUrl = $"{requestRoot}/{folder}/{fileName}";
+        // An address that the rules do not know would be removed from the topic by the sanitizer, so it is refused now.
+        if (!rules.IsTopicMediaUrl(url))
+        {
+            await TryDeleteFromCloudAsync(url, cancellationToken);
+            return MediaUploadResult.Unavailable("Cloudinary trả về địa chỉ không hợp lệ.");
+        }
+
         var mediaAsset = new MediaAsset
         {
             Id = id,
             UploaderId = uploaderId,
-            RelativePath = relativePath,
-            PublicUrl = publicUrl,
+            // For a file of Cloudinary this is its id there; for an old file it is the path on the disk.
+            RelativePath = publicId,
+            PublicUrl = url,
             ContentType = media.ContentTypes[0],
             Length = file.Length,
             CreatedAtUtc = timeProvider.GetUtcNow()
@@ -163,16 +201,45 @@ public sealed class MediaStorageService : IMediaStorageService
         }
         catch
         {
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
+            await TryDeleteFromCloudAsync(url, CancellationToken.None);
             throw;
         }
 
-        return MediaUploadResult.Success(id, publicUrl);
+        return MediaUploadResult.Success(id, url);
     }
 
+    private async Task DeleteStoredFileAsync(MediaAsset mediaAsset, CancellationToken cancellationToken)
+    {
+        var cloudAsset = rules.TryGetCloudAsset(mediaAsset.PublicUrl);
+        if (cloudAsset is not null)
+        {
+            await cloud.DeleteAsync(cloudAsset, cancellationToken);
+            return;
+        }
+
+        DeleteStoredFile(mediaAsset.RelativePath);
+    }
+
+    // Used when a file was uploaded but the record could not be saved: the file is not left behind without an owner.
+    private async Task TryDeleteFromCloudAsync(string url, CancellationToken cancellationToken)
+    {
+        var cloudAsset = rules.TryGetCloudAsset(url);
+        if (cloudAsset is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await cloud.DeleteAsync(cloudAsset, cancellationToken);
+        }
+        catch (CloudMediaException exception)
+        {
+            logger.LogWarning(exception, "Không xóa được tệp thừa {PublicId} trên Cloudinary.", cloudAsset.PublicId);
+        }
+    }
+
+    // A file of the time before Cloudinary.
     private void DeleteStoredFile(string relativePath)
     {
         if (Path.IsPathRooted(relativePath))

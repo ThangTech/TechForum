@@ -142,6 +142,7 @@ builder.Services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
 builder.Services.Configure<CloudinaryOptions>(
     builder.Configuration.GetSection(CloudinaryOptions.SectionName));
 builder.Services.AddSingleton<MediaUrlRules>();
+builder.Services.AddSingleton<ICloudMediaClient, CloudinaryMediaClient>();
 builder.Services.AddSingleton<IContentSanitizer, ContentSanitizer>();
 builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddHostedService<MediaCleanupBackgroundService>();

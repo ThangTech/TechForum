@@ -14,6 +14,7 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
     [HttpPost("images")]
     [ProducesResponseType<MediaUploadDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public Task<ActionResult<MediaUploadDto>> UploadImage(
         IFormFile file,
         CancellationToken cancellationToken) =>
@@ -22,6 +23,7 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
     [HttpPost("videos")]
     [ProducesResponseType<MediaUploadDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public Task<ActionResult<MediaUploadDto>> UploadVideo(
         IFormFile file,
         CancellationToken cancellationToken) =>
@@ -44,6 +46,12 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
                 Title = "Media đang được sử dụng",
                 Detail = "Không thể xóa media đã gắn với nội dung."
             }),
+            MediaDeleteResult.Unavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Chưa xóa được media",
+                Detail = "Không thể xóa tệp trên Cloudinary lúc này. Vui lòng thử lại sau."
+            }),
             _ => NotFound(new ProblemDetails
             {
                 Status = StatusCodes.Status404NotFound,
@@ -56,6 +64,16 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
         Func<string, Task<MediaUploadResult>> store)
     {
         var result = await store(User.GetRequiredUserId());
+        if (result.IsUnavailable)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Chưa thể lưu tệp",
+                Detail = result.Error
+            });
+        }
+
         if (!result.Succeeded)
         {
             return BadRequest(new ProblemDetails
@@ -67,10 +85,13 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
         }
 
         var media = result.Media!;
-        var absoluteLink = $"{Request.Scheme}://{Request.Host}{Request.PathBase}{media.Path}";
+        // A file of Cloudinary already has a full address. An old file of the disk is given with the address of this server.
+        var link = media.Path.StartsWith("https://", StringComparison.Ordinal)
+            ? media.Path
+            : $"{Request.Scheme}://{Request.Host}{Request.PathBase}{media.Path}";
         return StatusCode(
             StatusCodes.Status201Created,
-            media with { Link = absoluteLink });
+            media with { Link = link });
     }
 
 }

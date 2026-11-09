@@ -133,7 +133,7 @@ public sealed class BannerService(
     {
         if (!await bannerRepository.ImageUrlInUseAsync(imageUrl, bannerId, cancellationToken))
         {
-            imageStorage.Delete(imageUrl);
+            await imageStorage.DeleteAsync(imageUrl, cancellationToken);
         }
     }
 

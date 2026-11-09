@@ -29,6 +29,7 @@ public sealed class MediaUrlRules
 
     private const string Id = "[a-f0-9]{32}";
 
+    private readonly string cloudFolder;
     private readonly Regex topicMedia;
     private readonly Regex topicMediaWhole;
     private readonly Regex firstImage;
@@ -40,6 +41,7 @@ public sealed class MediaUrlRules
     {
         var local = Regex.Escape("/" + mediaOptions.Value.RequestPath.Trim('/'));
         var cloud = cloudinaryOptions.Value;
+        cloudFolder = cloud.Folder.Trim('/');
 
         var localImage = $"{local}/images/{Id}\\.(?:png|jpg|gif|webp)";
         var localVideo = $"{local}/videos/{Id}\\.(?:mp4|webm)";
@@ -70,6 +72,10 @@ public sealed class MediaUrlRules
         topicMediaWhole = new Regex($"^(?:(?:{imageAddress})|(?:{videoAddress}))$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         firstImage = new Regex($"<img\\b[^>]*?\\bsrc=\"({imageAddress})\"", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
+
+    // The id for a new file in the Cloudinary account: the folder of the site, the kind of file
+    // (images, videos, avatars or banners) and a random name. Cloudinary adds the extension to the address.
+    public string CreatePublicId(string kind, Guid id) => $"{cloudFolder}/{kind}/{id:N}";
 
     // A picture or a video that may appear in the content of a topic.
     public bool IsTopicMediaUrl(string url) => topicMediaWhole.IsMatch(url);

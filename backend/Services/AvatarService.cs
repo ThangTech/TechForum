@@ -5,10 +5,16 @@ using TechForum.Api.Dtos.Auth;
 
 namespace TechForum.Api.Services;
 
+// The avatar of a member is kept in the Cloudinary account (folder "avatars"). The user record keeps the address.
+// An avatar of the time before Cloudinary (/media/avatars/...) is still shown and is deleted from the disk when it
+// is replaced.
 public sealed class AvatarService(
     IAccountRepository accountRepository,
     IWebHostEnvironment environment,
-    IOptions<MediaOptions> optionsAccessor) : IAvatarService
+    IOptions<MediaOptions> optionsAccessor,
+    ICloudMediaClient cloud,
+    MediaUrlRules rules,
+    ILogger<AvatarService> logger) : IAvatarService
 {
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
     private static readonly byte[] JpegSignature = [0xFF, 0xD8, 0xFF];
@@ -31,36 +37,41 @@ public sealed class AvatarService(
             return AvatarUpdateResult.Invalid("Avatar phải có dung lượng từ 1 byte đến 2 MB.");
         }
 
-        await using var input = file.OpenReadStream();
-        var header = new byte[16];
-        var bytesRead = await input.ReadAsync(header.AsMemory(), cancellationToken);
-        var extension = DetectExtension(header[..bytesRead], file.ContentType);
+        string? extension;
+        await using (var input = file.OpenReadStream())
+        {
+            var header = new byte[16];
+            var bytesRead = await input.ReadAsync(header.AsMemory(), cancellationToken);
+            extension = DetectExtension(header[..bytesRead], file.ContentType);
+        }
+
         if (extension is null)
         {
             return AvatarUpdateResult.Invalid("Avatar chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
         }
 
-        var storageRoot = GetStorageRoot();
-        var avatarDirectory = Path.Combine(storageRoot, "avatars");
-        Directory.CreateDirectory(avatarDirectory);
-        var fileName = $"{Guid.NewGuid():N}{extension}";
-        var filePath = Path.Combine(avatarDirectory, fileName);
-        await using (var output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true))
+        if (!cloud.IsConfigured)
         {
-            await output.WriteAsync(header.AsMemory(0, bytesRead), cancellationToken);
-            await input.CopyToAsync(output, cancellationToken);
+            return AvatarUpdateResult.Invalid("Chưa cấu hình lưu trữ Cloudinary nên chưa thể đổi avatar.");
+        }
+
+        var newAvatarUrl = await UploadAsync(file, extension, cancellationToken);
+        if (newAvatarUrl is null)
+        {
+            return AvatarUpdateResult.Invalid("Không thể tải avatar lên Cloudinary lúc này. Vui lòng thử lại.");
         }
 
         var oldAvatarUrl = user.AvatarUrl;
-        user.AvatarUrl = $"/{options.RequestPath.Trim('/')}/avatars/{fileName}";
+        user.AvatarUrl = newAvatarUrl;
         var updateResult = await accountRepository.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            File.Delete(filePath);
+            // The new file has no owner now, so it is not left in the account.
+            await DeleteFromCloudAsync(newAvatarUrl, cancellationToken);
             return AvatarUpdateResult.Invalid("Không thể cập nhật avatar lúc này.");
         }
 
-        DeleteOldAvatar(oldAvatarUrl, storageRoot);
+        await DeleteOldAvatarAsync(oldAvatarUrl, cancellationToken);
         return AvatarUpdateResult.Success(await MapUserAsync(user));
     }
 
@@ -78,7 +89,7 @@ public sealed class AvatarService(
         {
             return AvatarUpdateResult.Invalid("Không thể xóa avatar lúc này.");
         }
-        DeleteOldAvatar(oldAvatarUrl, GetStorageRoot());
+        await DeleteOldAvatarAsync(oldAvatarUrl, cancellationToken);
         return AvatarUpdateResult.Success(await MapUserAsync(user));
     }
 
@@ -118,10 +129,71 @@ public sealed class AvatarService(
         return null;
     }
 
-    private void DeleteOldAvatar(string? avatarUrl, string storageRoot)
+    // Null when Cloudinary did not take the file.
+    private async Task<string?> UploadAsync(IFormFile file, string extension, CancellationToken cancellationToken)
+    {
+        var id = Guid.NewGuid();
+        try
+        {
+            await using var content = file.OpenReadStream();
+            var url = await cloud.UploadAsync(
+                content, $"{id:N}{extension}", CloudResourceType.Image, rules.CreatePublicId("avatars", id), cancellationToken);
+            if (rules.IsCloudAvatarUrl(url))
+            {
+                return url;
+            }
+
+            logger.LogWarning("Cloudinary trả về địa chỉ avatar không đúng quy tắc: {Url}", url);
+            await DeleteFromCloudAsync(url, cancellationToken);
+            return null;
+        }
+        catch (CloudMediaException exception)
+        {
+            logger.LogWarning(exception, "Không tải được avatar lên Cloudinary.");
+            return null;
+        }
+    }
+
+    // The old avatar is not needed any more. A failure here is only logged: the new avatar is already saved.
+    private async Task DeleteOldAvatarAsync(string? avatarUrl, CancellationToken cancellationToken)
+    {
+        if (avatarUrl is null)
+        {
+            return;
+        }
+
+        if (rules.IsCloudAvatarUrl(avatarUrl))
+        {
+            await DeleteFromCloudAsync(avatarUrl, cancellationToken);
+            return;
+        }
+
+        DeleteOldLocalAvatar(avatarUrl, GetStorageRoot());
+    }
+
+    private async Task DeleteFromCloudAsync(string url, CancellationToken cancellationToken)
+    {
+        var asset = rules.TryGetCloudAsset(url);
+        if (asset is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await cloud.DeleteAsync(asset, cancellationToken);
+        }
+        catch (CloudMediaException exception)
+        {
+            logger.LogWarning(exception, "Không xóa được avatar {PublicId} trên Cloudinary.", asset.PublicId);
+        }
+    }
+
+    // An avatar of the time before Cloudinary.
+    private void DeleteOldLocalAvatar(string avatarUrl, string storageRoot)
     {
         var prefix = $"/{options.RequestPath.Trim('/')}/avatars/";
-        if (avatarUrl is null || !avatarUrl.StartsWith(prefix, StringComparison.Ordinal))
+        if (!avatarUrl.StartsWith(prefix, StringComparison.Ordinal))
         {
             return;
         }

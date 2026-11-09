@@ -3,6 +3,8 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Services;
 
+// The picture of a banner is kept in the Cloudinary account (folder "banners"). The banner record keeps the address.
+// A picture of the time before Cloudinary (/media/banners/...) is still accepted and is deleted from the disk.
 public sealed class BannerImageStorage : IBannerImageStorage
 {
     private const string FolderName = "banners";
@@ -12,12 +14,24 @@ public sealed class BannerImageStorage : IBannerImageStorage
     private static readonly byte[] WebPType = "WEBP"u8.ToArray();
 
     private readonly MediaOptions options;
+    private readonly ICloudMediaClient cloud;
+    private readonly MediaUrlRules rules;
+    private readonly ILogger<BannerImageStorage> logger;
+    // The folder and the address of the old files on the disk.
     private readonly string bannerRoot;
-    private readonly string urlPrefix;
+    private readonly string localUrlPrefix;
 
-    public BannerImageStorage(IWebHostEnvironment environment, IOptions<MediaOptions> optionsAccessor)
+    public BannerImageStorage(
+        IWebHostEnvironment environment,
+        IOptions<MediaOptions> optionsAccessor,
+        ICloudMediaClient cloud,
+        MediaUrlRules rules,
+        ILogger<BannerImageStorage> logger)
     {
         options = optionsAccessor.Value;
+        this.cloud = cloud;
+        this.rules = rules;
+        this.logger = logger;
         if (Path.IsPathRooted(options.StoragePath))
         {
             throw new InvalidOperationException("Media:StoragePath phải là đường dẫn tương đối trong backend.");
@@ -31,7 +45,7 @@ public sealed class BannerImageStorage : IBannerImageStorage
         }
 
         bannerRoot = Path.Combine(storageRoot, FolderName);
-        urlPrefix = $"/{options.RequestPath.Trim('/')}/{FolderName}/";
+        localUrlPrefix = $"/{options.RequestPath.Trim('/')}/{FolderName}/";
     }
 
     public async Task<BannerImageResult> SaveAsync(IFormFile file, CancellationToken cancellationToken)
@@ -41,50 +55,93 @@ public sealed class BannerImageStorage : IBannerImageStorage
             return BannerImageResult.Invalid($"Ảnh banner phải có dung lượng từ 1 byte đến {options.MaxImageBytes / 1024 / 1024} MB.");
         }
 
-        await using var input = file.OpenReadStream();
-        var header = new byte[16];
-        var bytesRead = await input.ReadAsync(header.AsMemory(), cancellationToken);
-        var extension = DetectExtension(header.AsSpan(0, bytesRead), file.ContentType);
+        string? extension;
+        await using (var input = file.OpenReadStream())
+        {
+            var header = new byte[16];
+            var bytesRead = await input.ReadAsync(header.AsMemory(), cancellationToken);
+            extension = DetectExtension(header.AsSpan(0, bytesRead), file.ContentType);
+        }
+
         if (extension is null)
         {
             return BannerImageResult.Invalid("Ảnh banner chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
         }
 
-        Directory.CreateDirectory(bannerRoot);
-        var fileName = $"{Guid.NewGuid():N}{extension}";
-        var filePath = Path.Combine(bannerRoot, fileName);
+        if (!cloud.IsConfigured)
+        {
+            return BannerImageResult.Invalid("Chưa cấu hình lưu trữ Cloudinary nên chưa thể tải ảnh banner lên.");
+        }
+
+        var id = Guid.NewGuid();
         try
         {
-            await using var output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true);
-            await output.WriteAsync(header.AsMemory(0, bytesRead), cancellationToken);
-            await input.CopyToAsync(output, cancellationToken);
-        }
-        catch
-        {
-            if (File.Exists(filePath))
+            await using var content = file.OpenReadStream();
+            var url = await cloud.UploadAsync(
+                content, $"{id:N}{extension}", CloudResourceType.Image, rules.CreatePublicId(FolderName, id), cancellationToken);
+            if (rules.IsCloudBannerUrl(url))
             {
-                File.Delete(filePath);
+                return BannerImageResult.Success(url);
             }
-            throw;
-        }
 
-        return BannerImageResult.Success(urlPrefix + fileName);
+            logger.LogWarning("Cloudinary trả về địa chỉ banner không đúng quy tắc: {Url}", url);
+            await TryDeleteFromCloudAsync(url, cancellationToken);
+            return BannerImageResult.Invalid("Cloudinary trả về địa chỉ không hợp lệ.");
+        }
+        catch (CloudMediaException exception)
+        {
+            logger.LogWarning(exception, "Không tải được ảnh banner lên Cloudinary.");
+            return BannerImageResult.Invalid("Không thể tải ảnh lên Cloudinary lúc này. Vui lòng thử lại.");
+        }
     }
 
-    public bool IsStoredImageUrl(string imageUrl) =>
-        imageUrl.StartsWith(urlPrefix, StringComparison.Ordinal) &&
-        imageUrl.Length > urlPrefix.Length &&
-        imageUrl.IndexOfAny(['/', '\\', '?', '#', '%'], urlPrefix.Length) < 0 &&
-        !imageUrl.Contains("..", StringComparison.Ordinal);
+    public bool IsStoredImageUrl(string imageUrl) => rules.IsCloudBannerUrl(imageUrl) || IsLocalImageUrl(imageUrl);
 
-    public void Delete(string imageUrl)
+    public async Task DeleteAsync(string imageUrl, CancellationToken cancellationToken)
     {
-        if (!IsStoredImageUrl(imageUrl))
+        if (rules.IsCloudBannerUrl(imageUrl))
+        {
+            await TryDeleteFromCloudAsync(imageUrl, cancellationToken);
+            return;
+        }
+
+        DeleteLocalFile(imageUrl);
+    }
+
+    // A failure is only logged: the banner is already changed, and a file that stays behind does no harm.
+    private async Task TryDeleteFromCloudAsync(string url, CancellationToken cancellationToken)
+    {
+        var asset = rules.TryGetCloudAsset(url);
+        if (asset is null)
         {
             return;
         }
 
-        var filePath = Path.GetFullPath(Path.Combine(bannerRoot, imageUrl[urlPrefix.Length..]));
+        try
+        {
+            await cloud.DeleteAsync(asset, cancellationToken);
+        }
+        catch (CloudMediaException exception)
+        {
+            logger.LogWarning(exception, "Không xóa được ảnh banner {PublicId} trên Cloudinary.", asset.PublicId);
+        }
+    }
+
+    // A picture of the time before Cloudinary.
+    private bool IsLocalImageUrl(string imageUrl) =>
+        imageUrl.StartsWith(localUrlPrefix, StringComparison.Ordinal) &&
+        imageUrl.Length > localUrlPrefix.Length &&
+        imageUrl.IndexOfAny(['/', '\\', '?', '#', '%'], localUrlPrefix.Length) < 0 &&
+        !imageUrl.Contains("..", StringComparison.Ordinal);
+
+    private void DeleteLocalFile(string imageUrl)
+    {
+        if (!IsLocalImageUrl(imageUrl))
+        {
+            return;
+        }
+
+        var filePath = Path.GetFullPath(Path.Combine(bannerRoot, imageUrl[localUrlPrefix.Length..]));
         var root = Path.GetFullPath(bannerRoot);
         if (filePath.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && File.Exists(filePath))
         {

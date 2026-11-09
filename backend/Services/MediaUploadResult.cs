@@ -2,7 +2,8 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-public sealed record MediaUploadResult(MediaUploadDto? Media, string? Error)
+// IsUnavailable: the file is fine but the storage could not take it (Cloudinary is not set up or did not answer).
+public sealed record MediaUploadResult(MediaUploadDto? Media, string? Error, bool IsUnavailable = false)
 {
     public bool Succeeded => Media is not null;
 
@@ -10,4 +11,6 @@ public sealed record MediaUploadResult(MediaUploadDto? Media, string? Error)
         new(new MediaUploadDto(id, link, link), null);
 
     public static MediaUploadResult Invalid(string error) => new(null, error);
+
+    public static MediaUploadResult Unavailable(string error) => new(null, error, true);
 }

@@ -272,7 +272,11 @@ public sealed class BannerServiceTests
 
         public bool IsStoredImageUrl(string imageUrl) => imageUrl.StartsWith("/media/banners/", StringComparison.Ordinal);
 
-        public void Delete(string imageUrl) => Deleted.Add(imageUrl);
+        public Task DeleteAsync(string imageUrl, CancellationToken cancellationToken)
+        {
+            Deleted.Add(imageUrl);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class FakeAudit : IAdminAuditService
