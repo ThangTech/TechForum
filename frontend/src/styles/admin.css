@@ -13,6 +13,11 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
 }
+/* A MUI text field shows its focus on the border around it, so its input gets no second outline.
+   This file is not in a CSS layer, so the same rule in App.css cannot win here. */
+.admin-shell .MuiInputBase-input:focus-visible {
+  outline: 0;
+}
 .admin-sidebar {
   width: 230px;
   flex-shrink: 0;
