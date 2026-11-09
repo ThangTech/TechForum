@@ -11,6 +11,8 @@ import { deleteAnswer, setAnswerHelpful, type Answer, type AnswerHelpfulState, t
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { appRoutes } from '../../appRoutes'
+import { CheckCircleIcon, PencilIcon, ReplyIcon, ThumbUpIcon, TrashIcon } from '../common/ActionIcons'
+import { IconActionButton } from '../common/IconActionButton'
 import { ReportAction } from '../reports/ReportAction'
 import { ConfirmDialog } from '../feedback/ConfirmDialog'
 import { AnswerEditDialog } from './AnswerEditDialog'
@@ -37,8 +39,8 @@ const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 
 // Border colour of an answer card: green when accepted, light blue for a reply, grey otherwise.
 const getAnswerBorderColor = (answer: Answer) => {
-  if (answer.isAccepted) return '#4ade80'
-  if (answer.parentAnswerId) return '#bcd3f7'
+  if (answer.isAccepted) return 'var(--color-solved)'
+  if (answer.parentAnswerId) return 'var(--color-primary-border)'
   return 'divider'
 }
 
@@ -99,7 +101,7 @@ export const AnswerList = ({
   }
   if (data.items.length === 0) {
     return (
-      <Box sx={{ px: 3, py: 5, textAlign: 'center', border: 1, borderStyle: 'dashed', borderColor: '#cbd5e1', borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Box sx={{ px: 3, py: 5, textAlign: 'center', border: 1, borderStyle: 'dashed', borderColor: 'var(--color-border-strong)', borderRadius: 2, bgcolor: 'background.paper' }}>
         <Typography component="h3" sx={{ color: 'text.primary', fontWeight: 700 }}>Chưa có câu trả lời</Typography>
         <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
           {isLocked
@@ -153,31 +155,25 @@ export const AnswerList = ({
               sx={answerBodySx}
             />
             <Stack direction="row" sx={{ mt: 2, pt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 1.5, borderTop: 1, borderColor: 'divider' }}>
-              {/* The span keeps the tooltip working while the button is disabled. */}
-              <span title={user?.id === answer.author.id ? 'Bạn không thể tự đánh giá câu trả lời của mình.' : undefined}>
-                <Button
-                  aria-label={`${answer.isHelpful ? 'Bỏ đánh giá hữu ích' : 'Đánh giá hữu ích'}: ${answer.helpfulCount} lượt`}
-                  aria-pressed={answer.isHelpful}
-                  disabled={votingAnswerId !== null || user?.id === answer.author.id}
-                  onClick={() => void toggleHelpful(answer)}
-                  startIcon={<svg aria-hidden="true" fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="16"><path d="M7 10v11H3V10h4Zm0 0 5-7c1.8 0 2.5 1.2 2 3l-1 4h5a3 3 0 0 1 3 3l-1 6a2 2 0 0 1-2 2H7" /></svg>}
-                  sx={answer.isHelpful
-                    ? { minHeight: 40, bgcolor: 'primary.light', borderColor: '#93c5fd', color: 'primary.dark' }
-                    : { minHeight: 40, borderColor: 'divider', color: 'text.secondary', '&:hover': { borderColor: '#93c5fd', color: 'primary.main' } }}
-                  type="button"
-                  variant="outlined"
-                >
-                  {votingAnswerId === answer.id ? 'Đang lưu…' : `Hữu ích · ${answer.helpfulCount}`}
-                </Button>
-              </span>
+              <IconActionButton
+                count={answer.helpfulCount}
+                disabled={votingAnswerId !== null || user?.id === answer.author.id}
+                icon={<ThumbUpIcon filled={answer.isHelpful} />}
+                label={user?.id === answer.author.id
+                  ? 'Bạn không thể tự đánh giá câu trả lời của mình'
+                  : answer.isHelpful ? 'Bỏ đánh giá hữu ích' : 'Đánh giá hữu ích'}
+                loading={votingAnswerId === answer.id}
+                onClick={() => void toggleHelpful(answer)}
+                pressed={answer.isHelpful}
+              />
               {canAcceptAnswers && answer.parentAnswerId === null && !answer.isAccepted && (
-                <Button disabled={acceptingAnswerId !== null} loading={acceptingAnswerId === answer.id} onClick={() => onAccept(answer.id)} variant="outlined">Chấp nhận câu trả lời</Button>
+                <IconActionButton disabled={acceptingAnswerId !== null} icon={<CheckCircleIcon />} label="Chấp nhận câu trả lời" loading={acceptingAnswerId === answer.id} onClick={() => onAccept(answer.id)} />
               )}
-              {!isLocked && <Button onClick={() => user ? setReplyingTo(answer) : onLoginRequired()} variant="text">Phản hồi</Button>}
+              {!isLocked && <IconActionButton icon={<ReplyIcon />} label="Phản hồi" onClick={() => user ? setReplyingTo(answer) : onLoginRequired()} variant="text" />}
               <ReportAction targetId={answer.id} targetType="answer" />
               {user?.id === answer.author.id && <>
-                <Button onClick={() => setEditing(answer)} variant="text">Sửa</Button>
-                <Button onClick={() => setDeleting(answer)} variant="text">Xóa</Button>
+                <IconActionButton icon={<PencilIcon />} label="Sửa câu trả lời" onClick={() => setEditing(answer)} variant="text" />
+                <IconActionButton icon={<TrashIcon />} label="Xóa câu trả lời" onClick={() => setDeleting(answer)} tone="danger" variant="text" />
               </>}
             </Stack>
             {replyingTo?.id === answer.id && <Box sx={{ mt: 2 }}><AnswerForm parentAnswer={answer} topicId={answer.topicId} onCancel={() => setReplyingTo(null)} onCreated={(created) => { setReplyingTo(null); onReplyCreated(created) }} /></Box>}

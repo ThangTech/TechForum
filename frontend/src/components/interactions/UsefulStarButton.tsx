@@ -1,6 +1,8 @@
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { StarActionIcon } from '../common/ActionIcons'
+import { IconActionButton } from '../common/IconActionButton'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { getErrorMessage } from '../../queries/errorMessage'
@@ -47,10 +49,15 @@ export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {
 
   return (
     <div>
-      <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
-        <Button disabled={isLoading || status === null || isSaving} loading={isLoading || isSaving} onClick={() => void handleToggle()} variant={status?.hasStar ? 'contained' : 'outlined'}>{status?.hasStar ? `Bỏ Sao hữu ích · ${status.count}` : `Sao hữu ích · ${status?.count ?? 0}`}</Button>
-        <Typography color="text.secondary" sx={{ fontSize: '0.75rem' }}>Mỗi thành viên có tối đa một sao cho chủ đề này.</Typography>
-      </Stack>
+      <IconActionButton
+        count={status?.count ?? 0}
+        disabled={isLoading || status === null}
+        icon={<StarActionIcon filled={status?.hasStar} />}
+        label={status?.hasStar ? 'Bỏ Sao hữu ích' : 'Sao hữu ích'}
+        loading={isLoading || isSaving}
+        onClick={() => void handleToggle()}
+        pressed={status?.hasStar ?? false}
+      />
       {error && (
         <Stack direction="row" role="alert" sx={{ mt: 1.5, flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
           <Typography color="error" variant="body2">{error}</Typography>

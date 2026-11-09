@@ -1,4 +1,3 @@
-import Button from '@mui/material/Button'
 import MuiLink from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
 import { ApiError } from '../../api/client'
@@ -7,6 +6,8 @@ import { useBookmarkStatus, useToggleBookmark } from '../../queries/bookmarks'
 import { getErrorMessage } from '../../queries/errorMessage'
 import { isInitialLoading } from '../../queries/status'
 import { openAuthDialog } from '../../auth/authDialogStore'
+import { BookmarkActionIcon } from '../common/ActionIcons'
+import { IconActionButton } from '../common/IconActionButton'
 
 export const BookmarkButton = ({ topicId }: { topicId: number }) => {
   const { user } = useAuth()
@@ -37,7 +38,15 @@ export const BookmarkButton = ({ topicId }: { topicId: number }) => {
 
   return (
     <div>
-      <Button disabled={isLoading || !status || isSaving} loading={isLoading || isSaving} onClick={() => void toggle()} variant={status?.hasBookmark ? 'contained' : 'outlined'}>{status?.hasBookmark ? `Bỏ lưu · ${status.count}` : `Lưu bài · ${status?.count ?? 0}`}</Button>
+      <IconActionButton
+        count={status?.count ?? 0}
+        disabled={isLoading || !status}
+        icon={<BookmarkActionIcon filled={status?.hasBookmark} />}
+        label={status?.hasBookmark ? 'Bỏ lưu bài' : 'Lưu bài'}
+        loading={isLoading || isSaving}
+        onClick={() => void toggle()}
+        pressed={status?.hasBookmark ?? false}
+      />
       {error && (
         <Typography color="error" role="alert" sx={{ mt: 1 }} variant="body2">
           {error} <MuiLink component="button" onClick={retry} sx={{ fontSize: 'inherit', fontWeight: 700, verticalAlign: 'baseline' }} type="button" underline="always">Thử lại</MuiLink>

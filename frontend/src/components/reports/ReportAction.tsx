@@ -1,8 +1,9 @@
-import Button from '@mui/material/Button'
 import { useState } from 'react'
 import type { ReportTargetType } from '../../api/reports'
 import { useAuth } from '../../auth/authState'
 import { openAuthDialog } from '../../auth/authDialogStore'
+import { FlagIcon } from '../common/ActionIcons'
+import { IconActionButton } from '../common/IconActionButton'
 import { ReportDialog } from './ReportDialog'
 
 interface ReportActionProps {
@@ -25,7 +26,7 @@ export const ReportAction = ({ targetId, targetType }: ReportActionProps) => {
 
   return (
     <>
-      <Button onClick={open} variant="text">Báo cáo</Button>
+      <IconActionButton icon={<FlagIcon />} label="Báo cáo" onClick={open} variant="text" />
       <ReportDialog
         isOpen={isReportDialogOpen}
         onClose={() => setIsReportDialogOpen(false)}

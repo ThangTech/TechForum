@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
 import { ApiError } from '../../api/client'
@@ -8,6 +8,8 @@ import { useAuth } from '../../auth/authState'
 import { getErrorMessage } from '../../queries/errorMessage'
 import { useRecordTopicShare, useRecordTopicView, useTopic } from '../../queries/topics'
 import { openAuthDialog } from '../../auth/authDialogStore'
+import { EyeIcon, ShareIcon } from '../common/ActionIcons'
+import { IconActionButton } from '../common/IconActionButton'
 
 interface TopicEngagementBarProps {
   title: string
@@ -54,9 +56,12 @@ export const TopicEngagementBar = ({ title, topicId }: TopicEngagementBarProps) 
   return (
     <Box sx={{ width: '100%' }}>
       <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 1.5, color: 'text.secondary', fontSize: '0.875rem' }}>
-        <span aria-label={`${engagement.viewCount} lượt xem`}>Lượt xem · {engagement.viewCount}</span>
-        <span aria-label={`${engagement.shareCount} lượt chia sẻ`}>Chia sẻ · {engagement.shareCount}</span>
-        <Button disabled={isSharing} loading={isSharing} onClick={() => void share()} variant="text">Chia sẻ</Button>
+        <Tooltip arrow title="Lượt xem">
+          <Box aria-label={`${engagement.viewCount} lượt xem`} component="span" role="img" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, fontVariantNumeric: 'tabular-nums' }}>
+            <EyeIcon />{engagement.viewCount}
+          </Box>
+        </Tooltip>
+        <IconActionButton count={engagement.shareCount} icon={<ShareIcon />} label="Chia sẻ" loading={isSharing} onClick={() => void share()} variant="text" />
       </Stack>
       {success && <Typography color="success" role="status" sx={{ mt: 1 }} variant="body2">{success}</Typography>}
       {error && <Typography color="error" role="alert" sx={{ mt: 1 }} variant="body2">{error}</Typography>}
