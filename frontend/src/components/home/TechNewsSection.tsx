@@ -8,10 +8,11 @@ import { toMediaUrl } from '../../api/media'
 import { appRoutes } from '../../appRoutes'
 import { isInitialLoading } from '../../queries/status'
 import { useTopicFeed } from '../../queries/topics'
+import { TagCover } from './TagCover'
 
 const NEWS_COUNT = 6
 
-// A topic without a picture gets a plain blue gradient, so every card keeps the same shape.
+// A topic with no picture and no tag gets a plain blue gradient, so every card keeps the same shape.
 const fallbackGradients = [
   'linear-gradient(135deg, #1d4ed8, #38bdf8)',
   'linear-gradient(135deg, #0f766e, #38bdf8)',
@@ -38,15 +39,18 @@ const NewsCard = ({ topic }: { topic: TopicSummary }) => (
           background: fallbackGradients[topic.id % fallbackGradients.length],
         }}
       >
-        {topic.coverImageUrl && (
-          <Box
-            alt=""
-            component="img"
-            loading="lazy"
-            src={toMediaUrl(topic.coverImageUrl)}
-            sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        )}
+        {topic.coverImageUrl
+          ? (
+            <Box
+              alt=""
+              component="img"
+              loading="lazy"
+              src={toMediaUrl(topic.coverImageUrl)}
+              sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          )
+          // No picture (for example the article only has a video): the cover shows its first tag.
+          : topic.tags.length > 0 && <TagCover tag={topic.tags[0]} />}
       </Box>
       <Typography
         className="news-title"
