@@ -55,10 +55,10 @@ public sealed class AvatarService(
             return AvatarUpdateResult.Invalid("Chưa cấu hình lưu trữ Cloudinary nên chưa thể đổi avatar.");
         }
 
-        var newAvatarUrl = await UploadAsync(file, extension, cancellationToken);
+        var (newAvatarUrl, uploadError) = await UploadAsync(file, extension, cancellationToken);
         if (newAvatarUrl is null)
         {
-            return AvatarUpdateResult.Invalid("Không thể tải avatar lên Cloudinary lúc này. Vui lòng thử lại.");
+            return AvatarUpdateResult.Invalid(uploadError!);
         }
 
         var oldAvatarUrl = user.AvatarUrl;
@@ -129,8 +129,9 @@ public sealed class AvatarService(
         return null;
     }
 
-    // Null when Cloudinary did not take the file.
-    private async Task<string?> UploadAsync(IFormFile file, string extension, CancellationToken cancellationToken)
+    // The address of the new avatar, or the sentence for the member when Cloudinary did not take the file.
+    private async Task<(string? Url, string? Error)> UploadAsync(
+        IFormFile file, string extension, CancellationToken cancellationToken)
     {
         var id = Guid.NewGuid();
         try
@@ -140,17 +141,23 @@ public sealed class AvatarService(
                 content, $"{id:N}{extension}", CloudResourceType.Image, rules.CreatePublicId("avatars", id), cancellationToken);
             if (rules.IsCloudAvatarUrl(url))
             {
-                return url;
+                return (url, null);
             }
 
             logger.LogWarning("Cloudinary trả về địa chỉ avatar không đúng quy tắc: {Url}", url);
             await DeleteFromCloudAsync(url, cancellationToken);
-            return null;
+            return (null, "Cloudinary trả về địa chỉ không hợp lệ.");
+        }
+        catch (CloudMediaRejectedException exception)
+        {
+            // The connection works and Cloudinary refused the file itself: the member is told why.
+            logger.LogInformation("Cloudinary từ chối avatar: {Reason}", exception.CloudMessage);
+            return (null, CloudRejection.ToMessage(exception.CloudMessage));
         }
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được avatar lên Cloudinary.");
-            return null;
+            return (null, "Không thể tải avatar lên Cloudinary lúc này. Vui lòng thử lại.");
         }
     }
 

@@ -16,6 +16,9 @@ public sealed class FakeCloudMediaClient : ICloudMediaClient
     // Set to act like Cloudinary being unreachable (upload and delete fail).
     public bool Fails { get; set; }
 
+    // Set to a sentence of Cloudinary to act like it refusing the file itself (the connection works).
+    public string? RejectWith { get; set; }
+
     // Set to a text to give that address back instead of a correct one.
     public string? AddressToReturn { get; set; }
 
@@ -32,6 +35,11 @@ public sealed class FakeCloudMediaClient : ICloudMediaClient
         if (Fails)
         {
             throw new CloudMediaException("Cloudinary không phản hồi.");
+        }
+
+        if (RejectWith is not null)
+        {
+            throw new CloudMediaRejectedException(RejectWith);
         }
 
         // The bytes are read, like the real client does when it sends the file.

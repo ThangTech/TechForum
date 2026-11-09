@@ -62,6 +62,17 @@ public sealed class BannerImageStorageTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsync_WhenCloudinaryRefusesTheFile_TellsTheMemberWhy()
+    {
+        cloud.RejectWith = "File size too large. Got 1. Maximum is 0.";
+
+        var result = await CreateStorage().SaveAsync(CreateFile(Png, "image/png"), default);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("vượt quá kích thước", result.Error);
+    }
+
+    [Fact]
     public async Task SaveAsync_WhenCloudinaryGivesAnUnknownAddress_DeletesTheFileAndRefuses()
     {
         cloud.AddressToReturn = "https://res.cloudinary.com/other-cloud/image/upload/v1/techforum/banners/x.png";

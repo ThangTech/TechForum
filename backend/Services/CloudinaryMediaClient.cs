@@ -52,9 +52,16 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
                     cancellationToken);
             }
 
+            // 400 is the answer for a file that Cloudinary does not accept. Other answers (wrong keys, too many requests, a
+            // server error) are not the fault of the file.
+            if (result.Error is not null && result.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                throw new CloudMediaRejectedException(result.Error.Message);
+            }
+
             if (result.Error is not null || result.SecureUrl is null)
             {
-                throw new CloudMediaException($"Cloudinary từ chối tệp: {result.Error?.Message ?? "không có địa chỉ trả về"}.");
+                throw new CloudMediaException($"Cloudinary không nhận được tệp: {result.Error?.Message ?? "không có địa chỉ trả về"}.");
             }
 
             return result.SecureUrl.AbsoluteUri;

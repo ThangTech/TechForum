@@ -185,7 +185,11 @@ Với tệp cũ lưu trên đĩa (`/media/...`) `link` là địa chỉ tuyệt 
 - `DELETE /api/media/{id}`: chỉ chủ sở hữu được xóa media chưa gắn vào nội dung; xóa cả tệp
   trên Cloudinary. 404 nếu không tồn tại/không thuộc tài khoản, 409 nếu đã được sử dụng, 503
   nếu Cloudinary không xóa được lúc này (bản ghi được giữ để thử lại).
-- Mã lỗi khi tải lên: 400 tệp không hợp lệ, 503 chưa cấu hình hoặc Cloudinary không phản hồi.
+- Mã lỗi khi tải lên: **400** khi tệp không hợp lệ, gồm cả khi Cloudinary nhận được kết nối nhưng từ chối tệp
+  (ví dụ vượt giới hạn dung lượng của gói: "Tệp vượt quá kích thước mà Cloudinary cho phép"; tệp không phải
+  ảnh/video: "Cloudinary không đọc được tệp này"); **503** khi chưa cấu hình hoặc Cloudinary không phản hồi
+  (người dùng thử lại sau). Giới hạn của ứng dụng (ảnh 5 MB, avatar 2 MB, video 50 MB) nhỏ hơn giới hạn của
+  gói Free (ảnh 10 MB, video 100 MB), nên thường ứng dụng chặn trước; khi nâng giới hạn ứng dụng phải so với gói.
 
 ### Quy tắc địa chỉ
 

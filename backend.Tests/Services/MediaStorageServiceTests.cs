@@ -120,6 +120,31 @@ public sealed class MediaStorageServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task StoreImageAsync_WhenCloudinaryRefusesTheFile_TellsTheMemberWhyAndIsNotAnOutage()
+    {
+        cloud.RejectWith = "File size too large. Got 10847345. Maximum is 10485760.";
+
+        var result = await CreateService().StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
+
+        Assert.False(result.Succeeded);
+        // A refused file is a 400 for the member to fix, not a 503 to try again later.
+        Assert.False(result.IsUnavailable);
+        Assert.Contains("vượt quá kích thước", result.Error);
+        Assert.Empty(repository.Items);
+    }
+
+    [Fact]
+    public async Task StoreVideoAsync_WhenCloudinaryRefusesTheFile_TellsTheMemberWhy()
+    {
+        cloud.RejectWith = "Failed to ping video";
+
+        var result = await CreateService().StoreVideoAsync(UserId, CreateFile(Mp4, "clip.mp4", "video/mp4"), default);
+
+        Assert.False(result.IsUnavailable);
+        Assert.Contains("không đọc được tệp", result.Error);
+    }
+
+    [Fact]
     public async Task StoreImageAsync_WhenCloudinaryGivesAnUnknownAddress_DeletesTheFileAndRefuses()
     {
         cloud.AddressToReturn = "https://res.cloudinary.com/other-cloud/image/upload/v1/x/y.png";

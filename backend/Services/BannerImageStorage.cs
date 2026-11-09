@@ -88,6 +88,12 @@ public sealed class BannerImageStorage : IBannerImageStorage
             await TryDeleteFromCloudAsync(url, cancellationToken);
             return BannerImageResult.Invalid("Cloudinary trả về địa chỉ không hợp lệ.");
         }
+        catch (CloudMediaRejectedException exception)
+        {
+            // The connection works and Cloudinary refused the file itself: the member is told why.
+            logger.LogInformation("Cloudinary từ chối ảnh banner: {Reason}", exception.CloudMessage);
+            return BannerImageResult.Invalid(CloudRejection.ToMessage(exception.CloudMessage));
+        }
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được ảnh banner lên Cloudinary.");

@@ -106,6 +106,20 @@ public sealed class AvatarServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateAsync_WhenCloudinaryRefusesTheFile_TellsTheMemberWhyAndKeepsTheOldAvatar()
+    {
+        accounts.User.AvatarUrl = OldCloudAvatar;
+        cloud.RejectWith = "Failed to ping image";
+
+        var result = await CreateService().UpdateAsync(UserId, CreateFile(Png, "image/png"), default);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("không đọc được tệp", result.Error);
+        Assert.Equal(OldCloudAvatar, accounts.User.AvatarUrl);
+        Assert.Empty(cloud.Deleted);
+    }
+
+    [Fact]
     public async Task UpdateAsync_WhenTheUserCannotBeSaved_DeletesTheNewFile()
     {
         accounts.FailToUpdate = true;

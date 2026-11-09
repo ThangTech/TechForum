@@ -170,6 +170,12 @@ public sealed class MediaStorageService : IMediaStorageService
             await using var content = file.OpenReadStream();
             url = await cloud.UploadAsync(content, $"{id:N}{media.Extension}", resourceType, publicId, cancellationToken);
         }
+        catch (CloudMediaRejectedException exception)
+        {
+            // The connection works and Cloudinary refused the file itself: the member is told why.
+            logger.LogInformation("Cloudinary từ chối media: {Reason}", exception.CloudMessage);
+            return MediaUploadResult.Invalid(CloudRejection.ToMessage(exception.CloudMessage));
+        }
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được media lên Cloudinary.");
