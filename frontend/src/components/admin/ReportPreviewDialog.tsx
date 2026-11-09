@@ -36,6 +36,7 @@ export const ReportPreviewDialog = ({
       </>
     }
     headerExtra={<StatusBadge tone="blue">{reportStatusLabels[report.status]}</StatusBadge>}
+    closeOnBackdropClick
     onClose={onClose}
     title={`Chi tiết báo cáo #${report.id}`}
     width={850}

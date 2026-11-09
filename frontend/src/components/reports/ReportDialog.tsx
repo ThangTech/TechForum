@@ -71,6 +71,7 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
     return (
       <DialogFrame
         actions={<Button onClick={close} variant="contained">Đóng</Button>}
+        closeOnBackdropClick
         onClose={close}
         open={isOpen}
         title="Đã gửi báo cáo"

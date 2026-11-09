@@ -31,6 +31,7 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onCl
           <Button onClick={onClose} variant="outlined">Đóng xem trước</Button>
         </>
       }
+      closeOnBackdropClick
       onClose={onClose}
       title={`Xem trước nội dung #${topicId}`}
       width={850}

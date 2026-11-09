@@ -12,6 +12,9 @@ interface DialogFrameProps {
   width?: number
   open?: boolean
   onClose: () => void
+  // A click on the dark area around the dialog closes it only when this is true. It stays false for dialogs with a form,
+  // so a click next to the dialog does not throw away what was typed. Esc and the buttons still close it.
+  closeOnBackdropClick?: boolean
   // Something shown on the right of the title, for example a status badge.
   headerExtra?: ReactNode
   // An error shown under the content, for example a validation message.
@@ -27,6 +30,7 @@ export const DialogFrame = ({
   width = 480,
   open = true,
   onClose,
+  closeOnBackdropClick = false,
   headerExtra,
   error,
   actions,
@@ -34,7 +38,10 @@ export const DialogFrame = ({
 }: DialogFrameProps) => (
   <Dialog
     maxWidth={false}
-    onClose={() => onClose()}
+    onClose={(_, reason) => {
+      if (reason === 'backdropClick' && !closeOnBackdropClick) return
+      onClose()
+    }}
     open={open}
     slotProps={{ paper: { 'aria-label': title, sx: { width, maxWidth: 'calc(100% - 32px)' } } }}
   >

@@ -26,7 +26,7 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
     finally { setIsSaving(false) }
   }
   return (
-    <Dialog open onClose={() => !isSaving && onClose()} maxWidth={false} slotProps={{ paper: { 'aria-label': "Sửa câu trả lời", sx: { width: 560, maxWidth: 'calc(100% - 32px)' } } }}>
+    <Dialog open onClose={(_, reason) => { if (!isSaving && reason !== 'backdropClick') onClose() }} maxWidth={false} slotProps={{ paper: { 'aria-label': "Sửa câu trả lời", sx: { width: 560, maxWidth: 'calc(100% - 32px)' } } }}>
       <DialogTitle sx={{ px: 3, pt: 3, pb: 0, color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Sửa câu trả lời</DialogTitle>
       <DialogContent sx={{ px: 3, pt: 2.5, pb: 0 }}>
         <TextField
