@@ -147,6 +147,8 @@ builder.Services.AddScoped<IBannedWordService, BannedWordService>();
 builder.Services.AddScoped<IBannedWordSeeder, BannedWordSeeder>();
 builder.Services.AddScoped<IContentCheckService, ContentCheckService>();
 builder.Services.AddScoped<IVoteRepository, VoteRepository>();
+builder.Services.Configure<VoteLimitOptions>(builder.Configuration.GetSection(VoteLimitOptions.SectionName));
+builder.Services.AddSingleton<IVoteRateLimiter, VoteRateLimiter>();
 builder.Services.AddScoped<IVoteService, VoteService>();
 builder.Services.AddSingleton<IBannedWordLoader, BannedWordLoader>();
 builder.Services.AddSingleton<IProfanityFilter, ProfanityFilter>();

@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using TechForum.Api.Configuration;
 using TechForum.Api.Dtos;
 using TechForum.Api.Data.Repositories;
 using TechForum.Api.Enums;
@@ -9,7 +12,11 @@ namespace TechForum.Api.Tests.Services;
 
 public sealed class VoteServiceTests
 {
+    private static readonly DateTimeOffset Now = new(2026, 11, 20, 12, 0, 0, TimeSpan.Zero);
+
     private readonly FakeVotes votes = new();
+    private readonly FakeAccounts accounts = new();
+    private readonly FakeLimiter limiter = new();
     private readonly Topic topic = new()
     {
         Id = 1, Title = "t", Slug = "t", Summary = "s", BodyHtml = "<p>x</p>", AuthorId = "author",
@@ -17,7 +24,8 @@ public sealed class VoteServiceTests
     };
 
     private VoteService CreateService(params Answer[] answers) =>
-        new(new FakeTopics(topic), new FakeAnswers(answers), votes, TimeProvider.System);
+        new(new FakeTopics(topic), new FakeAnswers(answers), votes, accounts, limiter,
+            Options.Create(new VoteLimitOptions { MinAccountAgeDays = 3 }), new FixedTime(Now));
 
     private static Answer CreateAnswer(int id, string authorId) => new()
     {
@@ -139,6 +147,94 @@ public sealed class VoteServiceTests
         Assert.Null(await CreateService().GetTopicVoteAsync(1, "voter", default));
     }
 
+    [Fact]
+    public async Task SetTopicVoteAsync_RefusesAnAccountThatIsLessThanThreeDaysOld()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-1);
+
+        var up = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        var down = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+
+        Assert.Equal(VoteFailure.AccountTooNew, up.Failure);
+        Assert.Equal(2, up.DaysLeft);
+        Assert.Equal(VoteFailure.AccountTooNew, down.Failure);
+        Assert.Empty(votes.Commands);
+    }
+
+    [Fact]
+    public async Task SetAnswerVoteAsync_RefusesAnAccountThatIsLessThanThreeDaysOld()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-2).AddHours(-23);
+
+        var result = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", 1, default);
+
+        Assert.Equal(VoteFailure.AccountTooNew, result.Failure);
+        Assert.Equal(1, result.DaysLeft);
+        Assert.Empty(votes.Commands);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_AllowsAnAccountThatIsExactlyThreeDaysOld()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-3);
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+
+        Assert.Equal(VoteFailure.None, result.Failure);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_ANewAccountMayStillTakeAVoteBack()
+    {
+        accounts.CreatedAt["voter"] = Now.AddHours(-1);
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", 0, default);
+
+        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.Equal(0, Assert.Single(votes.Commands).NewValue);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_WhenTheMemberVotesTooFast_IsRefusedWithTheTimeToWait()
+    {
+        limiter.Allow = false;
+        limiter.RetryAfter = TimeSpan.FromSeconds(44.2);
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+
+        Assert.Equal(VoteFailure.RateLimited, result.Failure);
+        Assert.Equal(45, result.RetryAfterSeconds);
+        Assert.Empty(votes.Commands);
+    }
+
+    [Fact]
+    public async Task SetAnswerVoteAsync_WhenTheMemberVotesTooFast_IsRefused()
+    {
+        limiter.Allow = false;
+
+        var result = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", 1, default);
+
+        Assert.Equal(VoteFailure.RateLimited, result.Failure);
+        Assert.True(result.RetryAfterSeconds >= 1);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_AWrongValueDoesNotUseAPlaceOfTheLimit()
+    {
+        await CreateService().SetTopicVoteAsync(1, "voter", 9, default);
+
+        Assert.Equal(0, limiter.Calls);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_EveryAcceptedRequestUsesAPlaceOfTheLimit()
+    {
+        await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        await CreateService().SetTopicVoteAsync(1, "voter", 0, default);
+
+        Assert.Equal(2, limiter.Calls);
+    }
+
     [Theory]
     [InlineData(VoteTargetType.Answer, 1, 10)]
     [InlineData(VoteTargetType.Answer, -1, -2)]
@@ -157,6 +253,47 @@ public sealed class VoteServiceTests
         var change = ReputationRules.ForVote(VoteTargetType.Answer, -1) - ReputationRules.ForVote(VoteTargetType.Answer, 1);
 
         Assert.Equal(-12, change);
+    }
+
+    private sealed class FixedTime(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+    }
+
+    private sealed class FakeLimiter : IVoteRateLimiter
+    {
+        public bool Allow { get; set; } = true;
+        public TimeSpan RetryAfter { get; set; } = TimeSpan.FromSeconds(30);
+        public int Calls { get; private set; }
+
+        public bool TryAcquire(string userId, out TimeSpan retryAfter)
+        {
+            Calls++;
+            retryAfter = Allow ? TimeSpan.Zero : RetryAfter;
+            return Allow;
+        }
+    }
+
+    // Every account is old enough (30 days) unless a test gives it another time.
+    private sealed class FakeAccounts : IAccountRepository
+    {
+        public Dictionary<string, DateTimeOffset> CreatedAt { get; } = [];
+
+        public Task<ApplicationUser?> FindByIdAsync(string userId) =>
+            Task.FromResult<ApplicationUser?>(new ApplicationUser
+            {
+                Id = userId,
+                DisplayName = userId,
+                CreatedAtUtc = CreatedAt.GetValueOrDefault(userId, Now.AddDays(-30))
+            });
+
+        public Task<ApplicationUser?> FindByEmailAsync(string email) => throw new NotSupportedException();
+        public Task<IdentityResult> CreateMemberAsync(ApplicationUser user, string password) => throw new NotSupportedException();
+        public Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password) => throw new NotSupportedException();
+        public Task<bool> IsLockedOutAsync(ApplicationUser user) => throw new NotSupportedException();
+        public Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user) => throw new NotSupportedException();
+        public Task<IdentityResult> UpdateAsync(ApplicationUser user) => throw new NotSupportedException();
+        public Task<IdentityResult> ChangePasswordAsync(ApplicationUser user, string currentPassword, string newPassword) => throw new NotSupportedException();
     }
 
     private sealed class FakeVotes : IVoteRepository

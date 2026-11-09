@@ -380,6 +380,19 @@ lời được chọn là đúng +15 (người chọn không tự nhận điểm
 trừ lại). Rút phiếu hoặc đổi phiếu tự hoàn lại và tính lại điểm. Điểm danh tiếng không bị chặn ở 0 để việc hoàn lại
 luôn chính xác.
 
+Giới hạn chống bình chọn gian lận (cấu hình `VoteLimits` trong `appsettings.json`, đọc bằng `VoteLimitOptions`):
+
+- **Tài khoản phải tồn tại ít nhất 3 ngày** (`MinAccountAgeDays`) mới được bình chọn, để một tài khoản tạo ra
+  chỉ nhằm đẩy hoặc dìm điểm không bình chọn được ngay. Dưới 3 ngày, `PUT` với `1` hoặc `-1` trả `403` kèm số ngày
+  còn lại. Rút phiếu (`0`) luôn được phép.
+- **Giới hạn tốc độ** cho mỗi thành viên: tối đa 30 lượt mỗi phút (`PerMinute`) và 200 lượt mỗi ngày (`PerDay`),
+  quá thì `429` kèm header `Retry-After` (số giây chờ thật, vì cửa sổ cố định biết chính xác khi nào bắt đầu lại)
+  và câu thông báo tiếng Việt ("thử lại sau 45 giây", "sau 6 giờ"). Mọi yêu cầu bình chọn đều được tính, kể cả
+  rút phiếu và yêu cầu bị từ chối vì tài khoản mới; yêu cầu có giá trị sai (không phải 1, -1, 0) thì không tính.
+  Giới hạn ngắn được hỏi trước để một đợt gửi dồn không làm mất lượt trong cả ngày. Bộ đếm nằm trong bộ nhớ
+  (`VoteRateLimiter`, mỗi người một bộ đếm) nên về 0 khi khởi động lại ứng dụng, đủ để chặn script. Chưa
+  phát hiện hai tài khoản bình chọn qua lại cho nhau (có thể làm sau).
+
 `GET /api/stars` (cần đăng nhập, `page`, `pageSize` 1-50) liệt kê các bài người dùng đã thả sao ⭐, sao mới nhất
 trước, chỉ gồm bài còn công khai (cùng dạng với `GET /api/bookmarks`).
 
