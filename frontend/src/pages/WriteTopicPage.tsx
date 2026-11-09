@@ -1,4 +1,6 @@
 import Button from '@mui/material/Button'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import { useState, type FormEvent } from 'react'
@@ -15,6 +17,7 @@ import { TopicCreatedPanel } from '../components/topics/TopicCreatedPanel'
 import { TopicMetadataFields, TopicTitleField } from '../components/topics/TopicMetadataFields'
 import { WritingTips } from '../components/topics/WritingTips'
 import { appRoutes } from '../appRoutes'
+import { hasPreviewContent } from '../utils/previewContent'
 import { useCategories } from '../queries/categories'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useTags } from '../queries/tags'
@@ -195,9 +198,6 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
               <ToggleButton value="question">Câu hỏi</ToggleButton>
             </ToggleButtonGroup>
             <div className="write-toolbar__actions">
-              <Button disabled={isMediaUploading} onClick={() => setIsPreviewOpen((current) => !current)} type="button" variant="text">
-                {isPreviewOpen ? 'Đóng xem trước' : 'Xem trước'}
-              </Button>
               <Button disabled={isSubmitting || isMediaUploading} type="submit" variant="outlined">
                 {isMediaUploading ? 'Đang tải tệp…' : 'Lưu bản nháp'}
               </Button>
@@ -211,24 +211,48 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
 
           <div className="write-layout">
             <div className="write-main">
-              <TopicTitleField error={fieldErrors.title?.[0]} onTitleChange={setTitle} title={title} />
-              <TopicEditorField
-                error={fieldErrors.bodyHtml?.[0] || fieldErrors.mediaIds?.[0]}
-                initialMedia={media}
-                key={editingId ?? 'create'}
-                onChange={setBodyHtml}
-                onMediaChange={setMedia}
-                onUploadStateChange={setIsMediaUploading}
-                value={bodyHtml}
-              />
-              <p className="write-note">
-                Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
-              </p>
-              {isPreviewOpen && (
-                <RichHtml
-                  className="fr-view reading-content write-preview"
-                  html={toDisplayMediaHtml(bodyHtml)}
+              <Tabs
+                aria-label="Chế độ soạn thảo"
+                onChange={(_, value: 'edit' | 'preview') => setIsPreviewOpen(value === 'preview')}
+                sx={{ borderBottom: 1, borderColor: 'divider' }}
+                value={isPreviewOpen ? 'preview' : 'edit'}
+              >
+                <Tab aria-controls="write-edit-panel" id="write-tab-edit" label="Soạn thảo" value="edit" />
+                <Tab aria-controls="write-preview-panel" id="write-tab-preview" label="Xem trước" value="preview" />
+              </Tabs>
+
+              {/* The editor is only hidden, not removed, while the preview is open: it keeps what was typed and the
+                  files that are still uploading. */}
+              <div aria-labelledby="write-tab-edit" className="write-panel" hidden={isPreviewOpen} id="write-edit-panel" role="tabpanel">
+                <TopicTitleField error={fieldErrors.title?.[0]} onTitleChange={setTitle} title={title} />
+                <TopicEditorField
+                  error={fieldErrors.bodyHtml?.[0] || fieldErrors.mediaIds?.[0]}
+                  initialMedia={media}
+                  key={editingId ?? 'create'}
+                  onChange={setBodyHtml}
+                  onMediaChange={setMedia}
+                  onUploadStateChange={setIsMediaUploading}
+                  value={bodyHtml}
                 />
+                <p className="write-note">
+                  Có thể chèn ảnh PNG, JPEG, GIF, WebP tối đa 5 MB và video MP4, WebM tối đa 50 MB.
+                </p>
+              </div>
+
+              {isPreviewOpen && (
+                <div aria-labelledby="write-tab-preview" className="write-panel" id="write-preview-panel" role="tabpanel">
+                  <p className="write-note">Đây là cách nội dung hiển thị cho người đọc. Nội dung chưa được lưu.</p>
+                  <h2 className="write-preview__title">{title.trim() || 'Chưa có tiêu đề'}</h2>
+                  {summary.trim() && <p className="write-preview__summary">{summary.trim()}</p>}
+                  {hasPreviewContent(bodyHtml) ? (
+                    <RichHtml
+                      className="fr-view reading-content write-preview"
+                      html={toDisplayMediaHtml(bodyHtml)}
+                    />
+                  ) : (
+                    <p className="write-note">Chưa có nội dung để xem trước. Hãy quay lại tab Soạn thảo để viết.</p>
+                  )}
+                </div>
               )}
             </div>
             <div className="write-side">

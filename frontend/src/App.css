@@ -961,6 +961,33 @@
   font-size: 0.88rem;
 }
 
+/* The two panels of the write page (editor and preview) lay their children out the same way as .write-main.
+   The rule for [hidden] is needed because display: grid would otherwise show a hidden panel. */
+.write-panel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.write-panel[hidden] {
+  display: none;
+}
+
+.write-preview__title {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.75rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.write-preview__summary {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
 .write-preview {
   padding: 20px;
   border: 1px solid var(--color-border);
