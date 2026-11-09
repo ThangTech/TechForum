@@ -28,6 +28,7 @@ export const adminKeys = {
   categories: (scope: string) => [...adminKeys.all(scope), 'categories'] as const,
   tags: (scope: string) => [...adminKeys.all(scope), 'tags'] as const,
   banners: (scope: string) => [...adminKeys.all(scope), 'banners'] as const,
+  bannedWords: (scope: string) => [...adminKeys.all(scope), 'banned-words'] as const,
   accounts: (scope: string, params: AdminAccountParams) =>
     [...adminKeys.all(scope), 'accounts', params] as const,
   administrators: (scope: string) => [...adminKeys.all(scope), 'administrators'] as const,

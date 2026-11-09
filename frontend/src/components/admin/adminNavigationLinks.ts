@@ -8,5 +8,6 @@ export const adminLinks = [
   { to: appRoutes.adminCategories, label: 'Chuyên mục' },
   { to: appRoutes.adminTags, label: 'Thẻ' },
   { to: appRoutes.adminBanners, label: 'Banner' },
+  { to: appRoutes.adminBannedWords, label: 'Từ cấm' },
   { to: appRoutes.adminAudit, label: 'Nhật ký' },
 ]

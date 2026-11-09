@@ -22,4 +22,6 @@ export const auditActionLabels: Record<string, string> = {
   'banner-activated': 'Bật banner',
   'banner-deactivated': 'Tắt banner',
   'banner-deleted': 'Xóa banner',
+  'banned-word-added': 'Thêm từ cấm',
+  'banned-word-removed': 'Xóa từ cấm',
 }

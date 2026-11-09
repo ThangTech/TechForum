@@ -127,6 +127,10 @@ tại `/account`, ô **Kỹ năng**, chọn từ thẻ có sẵn, tối đa 12) 
 nhất trong nội dung công khai. Thành viên có thể theo dõi/bỏ theo dõi người khác;
 khách dùng modal đăng nhập chung.
 
+Trang quản trị `/admin/banned-words` (mục **Từ cấm**) cho quản trị viên xem, tìm, thêm
+và xóa từ cấm (xóa có hộp xác nhận). Danh sách được API dùng để thay từ cấm bằng `***`
+trong bài viết và câu trả lời mới; thêm/xóa có hiệu lực ngay.
+
 Trang `/account` chia hai cột độc lập (Avatar + Hồ sơ | Kỹ năng + Đổi mật khẩu +
 Phiên đăng nhập) để thẻ ngắn không bị kéo giãn theo thẻ bên cạnh. Kết quả lưu
 (hồ sơ, avatar, kỹ năng) hiện bằng thông báo nổi `ToastProvider` (MUI Snackbar + Alert,

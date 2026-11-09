@@ -18,6 +18,7 @@ import { AdminReportsPage } from './pages/AdminReportsPage'
 import { AdminCategoriesPage } from './pages/AdminCategoriesPage'
 import { AdminTagsPage } from './pages/AdminTagsPage'
 import { AdminBannersPage } from './pages/AdminBannersPage'
+import { AdminBannedWordsPage } from './pages/AdminBannedWordsPage'
 import { AdminAccountsPage } from './pages/AdminAccountsPage'
 import { AdminTopicsPage } from './pages/AdminTopicsPage'
 import { AdminOverviewPage } from './pages/AdminOverviewPage'
@@ -126,6 +127,7 @@ const App = () => {
           <Route path="categories" element={<AdminCategoriesPage />} />
           <Route path="tags" element={<AdminTagsPage />} />
           <Route path="banners" element={<AdminBannersPage />} />
+          <Route path="banned-words" element={<AdminBannedWordsPage />} />
           <Route path="accounts" element={<AdminAccountsPage />} />
           <Route path="audit-logs" element={<AdminAuditPage />} />
         </Route>

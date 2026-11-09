@@ -13,6 +13,7 @@ import {
   DashboardIcon,
   FlagIcon,
   FolderIcon,
+  ShieldIcon,
   TagIcon,
 } from '../common/NavIcons'
 import { adminLinks } from './adminNavigationLinks'
@@ -25,6 +26,7 @@ const iconByRoute: Record<string, ReactNode> = {
   [appRoutes.adminCategories]: <FolderIcon />,
   [appRoutes.adminTags]: <TagIcon />,
   [appRoutes.adminBanners]: <BannerIcon />,
+  [appRoutes.adminBannedWords]: <ShieldIcon />,
   [appRoutes.adminAudit]: <ClipboardIcon />,
 }
 

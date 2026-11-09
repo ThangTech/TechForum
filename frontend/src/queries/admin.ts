@@ -21,6 +21,7 @@ import {
   type AdminTag,
   type SaveTagInput,
 } from '../api/adminTags'
+import { addBannedWord, getBannedWords, removeBannedWord } from '../api/adminBannedWords'
 import {
   createAdminBanner,
   deleteAdminBanner,
@@ -134,6 +135,37 @@ export const useToggleAdminTag = () => {
       void invalidateAdminData()
       void queryClient.invalidateQueries({ queryKey: tagKeys.all })
     },
+  })
+}
+
+// ---------- banned words ----------
+
+export const useAdminBannedWords = () => {
+  const { scope, isEnabled } = useAdminQueryState()
+
+  return useQuery({
+    queryKey: adminKeys.bannedWords(scope),
+    queryFn: ({ signal }) => getBannedWords(signal),
+    enabled: isEnabled,
+  })
+}
+
+export const useAddBannedWord = () => {
+  const invalidateAdminData = useInvalidateAdminData()
+
+  return useMutation({
+    mutationFn: (word: string) => addBannedWord(word),
+    // The list and the audit log load again.
+    onSuccess: () => { void invalidateAdminData() },
+  })
+}
+
+export const useRemoveBannedWord = () => {
+  const invalidateAdminData = useInvalidateAdminData()
+
+  return useMutation({
+    mutationFn: (id: number) => removeBannedWord(id),
+    onSuccess: () => { void invalidateAdminData() },
   })
 }
 

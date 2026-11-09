@@ -66,3 +66,7 @@ export const BannerIcon = () => (
 export const ClipboardIcon = () => (
   <svg {...iconProps}><rect height="18" rx="2" width="14" x="5" y="3" /><path d="M9 3v2h6V3M9 11h6M9 15h6" /></svg>
 )
+
+export const ShieldIcon = () => (
+  <svg {...iconProps}><path d="M12 3 5 6v5c0 4.5 3 8.2 7 10 4-1.8 7-5.5 7-10V6z" /><path d="m9 12 2 2 4-4" /></svg>
+)
