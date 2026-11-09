@@ -7,6 +7,10 @@ import DialogTitle from '@mui/material/DialogTitle'
 
 interface ConfirmDialogProps {
   confirmLabel: string
+  // The label of the button that gives up the question. It is "Hủy" unless another word fits better.
+  cancelLabel?: string
+  // The label of the confirm button while it is busy.
+  busyLabel?: string
   description: string
   isBusy?: boolean
   isOpen: boolean
@@ -17,6 +21,8 @@ interface ConfirmDialogProps {
 
 export const ConfirmDialog = ({
   confirmLabel,
+  cancelLabel = 'Hủy',
+  busyLabel = 'Đang xóa…',
   description,
   isBusy = false,
   isOpen,
@@ -30,8 +36,8 @@ export const ConfirmDialog = ({
       <DialogContentText sx={{ mt: 1.5, fontSize: '0.875rem', lineHeight: '1.5rem' }}>{description}</DialogContentText>
     </DialogContent>
     <DialogActions sx={{ p: 3, pt: 3, gap: 1.5 }}>
-      <Button disabled={isBusy} onClick={onCancel} variant="outlined">Hủy</Button>
-      <Button disabled={isBusy} onClick={onConfirm} variant="contained">{isBusy ? 'Đang xóa…' : confirmLabel}</Button>
+      <Button disabled={isBusy} onClick={onCancel} variant="outlined">{cancelLabel}</Button>
+      <Button disabled={isBusy} onClick={onConfirm} variant="contained">{isBusy ? busyLabel : confirmLabel}</Button>
     </DialogActions>
   </Dialog>
 )

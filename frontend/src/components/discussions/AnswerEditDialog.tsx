@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { updateAnswer, type Answer } from '../../api/answers'
 import { ApiError } from '../../api/client'
+import { useDiscardGuard } from '../feedback/useDiscardGuard'
 import { toAnswerHtml, toAnswerText } from './answerContent'
 
 export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
@@ -18,6 +19,11 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
   const [content, setContent] = useState(() => toAnswerText(answer.bodyHtml))
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isDirty = content !== toAnswerText(answer.bodyHtml)
+  const { requestClose, discardDialog } = useDiscardGuard(isDirty, onClose)
+  const closeIfIdle = () => {
+    if (!isSaving) requestClose()
+  }
   const save = async () => {
     if (!content.trim()) { setError('Câu trả lời không được để trống.'); return }
     setIsSaving(true); setError(null)
@@ -26,7 +32,8 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
     finally { setIsSaving(false) }
   }
   return (
-    <Dialog open onClose={(_, reason) => { if (!isSaving && reason !== 'backdropClick') onClose() }} maxWidth={false} slotProps={{ paper: { 'aria-label': "Sửa câu trả lời", sx: { width: 560, maxWidth: 'calc(100% - 32px)' } } }}>
+    <>
+    <Dialog open onClose={(_, reason) => { if (reason !== 'backdropClick') closeIfIdle() }} maxWidth={false} slotProps={{ paper: { 'aria-label': "Sửa câu trả lời", sx: { width: 560, maxWidth: 'calc(100% - 32px)' } } }}>
       <DialogTitle sx={{ px: 3, pt: 3, pb: 0, color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Sửa câu trả lời</DialogTitle>
       <DialogContent sx={{ px: 3, pt: 2.5, pb: 0 }}>
         <TextField
@@ -42,9 +49,11 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
         {error && <Typography color="error" role="alert" sx={{ mt: 1.5 }} variant="body2">{error}</Typography>}
       </DialogContent>
       <DialogActions sx={{ p: 3, gap: 1.5 }}>
-        <Button disabled={isSaving} onClick={onClose} variant="outlined">Hủy</Button>
+        <Button disabled={isSaving} onClick={closeIfIdle} variant="outlined">Hủy</Button>
         <Button disabled={isSaving} loading={isSaving} onClick={() => void save()} variant="contained">{isSaving ? 'Đang lưu…' : 'Lưu thay đổi'}</Button>
       </DialogActions>
     </Dialog>
+    {discardDialog}
+    </>
   )
 }

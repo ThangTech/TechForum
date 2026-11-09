@@ -3,6 +3,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { DialogFrame } from '../feedback/DialogFrame'
+import { useDiscardGuard } from '../feedback/useDiscardGuard'
 
 interface ReportResolutionDialogProps {
   decision: 'accepted' | 'rejected' | null
@@ -38,17 +39,23 @@ export const ReportResolutionDialog = ({
     onConfirm(normalizedNote)
   }
 
+  const { requestClose, discardDialog } = useDiscardGuard(note.trim() !== '', close)
+  const closeIfIdle = () => {
+    if (!isBusy) requestClose()
+  }
+
   const isAccepted = decision === 'accepted'
   return (
+    <>
     <DialogFrame
       actions={
         <>
-          <Button disabled={isBusy} onClick={close} variant="outlined">Hủy</Button>
+          <Button disabled={isBusy} onClick={closeIfIdle} variant="outlined">Hủy</Button>
           <Button disabled={isBusy} loading={isBusy} onClick={confirm} variant="contained">{isBusy ? 'Đang xử lý…' : (isAccepted ? 'Chấp nhận' : 'Bác bỏ')}</Button>
         </>
       }
       error={error || requestError}
-      onClose={close}
+      onClose={closeIfIdle}
       open={decision !== null}
       title={isAccepted ? 'Chấp nhận báo cáo' : 'Bác bỏ báo cáo'}
     >
@@ -63,10 +70,13 @@ export const ReportResolutionDialog = ({
         minRows={4}
         multiline
         onChange={(event) => setNote(event.target.value)}
+        placeholder={isAccepted ? 'Ví dụ: Bài viết chứa quảng cáo, đã ẩn theo quy định cộng đồng.' : 'Ví dụ: Đã xem xét, nội dung không vi phạm quy định.'}
         slotProps={{ htmlInput: { maxLength: 1000 } }}
         sx={{ mt: 2.5 }}
         value={note}
       />
     </DialogFrame>
+    {discardDialog}
+    </>
   )
 }

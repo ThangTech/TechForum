@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography'
 import { useState, type FormEvent } from 'react'
 import type { AdminAccount } from '../../api/adminAccounts'
 import { DialogFrame } from '../feedback/DialogFrame'
+import { useDiscardGuard } from '../feedback/useDiscardGuard'
 
 export const AccountLockDialog = ({
   account,
@@ -20,12 +21,18 @@ export const AccountLockDialog = ({
   onConfirm: (reason: string | null, lockoutEndUtc: string | null) => void
 }) => {
   const [reason, setReason] = useState('')
+  const [until, setUntil] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
+  const close = () => {
+    if (!isBusy) onClose()
+  }
+  const { requestClose, discardDialog } = useDiscardGuard(reason.trim() !== '' || until !== '', close)
+  const closeIfIdle = () => {
+    if (!isBusy) requestClose()
+  }
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (isBusy) return
-    const fields = new FormData(event.currentTarget)
-    const until = String(fields.get('lockoutEnd') ?? '')
     if (!account.isLocked && !reason.trim()) {
       setValidationError('Vui lòng ghi lý do khóa tài khoản.')
       return
@@ -45,16 +52,17 @@ export const AccountLockDialog = ({
     )
   }
   return (
+    <>
     <DialogFrame
       actions={
         <>
-          <Button disabled={isBusy} onClick={onClose} variant="outlined">Hủy</Button>
+          <Button disabled={isBusy} onClick={closeIfIdle} variant="outlined">Hủy</Button>
           {/* The button is outside the form, so the "form" attribute connects it to the form. */}
           <Button disabled={isBusy} form="account-lock-form" loading={isBusy} type="submit" variant="contained">{account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}</Button>
         </>
       }
       error={validationError || requestError}
-      onClose={() => !isBusy && onClose()}
+      onClose={closeIfIdle}
       title={account.isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
       width={500}
     >
@@ -74,6 +82,7 @@ export const AccountLockDialog = ({
                 minRows={4}
                 multiline
                 onChange={(event) => setReason(event.target.value)}
+                placeholder="Ví dụ: Đăng nội dung spam nhiều lần dù đã được nhắc nhở."
                 required
                 slotProps={{ htmlInput: { maxLength: 1000 } }}
                 value={reason}
@@ -83,8 +92,10 @@ export const AccountLockDialog = ({
                 id="account-lock-until"
                 label="Khóa đến thời điểm"
                 name="lockoutEnd"
+                onChange={(event) => setUntil(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
                 type="datetime-local"
+                value={until}
               />
             </Stack>
             <Typography color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
@@ -94,5 +105,7 @@ export const AccountLockDialog = ({
         )}
       </form>
     </DialogFrame>
+    {discardDialog}
+    </>
   )
 }

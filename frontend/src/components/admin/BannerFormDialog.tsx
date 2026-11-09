@@ -7,6 +7,8 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import type { AdminBanner, SaveBannerInput } from '../../api/adminBanners'
 import { toMediaUrl } from '../../api/media'
 import { DialogFrame } from '../feedback/DialogFrame'
+import { useDiscardGuard } from '../feedback/useDiscardGuard'
+import { bannerLinkRuleMessage, isValidBannerLink } from './bannerLink'
 import { fromLocalInputValue, toLocalInputValue } from './bannerStatus'
 
 interface BannerFormDialogProps {
@@ -48,9 +50,19 @@ export const BannerFormDialog = ({
     if (filePreview) URL.revokeObjectURL(filePreview)
   }, [filePreview])
 
+  // Anything that differs from what the banner had when the dialog opened (or from an empty form).
+  const isDirty = title !== (banner?.title ?? '') || linkUrl !== (banner?.linkUrl ?? '') ||
+    displayOrder !== String(banner?.displayOrder ?? 0) ||
+    startsAt !== toLocalInputValue(banner?.startsAtUtc ?? null) || endsAt !== toLocalInputValue(banner?.endsAtUtc ?? null) ||
+    file !== null || imageUrl !== (banner?.imageUrl ?? '')
   const close = () => {
     if (!busy) onClose()
   }
+  const { requestClose, discardDialog } = useDiscardGuard(isDirty, close)
+  const closeIfIdle = () => {
+    if (!busy) requestClose()
+  }
+  const isLinkInvalid = !isValidBannerLink(linkUrl)
 
   const chooseFile = (event: ChangeEvent<HTMLInputElement>) => {
     const chosen = event.target.files?.[0]
@@ -76,6 +88,10 @@ export const BannerFormDialog = ({
     }
     if (!file && !imageUrl) {
       setValidationError('Vui lòng chọn ảnh banner.')
+      return
+    }
+    if (isLinkInvalid) {
+      setValidationError(`Liên kết không hợp lệ. ${bannerLinkRuleMessage}`)
       return
     }
     if (!Number.isInteger(order) || order < 0 || order > 10_000) {
@@ -117,17 +133,18 @@ export const BannerFormDialog = ({
   const previewSrc = filePreview ?? (imageUrl ? toMediaUrl(imageUrl) : null)
 
   return (
+    <>
     <DialogFrame
       actions={
         <>
-          <Button disabled={busy} onClick={close} variant="outlined">Hủy</Button>
+          <Button disabled={busy} onClick={closeIfIdle} variant="outlined">Hủy</Button>
           <Button disabled={busy} loading={busy} onClick={() => void submit()} variant="contained">
             {busy ? 'Đang lưu…' : 'Lưu banner'}
           </Button>
         </>
       }
       error={validationError || requestError}
-      onClose={close}
+      onClose={closeIfIdle}
       title={banner ? 'Sửa banner' : 'Thêm banner'}
       width={560}
     >
@@ -161,19 +178,21 @@ export const BannerFormDialog = ({
             </Typography>
           </Stack>
         </Box>
-        <TextField disabled={busy} id="banner-title" label="Tiêu đề" onChange={(event) => setTitle(event.target.value)} slotProps={{ htmlInput: { maxLength: 120 } }} value={title} />
+        <TextField disabled={busy} id="banner-title" label="Tiêu đề" placeholder="Ví dụ: Khóa học React miễn phí tháng 12" onChange={(event) => setTitle(event.target.value)} slotProps={{ htmlInput: { maxLength: 120 } }} value={title} />
         <TextField
           disabled={busy}
-          helperText="Đường dẫn trong trang (ví dụ /topics/5) hoặc địa chỉ https://. Để trống nếu không cần liên kết."
+          error={isLinkInvalid}
+          helperText={isLinkInvalid ? bannerLinkRuleMessage : 'Để trống nếu không cần liên kết. Ví dụ: /topics/5 (bài viết trong trang) hoặc https://example.com.'}
           id="banner-link"
           label="Liên kết khi bấm vào banner"
           onChange={(event) => setLinkUrl(event.target.value)}
+          placeholder="Ví dụ: /topics/5"
           slotProps={{ htmlInput: { maxLength: 500 } }}
           value={linkUrl}
         />
         <TextField
           disabled={busy}
-          helperText="Số nhỏ hiện trước."
+          helperText="Số nhỏ hiện trước, ví dụ 1, 2, 3."
           id="banner-order"
           label="Thứ tự hiển thị"
           onChange={(event) => setDisplayOrder(event.target.value)}
@@ -190,5 +209,7 @@ export const BannerFormDialog = ({
         </Typography>
       </Stack>
     </DialogFrame>
+    {discardDialog}
+    </>
   )
 }

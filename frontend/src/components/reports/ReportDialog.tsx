@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { createReport, type ReportReason, type ReportTargetType } from '../../api/reports'
 import { ApiError } from '../../api/client'
 import { DialogFrame } from '../feedback/DialogFrame'
+import { useDiscardGuard } from '../feedback/useDiscardGuard'
 
 interface ReportDialogProps {
   isOpen: boolean
@@ -37,6 +38,11 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
     setError(null)
     setIsSubmitted(false)
     onClose()
+  }
+
+  const { requestClose, discardDialog } = useDiscardGuard(reason !== 'spam' || details.trim() !== '', close)
+  const closeIfIdle = () => {
+    if (!isSubmitting) requestClose()
   }
 
   const submit = async () => {
@@ -84,15 +90,16 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
   }
 
   return (
+    <>
     <DialogFrame
       actions={
         <>
-          <Button disabled={isSubmitting} onClick={close} variant="outlined">Hủy</Button>
+          <Button disabled={isSubmitting} onClick={closeIfIdle} variant="outlined">Hủy</Button>
           <Button disabled={isSubmitting} loading={isSubmitting} onClick={() => void submit()} variant="contained">{isSubmitting ? 'Đang gửi…' : 'Gửi báo cáo'}</Button>
         </>
       }
       error={error}
-      onClose={close}
+      onClose={closeIfIdle}
       open={isOpen}
       title="Báo cáo nội dung"
     >
@@ -126,5 +133,7 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
         />
       </Stack>
     </DialogFrame>
+    {discardDialog}
+    </>
   )
 }
