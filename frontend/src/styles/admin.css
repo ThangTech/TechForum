@@ -1,8 +1,8 @@
 .admin-shell {
   display: flex;
   min-height: 100vh;
-  background: #f3f5f8;
-  color: #172033;
+  background: var(--color-page);
+  color: var(--color-heading);
   font-size: 14px;
 }
 .admin-shell a:focus-visible,
@@ -16,8 +16,8 @@
 .admin-sidebar {
   width: 230px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid #dce2ea;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   height: 100vh;
@@ -30,8 +30,8 @@
   font-size: 25px;
   font-weight: 850;
   letter-spacing: -1px;
-  color: #172033;
-  border-bottom: 1px solid #edf0f4;
+  color: var(--color-heading);
+  border-bottom: 1px solid var(--color-border);
 }
 .admin-brand > span {
   color: var(--color-primary);
@@ -42,12 +42,12 @@
   letter-spacing: 1.2px;
   margin-top: 8px;
   font-weight: 650;
-  color: #697789;
+  color: var(--color-muted);
 }
 .admin-nav-label {
   padding: 25px 24px 10px;
   font-size: 10px;
-  color: #7b8798;
+  color: var(--color-quiet);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 700;
@@ -59,7 +59,7 @@
   margin-top: auto;
   padding: 23px;
   font-size: 11px;
-  color: #7c899b;
+  color: var(--color-quiet);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -67,7 +67,7 @@
 .admin-status-dot {
   width: 6px;
   height: 6px;
-  background: #33936b;
+  background: var(--color-solved);
   border-radius: 50%;
 }
 .admin-workspace {
@@ -76,8 +76,8 @@
 }
 .admin-topbar {
   min-height: 78px;
-  background: #fff;
-  border-bottom: 1px solid #dce2ea;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -89,14 +89,14 @@
   gap: 10px;
   align-items: center;
   font-size: 12px;
-  color: #788395;
+  color: var(--color-quiet);
 }
 .admin-breadcrumb a {
-  color: #5a6c84;
+  color: var(--color-muted);
 }
 .admin-breadcrumb [aria-current] {
   font-weight: 650;
-  color: #293a52;
+  color: var(--color-text);
 }
 .admin-topbar-actions {
   display: flex;
@@ -112,19 +112,19 @@
 .admin-current-user {
   display: grid;
   gap: 3px;
-  border-left: 1px solid #e3e8ef;
+  border-left: 1px solid var(--color-border);
   padding-left: 22px;
   font-size: 12px;
 }
 .admin-current-user span {
   font-size: 10px;
-  color: #7b8798;
+  color: var(--color-quiet);
 }
 .admin-menu-button {
   display: none;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
   padding: 7px 10px;
-  background: #fff;
+  background: var(--color-surface);
   font-size: 18px;
 }
 .admin-main {
@@ -141,18 +141,18 @@
   margin: 4px 0 8px;
 }
 .admin-page .eyebrow {
-  color: #62738a;
+  color: var(--color-muted);
   font-size: 10px;
   letter-spacing: 1px;
 }
 .admin-page-description {
-  color: #69788c;
+  color: var(--color-muted);
   line-height: 1.7;
   font-size: 13px;
 }
 .admin-panel {
-  border: 1px solid #dce2ea;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
   min-width: 0;
@@ -160,7 +160,7 @@
 }
 .admin-panel-heading {
   padding: 19px 21px;
-  border-bottom: 1px solid #e8ecf1;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -170,10 +170,10 @@
 .admin-panel-heading h2 {
   font-size: 14px;
   font-weight: 750;
-  color: #263750;
+  color: var(--color-text);
 }
 .admin-panel-heading p {
-  color: #7b8798;
+  color: var(--color-quiet);
   font-size: 11px;
   margin-top: 4px;
 }
@@ -188,8 +188,8 @@
   align-items: end;
   gap: 12px;
   padding: 18px 20px;
-  background: #fff;
-  border: 1px solid #dce2ea;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-bottom: 0;
   margin-top: 24px;
 }
@@ -202,7 +202,7 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 650;
-  color: #5b6a80;
+  color: var(--color-muted);
   min-width: 0;
 }
 .admin-field input,
@@ -211,10 +211,10 @@
   font-weight: 400;
   min-height: 40px;
   padding: 8px 11px;
-  border: 1px solid #cdd5df;
+  border: 1px solid var(--color-border-strong);
   border-radius: 3px;
-  background: #fff;
-  color: #263750;
+  background: var(--color-surface);
+  color: var(--color-text);
   min-width: 0;
   max-width: 100%;
 }
@@ -226,8 +226,8 @@
 .admin-table-scroll {
   overflow-x: auto;
   max-width: 100%;
-  border: 1px solid #dce2ea;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 .admin-panel .admin-table-scroll {
   border: 0;
@@ -243,29 +243,29 @@
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #78869b;
-  background: #f8fafc;
+  color: var(--color-quiet);
+  background: var(--color-subtle);
   padding: 13px 18px;
   white-space: nowrap;
-  border-bottom: 1px solid #dce2ea;
+  border-bottom: 1px solid var(--color-border);
 }
 .admin-table td {
   padding: 17px 18px;
-  border-bottom: 1px solid #e9edf3;
+  border-bottom: 1px solid var(--color-border);
   vertical-align: top;
-  color: #53637a;
+  color: var(--color-muted);
   line-height: 1.6;
 }
 .admin-table tr:last-child td {
   border-bottom: 0;
 }
 .admin-table tbody tr:hover {
-  background: #fbfcfe;
+  background: var(--color-subtle);
 }
 .admin-table-primary {
   display: block;
   font-weight: 700;
-  color: #263750;
+  color: var(--color-text);
   max-width: 380px;
   min-width: 160px;
   font-size: 13px;
@@ -284,7 +284,7 @@
 .admin-table-secondary {
   display: block;
   font-size: 12px;
-  color: #8490a1;
+  color: var(--color-quiet);
   margin-top: 4px;
   overflow-wrap: anywhere;
 }
@@ -296,18 +296,18 @@
 }
 .admin-table-actions button,
 .admin-text-button {
-  border: 1px solid #d4dce7;
+  border: 1px solid var(--color-border-strong);
   border-radius: 3px;
-  background: #fff;
+  background: var(--color-surface);
   padding: 5px 9px;
   font-size: 11px;
   font-weight: 650;
-  color: #2b568e;
+  color: var(--color-primary);
   white-space: nowrap;
 }
 .admin-table-actions button:hover,
 .admin-text-button:hover {
-  background: #edf3fe;
+  background: var(--color-primary-soft);
 }
 .admin-table-actions button:disabled {
   opacity: 0.5;
@@ -320,25 +320,25 @@
   line-height: 1.7;
   font-weight: 700;
   border-radius: 3px;
-  background: #edf1f6;
-  color: #64748b;
+  background: var(--color-hover);
+  color: var(--color-muted);
   white-space: nowrap;
 }
 .admin-badge-blue {
-  background: #edf3ff;
-  color: #275ba5;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 .admin-badge-green {
-  background: #eaf6ef;
-  color: #287147;
+  background: var(--color-solved-soft);
+  color: var(--color-solved);
 }
 .admin-badge-amber {
-  background: #fff6e4;
-  color: #916719;
+  background: var(--color-question-soft);
+  color: var(--color-question);
 }
 .admin-badge-red {
-  background: #fff0ef;
-  color: #b04540;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 .admin-pagination {
   display: flex;
@@ -346,11 +346,11 @@
   align-items: center;
   gap: 15px;
   padding: 15px 18px;
-  background: #fff;
-  border: 1px solid #dce2ea;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-top: 0;
   font-size: 11px;
-  color: #78869b;
+  color: var(--color-quiet);
 }
 .admin-pagination > div {
   display: flex;
@@ -364,10 +364,10 @@
   margin-top: 23px;
 }
 .admin-stat {
-  border: 1px solid #dce2ea;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  background: #fff;
+  background: var(--color-surface);
   padding: 19px 20px 12px;
   min-width: 0;
   overflow: hidden;
@@ -378,7 +378,7 @@
 }
 .admin-stat-label {
   font-size: 11px;
-  color: #728198;
+  color: var(--color-quiet);
   line-height: 1.6;
 }
 .admin-stat-value {
@@ -386,15 +386,15 @@
   font-size: 29px;
   font-weight: 780;
   letter-spacing: -1px;
-  color: #24354d;
+  color: var(--color-heading);
   margin: 10px 0 4px;
 }
 .admin-stat-period {
   font-size: 10px;
-  color: #73839a;
+  color: var(--color-quiet);
 }
 .admin-stat-period strong {
-  color: #2464af;
+  color: var(--color-primary);
   font-weight: 700;
 }
 .admin-dashboard-grid {
@@ -429,17 +429,17 @@
   justify-content: space-between;
   gap: 14px;
   font-size: 12px;
-  color: #6a788d;
+  color: var(--color-muted);
 }
 .admin-question-row strong {
   font-size: 18px;
-  color: #2d405d;
+  color: var(--color-text);
 }
 .admin-preview {
   max-height: 380px;
   overflow: auto;
-  border: 1px solid #e0e6ef;
-  background: #f9fafc;
+  border: 1px solid var(--color-border);
+  background: var(--color-subtle);
   padding: 16px;
   font-size: 13px;
 }
@@ -504,7 +504,7 @@
     width: 100%;
     height: auto;
     border-right: 0;
-    border-bottom: 1px solid #dce2ea;
+    border-bottom: 1px solid var(--color-border);
   }
   .admin-menu-open .admin-sidebar {
     display: flex;

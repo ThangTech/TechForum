@@ -3,11 +3,13 @@ import Typography from '@mui/material/Typography'
 import FroalaEditorModule from 'react-froala-wysiwyg'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import 'froala-editor/css/froala_editor.pkgd.min.css'
+import 'froala-editor/css/themes/dark.min.css'
 import 'froala-editor/js/plugins.pkgd.min.js'
 import 'froala-editor/js/languages/vi.js'
 import { parseUploadedMedia, type UploadedMedia } from '../../api/media'
 import { useAuthStore } from '../../auth/authStore'
 import { createFroalaConfig } from '../../config/froala'
+import { useThemeMode } from '../../theme/themeModeState'
 import { resolveModuleDefault } from '../../utils/moduleInterop'
 
 const FroalaEditorComponent = resolveModuleDefault<typeof FroalaEditorModule>(FroalaEditorModule)
@@ -34,6 +36,7 @@ export const TopicEditorField = ({
   ))
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [pendingUploadCount, setPendingUploadCount] = useState(0)
+  const { mode } = useThemeMode()
 
   useEffect(() => {
     onUploadStateChange(pendingUploadCount > 0)
@@ -82,12 +85,14 @@ export const TopicEditorField = ({
     },
     onUploadStarted: startUpload,
     onUploadError: handleUploadError,
-  }), [handleUploadError, startUpload, syncInsertedMedia, uploadedMedia])
+    theme: mode,
+  }), [handleUploadError, mode, startUpload, syncInsertedMedia, uploadedMedia])
 
   return (
     <Stack spacing={1}>
       <Typography component="span" sx={{ color: 'text.primary', fontSize: '0.875rem', fontWeight: 700 }}>Nội dung</Typography>
-      <FroalaEditorComponent config={config} model={value} onModelChange={handleChange} tag="textarea" />
+      {/* The editor reads its theme only when it starts, so a new mode starts a new editor with the same content. */}
+      <FroalaEditorComponent config={config} key={mode} model={value} onModelChange={handleChange} tag="textarea" />
       {pendingUploadCount > 0 && (
         <Typography color="primary" role="status" variant="body2">Đang tải media lên, vui lòng chờ hoàn tất…</Typography>
       )}

@@ -31,7 +31,7 @@ export const BannerAdminCard = ({
           alt={banner.title}
           component="img"
           src={toMediaUrl(banner.imageUrl)}
-          sx={{ display: 'block', width: 160, minWidth: 160, height: 64, objectFit: 'cover', borderRadius: '4px', bgcolor: '#eef1f5' }}
+          sx={{ display: 'block', width: 160, minWidth: 160, height: 64, objectFit: 'cover', borderRadius: '4px', bgcolor: 'var(--color-loading)' }}
         />
       </TableCell>
       <TableCell>

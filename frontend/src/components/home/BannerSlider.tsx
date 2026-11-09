@@ -96,7 +96,7 @@ export const BannerSlider = () => {
       onTouchEnd={endTouch}
       onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
       role="region"
-      sx={{ ...frameSx, position: 'relative', overflow: 'hidden', mb: 3, bgcolor: '#e8edf5' }}
+      sx={{ ...frameSx, position: 'relative', overflow: 'hidden', mb: 3, bgcolor: 'var(--color-loading)' }}
     >
       <Box
         aria-live={isPaused ? 'polite' : 'off'}

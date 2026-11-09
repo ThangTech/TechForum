@@ -22,7 +22,7 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 // Ô số trả lời kiểu hỏi đáp: viền xám khi chưa có trả lời, viền xanh lá khi đã có, nền xanh lá khi đã có lời giải.
 // Màu chữ đặt trên thẻ span để không bị style mặc định của thẻ <a> ghi đè.
 const getAnswerBoxColors = (answerCount: number, hasAcceptedAnswer: boolean) => {
-  if (hasAcceptedAnswer) return { border: 'success.main', background: 'success.main', text: '#fff' }
+  if (hasAcceptedAnswer) return { border: 'success.main', background: 'success.main', text: 'var(--color-on-primary)' }
   if (answerCount > 0) return { border: 'success.main', background: 'transparent', text: 'success.main' }
   return { border: 'var(--color-border-strong)', background: 'transparent', text: 'text.secondary' }
 }
@@ -34,7 +34,7 @@ const metaRowSx = {
   alignItems: 'center',
   columnGap: 1.5,
   rowGap: 0.5,
-  color: '#8a93a5',
+  color: 'var(--color-quiet)',
   fontSize: '0.75rem',
 } as const
 
@@ -198,7 +198,7 @@ export const TopicSummaryItem = ({
           </Stack>
         </Stack>
         {isDiscussion && topic.discussion?.lastActivityAtUtc && (
-          <Typography component="time" dateTime={topic.discussion.lastActivityAtUtc} sx={{ display: 'block', mt: 0.5, color: '#8a93a5', fontSize: '0.75rem' }}>
+          <Typography component="time" dateTime={topic.discussion.lastActivityAtUtc} sx={{ display: 'block', mt: 0.5, color: 'var(--color-quiet)', fontSize: '0.75rem' }}>
             Trao đổi gần nhất: {new Date(topic.discussion.lastActivityAtUtc).toLocaleString('vi-VN')}
           </Typography>
         )}

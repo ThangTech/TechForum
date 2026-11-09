@@ -96,7 +96,7 @@
   left: 16px;
   z-index: 100;
   padding: 12px 16px;
-  color: white;
+  color: var(--color-on-primary);
   background: var(--color-primary-dark);
 }
 
@@ -176,7 +176,7 @@
 .header-register {
   padding: 8px 13px;
   border-radius: 4px;
-  color: #fff;
+  color: var(--color-on-primary);
   background: var(--color-primary);
 }
 
@@ -555,7 +555,7 @@
   display: flex;
   flex-direction: column;
   padding: 36px clamp(32px, 5vw, 72px);
-  background: #eaf3ff;
+  background: var(--color-primary-soft);
 }
 
 .auth-visual__brand {
@@ -647,7 +647,7 @@
 
 .form-alert {
   padding: 12px 14px;
-  border: 1px solid #f0b8b3;
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
   color: var(--color-danger);
   background: var(--color-danger-soft);
@@ -891,7 +891,7 @@
 .write-error {
   margin: 0 0 16px;
   padding: 12px 14px;
-  border: 1px solid #f0b8b3;
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
   color: var(--color-danger);
   background: var(--color-danger-soft);
@@ -907,7 +907,7 @@
 
 .writing-tips {
   padding: 16px 18px;
-  border: 1px solid #d5e4fb;
+  border: 1px solid var(--color-primary-border);
   border-radius: var(--radius-card);
   background: var(--color-primary-soft);
 }

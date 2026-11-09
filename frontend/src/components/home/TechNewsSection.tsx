@@ -64,7 +64,7 @@ const NewsCard = ({ topic }: { topic: TopicSummary }) => (
       >
         {topic.title}
       </Typography>
-      <Typography sx={{ mt: 0.25, color: '#8a93a5', fontSize: '0.75rem' }}>
+      <Typography sx={{ mt: 0.25, color: 'var(--color-quiet)', fontSize: '0.75rem' }}>
         {topic.category.name} · {formatDate(topic.publishedAtUtc)}
       </Typography>
     </MuiLink>

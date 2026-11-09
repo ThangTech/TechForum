@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../appRoutes'
 import { useAuth } from '../../auth/authState'
 import { ApiError } from '../../api/client'
+import { ThemeModeToggle } from '../header/ThemeModeToggle'
 import { AdminFeedback } from './AdminFeedback'
 import { AdminNavigation } from './AdminNavigation'
 import { adminLinks } from './adminNavigationLinks'
@@ -93,6 +94,7 @@ export const AdminLayout = () => {
               <span>Quản trị viên</span>
             </div>
             <Button disabled={isLoggingOut} loading={isLoggingOut} onClick={() => void signOut()} variant="text">Đăng xuất</Button>
+            <ThemeModeToggle />
           </div>
         </header>
         <main className="admin-main" id="main-content">

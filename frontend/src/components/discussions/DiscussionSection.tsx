@@ -181,7 +181,7 @@ export const DiscussionSection = ({
           <MenuItem value="helpful">Hữu ích nhất</MenuItem>
         </TextField>
         {isLocked && (
-          <Chip label="Đã khóa thảo luận" size="small" sx={{ bgcolor: '#e2e8f0', color: 'text.secondary', fontWeight: 700 }} />
+          <Chip label="Đã khóa thảo luận" size="small" sx={{ bgcolor: 'var(--color-loading)', color: 'text.secondary', fontWeight: 700 }} />
         )}
       </Stack>
 
@@ -190,7 +190,7 @@ export const DiscussionSection = ({
       {!isLocked && !user && (
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          sx={{ p: 2.5, gap: 2.5, alignItems: { sm: 'center' }, justifyContent: 'space-between', border: 1, borderColor: '#bcd3f7', borderRadius: 2, bgcolor: 'primary.light' }}
+          sx={{ p: 2.5, gap: 2.5, alignItems: { sm: 'center' }, justifyContent: 'space-between', border: 1, borderColor: 'var(--color-primary-border)', borderRadius: 2, bgcolor: 'primary.light' }}
         >
           <Typography sx={{ color: 'text.primary', fontSize: '0.875rem', lineHeight: '1.5rem' }}>Đăng nhập để đóng góp câu trả lời cho chủ đề này.</Typography>
           <Box>

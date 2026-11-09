@@ -5,16 +5,31 @@
 .introjs-tooltip {
   min-width: 300px;
   max-width: min(380px, calc(100vw - 32px));
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
-  color: #263044;
-  background: #fff;
+  color: var(--color-text);
+  background: var(--color-surface);
   box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
   font-family: var(--font-sans);
 }
 
+/* The variables of intro.js that its arrow, text and button rules read, so the tour follows light and dark mode. */
+.introjs-tooltip {
+  --introjs-arrow-color: var(--color-surface);
+  --introjs-bg: var(--color-surface);
+  --introjs-color: var(--color-text);
+}
+
+.introjs-tooltipbuttons {
+  border-top-color: var(--color-border);
+}
+
+.introjs-progress {
+  background-color: var(--color-loading);
+}
+
 .introjs-tooltip-title {
-  color: #111827;
+  color: var(--color-heading);
   font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 800;
@@ -36,7 +51,7 @@
   width: auto !important;
   height: auto !important;
   padding: 4px 6px !important;
-  color: #475569 !important;
+  color: var(--color-muted) !important;
   font-size: 0.875rem !important;
   line-height: 1.25 !important;
   white-space: nowrap !important;
@@ -47,10 +62,10 @@
 }
 
 .introjs-button {
-  border: 1px solid #cbd5e1 !important;
+  border: 1px solid var(--color-border-strong) !important;
   border-radius: 4px !important;
-  color: #334155 !important;
-  background: #fff !important;
+  color: var(--color-text) !important;
+  background: var(--color-surface) !important;
   box-shadow: none !important;
   font-family: var(--font-sans) !important;
   font-weight: 700 !important;
@@ -59,16 +74,16 @@
 
 .introjs-nextbutton,
 .introjs-donebutton {
-  border-color: #1463d6 !important;
-  color: #fff !important;
-  background: #1463d6 !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+  background: var(--color-primary) !important;
 }
 
 .introjs-progressbar {
-  background: #1463d6 !important;
+  background: var(--color-primary) !important;
 }
 
 .introjs-helperLayer {
   border-radius: 4px;
-  box-shadow: 0 0 0 2px #1463d6, 0 0 0 5000px rgb(15 23 42 / 48%) !important;
+  box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 5000px rgb(15 23 42 / 48%) !important;
 }

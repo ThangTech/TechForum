@@ -5,6 +5,7 @@ import { appRoutes } from '../appRoutes'
 import { NotificationLink } from './notifications/NotificationLink'
 import { createAuthUrl } from '../auth/returnUrl'
 import { HeaderSearch } from './header/HeaderSearch'
+import { ThemeModeToggle } from './header/ThemeModeToggle'
 
 const AccountMenu = lazy(() => import('./account/AccountMenu').then((module) => ({
   default: module.AccountMenu,
@@ -53,6 +54,7 @@ export const SiteHeader = () => {
               <NavLink className="header-register" to={createAuthUrl(appRoutes.register, returnUrl)}>Đăng ký</NavLink>
             </>
           )}
+          <ThemeModeToggle />
         </div>
       </div>
 

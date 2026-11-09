@@ -14,11 +14,11 @@ export const AdminEmptyState = ({ children, flat = false }: AdminEmptyStateProps
       px: 2.5,
       py: 5.5,
       textAlign: 'center',
-      color: '#728198',
+      color: 'var(--color-quiet)',
       lineHeight: 1.8,
       bgcolor: 'background.paper',
       border: flat ? 0 : 1,
-      borderColor: '#dce2ea',
+      borderColor: 'var(--color-border)',
     }}
   >
     {children}

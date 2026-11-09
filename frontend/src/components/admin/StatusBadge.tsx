@@ -3,9 +3,9 @@ import type { ReactNode } from 'react'
 
 export type BadgeTone = 'neutral' | 'blue' | 'green' | 'amber' | 'red'
 
-// Màu nền nhạt và chữ đậm lấy từ palette trong theme.ts, giống các nhãn trên trang công khai.
+// Màu nền nhạt và chữ đậm lấy từ palette của theme (src/theme/appTheme.ts), giống các nhãn trên trang công khai.
 const toneColors: Record<BadgeTone, { background: string; color: string }> = {
-  neutral: { background: '#eef1f5', color: '#4b5565' },
+  neutral: { background: 'var(--color-loading)', color: 'var(--color-muted)' },
   blue: { background: 'primary.light', color: 'primary.dark' },
   green: { background: 'success.light', color: 'success.main' },
   amber: { background: 'warning.light', color: 'warning.main' },

@@ -96,8 +96,8 @@ export const TopicFeed = ({
                 sx={{
                   px: { xs: 2, sm: 2.5 },
                   py: 2,
-                  bgcolor: topic.isPinned ? '#f5f9ff' : undefined,
-                  '&:hover': { bgcolor: topic.isPinned ? '#edf4ff' : 'var(--color-subtle)' },
+                  bgcolor: topic.isPinned ? 'var(--color-pinned)' : undefined,
+                  '&:hover': { bgcolor: topic.isPinned ? 'var(--color-pinned-hover)' : 'var(--color-subtle)' },
                 }}
               >
                 <TopicSummaryItem onFilter={onFilter} topic={topic} isDiscussion={isDiscussion} />

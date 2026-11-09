@@ -35,7 +35,7 @@ export const AsyncStatePanel = ({
 
   if (error) {
     return (
-      <Stack role="alert" spacing={2} sx={{ ...panelSx, alignItems: 'center', borderColor: '#fecaca' }}>
+      <Stack role="alert" spacing={2} sx={{ ...panelSx, alignItems: 'center', borderColor: 'var(--color-danger-border)' }}>
         <Typography color="error" variant="body2">{error}</Typography>
         {onRetry && <Button onClick={onRetry} variant="outlined">Thử lại</Button>}
       </Stack>

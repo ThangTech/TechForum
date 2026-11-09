@@ -15,6 +15,8 @@ interface FroalaConfigOptions {
   onMediaUploaded: (media: UploadedMedia) => void
   onUploadStarted: () => void
   onUploadError: (message: string) => void
+  // "dark" gives the editor its dark colours (needs froala-editor/css/themes/dark.min.css).
+  theme?: 'light' | 'dark'
 }
 
 export const createFroalaConfig = ({
@@ -23,6 +25,7 @@ export const createFroalaConfig = ({
   onMediaUploaded,
   onUploadStarted,
   onUploadError,
+  theme = 'light',
 }: FroalaConfigOptions) => {
   // Froala reads its request headers when an upload starts, so the Bearer token is set right
   // before each upload. The session refreshes the token before it expires.
@@ -39,6 +42,7 @@ export const createFroalaConfig = ({
 
   return {
     ...(hasFroalaKey ? { key: import.meta.env.VITE_FROALA_KEY.trim() } : {}),
+    ...(theme === 'dark' ? { theme: 'dark' } : {}),
     attribution: true,
     language: 'vi',
     charCounterMax: 100000,

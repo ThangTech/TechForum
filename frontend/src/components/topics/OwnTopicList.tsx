@@ -45,7 +45,7 @@ export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps
                 size="small"
                 sx={topic.status === 'published'
                   ? { bgcolor: 'success.light', color: 'success.main', fontWeight: 700 }
-                  : { bgcolor: '#f1f5f9', color: 'text.primary', fontWeight: 700 }}
+                  : { bgcolor: 'var(--color-hover)', color: 'text.primary', fontWeight: 700 }}
               />
               {topic.isHiddenByModerator && <Typography color="error" component="span" sx={{ fontSize: '0.75rem', fontWeight: 700 }}>Đã bị ẩn bởi quản trị viên</Typography>}
               {topic.isDiscussionLocked && <Typography color="text.secondary" component="span" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>Đã khóa thảo luận</Typography>}
@@ -67,7 +67,7 @@ export const OwnTopicList = ({ data, onDelete, onPageChange }: OwnTopicListProps
             {topic.tags.length > 0 && (
               <Stack direction="row" sx={{ mt: 1.5, flexWrap: 'wrap', gap: 1 }}>
                 {topic.tags.map((tag) => (
-                  <Chip key={tag.id} label={`#${tag.name}`} size="small" sx={{ bgcolor: '#f1f5f9', color: 'text.secondary', fontWeight: 600 }} />
+                  <Chip key={tag.id} label={`#${tag.name}`} size="small" sx={{ bgcolor: 'var(--color-hover)', color: 'text.secondary', fontWeight: 600 }} />
                 ))}
               </Stack>
             )}

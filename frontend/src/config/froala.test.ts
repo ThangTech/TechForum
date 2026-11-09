@@ -54,4 +54,18 @@ describe('createFroalaConfig', () => {
     expect(onUploadStarted).toHaveBeenCalledOnce()
     expect(config).not.toHaveProperty('requestHeaders')
   })
+
+  it('uses the dark editor theme only in dark mode', () => {
+    const options = {
+      getAccessToken: () => null,
+      onMediaInserted: vi.fn(),
+      onMediaUploaded: vi.fn(),
+      onUploadStarted: vi.fn(),
+      onUploadError: vi.fn(),
+    }
+
+    expect(createFroalaConfig({ ...options, theme: 'dark' })).toHaveProperty('theme', 'dark')
+    expect(createFroalaConfig({ ...options, theme: 'light' })).not.toHaveProperty('theme')
+    expect(createFroalaConfig(options)).not.toHaveProperty('theme')
+  })
 })

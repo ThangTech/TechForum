@@ -122,7 +122,7 @@ export const PublicProfilePage = () => {
                     <Chip
                       key={badge.code}
                       label={badge.name}
-                      sx={{ bgcolor: '#fffbeb', color: '#92400e', borderColor: '#fde68a', fontWeight: 700 }}
+                      sx={{ bgcolor: 'var(--color-question-soft)', color: 'var(--color-question)', borderColor: 'var(--color-question-border)', fontWeight: 700 }}
                       title={badge.description}
                       variant="outlined"
                     />

@@ -5,11 +5,11 @@ export type PanelTone = 'default' | 'dashed' | 'success' | 'warning' | 'error' |
 
 const toneBorders: Record<PanelTone, string> = {
   default: 'var(--color-border)',
-  dashed: '#cbd5e1',
-  success: '#bbf7d0',
-  warning: '#fde68a',
-  error: '#fecaca',
-  info: '#bfdbfe',
+  dashed: 'var(--color-border-strong)',
+  success: 'var(--color-solved-border)',
+  warning: 'var(--color-question-border)',
+  error: 'var(--color-danger-border)',
+  info: 'var(--color-primary-border)',
 }
 
 type PanelProps = BoxProps & {
