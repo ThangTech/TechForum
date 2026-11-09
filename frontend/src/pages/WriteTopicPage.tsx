@@ -1,13 +1,16 @@
+import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RichHtml } from '../components/common/RichHtml'
+import { useDebounce } from '../hooks/useDebounce'
 import { ApiError } from '../api/client'
 import type { Category } from '../api/categories'
+import type { Draft } from '../api/drafts'
 import type { Tag } from '../api/tags'
 import { toDisplayMediaHtml, toEditableMedia, toStoredMediaHtml, type UploadedMedia } from '../api/media'
 import type { OwnTopic, TopicType } from '../api/topics'
@@ -17,8 +20,10 @@ import { TopicCreatedPanel } from '../components/topics/TopicCreatedPanel'
 import { TopicMetadataFields, TopicTitleField } from '../components/topics/TopicMetadataFields'
 import { WritingTips } from '../components/topics/WritingTips'
 import { appRoutes } from '../appRoutes'
+import { getSnapshotKey, shouldRemoveDraft, shouldSaveDraft, type DraftSnapshot } from '../utils/draftSnapshot'
 import { hasPreviewContent } from '../utils/previewContent'
 import { useCategories } from '../queries/categories'
+import { useDeleteDraft, useDraft, useSaveDraft } from '../queries/drafts'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useTags } from '../queries/tags'
 import { useMyTopicForEdit, useSaveTopic } from '../queries/topics'
@@ -45,6 +50,7 @@ const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
   const categoriesQuery = useCategories()
   const tagsQuery = useTags()
   const topicQuery = useMyTopicForEdit(editingId ?? 0, isEditing && isEditingIdValid)
+  const draftQuery = useDraft(editingId, !isEditing || isEditingIdValid)
 
   const categories = categoriesQuery.data
   const tags = tagsQuery.data
@@ -55,7 +61,10 @@ const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
     : getErrorMessage(categoriesQuery.error, fallbackError) ??
       getErrorMessage(tagsQuery.error, fallbackError) ??
       getErrorMessage(topicQuery.error, fallbackError)
-  const isFormReady = categories !== undefined && tags !== undefined && (!isEditing || existingTopic !== undefined)
+  // The form waits for the draft too, so the offer to restore it is there from the first moment. A draft that cannot
+  // be read does not stop the form.
+  const isFormReady = categories !== undefined && tags !== undefined && (!isEditing || existingTopic !== undefined) &&
+    !draftQuery.isLoading
 
   const retry = () => {
     if (categoriesQuery.error) void categoriesQuery.refetch()
@@ -82,6 +91,7 @@ const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
   return (
     <WriteTopicEditor
       categories={categories}
+      draft={draftQuery.data ?? null}
       editingId={editingId}
       existingTopic={existingTopic ?? null}
       requestedType={requestedType}
@@ -92,13 +102,15 @@ const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
 
 interface WriteTopicEditorProps {
   categories: Category[]
+  // The automatic draft found when the form opened, or null.
+  draft: Draft | null
   editingId: number | null
   existingTopic: OwnTopic | null
   requestedType: TopicType
   tags: Tag[]
 }
 
-const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType, tags }: WriteTopicEditorProps) => {
+const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, requestedType, tags }: WriteTopicEditorProps) => {
   const navigate = useNavigate()
   const saveMutation = useSaveTopic(editingId)
   // The values of an existing topic are copied once, when the form opens.
@@ -119,6 +131,106 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
   const [createdTopic, setCreatedTopic] = useState<OwnTopic | null>(null)
   const isSubmitting = saveMutation.isPending
 
+  // ---- Automatic draft: the form is saved by itself 3 seconds after the member stops typing.
+  const [pendingDraft, setPendingDraft] = useState<Draft | null>(draft)
+  const [editorVersion, setEditorVersion] = useState(0)
+  const [draftStatus, setDraftStatus] = useState<DraftStatus>({ kind: 'idle' })
+  const { mutate: saveDraftNow, isPending: isSavingDraft } = useSaveDraft(editingId)
+  const { mutate: removeDraftNow, isPending: isRemovingDraft } = useDeleteDraft(editingId)
+
+  const snapshot = useMemo<DraftSnapshot>(() => ({
+    title,
+    summary,
+    bodyHtml: toStoredMediaHtml(bodyHtml, media),
+    type,
+    categoryId: categoryId === '' ? null : Number(categoryId),
+    tagIds,
+    mediaIds: media.map((item) => item.id),
+  }), [title, summary, bodyHtml, media, type, categoryId, tagIds])
+  // The state of the form when it opened: the saved topic, or an empty form. It has nothing to save.
+  const [baselineKey] = useState(() => getSnapshotKey(snapshot))
+  const [lastSavedKey, setLastSavedKey] = useState(baselineKey)
+  const [lastFailedKey, setLastFailedKey] = useState<string | null>(null)
+  const [hasSavedDraft, setHasSavedDraft] = useState(false)
+  const debouncedSnapshot = useDebounce(snapshot, AUTO_SAVE_DELAY_MS)
+  // Nothing is saved while the member still has to choose about the draft that was found, after the topic was saved
+  // (the draft is gone then and must not come back) or while the topic is being saved.
+  const canAutoSave = pendingDraft === null && createdTopic === null && !isSubmitting
+  const hasUnsavedChanges = canAutoSave && shouldSaveDraft(snapshot, lastSavedKey, baselineKey)
+
+  useEffect(() => {
+    if (!canAutoSave || isSavingDraft || isRemovingDraft) return
+    // The debounced value is older than the form while the member is typing or has just restored a draft. It is
+    // saved only when it is the same as what the form holds now.
+    if (debouncedSnapshot !== snapshot) return
+
+    if (shouldRemoveDraft(debouncedSnapshot, baselineKey, hasSavedDraft)) {
+      // Done or failed, the next change decides again; the state is changed when the answer arrives.
+      removeDraftNow(undefined, {
+        onSettled: () => {
+          setHasSavedDraft(false)
+          setLastSavedKey(baselineKey)
+          setDraftStatus({ kind: 'idle' })
+        },
+      })
+      return
+    }
+
+    const key = getSnapshotKey(debouncedSnapshot)
+    // After a failure the same text is not tried again at once; the next change tries again.
+    if (!shouldSaveDraft(debouncedSnapshot, lastSavedKey, baselineKey) || key === lastFailedKey) return
+
+    saveDraftNow(debouncedSnapshot, {
+      onSuccess: (saved) => {
+        setLastSavedKey(key)
+        setLastFailedKey(null)
+        setHasSavedDraft(true)
+        setDraftStatus({ kind: 'saved', at: saved.updatedAtUtc })
+      },
+      onError: () => {
+        setLastFailedKey(key)
+        setDraftStatus({ kind: 'error' })
+      },
+    })
+  }, [
+    baselineKey, canAutoSave, debouncedSnapshot, hasSavedDraft, isRemovingDraft, isSavingDraft,
+    lastFailedKey, lastSavedKey, removeDraftNow, saveDraftNow, snapshot,
+  ])
+
+  // Closing or reloading the page with text that is not saved yet asks for a confirmation.
+  useEffect(() => {
+    if (!hasUnsavedChanges) return undefined
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [hasUnsavedChanges])
+
+  const restoreDraft = () => {
+    if (!pendingDraft) return
+    setTitle(pendingDraft.title)
+    setSummary(pendingDraft.summary)
+    setBodyHtml(toDisplayMediaHtml(pendingDraft.bodyHtml))
+    if (!editingId) setType(pendingDraft.type)
+    if (categories.some((category) => category.id === pendingDraft.categoryId)) {
+      setCategoryId(String(pendingDraft.categoryId))
+    }
+    setTagIds(pendingDraft.tagIds.filter((tagId) => tags.some((tag) => tag.id === tagId)))
+    setMedia(toEditableMedia(pendingDraft.media))
+    // The editor reads its media list only when it starts, so it is started again with the restored files.
+    setEditorVersion((version) => version + 1)
+    setHasSavedDraft(true)
+    setLastSavedKey('')
+    setPendingDraft(null)
+  }
+
+  const discardDraft = () => {
+    removeDraftNow()
+    setPendingDraft(null)
+  }
+
   const submit = async (publish: boolean) => {
     if (isSubmitting || isMediaUploading) return
     setSubmitError(null)
@@ -137,6 +249,10 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
         publish,
       }
       setCreatedTopic(await saveMutation.mutateAsync(input))
+      // The API removed the draft when it saved the topic.
+      setHasSavedDraft(false)
+      setLastSavedKey(baselineKey)
+      setDraftStatus({ kind: 'idle' })
     } catch (requestError) {
       if (requestError instanceof ApiError) {
         setSubmitError(requestError.message)
@@ -198,6 +314,7 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
               <ToggleButton value="question">Câu hỏi</ToggleButton>
             </ToggleButtonGroup>
             <div className="write-toolbar__actions">
+              <span aria-live="polite" className="write-draft-status" role="status">{getDraftStatusText(isSavingDraft ? { kind: 'saving' } : draftStatus)}</span>
               <Button disabled={isSubmitting || isMediaUploading} type="submit" variant="outlined">
                 {isMediaUploading ? 'Đang tải tệp…' : 'Lưu bản nháp'}
               </Button>
@@ -206,6 +323,22 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
               </Button>
             </div>
           </div>
+
+          {pendingDraft && (
+            <Alert
+              action={(
+                <>
+                  <Button color="inherit" onClick={restoreDraft} size="small" type="button">Khôi phục</Button>
+                  <Button color="inherit" onClick={discardDraft} size="small" type="button">Bỏ bản nháp</Button>
+                </>
+              )}
+              severity="info"
+              sx={{ mb: 2 }}
+            >
+              Bạn có nội dung viết dở được tự lưu lúc {formatDraftTime(pendingDraft.updatedAtUtc, true)}.
+              Khôi phục để viết tiếp, hoặc bỏ nếu không cần.
+            </Alert>
+          )}
 
           {submitError && <p className="write-error" role="alert">{submitError}</p>}
 
@@ -228,7 +361,7 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
                 <TopicEditorField
                   error={fieldErrors.bodyHtml?.[0] || fieldErrors.mediaIds?.[0]}
                   initialMedia={media}
-                  key={editingId ?? 'create'}
+                  key={`${editingId ?? 'create'}-${editorVersion}`}
                   onChange={setBodyHtml}
                   onMediaChange={setMedia}
                   onUploadStateChange={setIsMediaUploading}
@@ -277,4 +410,26 @@ const WriteTopicEditor = ({ categories, editingId, existingTopic, requestedType,
       </div>
     </main>
   )
+}
+
+// The form is saved this long after the last key press.
+const AUTO_SAVE_DELAY_MS = 3000
+
+type DraftStatus =
+  | { kind: 'idle' }
+  | { kind: 'saving' }
+  | { kind: 'saved'; at: string }
+  | { kind: 'error' }
+
+const formatDraftTime = (iso: string, withDate = false): string => {
+  const date = new Date(iso)
+  const time = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  return withDate ? `${time} ngày ${date.toLocaleDateString('vi-VN')}` : time
+}
+
+const getDraftStatusText = (status: DraftStatus): string => {
+  if (status.kind === 'saving') return 'Đang tự lưu…'
+  if (status.kind === 'saved') return `Đã tự lưu lúc ${formatDraftTime(status.at)}`
+  if (status.kind === 'error') return 'Chưa tự lưu được, sẽ thử lại khi bạn gõ tiếp'
+  return ''
 }

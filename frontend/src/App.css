@@ -910,6 +910,11 @@
   gap: 8px;
 }
 
+.write-draft-status {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
 .write-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
