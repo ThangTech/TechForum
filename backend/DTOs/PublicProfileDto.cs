@@ -14,7 +14,9 @@ public sealed record PublicProfileDto(
     bool IsFollowedByViewer,
     IReadOnlyList<ProfileSkillDto> Skills,
     IReadOnlyList<ProfileBadgeDto> Badges,
-    IReadOnlyList<TopicSummaryDto> RecentTopics);
+    IReadOnlyList<TopicSummaryDto> RecentTopics,
+    // The reputation points of the member (see ReputationRules).
+    int Reputation = 0);
 
 public sealed record ProfileSkillDto(int TagId, string Name, string Slug, int TopicCount, bool IsChosen);
 

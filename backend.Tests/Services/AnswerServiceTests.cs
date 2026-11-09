@@ -88,6 +88,63 @@ public sealed class AnswerServiceTests
     }
 
     [Fact]
+    public async Task AcceptAsync_GivesTheBonusToTheAuthorOfTheChosenAnswer()
+    {
+        var topic = CreateTopic();
+        var repository = new FakeAnswerRepository(CreateAnswer(10, "member-a"));
+        var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var result = await service.AcceptAsync(1, 10, topic.AuthorId, CancellationToken.None);
+
+        Assert.Equal(AcceptAnswerFailure.None, result.Failure);
+        Assert.Equal(("member-a", ReputationRules.AcceptedAnswer), Assert.Single(repository.ReputationChanges));
+    }
+
+    [Fact]
+    public async Task AcceptAsync_MovesTheBonusWhenTheChosenAnswerChanges()
+    {
+        var topic = CreateTopic();
+        topic.AcceptedAnswerId = 9;
+        var repository = new FakeAnswerRepository(CreateAnswer(9, "member-b"), CreateAnswer(10, "member-a"));
+        var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        await service.AcceptAsync(1, 10, topic.AuthorId, CancellationToken.None);
+
+        Assert.Equal(
+            [("member-a", ReputationRules.AcceptedAnswer), ("member-b", -ReputationRules.AcceptedAnswer)],
+            repository.ReputationChanges);
+    }
+
+    [Fact]
+    public async Task AcceptAsync_ChoosingTheSameAnswerAgainChangesNothing()
+    {
+        var topic = CreateTopic();
+        topic.AcceptedAnswerId = 10;
+        var repository = new FakeAnswerRepository(CreateAnswer(10, "member-a"));
+        var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        await service.AcceptAsync(1, 10, topic.AuthorId, CancellationToken.None);
+
+        Assert.Empty(repository.ReputationChanges);
+    }
+
+    [Fact]
+    public async Task AcceptAsync_GivesNoBonusForTheOwnAnswerOfTheQuestionAuthor()
+    {
+        var topic = CreateTopic();
+        var repository = new FakeAnswerRepository(CreateAnswer(10, topic.AuthorId));
+        var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        await service.AcceptAsync(1, 10, topic.AuthorId, CancellationToken.None);
+
+        Assert.Empty(repository.ReputationChanges);
+    }
+
+    [Fact]
     public async Task AcceptAsync_RejectsAnotherMemberWithoutChangingSolution()
     {
         var topic = CreateTopic();
@@ -382,6 +439,13 @@ public sealed class AnswerServiceTests
         public int VisibleCallCount { get; private set; }
         public int HelpfulMutations { get; private set; }
         public HashSet<(int AnswerId, string UserId)> Votes { get; } = [];
+        public List<(string UserId, int Delta)> ReputationChanges { get; } = [];
+
+        public Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken)
+        {
+            ReputationChanges.Add((userId, delta));
+            return Task.CompletedTask;
+        }
 
         public Task<Answer?> GetVisibleByIdAsync(int topicId, int answerId, CancellationToken cancellationToken)
         {

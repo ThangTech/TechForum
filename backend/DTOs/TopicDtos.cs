@@ -43,6 +43,8 @@ public sealed record TopicDetailDto(
     bool IsPinned,
     bool IsDiscussionLocked,
     int ViewCount,
-    int ShareCount);
+    int ShareCount,
+    // The vote score of the post.
+    int Score = 0);
 
 public sealed record TopicEngagementDto(int ViewCount, int ShareCount);

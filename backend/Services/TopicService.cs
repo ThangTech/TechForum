@@ -511,7 +511,8 @@ public sealed partial class TopicService(
         topic.IsPinned,
         topic.IsDiscussionLocked,
         topic.ViewCount,
-        topic.ShareCount);
+        topic.ShareCount,
+        topic.Score);
 
     private static OwnTopicSummaryDto MapOwnedSummary(Topic topic) => new(
         topic.Id,

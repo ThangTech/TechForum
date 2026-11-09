@@ -355,6 +355,34 @@ Hồ sơ công khai (`GET /api/profiles/{userId}`) trả kỹ năng đã chọn 
 xếp theo tên), rồi mới tới các thẻ xuất hiện nhiều nhất trong nội dung công khai
 của thành viên (`isChosen: false`) cho đủ 12 chỗ, nên người chưa chọn gì vẫn có kỹ năng như trước.
 
+## Bình chọn và điểm danh tiếng
+
+Bài viết và câu trả lời có **bình chọn** ▲ (+1) và ▼ (−1), tách riêng với sao "hữu ích" (giữ nguyên, là
+lời cảm ơn/yêu thích và không đổi điểm danh tiếng):
+
+- `GET /api/topics/{topicId}/vote`: `{ score, myVote }` (khách thấy `myVote: 0`).
+- `PUT /api/topics/{topicId}/vote` và `PUT /api/topics/{topicId}/answers/{answerId}/vote`
+  (cần đăng nhập), body `{ "value": 1 | -1 | 0 }` (0 là rút phiếu). Trả `{ score, myVote }`. `409` khi tự
+  bình chọn nội dung của mình, `404` khi nội dung không còn công khai, `400` khi giá trị khác 1, -1, 0.
+  Gửi lại cùng một giá trị không đổi gì.
+- Điểm của bài (`score`) có trong chi tiết bài; mỗi câu trả lời có `score` và `myVote`. Câu trả lời sắp xếp
+  được theo `sort=score` (ngoài `oldest`, `helpful`); câu được chọn vẫn đứng đầu.
+- Điểm danh tiếng (`reputation`) có ở `/api/auth/me` và hồ sơ công khai.
+
+Bảng `UserVotes` có khóa chính (`UserId`, `TargetType`, `TargetId`) nên một người chỉ có một phiếu cho mỗi bài hoặc
+câu trả lời, và ràng buộc `Value IN (-1, 1)`. Cột `Score` của `Topics`/`Answers` và `Reputation` của người dùng
+được giữ khớp với bảng phiếu bằng **một transaction** (`VoteRepository`, mức cô lập Serializable): thêm/đổi/xóa
+phiếu, cộng `Score` và cộng `Reputation` của tác giả thành công cả ba hoặc hoàn tác cả ba. Điểm được cộng
+trực tiếp trong SQL (`Score = Score + @thay_đổi`) nên hai người bình chọn cùng lúc không ghi đè nhau. Nhiều yêu cầu
+của cùng một người đến cùng lúc gặp deadlock hoặc khóa chính thì được đọc lại và thử tối đa 4 lần, nên kết quả
+chỉ là một phiếu. Bảng điểm (`ReputationRules`): upvote câu trả lời +10, upvote bài viết +5, downvote −2, câu trả
+lời được chọn là đúng +15 (người chọn không tự nhận điểm khi chọn câu của chính mình; đổi hoặc xóa câu đã chọn thì
+trừ lại). Rút phiếu hoặc đổi phiếu tự hoàn lại và tính lại điểm. Điểm danh tiếng không bị chặn ở 0 để việc hoàn lại
+luôn chính xác.
+
+`GET /api/stars` (cần đăng nhập, `page`, `pageSize` 1-50) liệt kê các bài người dùng đã thả sao ⭐, sao mới nhất
+trước, chỉ gồm bài còn công khai (cùng dạng với `GET /api/bookmarks`).
+
 ## Câu trả lời được chấp nhận
 
 Tác giả của một Câu hỏi chọn (hoặc đổi) câu trả lời đúng bằng `PUT /api/topics/{id}/answers/{answerId}/accepted`

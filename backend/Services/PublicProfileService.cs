@@ -34,7 +34,8 @@ public sealed class PublicProfileService(IPublicProfileRepository profileReposit
             profile.Skills.Select(skill => new ProfileSkillDto(
                 skill.TagId, skill.Name, skill.Slug, skill.TopicCount, skill.IsChosen)).ToList(),
             CreateBadges(profile),
-            profile.RecentTopics.Select(MapTopic).ToList());
+            profile.RecentTopics.Select(MapTopic).ToList(),
+            profile.User.Reputation);
     }
 
     private static IReadOnlyList<ProfileBadgeDto> CreateBadges(PublicProfileData profile)

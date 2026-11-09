@@ -10,8 +10,23 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [ProfanityFilter]
 [Route("api/topics/{topicId:int}/answers")]
-public sealed class AnswersController(IAnswerService answerService) : ControllerBase
+public sealed class AnswersController(IAnswerService answerService, IVoteService voteService) : ControllerBase
 {
+    // Upvote (1), downvote (-1) or take the vote back (0). The score and the reputation of the author change with it.
+    [Authorize]
+    [HttpPut("{answerId:int}/vote")]
+    [ProducesResponseType<VoteDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<VoteDto>> SetVote(
+        int topicId,
+        int answerId,
+        [FromBody] SetVoteRequest request,
+        CancellationToken cancellationToken) =>
+        this.ToVoteResponse(await voteService.SetAnswerVoteAsync(
+            topicId, answerId, User.GetRequiredUserId(), request.Value, cancellationToken));
+
     [HttpGet]
     [ProducesResponseType<PagedResultDto<AnswerDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -238,9 +253,9 @@ public sealed class AnswersController(IAnswerService answerService) : Controller
         {
             errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
         }
-        if (query.Sort is not ("oldest" or "helpful"))
+        if (query.Sort is not ("oldest" or "helpful" or "score"))
         {
-            errors["sort"] = ["Cách sắp xếp phải là oldest hoặc helpful."];
+            errors["sort"] = ["Cách sắp xếp phải là oldest, helpful hoặc score."];
         }
 
         return errors.Count == 0

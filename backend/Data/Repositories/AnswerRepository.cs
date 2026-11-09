@@ -27,7 +27,7 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         {
             var target = await answers
                 .Where(answer => answer.Id == aroundAnswerId.Value)
-                .Select(answer => new { answer.Id, answer.CreatedAtUtc, HelpfulCount = answer.HelpfulVotes.Count })
+                .Select(answer => new { answer.Id, answer.CreatedAtUtc, HelpfulCount = answer.HelpfulVotes.Count, answer.Score })
                 .SingleOrDefaultAsync(cancellationToken);
             if (target is null)
             {
@@ -36,7 +36,14 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
 
             // Dùng đúng thứ tự của danh sách để tìm trang, không tải các trang trước đó.
             // The pinned answer is before all the others; if it is the one that is looked for, it is the first.
-            var precedingCount = target.Id == pinnedId ? 0 : (hasPinned ? 1 : 0) + (sort == "helpful"
+            var precedingCount = target.Id == pinnedId ? 0 : (hasPinned ? 1 : 0) + (sort == "score"
+                ? await unpinned.CountAsync(answer =>
+                    answer.Score > target.Score ||
+                    (answer.Score == target.Score &&
+                        (answer.CreatedAtUtc < target.CreatedAtUtc ||
+                        (answer.CreatedAtUtc == target.CreatedAtUtc && answer.Id < target.Id))),
+                    cancellationToken)
+                : sort == "helpful"
                 ? await unpinned.CountAsync(answer =>
                     answer.HelpfulVotes.Count > target.HelpfulCount ||
                     (answer.HelpfulVotes.Count == target.HelpfulCount &&
@@ -52,10 +59,14 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
 
         var totalItems = await answers.CountAsync(cancellationToken);
         var pinnedFirst = answers.OrderByDescending(answer => answer.Id == pinnedId);
-        var orderedAnswers = sort == "helpful"
-            ? pinnedFirst.ThenByDescending(answer => answer.HelpfulVotes.Count)
-                .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id)
-            : pinnedFirst.ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id);
+        var orderedAnswers = sort switch
+        {
+            "score" => pinnedFirst.ThenByDescending(answer => answer.Score)
+                .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id),
+            "helpful" => pinnedFirst.ThenByDescending(answer => answer.HelpfulVotes.Count)
+                .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id),
+            _ => pinnedFirst.ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id)
+        };
         var items = await orderedAnswers
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -82,6 +93,12 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         return await visibleAnswers.AnyAsync(answer => answer.Id == acceptedId.Value, cancellationToken) ? acceptedId.Value : 0;
     }
 
+    // Adds (or takes away, when delta is negative) reputation points of a member. It is only used for the bonus of an
+    // accepted answer; votes change reputation inside their own transaction (VoteRepository).
+    public async Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken) =>
+        await dbContext.Users.Where(user => user.Id == userId)
+            .ExecuteUpdateAsync(set => set.SetProperty(user => user.Reputation, user => user.Reputation + delta), cancellationToken);
+
     public async Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
         IReadOnlyCollection<int> answerIds,
         string? viewerId,
@@ -91,7 +108,14 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
             .Select(answer => new AnswerHelpfulState(
                 answer.Id,
                 answer.HelpfulVotes.Count,
-                viewerId != null && answer.HelpfulVotes.Any(vote => vote.UserId == viewerId)))
+                viewerId != null && answer.HelpfulVotes.Any(vote => vote.UserId == viewerId),
+                answer.Score,
+                viewerId == null
+                    ? 0
+                    : dbContext.UserVotes
+                        .Where(vote => vote.UserId == viewerId && vote.TargetType == VoteTargetType.Answer && vote.TargetId == answer.Id)
+                        .Select(vote => vote.Value)
+                        .FirstOrDefault()))
             .ToListAsync(cancellationToken);
 
     public async Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken)

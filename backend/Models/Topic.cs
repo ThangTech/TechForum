@@ -26,6 +26,8 @@ public sealed class Topic
     public bool IsPinned { get; set; }
     public int ViewCount { get; set; }
     public int ShareCount { get; set; }
+    // The sum of the votes (+1 and -1) of the members. Kept in step with the table of votes in one transaction.
+    public int Score { get; set; }
     public int? AcceptedAnswerId { get; set; }
     public Answer? AcceptedAnswer { get; set; }
     public ICollection<TopicTag> TopicTags { get; set; } = [];

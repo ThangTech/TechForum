@@ -276,7 +276,8 @@ public sealed class AuthService(
             user.Bio,
             user.AvatarUrl,
             user.Email ?? string.Empty,
-            roles);
+            roles,
+            user.Reputation);
     }
 
     private static AuthFailureKind GetFailureKind(IEnumerable<IdentityError> errors)

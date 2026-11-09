@@ -17,6 +17,8 @@ public interface IAnswerRepository
         string? viewerId,
         CancellationToken cancellationToken);
 
+    Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken);
+
     Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken);
 
     Task RemoveHelpfulAsync(int answerId, string userId, CancellationToken cancellationToken);

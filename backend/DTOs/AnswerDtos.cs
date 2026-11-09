@@ -13,7 +13,10 @@ public sealed record AnswerDto(
     DateTimeOffset? UpdatedAtUtc,
     bool IsAccepted,
     int HelpfulCount = 0,
-    bool IsHelpful = false);
+    bool IsHelpful = false,
+    // The vote score of the answer and the vote of the member who asks (1, -1 or 0).
+    int Score = 0,
+    int MyVote = 0);
 
 public sealed record AnswerHelpfulDto(int HelpfulCount, bool IsHelpful);
 

@@ -37,6 +37,7 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
     public DbSet<UserSkill> UserSkills => Set<UserSkill>();
     public DbSet<BannedWord> BannedWords => Set<BannedWord>();
+    public DbSet<UserVote> UserVotes => Set<UserVote>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -310,6 +311,14 @@ public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> opti
         userSkill.HasIndex(item => item.TagId);
         userSkill.HasOne(item => item.User).WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
         userSkill.HasOne(item => item.Tag).WithMany().HasForeignKey(item => item.TagId).OnDelete(DeleteBehavior.Cascade);
+
+        var userVote = modelBuilder.Entity<UserVote>();
+        userVote.ToTable("UserVotes", table => table.HasCheckConstraint("CK_UserVotes_Value", "[Value] IN (-1, 1)"));
+        // One vote of a member for one post or answer: the same vote cannot be saved twice.
+        userVote.HasKey(item => new { item.UserId, item.TargetType, item.TargetId });
+        userVote.Property(item => item.UserId).HasMaxLength(450).IsRequired();
+        userVote.HasIndex(item => new { item.TargetType, item.TargetId });
+        userVote.HasOne(item => item.User).WithMany().HasForeignKey(item => item.UserId).OnDelete(DeleteBehavior.Cascade);
 
         var bannedWord = modelBuilder.Entity<BannedWord>();
         bannedWord.ToTable("BannedWords");

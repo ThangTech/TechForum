@@ -253,6 +253,9 @@ namespace TechForum.Api.Data.Migrations
                     b.Property<int?>("ParentAnswerId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
                     b.Property<int>("TopicId")
                         .HasColumnType("int");
 
@@ -352,6 +355,9 @@ namespace TechForum.Api.Data.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<int>("Reputation")
+                        .HasColumnType("int");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -833,6 +839,9 @@ namespace TechForum.Api.Data.Migrations
                     b.Property<DateTimeOffset?>("PublishedAtUtc")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
                     b.Property<int>("ShareCount")
                         .HasColumnType("int");
 
@@ -1002,6 +1011,37 @@ namespace TechForum.Api.Data.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("UserSkills", (string)null);
+                });
+
+            modelBuilder.Entity("TechForum.Api.Models.UserVote", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Value")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "TargetType", "TargetId");
+
+                    b.HasIndex("TargetType", "TargetId");
+
+                    b.ToTable("UserVotes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UserVotes_Value", "[Value] IN (-1, 1)");
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1329,6 +1369,17 @@ namespace TechForum.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Tag");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TechForum.Api.Models.UserVote", b =>
+                {
+                    b.HasOne("TechForum.Api.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

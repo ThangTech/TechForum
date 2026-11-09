@@ -215,6 +215,7 @@ public sealed partial class AnswerService(
             return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
         }
 
+        var previousAcceptedId = topic.AcceptedAnswerId;
         topic.AcceptedAnswerId = answer.Id;
         if (answer.AuthorId != authorId)
         {
@@ -226,6 +227,7 @@ public sealed partial class AnswerService(
                 cancellationToken);
         }
         await topicRepository.SaveChangesAsync(cancellationToken);
+        await MoveAcceptedBonusAsync(topicId, previousAcceptedId, answer, authorId, cancellationToken);
 
         var helpfulState = await GetHelpfulStateAsync(answer.Id, authorId, cancellationToken);
         return AcceptAnswerResult.Success(MapAnswer(answer, answer.Id, helpfulState: helpfulState));
@@ -277,12 +279,43 @@ public sealed partial class AnswerService(
         }
         answer.IsDeleted = true;
         answer.UpdatedAtUtc = timeProvider.GetUtcNow();
-        if (answer.Topic.AcceptedAnswerId == answer.Id)
+        var wasAccepted = answer.Topic.AcceptedAnswerId == answer.Id;
+        if (wasAccepted)
         {
             answer.Topic.AcceptedAnswerId = null;
         }
         await answerRepository.SaveChangesAsync(cancellationToken);
+        // The bonus of an accepted answer goes with it.
+        if (wasAccepted && answer.AuthorId != answer.Topic.AuthorId)
+        {
+            await answerRepository.AdjustReputationAsync(answer.AuthorId, -ReputationRules.AcceptedAnswer, cancellationToken);
+        }
         return true;
+    }
+
+    // The author of the answer that was chosen earns the bonus; the author of the answer that was chosen before loses it.
+    // Nobody earns anything from choosing their own answer.
+    private async Task MoveAcceptedBonusAsync(
+        int topicId,
+        int? previousAcceptedId,
+        Answer accepted,
+        string topicAuthorId,
+        CancellationToken cancellationToken)
+    {
+        if (previousAcceptedId == accepted.Id) return;
+
+        if (accepted.AuthorId != topicAuthorId)
+        {
+            await answerRepository.AdjustReputationAsync(accepted.AuthorId, ReputationRules.AcceptedAnswer, cancellationToken);
+        }
+        if (previousAcceptedId is { } previousId)
+        {
+            var previous = await answerRepository.GetVisibleByIdAsync(topicId, previousId, cancellationToken);
+            if (previous is not null && previous.AuthorId != topicAuthorId)
+            {
+                await answerRepository.AdjustReputationAsync(previous.AuthorId, -ReputationRules.AcceptedAnswer, cancellationToken);
+            }
+        }
     }
 
     private static int? AcceptedAnswerIdFor(Topic topic) =>
@@ -314,7 +347,9 @@ public sealed partial class AnswerService(
         answer.UpdatedAtUtc,
         answer.Id == acceptedAnswerId,
         helpfulState?.HelpfulCount ?? 0,
-        helpfulState?.IsHelpful ?? false);
+        helpfulState?.IsHelpful ?? false,
+        helpfulState?.Score ?? answer.Score,
+        helpfulState?.MyVote ?? 0);
 
     private static bool HasMeaningfulContent(string html)
     {

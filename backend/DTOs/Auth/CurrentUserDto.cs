@@ -6,4 +6,6 @@ public sealed record CurrentUserDto(
     string? Bio,
     string? AvatarUrl,
     string Email,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    // The reputation points of the member (see ReputationRules).
+    int Reputation = 0);
