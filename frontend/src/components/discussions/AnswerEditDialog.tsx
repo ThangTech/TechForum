@@ -9,7 +9,11 @@ import { useState } from 'react'
 import { updateAnswer, type Answer } from '../../api/answers'
 import { ApiError } from '../../api/client'
 import { useDiscardGuard } from '../feedback/useDiscardGuard'
+import { ProfanityNotice } from '../moderation/ProfanityNotice'
+import { useContentCheck } from '../../queries/moderation'
 import { toAnswerHtml, toAnswerText } from './answerContent'
+
+const answerLabels = { title: 'tiêu đề', summary: 'tóm tắt', bodyHtml: 'câu trả lời' }
 
 export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
   answer: Answer
@@ -20,6 +24,7 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isDirty = content !== toAnswerText(answer.bodyHtml)
+  const contentCheck = useContentCheck({ bodyHtml: toAnswerHtml(content) })
   const { requestClose, discardDialog } = useDiscardGuard(isDirty, onClose)
   const closeIfIdle = () => {
     if (!isSaving) requestClose()
@@ -46,6 +51,7 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
           value={content}
         />
         <Typography color="text.secondary" sx={{ mt: 1, textAlign: 'right', fontSize: '0.75rem' }}>{content.length.toLocaleString('vi-VN')}/20.000</Typography>
+        <ProfanityNotice labels={answerLabels} result={contentCheck.result} />
         {error && <Typography color="error" role="alert" sx={{ mt: 1.5 }} variant="body2">{error}</Typography>}
       </DialogContent>
       <DialogActions sx={{ p: 3, gap: 1.5 }}>

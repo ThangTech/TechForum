@@ -8,6 +8,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RichHtml } from '../components/common/RichHtml'
 import { useDebounce } from '../hooks/useDebounce'
+import { ProfanityNotice } from '../components/moderation/ProfanityNotice'
+import { useContentCheck } from '../queries/moderation'
 import { ApiError } from '../api/client'
 import type { Category } from '../api/categories'
 import type { Draft } from '../api/drafts'
@@ -153,6 +155,8 @@ const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, request
   const [lastFailedKey, setLastFailedKey] = useState<string | null>(null)
   const [hasSavedDraft, setHasSavedDraft] = useState(false)
   const debouncedSnapshot = useDebounce(snapshot, AUTO_SAVE_DELAY_MS)
+  // The server says which words it would replace by *** when the content is posted.
+  const contentCheck = useContentCheck({ title, summary, bodyHtml })
   // Nothing is saved while the member still has to choose about the draft that was found, after the topic was saved
   // (the draft is gone then and must not come back) or while the topic is being saved.
   const canAutoSave = pendingDraft === null && createdTopic === null && !isSubmitting
@@ -296,6 +300,13 @@ const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, request
     )
   }
 
+  // The preview shows the texts as readers will see them: with the banned words already replaced by ***. The server's
+  // answer is only used when it is about the texts on the screen now.
+  const cleaned = contentCheck.isCurrent ? contentCheck.result : undefined
+  const previewTitle = cleaned?.title ?? title
+  const previewSummary = cleaned?.summary ?? summary
+  const previewBodyHtml = cleaned?.bodyHtml ?? bodyHtml
+
   return (
     <main className="main-area" id="main-content">
       <div className="write-page">
@@ -344,6 +355,8 @@ const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, request
 
           <div className="write-layout">
             <div className="write-main">
+              <ProfanityNotice result={contentCheck.result} />
+
               <Tabs
                 aria-label="Chế độ soạn thảo"
                 onChange={(_, value: 'edit' | 'preview') => setIsPreviewOpen(value === 'preview')}
@@ -375,12 +388,12 @@ const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, request
               {isPreviewOpen && (
                 <div aria-labelledby="write-tab-preview" className="write-panel" id="write-preview-panel" role="tabpanel">
                   <p className="write-note">Đây là cách nội dung hiển thị cho người đọc. Nội dung chưa được lưu.</p>
-                  <h2 className="write-preview__title">{title.trim() || 'Chưa có tiêu đề'}</h2>
-                  {summary.trim() && <p className="write-preview__summary">{summary.trim()}</p>}
+                  <h2 className="write-preview__title">{previewTitle.trim() || 'Chưa có tiêu đề'}</h2>
+                  {previewSummary.trim() && <p className="write-preview__summary">{previewSummary.trim()}</p>}
                   {hasPreviewContent(bodyHtml) ? (
                     <RichHtml
                       className="fr-view reading-content write-preview"
-                      html={toDisplayMediaHtml(bodyHtml)}
+                      html={toDisplayMediaHtml(previewBodyHtml)}
                     />
                   ) : (
                     <p className="write-note">Chưa có nội dung để xem trước. Hãy quay lại tab Soạn thảo để viết.</p>

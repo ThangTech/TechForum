@@ -6,7 +6,12 @@ import Typography from '@mui/material/Typography'
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { createAnswer, type Answer } from '../../api/answers'
+import { ProfanityNotice } from '../moderation/ProfanityNotice'
+import { useContentCheck } from '../../queries/moderation'
 import { toAnswerHtml } from './answerContent'
+
+// An answer has only its content, so the warning calls it "câu trả lời".
+const answerLabels = { title: 'tiêu đề', summary: 'tóm tắt', bodyHtml: 'câu trả lời' }
 
 interface AnswerFormProps {
   parentAnswer?: Answer
@@ -20,6 +25,7 @@ export const AnswerForm = ({ parentAnswer, topicId, onCreated, onCancel }: Answe
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const contentCheck = useContentCheck({ bodyHtml: toAnswerHtml(content) })
   const fieldId = parentAnswer ? `reply-content-${parentAnswer.id}` : 'answer-content'
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -75,6 +81,7 @@ export const AnswerForm = ({ parentAnswer, topicId, onCreated, onCancel }: Answe
           <Button disabled={isSubmitting} loading={isSubmitting} type="submit" variant="contained">{parentAnswer ? 'Gửi phản hồi' : 'Gửi câu trả lời'}</Button>
         </Stack>
       </Stack>
+      <ProfanityNotice labels={answerLabels} result={contentCheck.result} />
       {error && <Typography color="error" role="alert" sx={{ mt: 1.5 }} variant="body2">{error}</Typography>}
     </Box>
   )

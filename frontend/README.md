@@ -131,6 +131,14 @@ Trang quản trị `/admin/banned-words` (mục **Từ cấm**) cho quản trị
 và xóa từ cấm (xóa có hộp xác nhận). Danh sách được API dùng để thay từ cấm bằng `***`
 trong bài viết và câu trả lời mới; thêm/xóa có hiệu lực ngay.
 
+Khi đang viết bài (`/write`), trả lời hoặc sửa câu trả lời, trang gửi nội dung tới
+`POST /api/moderation/check` sau khi ngừng gõ khoảng 1 giây (`useContentCheck`) và hiện cảnh báo
+vàng `ProfanityNotice` nếu có từ sẽ bị thay bằng `***` ("Phần tiêu đề và nội dung có từ ngữ không
+phù hợp…"). Tab **Xem trước** hiển thị tiêu đề, tóm tắt và nội dung đã lọc, đúng như người đọc sẽ thấy.
+Cảnh báo chỉ để nhắc, không chặn việc đăng (backend vẫn tự lọc); lỗi của lần kiểm tra bị bỏ qua. Trang
+không chứa danh sách từ cấm nào và không dùng thư viện npm lọc từ: mọi quy tắc nằm ở backend, nên
+người ngoài không đọc được danh sách trong mã frontend.
+
 Trang `/account` chia hai cột độc lập (Avatar + Hồ sơ | Kỹ năng + Đổi mật khẩu +
 Phiên đăng nhập) để thẻ ngắn không bị kéo giãn theo thẻ bên cạnh. Kết quả lưu
 (hồ sơ, avatar, kỹ năng) hiện bằng thông báo nổi `ToastProvider` (MUI Snackbar + Alert,
