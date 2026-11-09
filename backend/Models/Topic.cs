@@ -9,6 +9,8 @@ public sealed class Topic
     public required string Slug { get; set; }
     public required string Summary { get; set; }
     public required string BodyHtml { get; set; }
+    // Address of the first picture of the body (for example /media/images/abc.png), used as the cover in lists.
+    public string? CoverImageUrl { get; set; }
     public TopicType Type { get; set; }
     public TopicStatus Status { get; set; }
     public int CategoryId { get; set; }

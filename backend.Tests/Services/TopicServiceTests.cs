@@ -290,6 +290,86 @@ public sealed class TopicServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WithAPicture_UsesTheFirstPictureAsTheCover()
+    {
+        var mediaId = Guid.NewGuid();
+        var media = new MediaAsset
+        {
+            Id = mediaId,
+            UploaderId = "member-a",
+            RelativePath = $"images/{mediaId:N}.png",
+            PublicUrl = $"/media/images/{mediaId:N}.png",
+            ContentType = "image/png",
+            Length = 100,
+            CreatedAtUtc = DateTimeOffset.UtcNow
+        };
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+        };
+        var service = CreateService(repository, new FakeMediaAssetRepository { Items = [media] });
+        var request = new CreateTopicRequest(
+            "Bài viết có ảnh bìa",
+            "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
+            $"<p>Nội dung.</p><img src=\"{media.PublicUrl}\" alt=\"Ảnh\">",
+            "article",
+            2,
+            [],
+            [mediaId],
+            true);
+
+        var result = await service.CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(media.PublicUrl, repository.AddedTopic!.CoverImageUrl);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithoutAPicture_HasNoCover()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+        };
+        var request = new CreateTopicRequest(
+            "Bài viết không có ảnh",
+            "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
+            "<p>Chỉ có chữ.</p>",
+            "article",
+            2,
+            [],
+            [],
+            true);
+
+        var result = await CreateService(repository).CreateAsync("member-a", request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Null(repository.AddedTopic!.CoverImageUrl);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RemovingThePictureClearsTheCover()
+    {
+        var existing = CreateTopic();
+        existing.CoverImageUrl = "/media/images/0123456789abcdef0123456789abcdef.png";
+        var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category };
+        var request = new UpdateTopicRequest(
+            "Tiêu đề đã được cập nhật",
+            "Tóm tắt mới hợp lệ có nhiều hơn hai mươi ký tự.",
+            "<p>Nội dung không còn ảnh.</p>",
+            "article",
+            existing.CategoryId,
+            [],
+            [],
+            true);
+
+        var result = await CreateService(repository).UpdateAsync(existing.Id, "member-a", request, CancellationToken.None);
+
+        Assert.True(result!.Succeeded);
+        Assert.Null(existing.CoverImageUrl);
+    }
+
+    [Fact]
     public async Task CreateAsync_WithMediaFromDifferentOwner_ReturnsFieldError()
     {
         var mediaId = Guid.NewGuid();

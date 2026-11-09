@@ -24,7 +24,8 @@ public sealed record TopicSummaryDto(
     bool IsDiscussionLocked,
     int ViewCount,
     int ShareCount,
-    TopicDiscussionDto? Discussion = null);
+    TopicDiscussionDto? Discussion = null,
+    string? CoverImageUrl = null);
 
 public sealed record TopicDetailDto(
     int Id,

@@ -78,5 +78,6 @@ public sealed class PublicProfileService(IPublicProfileRepository profileReposit
         topic.IsPinned,
         topic.IsDiscussionLocked,
         topic.ViewCount,
-        topic.ShareCount);
+        topic.ShareCount,
+        CoverImageUrl: topic.CoverImageUrl);
 }

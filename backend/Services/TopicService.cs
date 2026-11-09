@@ -114,6 +114,7 @@ public sealed partial class TopicService(
             Slug = slug,
             Summary = values.Summary,
             BodyHtml = values.SanitizedBody,
+            CoverImageUrl = TopicCoverImage.Extract(values.SanitizedBody),
             Type = values.Type,
             Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft,
             CategoryId = values.Category.Id,
@@ -174,6 +175,7 @@ public sealed partial class TopicService(
         topic.Title = values.Title;
         topic.Summary = values.Summary;
         topic.BodyHtml = values.SanitizedBody;
+        topic.CoverImageUrl = TopicCoverImage.Extract(values.SanitizedBody);
         topic.Type = values.Type;
         if (values.Type == TopicType.Article)
         {
@@ -488,7 +490,8 @@ public sealed partial class TopicService(
         topic.IsPinned,
         topic.IsDiscussionLocked,
         topic.ViewCount,
-        topic.ShareCount);
+        topic.ShareCount,
+        CoverImageUrl: topic.CoverImageUrl);
 
     private static TopicDetailDto MapDetail(Topic topic) => new(
         topic.Id,
