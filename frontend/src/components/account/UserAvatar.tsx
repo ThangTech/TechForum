@@ -1,5 +1,5 @@
 import Avatar from '@mui/material/Avatar'
-import { apiBaseUrl } from '../../api/client'
+import { toMediaUrl } from '../../api/media'
 
 interface UserAvatarProps {
   avatarUrl: string | null
@@ -20,7 +20,7 @@ export const UserAvatar = ({ avatarUrl, displayName, size = 'sm' }: UserAvatarPr
   return avatarUrl ? (
     <Avatar
       alt={`Avatar của ${displayName}`}
-      src={`${apiBaseUrl}${avatarUrl}`}
+      src={toMediaUrl(avatarUrl)}
       sx={{ width: pixels, height: pixels, flexShrink: 0, border: 1, borderColor: 'divider' }}
     />
   ) : (

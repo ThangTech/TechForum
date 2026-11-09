@@ -31,6 +31,23 @@ interface FroalaConfigOptions {
   theme?: 'light' | 'dark'
 }
 
+// The reason that the API gave for refusing an upload (the "detail" of its answer), so the member sees for example
+// "Chưa cấu hình lưu trữ Cloudinary" and not only a general sentence. Froala gives the answer as text.
+export const getUploadErrorMessage = (response: unknown, fallback: string): string => {
+  if (typeof response !== 'string') return fallback
+  try {
+    const problem: unknown = JSON.parse(response)
+    if (typeof problem === 'object' && problem !== null) {
+      const { detail, title } = problem as { detail?: unknown; title?: unknown }
+      if (typeof detail === 'string' && detail.trim() !== '') return detail
+      if (typeof title === 'string' && title.trim() !== '') return title
+    }
+  } catch {
+    // The answer is not JSON (for example a page of a proxy): the general sentence is used.
+  }
+  return fallback
+}
+
 export const createFroalaConfig = ({
   getAccessToken,
   onMediaInserted,
@@ -104,8 +121,10 @@ export const createFroalaConfig = ({
         }
       },
       'video.inserted': onMediaInserted,
-      'image.error': () => onUploadError('Không thể tải ảnh lên. Hãy kiểm tra định dạng và dung lượng tệp.'),
-      'video.error': () => onUploadError('Không thể tải video lên. Hãy kiểm tra định dạng và dung lượng tệp.'),
+      'image.error': (_error: unknown, response: unknown) => onUploadError(getUploadErrorMessage(
+        response, 'Không thể tải ảnh lên. Hãy kiểm tra định dạng và dung lượng tệp.')),
+      'video.error': (_error: unknown, response: unknown) => onUploadError(getUploadErrorMessage(
+        response, 'Không thể tải video lên. Hãy kiểm tra định dạng và dung lượng tệp.')),
     },
   }
 }

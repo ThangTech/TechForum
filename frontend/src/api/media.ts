@@ -3,8 +3,15 @@ import { ApiError, apiBaseUrl } from './client'
 export interface UploadedMedia {
   id: string
   link: string
+  // The address that is stored in the content: https://res.cloudinary.com/... for a file on Cloudinary, or
+  // /media/... for a file that was stored on the server before.
   path: string
 }
+
+// A file on Cloudinary has a full address. A file of the old storage has a path that starts with /media/.
+const isFullAddress = (path: string): boolean => path.startsWith('https://')
+
+const isMediaAddress = (path: string): boolean => path.startsWith('/media/') || isFullAddress(path)
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -24,7 +31,7 @@ export const parseUploadedMedia = (response: unknown): UploadedMedia => {
     typeof data.id !== 'string' ||
     typeof data.link !== 'string' ||
     typeof data.path !== 'string' ||
-    !data.path.startsWith('/media/')
+    !isMediaAddress(data.path)
   ) {
     throw new ApiError(500, 'API upload trả về dữ liệu không đúng định dạng.')
   }
@@ -32,8 +39,9 @@ export const parseUploadedMedia = (response: unknown): UploadedMedia => {
   return { id: data.id, link: data.link, path: data.path }
 }
 
-// A picture or file of the media storage is served by the API, so its address starts with the API address.
-export const toMediaUrl = (path: string): string => `${apiBaseUrl}${path}`
+// A file on Cloudinary is shown from its own address. An old file of the media storage is served by the API, so its
+// path gets the API address in front.
+export const toMediaUrl = (path: string): string => (isFullAddress(path) ? path : `${apiBaseUrl}${path}`)
 
 export const toStoredMediaHtml = (html: string, mediaItems: UploadedMedia[]): string =>
   mediaItems.reduce(
@@ -68,6 +76,6 @@ export const toEditableMedia = (
   media: { id: string; path: string }[],
 ): UploadedMedia[] => media.map((item) => ({
   id: item.id,
-  link: `${apiBaseUrl}${item.path}`,
+  link: toMediaUrl(item.path),
   path: item.path,
 }))

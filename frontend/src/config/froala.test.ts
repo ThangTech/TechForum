@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createFroalaConfig, fixVietnameseTranslation } from './froala'
+import { createFroalaConfig, fixVietnameseTranslation, getUploadErrorMessage } from './froala'
 
 describe('createFroalaConfig', () => {
   it('tracks a video from upload start through editor insertion', () => {
@@ -82,5 +82,27 @@ describe('fixVietnameseTranslation', () => {
   it('does nothing when the Vietnamese file is not loaded', () => {
     expect(() => fixVietnameseTranslation({})).not.toThrow()
     expect(() => fixVietnameseTranslation({ LANGUAGE: {} })).not.toThrow()
+  })
+})
+
+describe('getUploadErrorMessage', () => {
+  const fallback = 'Không thể tải ảnh lên.'
+
+  it('gives the reason of the API when the answer has one', () => {
+    const response = JSON.stringify({ title: 'Chưa thể lưu tệp', detail: 'Chưa cấu hình lưu trữ Cloudinary nên chưa thể tải tệp lên.' })
+
+    expect(getUploadErrorMessage(response, fallback)).toBe('Chưa cấu hình lưu trữ Cloudinary nên chưa thể tải tệp lên.')
+  })
+
+  it('uses the title when there is no detail', () => {
+    expect(getUploadErrorMessage(JSON.stringify({ title: 'Tệp tải lên không hợp lệ' }), fallback)).toBe('Tệp tải lên không hợp lệ')
+  })
+
+  it('uses the general sentence when the answer is empty, not JSON or has no reason', () => {
+    expect(getUploadErrorMessage(undefined, fallback)).toBe(fallback)
+    expect(getUploadErrorMessage('<html>Bad gateway</html>', fallback)).toBe(fallback)
+    expect(getUploadErrorMessage('{}', fallback)).toBe(fallback)
+    expect(getUploadErrorMessage('null', fallback)).toBe(fallback)
+    expect(getUploadErrorMessage(JSON.stringify({ detail: '   ' }), fallback)).toBe(fallback)
   })
 })
