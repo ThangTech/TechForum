@@ -35,6 +35,9 @@ const readPositiveInteger = (value: string | null) => {
   return Number.isInteger(number) && number > 0 && number <= 2147483647 ? number : undefined
 }
 
+// The order of the answers is in the address (?answerSort=). Anything unknown gives the default order.
+const readSort = (value: string | null): AnswerSort => (value === 'helpful' || value === 'score' ? value : 'oldest')
+
 export const DiscussionSection = ({
   isLocked,
   topicAuthorId,
@@ -45,7 +48,7 @@ export const DiscussionSection = ({
   const location = useLocation()
   const navigate = useNavigate()
   const page = readPositiveInteger(new URLSearchParams(location.search).get('answerPage')) ?? 1
-  const sort: AnswerSort = new URLSearchParams(location.search).get('answerSort') === 'helpful' ? 'helpful' : 'oldest'
+  const sort = readSort(new URLSearchParams(location.search).get('answerSort'))
   const answerHash = /^#answer-(\d+)$/.exec(location.hash)
   const aroundAnswerId = readPositiveInteger(answerHash?.[1] ?? null)
   const queryClient = useQueryClient()
@@ -171,7 +174,7 @@ export const DiscussionSection = ({
         <TextField
           fullWidth={false}
           label="Sắp xếp phản hồi"
-          onChange={(event) => changeSort(event.target.value === 'helpful' ? 'helpful' : 'oldest')}
+          onChange={(event) => changeSort(readSort(event.target.value))}
           select
           size="small"
           sx={{ minWidth: 190 }}
@@ -179,6 +182,7 @@ export const DiscussionSection = ({
         >
           <MenuItem value="oldest">Cũ nhất trước</MenuItem>
           <MenuItem value="helpful">Hữu ích nhất</MenuItem>
+          <MenuItem value="score">Điểm cao nhất</MenuItem>
         </TextField>
         {isLocked && (
           <Chip label="Đã khóa thảo luận" size="small" sx={{ bgcolor: 'var(--color-loading)', color: 'text.secondary', fontWeight: 700 }} />
@@ -236,6 +240,14 @@ export const DiscussionSection = ({
               setSuccessMessage(helpful.isHelpful ? 'Đã đánh giá câu trả lời hữu ích.' : 'Đã bỏ đánh giá hữu ích.')
               // With the "most helpful" order, the new count can move the answer to another place.
               if (sort === 'helpful') refreshAnswers()
+            }}
+            onVoteChanged={(answerId, vote) => {
+              patchAnswers((current) => ({
+                ...current,
+                items: current.items.map((answer) => answer.id === answerId ? { ...answer, ...vote } : answer),
+              }))
+              // With the "highest score" order, the new score can move the answer to another place.
+              if (sort === 'score') refreshAnswers()
             }}
             onPageChange={changePage}
             onReplyCreated={handleCreated}

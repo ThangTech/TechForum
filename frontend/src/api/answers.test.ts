@@ -19,7 +19,7 @@ describe('answer helpful votes', () => {
         id: 42, topicId: 3, parentAnswerId: null, replyingTo: null,
         bodyHtml: '<p>Giải thích</p>', author: { id: 'member', displayName: 'An' },
         createdAtUtc: '2026-10-21T00:00:00Z', updatedAtUtc: null,
-        isAccepted: false, helpfulCount: 8, isHelpful: true,
+        isAccepted: false, helpfulCount: 8, isHelpful: true, score: 3, myVote: 0,
       }],
       page: 2, pageSize: 20, totalItems: 25, totalPages: 2,
     }))

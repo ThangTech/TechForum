@@ -16,6 +16,7 @@ import { ViewIcon } from '../components/common/StatIcons'
 import { appRoutes } from '../appRoutes'
 import { DiscussionSection } from '../components/discussions/DiscussionSection'
 import { UsefulStarButton } from '../components/interactions/UsefulStarButton'
+import { TopicVoteButtons } from '../components/interactions/TopicVoteButtons'
 import { BookmarkButton } from '../components/interactions/BookmarkButton'
 import { ReportAction } from '../components/reports/ReportAction'
 import { TopicEngagementBar } from '../components/interactions/TopicEngagementBar'
@@ -175,6 +176,7 @@ export const TopicDetailPage = () => {
                 />
                 <Box component="footer" sx={{ px: { xs: 3, sm: 4 }, py: 2.5, borderTop: 1, borderColor: 'divider', bgcolor: 'var(--color-subtle)' }}>
                   <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1.5 }}>
+                    <TopicVoteButtons authorId={topic.author.id} topicId={topic.id} />
                     <UsefulStarButton topicId={topic.id} />
                     <BookmarkButton topicId={topic.id} />
                     <ReportAction targetId={topic.id} targetType="topic" />

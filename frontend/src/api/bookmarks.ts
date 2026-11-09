@@ -56,12 +56,16 @@ export const addBookmark = async (topicId: number) =>
 export const removeBookmark = async (topicId: number) =>
   parseStatus(await apiRequest(`/api/topics/${topicId}/bookmark`, { method: 'DELETE' }))
 
-export const getSavedTopics = async (page: number, pageSize: number, signal?: AbortSignal): Promise<SavedTopicPage> => {
-  const data: unknown = await apiRequest(`/api/bookmarks?page=${page}&pageSize=${pageSize}`, { signal })
+// A page of the posts that belong to the member (the saved posts and the starred posts have the same card).
+export const getPersonalTopicPage = async (path: string, errorText: string, signal?: AbortSignal): Promise<SavedTopicPage> => {
+  const data: unknown = await apiRequest(path, { signal })
   if (!isRecord(data) || !Array.isArray(data.items) || !data.items.every(isSavedTopic) ||
       typeof data.page !== 'number' || typeof data.pageSize !== 'number' ||
       typeof data.totalItems !== 'number' || typeof data.totalPages !== 'number') {
-    throw new ApiError(500, 'Danh sách bài đã lưu từ API không đúng định dạng.')
+    throw new ApiError(500, errorText)
   }
   return data as unknown as SavedTopicPage
 }
+
+export const getSavedTopics = (page: number, pageSize: number, signal?: AbortSignal): Promise<SavedTopicPage> =>
+  getPersonalTopicPage(`/api/bookmarks?page=${page}&pageSize=${pageSize}`, 'Danh sách bài đã lưu từ API không đúng định dạng.', signal)

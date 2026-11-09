@@ -16,6 +16,8 @@ export interface PublicProfile {
   skills: ProfileSkill[]
   badges: ProfileBadge[]
   recentTopics: TopicSummary[]
+  // The reputation points of the member (votes for their posts and answers, chosen answers).
+  reputation: number
 }
 
 // isChosen: the member picked this skill; otherwise it was found from the tags of their public content.
@@ -50,6 +52,7 @@ export const getPublicProfile = async (
     typeof data.followerCount !== 'number' ||
     typeof data.followingCount !== 'number' ||
     typeof data.isFollowedByViewer !== 'boolean' ||
+    typeof data.reputation !== 'number' ||
     !Array.isArray(data.skills) || !data.skills.every((skill) => isRecord(skill) &&
       typeof skill.tagId === 'number' && typeof skill.name === 'string' &&
       typeof skill.slug === 'string' && typeof skill.topicCount === 'number' && typeof skill.isChosen === 'boolean') ||

@@ -9,11 +9,14 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { RichHtml } from '../common/RichHtml'
 import { deleteAnswer, setAnswerHelpful, type Answer, type AnswerHelpfulState, type AnswerPage } from '../../api/answers'
+import { setAnswerVote, type VoteState } from '../../api/votes'
 import { ApiError } from '../../api/client'
 import { useAuth } from '../../auth/authState'
 import { appRoutes } from '../../appRoutes'
 import { CheckCircleIcon, PencilIcon, ReplyIcon, ThumbUpIcon, TrashIcon } from '../common/ActionIcons'
 import { IconActionButton } from '../common/IconActionButton'
+import { VoteControl } from '../interactions/VoteControl'
+import { getNextVote, type VoteDirection } from '../interactions/voteLogic'
 import { ReportAction } from '../reports/ReportAction'
 import { ConfirmDialog } from '../feedback/ConfirmDialog'
 import { AnswerEditDialog } from './AnswerEditDialog'
@@ -28,6 +31,7 @@ interface AnswerListProps {
   onDeleted: (answerId: number) => void
   onLoginRequired: () => void
   onHelpfulChanged: (answerId: number, helpful: AnswerHelpfulState) => void
+  onVoteChanged: (answerId: number, vote: VoteState) => void
   onPageChange: (page: number) => void
   onReplyCreated: (answer: Answer) => void
   onUpdated: (answer: Answer) => void
@@ -65,6 +69,7 @@ export const AnswerList = ({
   onDeleted,
   onLoginRequired,
   onHelpfulChanged,
+  onVoteChanged,
   onPageChange,
   onReplyCreated,
   onUpdated,
@@ -76,6 +81,23 @@ export const AnswerList = ({
   const [actionError, setActionError] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<Answer | null>(null)
   const [votingAnswerId, setVotingAnswerId] = useState<number | null>(null)
+  const [scoringAnswerId, setScoringAnswerId] = useState<number | null>(null)
+
+  // The vote ▲ ▼ for the answer (it counts for the score and the reputation of its author).
+  const voteForAnswer = async (answer: Answer, direction: VoteDirection) => {
+    if (!user) { onLoginRequired(); return }
+    if (scoringAnswerId !== null || user.id === answer.author.id) return
+    setScoringAnswerId(answer.id)
+    setActionError(null)
+    try {
+      onVoteChanged(answer.id, await setAnswerVote(answer.topicId, answer.id, getNextVote(answer.myVote, direction)))
+    } catch (requestError) {
+      if (requestError instanceof ApiError && requestError.status === 401) onLoginRequired()
+      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể bình chọn lúc này.')
+    } finally {
+      setScoringAnswerId(null)
+    }
+  }
 
   const toggleHelpful = async (answer: Answer) => {
     if (!user) { onLoginRequired(); return }
@@ -156,6 +178,14 @@ export const AnswerList = ({
               sx={answerBodySx}
             />
             <Stack direction="row" sx={{ mt: 2, pt: 2, flexWrap: 'wrap', alignItems: 'center', gap: 1.5, borderTop: 1, borderColor: 'divider' }}>
+              <VoteControl
+                disabledReason={user?.id === answer.author.id ? 'Bạn không thể bình chọn câu trả lời của chính mình' : undefined}
+                isBusy={scoringAnswerId === answer.id}
+                myVote={answer.myVote}
+                onVote={(direction) => void voteForAnswer(answer, direction)}
+                score={answer.score}
+                subject="câu trả lời"
+              />
               <IconActionButton
                 count={answer.helpfulCount}
                 disabled={votingAnswerId !== null || user?.id === answer.author.id}

@@ -10,6 +10,7 @@ import {
   MyTopicsIcon,
   QuestionIcon,
   SavedIcon,
+  StarNavIcon,
 } from '../common/NavIcons'
 
 interface ExploreLink {
@@ -29,6 +30,7 @@ const exploreLinks: ExploreLink[] = [
 
 const memberLinks: ExploreLink[] = [
   { to: appRoutes.saved, label: 'Đã lưu', icon: <SavedIcon /> },
+  { to: appRoutes.starred, label: 'Đã thả sao', icon: <StarNavIcon /> },
   { to: appRoutes.activity, label: 'Hoạt động của tôi', icon: <ActivityIcon /> },
   { to: appRoutes.myTopics, label: 'Nội dung của tôi', icon: <MyTopicsIcon /> },
 ]

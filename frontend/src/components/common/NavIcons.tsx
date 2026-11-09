@@ -70,3 +70,7 @@ export const ClipboardIcon = () => (
 export const ShieldIcon = () => (
   <svg {...iconProps}><path d="M12 3 5 6v5c0 4.5 3 8.2 7 10 4-1.8 7-5.5 7-10V6z" /><path d="m9 12 2 2 4-4" /></svg>
 )
+
+export const StarNavIcon = () => (
+  <svg {...iconProps}><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" /></svg>
+)

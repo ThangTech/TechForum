@@ -13,9 +13,12 @@ export interface Answer {
   isAccepted: boolean
   helpfulCount: number
   isHelpful: boolean
+  // The vote score of the answer and the vote of the member who reads it (1, -1 or 0).
+  score: number
+  myVote: number
 }
 
-export type AnswerSort = 'oldest' | 'helpful'
+export type AnswerSort = 'oldest' | 'helpful' | 'score'
 
 export interface AnswerHelpfulState {
   helpfulCount: number
@@ -48,7 +51,9 @@ const isAnswer = (value: unknown): value is Answer =>
   (value.updatedAtUtc === null || typeof value.updatedAtUtc === 'string') &&
   typeof value.isAccepted === 'boolean' &&
   typeof value.helpfulCount === 'number' &&
-  typeof value.isHelpful === 'boolean'
+  typeof value.isHelpful === 'boolean' &&
+  typeof value.score === 'number' &&
+  typeof value.myVote === 'number'
 
 const parseAnswer = (data: unknown): Answer => {
   if (!isAnswer(data)) {

@@ -12,6 +12,7 @@ import { TopicDetailPage } from './pages/TopicDetailPage'
 import { PublicProfilePage } from './pages/PublicProfilePage'
 import { MyTopicsPage } from './pages/MyTopicsPage'
 import { SavedTopicsPage } from './pages/SavedTopicsPage'
+import { StarredTopicsPage } from './pages/StarredTopicsPage'
 import { appRoutes } from './appRoutes'
 import { LegacyRouteRedirect } from './components/LegacyRouteRedirect'
 import { AdminReportsPage } from './pages/AdminReportsPage'
@@ -95,6 +96,10 @@ const App = () => {
           <Route
             path="saved"
             element={<ProtectedRoute><SavedTopicsPage /></ProtectedRoute>}
+          />
+          <Route
+            path="starred"
+            element={<ProtectedRoute><StarredTopicsPage /></ProtectedRoute>}
           />
           <Route
             path="account"
