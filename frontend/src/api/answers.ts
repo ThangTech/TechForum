@@ -16,6 +16,8 @@ export interface Answer {
   // The vote score of the answer and the vote of the member who reads it (1, -1 or 0).
   score: number
   myVote: number
+  // True while the answer is new: the score is hidden (0) for the first hours.
+  scoreHidden: boolean
 }
 
 export type AnswerSort = 'oldest' | 'helpful' | 'score'
@@ -53,7 +55,8 @@ const isAnswer = (value: unknown): value is Answer =>
   typeof value.helpfulCount === 'number' &&
   typeof value.isHelpful === 'boolean' &&
   typeof value.score === 'number' &&
-  typeof value.myVote === 'number'
+  typeof value.myVote === 'number' &&
+  typeof value.scoreHidden === 'boolean'
 
 const parseAnswer = (data: unknown): Answer => {
   if (!isAnswer(data)) {

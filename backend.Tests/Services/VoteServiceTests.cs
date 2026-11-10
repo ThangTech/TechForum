@@ -165,6 +165,82 @@ public sealed class VoteServiceTests
     }
 
     [Theory]
+    [InlineData(0, true)]
+    [InlineData(30, true)]
+    [InlineData(119, true)]
+    [InlineData(120, false)]
+    [InlineData(121, false)]
+    [InlineData(60 * 24, false)]
+    public void ReputationRules_IsScoreHidden_OnlyForTheFirstTwoHours(int minutesAgo, bool hidden)
+    {
+        Assert.Equal(hidden, ReputationRules.IsScoreHidden(Now.AddMinutes(-minutesAgo), Now));
+    }
+
+    [Theory]
+    [InlineData(9, true, 0)]
+    [InlineData(-9, true, 0)]
+    [InlineData(9, false, 9)]
+    [InlineData(-9, false, 0)]
+    public void ReputationRules_ShownScore_IsZeroWhileHiddenAndNeverBelowZero(int score, bool hidden, int expected)
+    {
+        Assert.Equal(expected, ReputationRules.ShownScore(score, hidden));
+    }
+
+    [Fact]
+    public async Task GetTopicVoteAsync_ANewPostHidesItsScoreButNotTheVoteOfTheViewer()
+    {
+        topic.PublishedAtUtc = Now.AddMinutes(-30);
+        topic.Score = 8;
+        votes.MyVote = 1;
+
+        var vote = await CreateService().GetTopicVoteAsync(1, "voter", default);
+
+        Assert.True(vote!.ScoreHidden);
+        Assert.Equal(0, vote.Score);
+        Assert.Equal(1, vote.MyVote);
+    }
+
+    [Fact]
+    public async Task GetTopicVoteAsync_APostOlderThanTwoHoursShowsItsScore()
+    {
+        topic.PublishedAtUtc = Now.AddHours(-3);
+        topic.Score = 8;
+
+        var vote = await CreateService().GetTopicVoteAsync(1, "voter", default);
+
+        Assert.False(vote!.ScoreHidden);
+        Assert.Equal(8, vote.Score);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_OnANewPost_AnswersWithAHiddenScore()
+    {
+        topic.PublishedAtUtc = Now.AddMinutes(-10);
+        votes.ScoreAfter = 5;
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+
+        Assert.Equal(new VoteDto(0, 1, true), result.Vote);
+    }
+
+    [Fact]
+    public async Task SetAnswerVoteAsync_HidesTheScoreOfANewAnswerOnly()
+    {
+        votes.ScoreAfter = 4;
+        var fresh = CreateAnswer(10, "answerer");
+        fresh.CreatedAtUtc = Now.AddMinutes(-20);
+        var old = CreateAnswer(11, "answerer");
+        old.CreatedAtUtc = Now.AddHours(-5);
+        var service = CreateService(fresh, old);
+
+        var freshResult = await service.SetAnswerVoteAsync(1, 10, "voter", 1, default);
+        var oldResult = await service.SetAnswerVoteAsync(1, 11, "voter", 1, default);
+
+        Assert.Equal(new VoteDto(0, 1, true), freshResult.Vote);
+        Assert.Equal(new VoteDto(4, 1, false), oldResult.Vote);
+    }
+
+    [Theory]
     [InlineData(-1, -1)]
     [InlineData(1, 0)]
     [InlineData(0, 0)]

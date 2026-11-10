@@ -23,7 +23,8 @@ public sealed class VoteService(
         var myVote = string.IsNullOrWhiteSpace(viewerId)
             ? 0
             : await voteRepository.GetMyVoteAsync(viewerId, VoteTargetType.Topic, topicId, cancellationToken);
-        return new VoteDto(ReputationRules.ForDisplay(topic.Score), myVote);
+        var isHidden = IsHidden(topic.PublishedAtUtc);
+        return new VoteDto(ReputationRules.ShownScore(topic.Score, isHidden), myVote, isHidden);
     }
 
     public async Task<VoteResult> SetTopicVoteAsync(int topicId, string userId, int value, CancellationToken cancellationToken)
@@ -37,7 +38,7 @@ public sealed class VoteService(
         var tooNew = await CheckAccountAgeAsync(userId, value, cancellationToken);
         if (tooNew is not null) return tooNew;
 
-        return await ApplyAsync(userId, VoteTargetType.Topic, topicId, topic.AuthorId, value, cancellationToken);
+        return await ApplyAsync(userId, VoteTargetType.Topic, topicId, topic.AuthorId, value, topic.PublishedAtUtc, cancellationToken);
     }
 
     public async Task<VoteResult> SetAnswerVoteAsync(
@@ -59,7 +60,7 @@ public sealed class VoteService(
         var tooNew = await CheckAccountAgeAsync(userId, value, cancellationToken);
         if (tooNew is not null) return tooNew;
 
-        return await ApplyAsync(userId, VoteTargetType.Answer, answerId, answer.AuthorId, value, cancellationToken);
+        return await ApplyAsync(userId, VoteTargetType.Answer, answerId, answer.AuthorId, value, answer.CreatedAtUtc, cancellationToken);
     }
 
     // The checks that do not need the database: the value, and how fast the member votes. A request that is refused for
@@ -110,11 +111,17 @@ public sealed class VoteService(
         int targetId,
         string authorId,
         int value,
+        DateTimeOffset? postedAtUtc,
         CancellationToken cancellationToken)
     {
         var outcome = await voteRepository.ApplyAsync(
             new VoteCommand(userId, targetType, targetId, authorId, value, timeProvider.GetUtcNow()),
             cancellationToken);
-        return VoteResult.Success(new VoteDto(ReputationRules.ForDisplay(outcome.Score), outcome.NewValue));
+        var isHidden = IsHidden(postedAtUtc);
+        return VoteResult.Success(new VoteDto(ReputationRules.ShownScore(outcome.Score, isHidden), outcome.NewValue, isHidden));
     }
+
+    // The score of a new post or answer is hidden for the first hours.
+    private bool IsHidden(DateTimeOffset? postedAtUtc) =>
+        postedAtUtc is { } posted && ReputationRules.IsScoreHidden(posted, timeProvider.GetUtcNow());
 }

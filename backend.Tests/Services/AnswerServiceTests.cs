@@ -50,6 +50,26 @@ public sealed class AnswerServiceTests
         Assert.Equal(41, Assert.Single(result.Items).Id);
     }
 
+    [Theory]
+    // minutes since the answer was written, real score, shown score, hidden
+    [InlineData(20, 7, 0, true)]
+    [InlineData(300, 7, 7, false)]
+    [InlineData(300, -3, 0, false)]
+    public async Task GetPublicPageAsync_HidesTheScoreOfANewAnswer(int minutesAgo, int score, int shown, bool hidden)
+    {
+        var answer = CreateAnswer(10, "member-a");
+        answer.CreatedAtUtc = DateTimeOffset.UtcNow.AddMinutes(-minutesAgo);
+        answer.Score = score;
+        var repository = new FakeAnswerRepository(answer) { PageResult = new AnswerPage([answer], 1, 1) };
+        var service = new AnswerService(repository, new FakeTopicRepository(CreateTopic()), new FakeNotificationService(),
+            new PlainTextSanitizer(), TimeProvider.System);
+
+        var item = Assert.Single((await service.GetPublicPageAsync(1, new AnswerQuery(), CancellationToken.None))!.Items);
+
+        Assert.Equal(shown, item.Score);
+        Assert.Equal(hidden, item.ScoreHidden);
+    }
+
     [Fact]
     public async Task GetPublicPageAsync_WhenLinkedAnswerUnavailable_ReturnsNotFound()
     {
@@ -472,7 +492,9 @@ public sealed class AnswerServiceTests
         public Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(IReadOnlyCollection<int> answerIds, string? viewerId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<AnswerHelpfulState>>(answerIds.Select(answerId => new AnswerHelpfulState(
                 answerId, Votes.Count(vote => vote.AnswerId == answerId),
-                viewerId != null && Votes.Contains((answerId, viewerId)))).ToList());
+                viewerId != null && Votes.Contains((answerId, viewerId)),
+                // Like the real repository: the vote score of the answer.
+                items.TryGetValue(answerId, out var answer) ? answer.Score : 0)).ToList());
         public Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken)
         {
             HelpfulMutations++;

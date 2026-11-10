@@ -7,6 +7,8 @@ interface VoteControlProps {
   // What is voted for, for the labels read by screen readers ("bài viết", "câu trả lời").
   subject: string
   score: number
+  // True for a new post or answer: the number is replaced by a dot, so people judge it on its own.
+  scoreHidden?: boolean
   // The vote of the signed-in member: 1, -1 or 0.
   myVote: number
   onVote: (direction: VoteDirection) => void
@@ -24,7 +26,7 @@ const Arrow = ({ direction }: { direction: VoteDirection }) => (
 // ▲ score ▼: the vote of a member for a post or an answer. It is separate from the star "hữu ích" (a thank you),
 // the votes decide the score and the reputation of the author. A pressed arrow is coloured; pressing it again takes the
 // vote back.
-export const VoteControl = ({ subject, score, myVote, onVote, isBusy = false, disabledReason }: VoteControlProps) => {
+export const VoteControl = ({ subject, score, scoreHidden = false, myVote, onVote, isBusy = false, disabledReason }: VoteControlProps) => {
   const isDisabled = isBusy || Boolean(disabledReason)
 
   const arrow = (direction: VoteDirection) => {
@@ -75,9 +77,9 @@ export const VoteControl = ({ subject, score, myVote, onVote, isBusy = false, di
         aria-live="polite"
         component="span"
         sx={{ minWidth: 34, textAlign: 'center', fontSize: '0.875rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: myVote === 1 ? 'success.main' : myVote === -1 ? 'error.main' : 'text.primary' }}
-        title={`Điểm: ${score}`}
+        title={scoreHidden ? 'Điểm được ẩn trong 2 giờ đầu sau khi đăng để mọi người đánh giá khách quan' : `Điểm: ${score}`}
       >
-        {formatScore(score)}
+        {scoreHidden ? '•' : formatScore(score)}
       </Box>
       {arrow(-1)}
     </Box>

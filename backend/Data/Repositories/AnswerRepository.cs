@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using TechForum.Api.Enums;
 using TechForum.Api.Models;
+using TechForum.Api.Services;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepository
+public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider timeProvider) : IAnswerRepository
 {
     public async Task<AnswerPage?> GetPublicPageAsync(
         int topicId,
@@ -16,6 +17,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         CancellationToken cancellationToken)
     {
         var answers = PublicAnswers(topicId);
+        // An answer that is new has its score hidden, so in the order by score it counts as 0 (the order must not tell it).
+        var hiddenSince = timeProvider.GetUtcNow().AddHours(-ReputationRules.ScoreHiddenHours);
 
         // The answer that the author of a question chose is shown first in every order. 0 means there is none (an
         // answer id is never 0), so the comparisons below simply never match.
@@ -27,7 +30,7 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         {
             var target = await answers
                 .Where(answer => answer.Id == aroundAnswerId.Value)
-                .Select(answer => new { answer.Id, answer.CreatedAtUtc, HelpfulCount = answer.HelpfulVotes.Count, answer.Score })
+                .Select(answer => new { answer.Id, answer.CreatedAtUtc, HelpfulCount = answer.HelpfulVotes.Count, Score = answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0 })
                 .SingleOrDefaultAsync(cancellationToken);
             if (target is null)
             {
@@ -38,8 +41,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
             // The pinned answer is before all the others; if it is the one that is looked for, it is the first.
             var precedingCount = target.Id == pinnedId ? 0 : (hasPinned ? 1 : 0) + (sort == "score"
                 ? await unpinned.CountAsync(answer =>
-                    answer.Score > target.Score ||
-                    (answer.Score == target.Score &&
+                    (answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0) > target.Score ||
+                    ((answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0) == target.Score &&
                         (answer.CreatedAtUtc < target.CreatedAtUtc ||
                         (answer.CreatedAtUtc == target.CreatedAtUtc && answer.Id < target.Id))),
                     cancellationToken)
@@ -61,7 +64,7 @@ public sealed class AnswerRepository(TechForumDbContext dbContext) : IAnswerRepo
         var pinnedFirst = answers.OrderByDescending(answer => answer.Id == pinnedId);
         var orderedAnswers = sort switch
         {
-            "score" => pinnedFirst.ThenByDescending(answer => answer.Score)
+            "score" => pinnedFirst.ThenByDescending(answer => answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0)
                 .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id),
             "helpful" => pinnedFirst.ThenByDescending(answer => answer.HelpfulVotes.Count)
                 .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id),

@@ -43,6 +43,41 @@ public sealed class TopicServiceTests
         Assert.Equal(2, item.Discussion?.StarCount);
     }
 
+    [Theory]
+    // minutes since it was published, real score, shown score, hidden
+    [InlineData(30, 9, 0, true)]
+    [InlineData(119, 9, 0, true)]
+    [InlineData(121, 9, 9, false)]
+    [InlineData(600, -4, 0, false)]
+    public async Task GetPublicPageAsync_HidesTheScoreOfANewPost(int minutesAgo, int score, int shown, bool hidden)
+    {
+        var topic = CreateTopic();
+        topic.PublishedAtUtc = DateTimeOffset.UtcNow.AddMinutes(-minutesAgo);
+        topic.Score = score;
+        var service = CreateService(new FakeTopicRepository { Page = new TopicPage([topic], 1) });
+
+        var item = Assert.Single((await service.GetPublicPageAsync(new TopicQuery(), CancellationToken.None)).Items);
+
+        Assert.Equal(shown, item.Score);
+        Assert.Equal(hidden, item.ScoreHidden);
+    }
+
+    [Fact]
+    public async Task GetPublicByIdAsync_HidesTheScoreOfANewPostAndShowsItLater()
+    {
+        var topic = CreateTopic();
+        topic.Score = 6;
+        topic.PublishedAtUtc = DateTimeOffset.UtcNow.AddMinutes(-45);
+        var service = CreateService(new FakeTopicRepository { Page = new TopicPage([topic], 1) });
+        var fresh = await service.GetPublicByIdAsync(topic.Id, CancellationToken.None);
+
+        topic.PublishedAtUtc = DateTimeOffset.UtcNow.AddHours(-3);
+        var older = await service.GetPublicByIdAsync(topic.Id, CancellationToken.None);
+
+        Assert.Equal((0, true), (fresh!.Score, fresh.ScoreHidden));
+        Assert.Equal((6, false), (older!.Score, older.ScoreHidden));
+    }
+
     [Fact]
     public async Task GetPublicPageAsync_WhenEmpty_ReturnsZeroTotalPages()
     {

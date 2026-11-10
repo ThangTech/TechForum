@@ -8,6 +8,7 @@ import type { TopicFeedMode, TopicPage, TopicType } from '../api/topics'
 import { Panel } from './common/Panel'
 import { PanelList } from './common/PanelList'
 import { TopicSummaryItem } from './topics/TopicSummaryItem'
+import { showsScore } from './home/feedLogic'
 
 interface TopicFeedProps {
   data: TopicPage | null
@@ -70,7 +71,9 @@ export const TopicFeed = ({
           ? 'Chưa có nội dung phù hợp từ những người bạn đang theo dõi. Hãy theo dõi tác giả trên trang cá nhân hoặc thử bỏ bớt bộ lọc.'
           : feed === 'weekly'
             ? 'Chưa có nội dung phù hợp nhận tương tác trong 7 ngày qua.'
-            : 'Không tìm thấy nội dung phù hợp.'}</Typography>
+            : feed === 'top'
+              ? 'Chưa có bài nào trong khoảng thời gian này. Thử chọn "Mọi thời đại".'
+              : 'Không tìm thấy nội dung phù hợp.'}</Typography>
         {feed !== 'latest' && (
           <MuiLink component="button" onClick={onShowLatest} sx={{ fontWeight: 600 }} type="button" underline="always">Xem Mới nhất</MuiLink>
         )}
@@ -100,7 +103,7 @@ export const TopicFeed = ({
                   '&:hover': { bgcolor: topic.isPinned ? 'var(--color-pinned-hover)' : 'var(--color-subtle)' },
                 }}
               >
-                <TopicSummaryItem onFilter={onFilter} topic={topic} isDiscussion={isDiscussion} />
+                <TopicSummaryItem onFilter={onFilter} showScore={showsScore(feed)} topic={topic} isDiscussion={isDiscussion} />
               </Box>
             ))}
           </PanelList>

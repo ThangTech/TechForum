@@ -5,6 +5,8 @@ import { ApiError, apiRequest } from './client'
 export interface VoteState {
   score: number
   myVote: number
+  // True for a new post or answer: the score is hidden (0) for the first hours.
+  scoreHidden: boolean
 }
 
 export const parseVoteState = (data: unknown): VoteState => {
@@ -15,8 +17,8 @@ export const parseVoteState = (data: unknown): VoteState => {
   ) {
     throw new ApiError(500, 'Dữ liệu bình chọn từ API không đúng định dạng.')
   }
-  const { score, myVote } = data as VoteState
-  return { score, myVote }
+  const { score, myVote, scoreHidden } = data as VoteState
+  return { score, myVote, scoreHidden: scoreHidden === true }
 }
 
 export const getTopicVote = async (topicId: number, signal?: AbortSignal): Promise<VoteState> =>

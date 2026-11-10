@@ -25,7 +25,7 @@ public sealed partial class TopicService(
         CancellationToken cancellationToken)
     {
         var page = await topicRepository.GetPublicPageAsync(query, cancellationToken);
-        return MapPublicPage(page, query);
+        return MapPublicPage(page, query, timeProvider.GetUtcNow());
     }
 
     public async Task<PagedResultDto<TopicSummaryDto>> GetFollowingPageAsync(
@@ -35,17 +35,17 @@ public sealed partial class TopicService(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(followerId);
         var page = await topicRepository.GetFollowingPageAsync(followerId, query, cancellationToken);
-        return MapPublicPage(page, query);
+        return MapPublicPage(page, query, timeProvider.GetUtcNow());
     }
 
-    private static PagedResultDto<TopicSummaryDto> MapPublicPage(TopicPage page, TopicQuery query)
+    private static PagedResultDto<TopicSummaryDto> MapPublicPage(TopicPage page, TopicQuery query, DateTimeOffset now)
     {
         var totalPages = page.TotalItems == 0
             ? 0
             : (int)Math.Ceiling(page.TotalItems / (double)query.PageSize);
 
         return new PagedResultDto<TopicSummaryDto>(
-            page.Items.Select(topic => MapSummary(topic) with
+            page.Items.Select(topic => MapSummary(topic, now) with
             {
                 Discussion = page.Discussions?.GetValueOrDefault(topic.Id)
             }).ToList(),
@@ -58,7 +58,7 @@ public sealed partial class TopicService(
     public async Task<TopicDetailDto?> GetPublicByIdAsync(int id, CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetPublicByIdAsync(id, cancellationToken);
-        return topic is null ? null : MapDetail(topic);
+        return topic is null ? null : MapDetail(topic, timeProvider.GetUtcNow());
     }
 
     public async Task<OwnTopicDto?> GetOwnedByIdAsync(
@@ -479,7 +479,7 @@ public sealed partial class TopicService(
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTags();
 
-    private static TopicSummaryDto MapSummary(Topic topic) => new(
+    private static TopicSummaryDto MapSummary(Topic topic, DateTimeOffset now) => new(
         topic.Id,
         topic.Title,
         topic.Slug,
@@ -493,9 +493,15 @@ public sealed partial class TopicService(
         topic.IsDiscussionLocked,
         topic.ViewCount,
         topic.ShareCount,
-        CoverImageUrl: topic.CoverImageUrl);
+        CoverImageUrl: topic.CoverImageUrl,
+        Score: ReputationRules.ShownScore(topic.Score, IsScoreHidden(topic, now)),
+        ScoreHidden: IsScoreHidden(topic, now));
 
-    private static TopicDetailDto MapDetail(Topic topic) => new(
+    // A post is new for the first hours after it was published: its score is hidden.
+    private static bool IsScoreHidden(Topic topic, DateTimeOffset now) =>
+        topic.PublishedAtUtc is { } published && ReputationRules.IsScoreHidden(published, now);
+
+    private static TopicDetailDto MapDetail(Topic topic, DateTimeOffset now) => new(
         topic.Id,
         topic.Title,
         topic.Slug,
@@ -512,7 +518,8 @@ public sealed partial class TopicService(
         topic.IsDiscussionLocked,
         topic.ViewCount,
         topic.ShareCount,
-        ReputationRules.ForDisplay(topic.Score));
+        ReputationRules.ShownScore(topic.Score, IsScoreHidden(topic, now)),
+        IsScoreHidden(topic, now));
 
     private static OwnTopicSummaryDto MapOwnedSummary(Topic topic) => new(
         topic.Id,

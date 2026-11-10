@@ -25,7 +25,10 @@ public sealed record TopicSummaryDto(
     int ViewCount,
     int ShareCount,
     TopicDiscussionDto? Discussion = null,
-    string? CoverImageUrl = null);
+    string? CoverImageUrl = null,
+    // The vote score (0 while it is hidden for a new post).
+    int Score = 0,
+    bool ScoreHidden = false);
 
 public sealed record TopicDetailDto(
     int Id,
@@ -44,7 +47,8 @@ public sealed record TopicDetailDto(
     bool IsDiscussionLocked,
     int ViewCount,
     int ShareCount,
-    // The vote score of the post.
-    int Score = 0);
+    // The vote score of the post (0 while it is hidden for a new post).
+    int Score = 0,
+    bool ScoreHidden = false);
 
 public sealed record TopicEngagementDto(int ViewCount, int ShareCount);

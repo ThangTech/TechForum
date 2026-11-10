@@ -184,6 +184,7 @@ export const AnswerList = ({
                 myVote={answer.myVote}
                 onVote={(direction) => void voteForAnswer(answer, direction)}
                 score={answer.score}
+                scoreHidden={answer.scoreHidden}
                 subject="câu trả lời"
               />
               <IconActionButton

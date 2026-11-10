@@ -260,9 +260,17 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
         if (query.Sort is not null &&
             !string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(query.Sort, "weekly", StringComparison.OrdinalIgnoreCase))
+            !string.Equals(query.Sort, "weekly", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(query.Sort, "hot", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(query.Sort, "top", StringComparison.OrdinalIgnoreCase))
         {
-            errors["sort"] = ["Kiểu sắp xếp chỉ hỗ trợ 'discussion' hoặc 'weekly'."];
+            errors["sort"] = ["Kiểu sắp xếp chỉ hỗ trợ 'discussion', 'weekly', 'hot' hoặc 'top'."];
+        }
+
+        if (query.Range is not null &&
+            query.Range.ToLowerInvariant() is not ("day" or "week" or "month" or "all"))
+        {
+            errors["range"] = ["Khoảng thời gian chỉ hỗ trợ 'day', 'week', 'month' hoặc 'all'."];
         }
 
         if (query.QuestionStatus is not null)

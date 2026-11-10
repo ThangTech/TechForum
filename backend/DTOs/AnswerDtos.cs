@@ -16,7 +16,9 @@ public sealed record AnswerDto(
     bool IsHelpful = false,
     // The vote score of the answer and the vote of the member who asks (1, -1 or 0).
     int Score = 0,
-    int MyVote = 0);
+    int MyVote = 0,
+    // True while the answer is new: the score is hidden (0) for the first hours.
+    bool ScoreHidden = false);
 
 public sealed record AnswerHelpfulDto(int HelpfulCount, bool IsHelpful);
 

@@ -2,7 +2,9 @@ import { ApiError, apiRequest } from './client'
 
 export type TopicType = 'article' | 'question'
 export type QuestionStatus = 'unanswered' | 'unsolved' | 'solved'
-export type TopicFeedMode = 'latest' | 'following' | 'weekly'
+export type TopicFeedMode = 'latest' | 'following' | 'weekly' | 'hot' | 'top'
+// The time of the posts in the tab "Top".
+export type TopicRange = 'day' | 'week' | 'month' | 'all'
 
 export interface TopicCategory { id: number; name: string; slug: string }
 export interface TopicAuthor { id: string; displayName: string }
@@ -33,6 +35,9 @@ export interface TopicSummary {
   discussion?: TopicDiscussion | null
   // Address of the first picture of the topic (for example /media/images/abc.png), empty when it has none.
   coverImageUrl?: string | null
+  // The vote score (0 while it is hidden for a new post).
+  score?: number
+  scoreHidden?: boolean
 }
 
 export interface TopicDetail extends TopicSummary {
@@ -56,7 +61,9 @@ export interface TopicFilters {
   type?: 'Article' | 'Question'
   categoryId?: number
   tagId?: number
-  sort?: 'discussion' | 'weekly'
+  sort?: 'discussion' | 'weekly' | 'hot' | 'top'
+  // For sort=top.
+  range?: TopicRange
   questionStatus?: QuestionStatus
 }
 
@@ -139,6 +146,8 @@ export const isTopicSummary = (value: unknown): value is TopicSummary => {
     typeof value.viewCount === 'number' &&
     typeof value.shareCount === 'number' &&
     (value.coverImageUrl == null || typeof value.coverImageUrl === 'string') &&
+    (value.score === undefined || typeof value.score === 'number') &&
+    (value.scoreHidden === undefined || typeof value.scoreHidden === 'boolean') &&
     (value.discussion == null || (
       isRecord(value.discussion) &&
       Number.isInteger(value.discussion.answerCount) && Number(value.discussion.answerCount) >= 0 &&

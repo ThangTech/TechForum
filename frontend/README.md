@@ -136,7 +136,11 @@ Bài viết và câu trả lời có nút bình chọn **▲ điểm ▼** (`Vot
 đổi phiếu; khách bấm thì hiện hộp đăng nhập, tác giả không tự bình chọn được (nút mờ kèm lý do). Rê chuột vào ▼ báo trước: tốn 1 điểm danh tiếng (hoàn lại khi bỏ
 phiếu) và cần tài khoản từ 7 ngày hoặc 50 điểm danh tiếng; không đủ điều kiện thì hiện lý do cụ thể. Câu trả lời
 sắp xếp thêm được theo **Điểm cao nhất** (`?answerSort=score`; câu được chọn vẫn đứng đầu). Hồ sơ công khai hiện
-**điểm danh tiếng**. Trang `/starred` ("Bài đã thả sao", cũng có ở menu tài khoản và thanh điều hướng) liệt kê các
+**điểm danh tiếng**. Bảng tin trang chủ có các tab **Mới nhất, Hot, Top, Nổi bật tuần, Đang theo dõi** (`?feed=`). **Hot** đưa bài được bình chọn nhiều
+trong thời gian ngắn lên đầu rồi hạ dần; **Top** xếp theo điểm cao nhất và có ô chọn khoảng thời gian (Hôm nay, Tuần này, Tháng
+này, Mọi thời đại; `?range=`, mặc định Tuần này). Thẻ bài ở hai tab này hiện `▲ điểm`. Điểm của bài mới được **ẩn trong 2 giờ
+đầu**: nút ▲▼, thẻ bài và câu trả lời hiện dấu `•` thay cho số (rê chuột để đọc lý do); phiếu của chính bạn vẫn hiện.
+Trang `/starred` ("Bài đã thả sao", cũng có ở menu tài khoản và thanh điều hướng) liệt kê các
 bài đã thả sao ⭐ để đọc lại; nó dùng chung danh sách `PersonalTopicList` với trang "Đã lưu".
 
 Khi đang viết bài (`/write`), trả lời hoặc sửa câu trả lời, trang gửi nội dung tới

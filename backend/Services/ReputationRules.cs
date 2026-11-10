@@ -17,6 +17,17 @@ public static class ReputationRules
     // The author of a question chose this answer as the right one.
     public const int AcceptedAnswer = 15;
 
+    // The score of a post or answer is hidden for this many hours after it is posted, so people judge it on its own and are
+    // not carried by the first votes. Votes are still counted; the score and the order by score are the same as if there
+    // were none until the time has passed.
+    public const int ScoreHiddenHours = 2;
+
+    public static bool IsScoreHidden(DateTimeOffset postedAtUtc, DateTimeOffset nowUtc) =>
+        nowUtc - postedAtUtc < TimeSpan.FromHours(ScoreHiddenHours);
+
+    // The score as it is shown: 0 while it is hidden, never below 0 otherwise.
+    public static int ShownScore(int score, bool isHidden) => isHidden ? 0 : ForDisplay(score);
+
     // What a member sees. The score of a post or answer and the reputation of a member are never shown below 0: a few
     // downvotes must not show a negative number or invite others to pile on. The database keeps the real number (it can be
     // below 0), so taking a vote back or changing it still gives the points back exactly.

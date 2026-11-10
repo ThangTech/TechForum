@@ -37,6 +37,7 @@ export const TopicVoteButtons = ({ topicId, authorId }: { topicId: number; autho
         myVote={state?.myVote ?? 0}
         onVote={(direction) => void vote(direction)}
         score={state?.score ?? 0}
+        scoreHidden={state?.scoreHidden ?? false}
         subject="bài viết"
       />
       {error && (

@@ -25,6 +25,7 @@ import { QuestionHighlightsPanel } from '../components/questions/QuestionHighlig
 import { useCategories } from '../queries/categories'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useQuestionHighlights } from '../queries/questionHighlights'
+import { describeFeed, feedTabs, getFeedSort, parseFeed, parseRange, topRanges } from '../components/home/feedLogic'
 import { isInitialLoading } from '../queries/status'
 import { useTags } from '../queries/tags'
 import { useTopicFeed } from '../queries/topics'
@@ -38,12 +39,6 @@ interface HomePageProps {
   // Shows the banner slider and the technology news above the list (only on the first page without filters).
   showHighlights?: boolean
 }
-
-const feedTabs = [
-  ['latest', 'Mới nhất'],
-  ['following', 'Đang theo dõi'],
-  ['weekly', 'Nổi bật tuần'],
-] as const satisfies readonly (readonly [TopicFeedMode, string])[]
 
 const readPositiveInteger = (value: string | null) => {
   const parsed = Number(value)
@@ -62,7 +57,8 @@ export const HomePage = ({
   const location = useLocation()
   const { user, isLoading: isAuthLoading } = useAuth()
   const feedParam = searchParams.get('feed')
-  const feed: TopicFeedMode = !sort && (feedParam === 'following' || feedParam === 'weekly') ? feedParam : 'latest'
+  const feed: TopicFeedMode = sort ? 'latest' : parseFeed(feedParam)
+  const range = parseRange(searchParams.get('range'))
   const page = readPositiveInteger(searchParams.get('page')) ?? 1
   const categoryId = readPositiveInteger(searchParams.get('categoryId'))
   const tagId = readPositiveInteger(searchParams.get('tagId'))
@@ -88,7 +84,8 @@ export const HomePage = ({
     type: selectedType,
     categoryId,
     tagId,
-    sort: feed === 'weekly' ? 'weekly' : sort,
+    sort: getFeedSort(feed, sort),
+    range: feed === 'top' ? range : undefined,
     questionStatus,
   })
 
@@ -187,11 +184,21 @@ export const HomePage = ({
             <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
               <Typography color="text.secondary" variant="body2">{sort === 'discussion'
                 ? 'Theo phản hồi mới nhất (gồm chỉnh sửa)'
-                : feed === 'weekly'
-                  ? 'Các bài được quan tâm qua lượt đánh giá, lưu và trả lời trong 7 ngày gần nhất. Số liệu trên bài là tổng tương tác.'
-                  : feed === 'following'
-                    ? 'Nội dung công khai từ tác giả bạn theo dõi; bài ghim trước, sau đó mới nhất.'
-                    : 'Bài ghim trước, sau đó mới nhất'}</Typography>
+                : describeFeed(feed, range)}</Typography>
+              {feed === 'top' && (
+                <TextField
+                  fullWidth={false}
+                  label="Khoảng thời gian"
+                  onChange={(event) => updateSearchParams({ range: parseRange(event.target.value), page: undefined })}
+                  select
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ minWidth: 170 }}
+                  value={range}
+                >
+                  {topRanges.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+                </TextField>
+              )}
               {!fixedType && (
                 <TextField
                   fullWidth={false}

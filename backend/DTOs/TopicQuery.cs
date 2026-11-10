@@ -11,5 +11,7 @@ public sealed class TopicQuery
     public int? CategoryId { get; init; }
     public int? TagId { get; init; }
     public string? Sort { get; init; }
+    // For sort=top: the time of the posts, day, week, month or all (the default).
+    public string? Range { get; init; }
     public string? QuestionStatus { get; init; }
 }

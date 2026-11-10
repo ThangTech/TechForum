@@ -402,6 +402,19 @@ Giới hạn chống bình chọn gian lận (cấu hình `VoteLimits` trong `ap
   (`VoteRateLimiter`, mỗi người một bộ đếm) nên về 0 khi khởi động lại ứng dụng, đủ để chặn script. Chưa
   phát hiện hai tài khoản bình chọn qua lại cho nhau (có thể làm sau).
 
+Điểm của bài mới được **ẩn trong 2 giờ đầu** (`ReputationRules.ScoreHiddenHours`) để mọi người đánh giá khách quan, không bị
+cuốn theo vài phiếu đầu: trong thời gian đó `score` là `0` và `scoreHidden` là `true` (ở chi tiết bài, `GET .../vote`, kết quả
+`PUT .../vote`, danh sách bài và từng câu trả lời); phiếu của người xem (`myVote`) vẫn hiện. Phiếu vẫn được đếm và tính danh
+tiếng như bình thường. Thứ tự theo điểm không để lộ điểm đang ẩn: bài hoặc câu trả lời mới được xếp như thể có 0 điểm (Hot, Top
+và `sort=score` của câu trả lời), qua 2 giờ thì dùng điểm thật. Mốc thời gian tính từ lúc xuất bản bài hoặc lúc viết câu trả lời.
+
+Hai kiểu xếp hạng cho bảng tin `GET /api/topics` (và `/following`):
+
+- `sort=hot`: điểm / (số giờ + 2)^1,5 (công thức của Hacker News), nên bài được bình chọn nhiều trong thời gian ngắn lên đầu rồi
+  tự hạ dần; điểm âm tính là 0; bài chưa có điểm xếp sau, mới nhất trước.
+- `sort=top&range=day|week|month|all` (mặc định `all`): điểm cao nhất, chỉ trong các bài đăng trong khoảng thời gian đã chọn
+  (1, 7, 30 ngày hoặc mọi thời đại); bằng điểm thì mới nhất trước. `range` khác các giá trị trên trả `400`.
+
 `GET /api/stars` (cần đăng nhập, `page`, `pageSize` 1-50) liệt kê các bài người dùng đã thả sao ⭐, sao mới nhất
 trước, chỉ gồm bài còn công khai (cùng dạng với `GET /api/bookmarks`).
 

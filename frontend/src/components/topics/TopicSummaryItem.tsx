@@ -13,6 +13,8 @@ interface TopicSummaryItemProps {
   showAuthor?: boolean
   onFilter?: (key: 'categoryId' | 'tagId', value: number) => void
   isDiscussion?: boolean
+  // The tabs Hot and Top order by the score, so the card shows it (a dot while it is hidden for a new post).
+  showScore?: boolean
 }
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
@@ -45,6 +47,7 @@ export const TopicSummaryItem = ({
   showAuthor = true,
   onFilter,
   isDiscussion = false,
+  showScore = false,
 }: TopicSummaryItemProps) => {
   const answerColors = topic.discussion
     ? getAnswerBoxColors(topic.discussion.answerCount, topic.discussion.hasAcceptedAnswer)
@@ -175,6 +178,12 @@ export const TopicSummaryItem = ({
             <span key={tag.id}>#{tag.name}</span>
           ))}
           <Stack direction="row" sx={{ ml: 'auto', alignItems: 'center', columnGap: 1.75, fontVariantNumeric: 'tabular-nums' }}>
+            {showScore && (
+              <span className="topic-stat" title={topic.scoreHidden ? 'Điểm được ẩn trong 2 giờ đầu' : 'Điểm bình chọn'}>
+                ▲ {topic.scoreHidden ? '•' : topic.score ?? 0}
+                <span className="sr-only"> {topic.scoreHidden ? 'điểm đang ẩn' : 'điểm'}</span>
+              </span>
+            )}
             <span className="topic-stat" title="Lượt xem"><ViewIcon />{topic.viewCount}<span className="sr-only"> lượt xem</span></span>
             {topic.discussion && <>
               <MuiLink

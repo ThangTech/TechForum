@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
 using TechForum.Api.Models;
+using TechForum.Api.Services;
 
 namespace TechForum.Api.Data.Repositories;
 
@@ -83,6 +84,35 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
                 .ThenByDescending(item => item.Topic.Id)
                 .Select(item => item.Topic);
         }
+        else if (string.Equals(query.Sort, "hot", StringComparison.OrdinalIgnoreCase))
+        {
+            // "Hot": the votes of a post divided by its age, so a post with many votes in a short time is on top and then
+            // goes down as it gets older (the formula of Hacker News: score / (hours + 2) ^ 1.5). A new post has its score
+            // hidden, so it counts as 0 for the first hours. Posts without votes follow, the newest first.
+            var now = timeProvider.GetUtcNow();
+            var hiddenSince = now.AddHours(-ReputationRules.ScoreHiddenHours);
+            orderedTopics = topics
+                .OrderByDescending(topic => (topic.PublishedAtUtc <= hiddenSince && topic.Score > 0 ? (double)topic.Score : 0.0) /
+                    Math.Pow((EF.Functions.DateDiffMinute(topic.PublishedAtUtc, now) ?? 0) / 60.0 + 2.0, 1.5))
+                .ThenByDescending(topic => topic.PublishedAtUtc)
+                .ThenByDescending(topic => topic.Id);
+        }
+        else if (string.Equals(query.Sort, "top", StringComparison.OrdinalIgnoreCase))
+        {
+            // "Top": the highest score, of the posts of the chosen time (today, this week, this month or all). The score of
+            // a new post is hidden, so it counts as 0 for the first hours.
+            var now = timeProvider.GetUtcNow();
+            var hiddenSince = now.AddHours(-ReputationRules.ScoreHiddenHours);
+            var since = GetTopSince(query.Range, now);
+            if (since is not null)
+            {
+                topics = topics.Where(topic => topic.PublishedAtUtc >= since);
+            }
+            orderedTopics = topics
+                .OrderByDescending(topic => topic.PublishedAtUtc <= hiddenSince ? topic.Score : 0)
+                .ThenByDescending(topic => topic.PublishedAtUtc)
+                .ThenByDescending(topic => topic.Id);
+        }
         else if (string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase))
         {
             orderedTopics = topics.OrderByDescending(topic => topic.Answers
@@ -131,6 +161,15 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
 
         return new TopicPage(items, totalItems, discussions);
     }
+
+    // The oldest time of a post in "Top": a day, a week or a month back; null (every time) for anything else.
+    public static DateTimeOffset? GetTopSince(string? range, DateTimeOffset now) => range?.ToLowerInvariant() switch
+    {
+        "day" => now.AddDays(-1),
+        "week" => now.AddDays(-7),
+        "month" => now.AddDays(-30),
+        _ => null
+    };
 
     public async Task<TopicPage> GetOwnedPageAsync(
         string authorId,

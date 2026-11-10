@@ -330,7 +330,7 @@ public sealed partial class AnswerService(
         return states.FirstOrDefault() ?? new AnswerHelpfulState(answerId, 0, false);
     }
 
-    private static AnswerDto MapAnswer(
+    private AnswerDto MapAnswer(
         Answer answer,
         int? acceptedAnswerId,
         TopicAuthorDto? replyingTo = null,
@@ -348,8 +348,9 @@ public sealed partial class AnswerService(
         answer.Id == acceptedAnswerId,
         helpfulState?.HelpfulCount ?? 0,
         helpfulState?.IsHelpful ?? false,
-        ReputationRules.ForDisplay(helpfulState?.Score ?? answer.Score),
-        helpfulState?.MyVote ?? 0);
+        ReputationRules.ShownScore(helpfulState?.Score ?? answer.Score, ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow())),
+        helpfulState?.MyVote ?? 0,
+        ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow()));
 
     private static bool HasMeaningfulContent(string html)
     {
