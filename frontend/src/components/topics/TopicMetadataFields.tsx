@@ -34,11 +34,11 @@ interface TopicMetadataFieldsProps {
   categoryId: string
   errors: Record<string, string[]>
   summary: string
-  tagIds: number[]
+  tagIds: string[]
   tags: Tag[]
   onCategoryChange: (value: string) => void
   onSummaryChange: (value: string) => void
-  onTagIdsChange: (ids: number[]) => void
+  onTagIdsChange: (ids: string[]) => void
 }
 
 // Cột cài đặt bên phải: chuyên mục, thẻ và tóm tắt.

@@ -2,7 +2,7 @@ import { ApiError, apiRequest } from './client'
 import type { TopicAuthor, TopicCategory, TopicType } from './topics'
 
 export interface RelatedTopic {
-  id: number
+  id: string
   title: string
   summary: string
   type: TopicType
@@ -18,12 +18,12 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isRelatedTopic = (value: unknown): value is RelatedTopic =>
   isRecord(value) &&
-  Number.isInteger(value.id) && Number(value.id) > 0 &&
+  typeof value.id === 'string' &&
   typeof value.title === 'string' &&
   typeof value.summary === 'string' &&
   (value.type === 'article' || value.type === 'question') &&
   isRecord(value.category) &&
-  typeof value.category.id === 'number' &&
+  typeof value.category.id === 'string' &&
   typeof value.category.name === 'string' &&
   typeof value.category.slug === 'string' &&
   isRecord(value.author) &&
@@ -33,7 +33,7 @@ const isRelatedTopic = (value: unknown): value is RelatedTopic =>
   Number.isInteger(value.sharedTagCount) && Number(value.sharedTagCount) >= 0 &&
   typeof value.isSameCategory === 'boolean'
 
-export const getRelatedTopics = async (topicId: number, signal?: AbortSignal): Promise<RelatedTopic[]> => {
+export const getRelatedTopics = async (topicId: string, signal?: AbortSignal): Promise<RelatedTopic[]> => {
   const data: unknown = await apiRequest(`/api/topics/${topicId}/related`, { signal })
   if (!Array.isArray(data) || data.length > 4 || !data.every(isRelatedTopic)) {
     throw new ApiError(500, 'Danh sách nội dung liên quan từ API không đúng định dạng.')

@@ -1,7 +1,7 @@
 import { ApiError, apiRequest } from './client'
 
 export interface QuestionHighlight {
-  id: number
+  id: string
   title: string
   answerCount: number
   publishedAtUtc: string
@@ -16,7 +16,7 @@ export interface QuestionHighlights {
 const isHighlight = (value: unknown): value is QuestionHighlight => {
   if (typeof value !== 'object' || value === null) return false
   const item = value as Record<string, unknown>
-  return typeof item.id === 'number' && typeof item.title === 'string' &&
+  return typeof item.id === 'string' && typeof item.title === 'string' &&
     typeof item.answerCount === 'number' && typeof item.publishedAtUtc === 'string'
 }
 

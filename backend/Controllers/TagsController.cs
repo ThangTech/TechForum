@@ -15,10 +15,10 @@ public sealed class TagsController(ITagService tagService) : ControllerBase
         return Ok(await tagService.GetActiveAsync(cancellationToken));
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType<TagDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TagDto>> GetById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<TagDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var tag = await tagService.GetActiveByIdAsync(id, cancellationToken);
         if (tag is null)

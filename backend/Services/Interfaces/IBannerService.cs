@@ -10,11 +10,11 @@ public interface IBannerService
 
     Task<BannerWriteResult> CreateAsync(string administratorId, SaveBannerRequest request, CancellationToken cancellationToken);
 
-    Task<BannerWriteResult> UpdateAsync(string administratorId, int id, SaveBannerRequest request, CancellationToken cancellationToken);
+    Task<BannerWriteResult> UpdateAsync(string administratorId, Guid id, SaveBannerRequest request, CancellationToken cancellationToken);
 
-    Task<BannerWriteResult> SetActiveAsync(string administratorId, int id, bool isActive, CancellationToken cancellationToken);
+    Task<BannerWriteResult> SetActiveAsync(string administratorId, Guid id, bool isActive, CancellationToken cancellationToken);
 
-    Task<BannerWriteResult> DeleteAsync(string administratorId, int id, CancellationToken cancellationToken);
+    Task<BannerWriteResult> DeleteAsync(string administratorId, Guid id, CancellationToken cancellationToken);
 
     Task<BannerImageResult> UploadImageAsync(IFormFile file, CancellationToken cancellationToken);
 }

@@ -25,7 +25,7 @@ export const useMarkNotificationRead = () => {
   const { scope } = useUserScope()
 
   return useMutation({
-    mutationFn: (notificationId: number) => markNotificationRead(notificationId),
+    mutationFn: (notificationId: string) => markNotificationRead(notificationId),
     // The list and the unread count in the header load again.
     onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationKeys.all(scope) }),
   })

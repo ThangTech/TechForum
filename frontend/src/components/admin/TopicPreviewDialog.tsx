@@ -11,7 +11,7 @@ import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
 import { DialogFrame } from '../feedback/DialogFrame'
 import { StatusBadge } from './StatusBadge'
 
-export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: number; onClose: () => void }) => {
+export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: string; onClose: () => void }) => {
   const detailQuery = useAdminTopicDetail(topicId)
   const data = detailQuery.data ?? null
   const isLoading = isInitialLoading(detailQuery)

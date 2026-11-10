@@ -29,6 +29,7 @@ import { describeFeed, feedTabs, getFeedSort, parseFeed, parseRange, topRanges }
 import { isInitialLoading } from '../queries/status'
 import { useTags } from '../queries/tags'
 import { useTopicFeed } from '../queries/topics'
+import { isGuid } from '../utils/ids'
 
 interface HomePageProps {
   fixedType?: 'Article' | 'Question'
@@ -45,6 +46,9 @@ const readPositiveInteger = (value: string | null) => {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
+// A category or a tag in the address (?categoryId=, ?tagId=) is a GUID; anything else is ignored.
+const readId = (value: string | null) => (isGuid(value) ? value.toLowerCase() : undefined)
+
 export const HomePage = ({
   fixedType,
   title = 'Cùng học hỏi, chia sẻ và làm chủ công nghệ.',
@@ -60,8 +64,8 @@ export const HomePage = ({
   const feed: TopicFeedMode = sort ? 'latest' : parseFeed(feedParam)
   const range = parseRange(searchParams.get('range'))
   const page = readPositiveInteger(searchParams.get('page')) ?? 1
-  const categoryId = readPositiveInteger(searchParams.get('categoryId'))
-  const tagId = readPositiveInteger(searchParams.get('tagId'))
+  const categoryId = readId(searchParams.get('categoryId'))
+  const tagId = readId(searchParams.get('tagId'))
   const keyword = searchParams.get('keyword')?.trim() ?? ''
   const typeParam = searchParams.get('type')
   const selectedType = fixedType ?? (typeParam === 'Article' || typeParam === 'Question' ? typeParam : undefined)
@@ -124,7 +128,7 @@ export const HomePage = ({
     setSearchParams(next)
   }
 
-  const handleFilter = (key: 'categoryId' | 'tagId', value: number) => {
+  const handleFilter = (key: 'categoryId' | 'tagId', value: string) => {
     updateSearchParams({ [key]: value, page: undefined })
   }
 

@@ -5,7 +5,7 @@ namespace TechForum.Api.Services;
 public interface ISkillCommunityService
 {
     Task<SkillCommunityDto?> GetAsync(
-        int tagId,
+        Guid tagId,
         int page,
         int pageSize,
         CancellationToken cancellationToken);

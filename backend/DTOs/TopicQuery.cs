@@ -8,8 +8,8 @@ public sealed class TopicQuery
     public int PageSize { get; init; } = 10;
     public string? Keyword { get; init; }
     public TopicType? Type { get; init; }
-    public int? CategoryId { get; init; }
-    public int? TagId { get; init; }
+    public Guid? CategoryId { get; init; }
+    public Guid? TagId { get; init; }
     public string? Sort { get; init; }
     // For sort=top: the time of the posts, day, week, month or all (the default).
     public string? Range { get; init; }

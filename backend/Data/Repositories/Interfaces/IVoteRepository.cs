@@ -6,7 +6,7 @@ namespace TechForum.Api.Data.Repositories;
 public sealed record VoteCommand(
     string VoterId,
     VoteTargetType TargetType,
-    int TargetId,
+    Guid TargetId,
     string AuthorId,
     int NewValue,
     DateTimeOffset NowUtc);
@@ -20,5 +20,5 @@ public interface IVoteRepository
     // reputation of the voter. All of it happens in one transaction: if one step fails, none is kept.
     Task<VoteOutcome> ApplyAsync(VoteCommand command, CancellationToken cancellationToken);
 
-    Task<int> GetMyVoteAsync(string userId, VoteTargetType targetType, int targetId, CancellationToken cancellationToken);
+    Task<int> GetMyVoteAsync(string userId, VoteTargetType targetType, Guid targetId, CancellationToken cancellationToken);
 }

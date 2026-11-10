@@ -27,7 +27,7 @@ public sealed class BannedWordRepository(TechForumDbContext dbContext) : IBanned
         }
     }
 
-    public Task<BannedWord?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
+    public Task<BannedWord?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.BannedWords.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
 
     public async Task<bool> AddAsync(BannedWord word, CancellationToken cancellationToken)

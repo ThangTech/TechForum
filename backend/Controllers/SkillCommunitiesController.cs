@@ -5,12 +5,12 @@ using TechForum.Api.Services;
 namespace TechForum.Api.Controllers;
 
 [ApiController]
-[Route("api/tags/{tagId:int}/community")]
+[Route("api/tags/{tagId:guid}/community")]
 public sealed class SkillCommunitiesController(ISkillCommunityService service) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<SkillCommunityDto>> Get(
-        int tagId,
+        Guid tagId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default)

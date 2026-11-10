@@ -20,7 +20,7 @@ public sealed class ContentReportService(
         CancellationToken cancellationToken)
     {
         var targetType = request.TargetType?.Trim().ToLowerInvariant();
-        if (targetType is not ("topic" or "answer") || request.TargetId <= 0)
+        if (targetType is not ("topic" or "answer") || request.TargetId == Guid.Empty)
         {
             return CreateReportResult.Failed(CreateReportFailure.Validation, "Nội dung cần báo cáo không hợp lệ.", "targetId");
         }
@@ -41,8 +41,8 @@ public sealed class ContentReportService(
             return CreateReportResult.Failed(CreateReportFailure.Validation, "Vui lòng mô tả lý do khác.", "details");
         }
 
-        int? topicId = targetType == "topic" ? request.TargetId : null;
-        int? answerId = targetType == "answer" ? request.TargetId : null;
+        Guid? topicId = targetType == "topic" ? request.TargetId : null;
+        Guid? answerId = targetType == "answer" ? request.TargetId : null;
         var exists = topicId.HasValue
             ? await topicRepository.GetPublicByIdAsync(topicId.Value, cancellationToken) is not null
             : await reportRepository.GetPublicAnswerAsync(answerId!.Value, cancellationToken) is not null;
@@ -105,7 +105,7 @@ public sealed class ContentReportService(
     }
 
     public async Task<ResolveReportResult> ResolveAsync(
-        int reportId,
+        Guid reportId,
         string administratorId,
         ResolveReportRequest request,
         CancellationToken cancellationToken)

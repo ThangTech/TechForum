@@ -11,7 +11,7 @@ import { isInitialLoading } from '../../queries/status'
 import { openAuthDialog } from '../../auth/authDialogStore'
 
 interface UsefulStarButtonProps {
-  topicId: number
+  topicId: string
 }
 
 export const UsefulStarButton = ({ topicId }: UsefulStarButtonProps) => {

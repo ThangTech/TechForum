@@ -12,21 +12,21 @@ public interface INotificationService
 
     Task AddAcceptedAnswerAsync(
         string recipientId,
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string topicTitle,
         CancellationToken cancellationToken);
 
     Task AddNewAnswerAsync(
         string recipientId,
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string answerAuthorName,
         string topicTitle,
         CancellationToken cancellationToken);
 
     Task<bool> MarkReadAsync(
-        long id,
+        Guid id,
         string userId,
         CancellationToken cancellationToken);
 }

@@ -1,7 +1,7 @@
 import { ApiError, apiRequest } from './client'
 
 export interface AdminBanner {
-  id: number
+  id: string
   title: string
   imageUrl: string
   linkUrl: string | null
@@ -28,7 +28,7 @@ const isNullableString = (value: unknown) => value === null || typeof value === 
 
 const isAdminBanner = (value: unknown): value is AdminBanner =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.title === 'string' &&
   typeof value.imageUrl === 'string' &&
   isNullableString(value.linkUrl) &&
@@ -54,16 +54,16 @@ export const getAdminBanners = async (signal?: AbortSignal): Promise<AdminBanner
 export const createAdminBanner = async (input: SaveBannerInput): Promise<AdminBanner> =>
   parseBanner(await apiRequest('/api/admin/banners', { method: 'POST', body: JSON.stringify(input) }))
 
-export const updateAdminBanner = async (id: number, input: SaveBannerInput): Promise<AdminBanner> =>
+export const updateAdminBanner = async (id: string, input: SaveBannerInput): Promise<AdminBanner> =>
   parseBanner(await apiRequest(`/api/admin/banners/${id}`, { method: 'PUT', body: JSON.stringify(input) }))
 
-export const setAdminBannerActive = async (id: number, isActive: boolean): Promise<AdminBanner> =>
+export const setAdminBannerActive = async (id: string, isActive: boolean): Promise<AdminBanner> =>
   parseBanner(await apiRequest(`/api/admin/banners/${id}/active`, {
     method: 'PUT',
     body: JSON.stringify({ isActive }),
   }))
 
-export const deleteAdminBanner = (id: number) =>
+export const deleteAdminBanner = (id: string) =>
   apiRequest<void>(`/api/admin/banners/${id}`, { method: 'DELETE' })
 
 // Uploads the picture of a banner. The answer holds the address to put in the banner form.

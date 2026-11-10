@@ -6,8 +6,8 @@ export interface DraftSnapshot {
   summary: string
   bodyHtml: string
   type: 'article' | 'question'
-  categoryId: number | null
-  tagIds: number[]
+  categoryId: string | null
+  tagIds: string[]
   mediaIds: string[]
 }
 
@@ -15,7 +15,7 @@ export interface DraftSnapshot {
 // The order of tags and media does not change the meaning, so it does not change the key.
 export const getSnapshotKey = (snapshot: DraftSnapshot): string => JSON.stringify({
   ...snapshot,
-  tagIds: [...snapshot.tagIds].sort((a, b) => a - b),
+  tagIds: [...snapshot.tagIds].sort(),
   mediaIds: [...snapshot.mediaIds].sort(),
 })
 

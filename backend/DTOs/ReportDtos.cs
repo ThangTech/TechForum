@@ -2,14 +2,14 @@ namespace TechForum.Api.Dtos;
 
 public sealed record CreateReportRequest(
     string? TargetType,
-    int TargetId,
+    Guid TargetId,
     string? Reason,
     string? Details);
 
 public sealed record ReportReceiptDto(
-    int Id,
+    Guid Id,
     string TargetType,
-    int TargetId,
+    Guid TargetId,
     string Reason,
     string? Details,
     string Status,
@@ -20,10 +20,10 @@ public sealed record ResolveReportRequest(
     string? ResolutionNote);
 
 public sealed record MyReportDto(
-    int Id,
+    Guid Id,
     string TargetType,
-    int TargetId,
-    int? TopicId,
+    Guid TargetId,
+    Guid? TopicId,
     string? TargetTitle,
     string Reason,
     string? Details,
@@ -37,9 +37,9 @@ public sealed record ReportUserDto(
     string DisplayName);
 
 public sealed record AdminReportDto(
-    int Id,
+    Guid Id,
     string TargetType,
-    int TargetId,
+    Guid TargetId,
     string TargetTitle,
     string TargetBodyHtml,
     ReportUserDto Reporter,
@@ -50,7 +50,7 @@ public sealed record AdminReportDto(
     ReportUserDto? ResolvedBy,
     DateTimeOffset? ResolvedAtUtc,
     string? ResolutionNote,
-    int TopicId,
+    Guid TopicId,
     ReportUserDto TargetAuthor,
     bool IsTargetHidden,
     bool IsTargetDeleted,

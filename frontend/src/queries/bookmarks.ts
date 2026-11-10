@@ -6,12 +6,12 @@ import { useUserScope, userKey } from './userScope'
 export const bookmarkKeys = {
   // Everything about the saved topics of one user: the list and the status of single topics.
   all: (scope: string) => userKey(scope, 'bookmarks'),
-  status: (scope: string, topicId: number) => userKey(scope, 'topics', topicId, 'bookmark'),
+  status: (scope: string, topicId: string) => userKey(scope, 'topics', topicId, 'bookmark'),
   list: (scope: string, page: number, pageSize: number) =>
     [...bookmarkKeys.all(scope), 'list', { page, pageSize }] as const,
 }
 
-export const useBookmarkStatus = (topicId: number) => {
+export const useBookmarkStatus = (topicId: string) => {
   const { scope, isReady } = useUserScope()
 
   return useQuery({
@@ -22,7 +22,7 @@ export const useBookmarkStatus = (topicId: number) => {
 }
 
 // Pass the current value of hasBookmark: true removes the bookmark, false adds it.
-export const useToggleBookmark = (topicId: number) => {
+export const useToggleBookmark = (topicId: string) => {
   const queryClient = useQueryClient()
   const { scope } = useUserScope()
 

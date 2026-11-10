@@ -14,4 +14,4 @@ public sealed record PublicProfileData(
     IReadOnlyList<Topic> RecentTopics);
 
 // IsChosen: the member picked this skill themself; otherwise it was found from the tags of their public content.
-public sealed record ProfileSkillData(int TagId, string Name, string Slug, int TopicCount, bool IsChosen = false);
+public sealed record ProfileSkillData(Guid TagId, string Name, string Slug, int TopicCount, bool IsChosen = false);

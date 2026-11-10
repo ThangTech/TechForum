@@ -2,7 +2,7 @@ namespace TechForum.Api.Models;
 
 public sealed class AdminAuditLog
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
     public required string AdministratorId { get; set; }
     public ApplicationUser Administrator { get; set; } = null!;
     public required string Action { get; set; }

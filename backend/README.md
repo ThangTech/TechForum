@@ -113,6 +113,24 @@ khai phải bật mã hóa và dùng chứng thư hợp lệ.
 từng nhóm dữ liệu khi bảng `Categories` hoặc `Tags` tương ứng đang rỗng. Các môi
 trường khác không tự migrate và không seed.
 
+## Mã định danh (GUID)
+
+Mọi bảng có khóa chính riêng (`Topics`, `Answers`, `Categories`, `Tags`, `Banners`, `BannedWords`, `ContentReports`,
+`Notifications`, `AdminAuditLogs`, `RefreshTokens`, cùng với `Drafts` và `MediaAssets` vốn đã dùng từ trước) đều dùng
+`uniqueidentifier` (GUID) thay cho số nguyên tăng dần, nên địa chỉ như `/topics/5` không thể đoán bằng cách đếm. Tài khoản
+vẫn dùng chuỗi GUID của ASP.NET Identity. Các cột đếm và điểm (`Score`, `ViewCount`, `ShareCount`, `Reputation`…) vẫn là `int`.
+
+- Trong route, id là `{id:guid}`, `{topicId:guid}`, `{answerId:guid}`…; một số nguyên hoặc chuỗi khác trả `404` (route không khớp),
+  còn tham số query như `categoryId`, `tagId`, `aroundAnswerId` sai định dạng hoặc là GUID rỗng trả `400`.
+- JSON trả id là chuỗi chữ thường, ví dụ `"0f8fad5b-d9cb-469f-a165-70867728950e"`; thông báo lưu liên kết và khóa nguồn dưới dạng
+  `/topics/{guid}#answer-{guid}`, `new-answer:{guid}:{guid}`.
+- EF Core tự sinh GUID tuần tự khi thêm dòng (không đặt `Id` bằng tay), để chỉ mục cụm không bị phân mảnh.
+- Migration `ConvertIdsToGuid` đổi dữ liệu đang có: thêm cột GUID mới cho từng dòng, ánh xạ lại mọi khóa ngoại (kể cả phiếu bầu theo
+  `TargetType`), viết lại id nằm trong chữ (đích của nhật ký quản trị, liên kết và khóa của thông báo, danh sách thẻ trong bản nháp), rồi
+  dựng lại khóa chính, chỉ mục, khóa ngoại và ràng buộc kiểm tra theo đúng tên cũ. Số thứ tự cũ không được giữ nên **không có
+  `Down`**: hãy sao lưu cơ sở dữ liệu trước khi áp dụng.
+- Các ca kiểm thử dùng `TestIds.Id(n)` để đặt tên id GUID bằng một số nhỏ cho dễ đọc.
+
 ## Endpoint M1
 
 - `GET /api/categories`: danh sách chuyên mục, sắp theo `displayOrder`, `name`, `id`.

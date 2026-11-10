@@ -13,7 +13,7 @@ interface TopicModerationDialogProps {
   categories: Category[]
   isBusy: boolean
   onClose: () => void
-  onConfirm: (reason: string, categoryId?: number) => void
+  onConfirm: (reason: string, categoryId?: string) => void
   requestError: string | null
 }
 
@@ -43,7 +43,7 @@ export const TopicModerationDialog = ({ action, categories, isBusy, onClose, onC
   const confirm = () => {
     if (!reason.trim()) { setValidationError('Vui lòng ghi lý do kiểm duyệt.'); return }
     if (action === 'move' && !categoryId) { setValidationError('Vui lòng chọn chuyên mục đích.'); return }
-    onConfirm(reason.trim(), categoryId ? Number(categoryId) : undefined)
+    onConfirm(reason.trim(), categoryId || undefined)
   }
   return (
     <>

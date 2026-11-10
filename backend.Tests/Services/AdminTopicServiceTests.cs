@@ -15,8 +15,8 @@ public sealed class AdminTopicServiceTests
     {
         var repository = new FakeTopics();
         var service = new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System);
-        var first = await service.ModerateAsync(1, "admin", new("hide", null, "Quảng cáo lặp lại"), default);
-        var second = await service.ModerateAsync(1, "admin", new("hide", null, "Quảng cáo lặp lại"), default);
+        var first = await service.ModerateAsync(TestIds.Id(1), "admin", new("hide", null, "Quảng cáo lặp lại"), default);
+        var second = await service.ModerateAsync(TestIds.Id(1), "admin", new("hide", null, "Quảng cáo lặp lại"), default);
 
         Assert.Equal(AdminTopicWriteFailure.None, first.Failure);
         Assert.Equal(AdminTopicWriteFailure.None, second.Failure);
@@ -32,7 +32,7 @@ public sealed class AdminTopicServiceTests
     {
         var repository = new FakeTopics { CanSave = false };
         var result = await new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System)
-            .ModerateAsync(1, "admin", new("lock", null, "Tạm dừng thảo luận"), default);
+            .ModerateAsync(TestIds.Id(1), "admin", new("lock", null, "Tạm dừng thảo luận"), default);
         Assert.Equal(AdminTopicWriteFailure.Conflict, result.Failure);
         Assert.Empty(repository.Notifications);
     }
@@ -42,7 +42,7 @@ public sealed class AdminTopicServiceTests
     {
         var repository = new FakeTopics();
         var result = await new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System)
-            .ModerateAsync(1, "admin", new("hide", null, "  "), default);
+            .ModerateAsync(TestIds.Id(1), "admin", new("hide", null, "  "), default);
         Assert.Equal(AdminTopicWriteFailure.Validation, result.Failure);
         Assert.Equal(0, repository.SaveCount);
     }
@@ -54,14 +54,14 @@ public sealed class AdminTopicServiceTests
         public List<Notification> Notifications { get; } = [];
         private readonly Topic topic = new()
         {
-            Id = 1, Title = "Chủ đề kiểm thử", Slug = "kiem-thu", Summary = "Tóm tắt", BodyHtml = "<p>Nội dung</p>",
+            Id = TestIds.Id(1), Title = "Chủ đề kiểm thử", Slug = "kiem-thu", Summary = "Tóm tắt", BodyHtml = "<p>Nội dung</p>",
             AuthorId = "author", Author = new() { Id = "author", DisplayName = "Tác giả" },
-            CategoryId = 1, Category = new() { Id = 1, Name = "Chuyên mục", Slug = "chuyen-muc" },
+            CategoryId = TestIds.Id(1), Category = new() { Id = TestIds.Id(1), Name = "Chuyên mục", Slug = "chuyen-muc" },
             Status = TopicStatus.Published, PublishedAtUtc = DateTimeOffset.UtcNow
         };
         public Task<AdminTopicPage> GetPageAsync(AdminTopicQuery query, TopicType? type, CancellationToken cancellationToken) => Task.FromResult(new AdminTopicPage([topic], 1));
-        public Task<Topic?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<Topic?>(topic);
-        public Task<Category?> GetActiveCategoryAsync(int id, CancellationToken cancellationToken) => Task.FromResult<Category?>(topic.Category);
+        public Task<Topic?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Topic?>(topic);
+        public Task<Category?> GetActiveCategoryAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Category?>(topic.Category);
         public Task<bool> SaveWithAuditAsync(AdminAuditLog auditLog, Notification? notification, CancellationToken cancellationToken)
         {
             if (!CanSave) return Task.FromResult(false);

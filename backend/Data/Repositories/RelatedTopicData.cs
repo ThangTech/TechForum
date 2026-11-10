@@ -3,11 +3,11 @@ using TechForum.Api.Enums;
 namespace TechForum.Api.Data.Repositories;
 
 public sealed record RelatedTopicData(
-    int Id,
+    Guid Id,
     string Title,
     string Summary,
     TopicType Type,
-    int CategoryId,
+    Guid CategoryId,
     string CategoryName,
     string CategorySlug,
     string AuthorId,

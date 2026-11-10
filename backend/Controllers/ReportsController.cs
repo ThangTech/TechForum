@@ -64,10 +64,10 @@ public sealed class ReportsController(IContentReportService reportService) : Con
             : Ok(result);
     }
 
-    [HttpPut("admin/{reportId:int}/resolution")]
+    [HttpPut("admin/{reportId:guid}/resolution")]
     [Authorize(Roles = RoleNames.Administrator)]
     public async Task<ActionResult<AdminReportDto>> Resolve(
-        int reportId,
+        Guid reportId,
         [FromBody] ResolveReportRequest request,
         CancellationToken cancellationToken)
     {

@@ -15,7 +15,7 @@ public sealed class RelatedTopicServiceTests
     {
         var service = new RelatedTopicService(new FakeRepository());
 
-        Assert.Null(await service.GetPublicRelatedAsync(1, CancellationToken.None));
+        Assert.Null(await service.GetPublicRelatedAsync(TestIds.Id(1), CancellationToken.None));
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public sealed class RelatedTopicServiceTests
     {
         var service = new RelatedTopicService(new FakeRepository { Items = [] });
 
-        Assert.Empty((await service.GetPublicRelatedAsync(1, CancellationToken.None))!);
+        Assert.Empty((await service.GetPublicRelatedAsync(TestIds.Id(1), CancellationToken.None))!);
     }
 
     [Theory]
@@ -34,17 +34,17 @@ public sealed class RelatedTopicServiceTests
         var publishedAt = new DateTimeOffset(2026, 10, 21, 1, 0, 0, TimeSpan.Zero);
         var repository = new FakeRepository
         {
-            Items = [new RelatedTopicData(2, "Nội dung liên quan", "Tóm tắt công khai", type,
-                3, "Frontend", "frontend", "member", "Thành viên", publishedAt, 2, true)]
+            Items = [new RelatedTopicData(TestIds.Id(2), "Nội dung liên quan", "Tóm tắt công khai", type,
+                TestIds.Id(3), "Frontend", "frontend", "member", "Thành viên", publishedAt, 2, true)]
         };
         var service = new RelatedTopicService(repository);
 
-        var result = Assert.Single((await service.GetPublicRelatedAsync(1, CancellationToken.None))!);
+        var result = Assert.Single((await service.GetPublicRelatedAsync(TestIds.Id(1), CancellationToken.None))!);
 
         Assert.Equal(4, repository.RequestedLimit);
-        Assert.Equal(1, repository.RequestedTopicId);
+        Assert.Equal(TestIds.Id(1), repository.RequestedTopicId);
         Assert.Equal(expectedType, result.Type);
-        Assert.Equal(new TopicCategoryDto(3, "Frontend", "frontend"), result.Category);
+        Assert.Equal(new TopicCategoryDto(TestIds.Id(3), "Frontend", "frontend"), result.Category);
         Assert.Equal(new TopicAuthorDto("member", "Thành viên"), result.Author);
         Assert.Equal(publishedAt, result.PublishedAtUtc);
         Assert.Equal(2, result.SharedTagCount);
@@ -56,7 +56,7 @@ public sealed class RelatedTopicServiceTests
     {
         var controller = new RelatedTopicsController(new RelatedTopicService(new FakeRepository()));
 
-        var response = await controller.Get(1, CancellationToken.None);
+        var response = await controller.Get(TestIds.Id(1), CancellationToken.None);
 
         var result = Assert.IsType<NotFoundObjectResult>(response.Result);
         Assert.Equal(404, Assert.IsType<ProblemDetails>(result.Value).Status);
@@ -65,11 +65,11 @@ public sealed class RelatedTopicServiceTests
     private sealed class FakeRepository : IRelatedTopicRepository
     {
         public IReadOnlyList<RelatedTopicData>? Items { get; init; }
-        public int RequestedTopicId { get; private set; }
+        public Guid RequestedTopicId { get; private set; }
         public int RequestedLimit { get; private set; }
 
         public Task<IReadOnlyList<RelatedTopicData>?> GetPublicRelatedAsync(
-            int topicId, int limit, CancellationToken cancellationToken)
+            Guid topicId, int limit, CancellationToken cancellationToken)
         {
             RequestedTopicId = topicId;
             RequestedLimit = limit;

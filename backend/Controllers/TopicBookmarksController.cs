@@ -7,11 +7,11 @@ using TechForum.Api.Services;
 namespace TechForum.Api.Controllers;
 
 [ApiController]
-[Route("api/topics/{topicId:int}/bookmark")]
+[Route("api/topics/{topicId:guid}/bookmark")]
 public sealed class TopicBookmarksController(ITopicBookmarkService bookmarkService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<BookmarkStatusDto>> Get(int topicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<BookmarkStatusDto>> Get(Guid topicId, CancellationToken cancellationToken)
     {
         var result = await bookmarkService.GetStatusAsync(topicId, User.GetUserIdOrNull(), cancellationToken);
         return result is null ? TopicNotFound() : Ok(result);
@@ -19,7 +19,7 @@ public sealed class TopicBookmarksController(ITopicBookmarkService bookmarkServi
 
     [Authorize]
     [HttpPut]
-    public async Task<ActionResult<BookmarkStatusDto>> Add(int topicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<BookmarkStatusDto>> Add(Guid topicId, CancellationToken cancellationToken)
     {
         var result = await bookmarkService.AddAsync(topicId, User.GetRequiredUserId(), cancellationToken);
         return result is null ? TopicNotFound() : Ok(result);
@@ -27,7 +27,7 @@ public sealed class TopicBookmarksController(ITopicBookmarkService bookmarkServi
 
     [Authorize]
     [HttpDelete]
-    public async Task<ActionResult<BookmarkStatusDto>> Remove(int topicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<BookmarkStatusDto>> Remove(Guid topicId, CancellationToken cancellationToken)
     {
         var result = await bookmarkService.RemoveAsync(topicId, User.GetRequiredUserId(), cancellationToken);
         return result is null ? TopicNotFound() : Ok(result);

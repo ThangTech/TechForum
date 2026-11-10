@@ -32,7 +32,7 @@ public sealed class VoteRepository(TechForumDbContext dbContext) : IVoteReposito
     public async Task<int> GetMyVoteAsync(
         string userId,
         VoteTargetType targetType,
-        int targetId,
+        Guid targetId,
         CancellationToken cancellationToken) =>
         await dbContext.UserVotes.AsNoTracking()
             .Where(vote => vote.UserId == userId && vote.TargetType == targetType && vote.TargetId == targetId)

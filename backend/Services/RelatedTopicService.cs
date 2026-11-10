@@ -7,7 +7,7 @@ namespace TechForum.Api.Services;
 public sealed class RelatedTopicService(IRelatedTopicRepository repository) : IRelatedTopicService
 {
     public async Task<IReadOnlyList<RelatedTopicDto>?> GetPublicRelatedAsync(
-        int topicId,
+        Guid topicId,
         CancellationToken cancellationToken)
     {
         var topics = await repository.GetPublicRelatedAsync(topicId, 4, cancellationToken);

@@ -38,7 +38,7 @@ public sealed class ProfanityFilterAttributeTests
     {
         var request = new CreateTopicRequest(
             "What the foobar is DI", "A bazqux summary that is long enough", "<p>Body with <b>bazqux</b> and <a href=\"/foobar\">a link</a></p>",
-            "article", 1, [1], [], true);
+            "article", TestIds.Id(1), [TestIds.Id(1)], [], true);
 
         await RunAsync(request);
 
@@ -50,26 +50,26 @@ public sealed class ProfanityFilterAttributeTests
     [Fact]
     public async Task OnActionExecution_LeavesTheUnmarkedValuesAlone()
     {
-        var request = new CreateTopicRequest("Title", "Summary long enough", "<p>ok</p>", "article", 7, [1, 2], [], true);
+        var request = new CreateTopicRequest("Title", "Summary long enough", "<p>ok</p>", "article", TestIds.Id(7), [TestIds.Id(1), TestIds.Id(2)], [], true);
 
         await RunAsync(request);
 
         Assert.Equal("article", request.Type);
-        Assert.Equal(7, request.CategoryId);
-        Assert.Equal([1, 2], request.TagIds);
+        Assert.Equal(TestIds.Id(7), request.CategoryId);
+        Assert.Equal([TestIds.Id(1), TestIds.Id(2)], request.TagIds);
         Assert.True(request.Publish);
     }
 
     [Fact]
     public async Task OnActionExecution_CleansAnAnswerAndAnUpdate()
     {
-        var answer = new CreateAnswerRequest("<p>you are bazqux</p>", 5);
-        var update = new UpdateTopicRequest("foobar", "summary", "<p>bazqux</p>", "question", 1, [], [], false);
+        var answer = new CreateAnswerRequest("<p>you are bazqux</p>", TestIds.Id(5));
+        var update = new UpdateTopicRequest("foobar", "summary", "<p>bazqux</p>", "question", TestIds.Id(1), [], [], false);
 
         await RunAsync(answer, update);
 
         Assert.Equal("<p>you are ***</p>", answer.BodyHtml);
-        Assert.Equal(5, answer.ParentAnswerId);
+        Assert.Equal(TestIds.Id(5), answer.ParentAnswerId);
         Assert.Equal("***", update.Title);
         Assert.Equal("<p>***</p>", update.BodyHtml);
     }

@@ -12,7 +12,7 @@ public sealed class UserSkillService(
 
     public async Task<UserSkillResult> ReplaceAsync(
         string userId,
-        IReadOnlyCollection<int> tagIds,
+        IReadOnlyCollection<Guid> tagIds,
         CancellationToken cancellationToken)
     {
         // The same tag sent twice counts once.

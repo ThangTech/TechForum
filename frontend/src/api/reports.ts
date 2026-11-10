@@ -5,15 +5,15 @@ export type ReportReason = 'spam' | 'harassment' | 'misinformation' | 'copyright
 
 export interface CreateReportInput {
   targetType: ReportTargetType
-  targetId: number
+  targetId: string
   reason: ReportReason
   details: string | null
 }
 
 export interface ReportReceipt {
-  id: number
+  id: string
   targetType: ReportTargetType
-  targetId: number
+  targetId: string
   reason: ReportReason
   details: string | null
   status: 'pending'
@@ -28,9 +28,9 @@ export interface ReportUser {
 }
 
 export interface AdminReport {
-  id: number
+  id: string
   targetType: ReportTargetType
-  targetId: number
+  targetId: string
   targetTitle: string
   targetBodyHtml: string
   reporter: ReportUser
@@ -41,7 +41,7 @@ export interface AdminReport {
   resolvedBy: ReportUser | null
   resolvedAtUtc: string | null
   resolutionNote: string | null
-  topicId: number
+  topicId: string
   targetAuthor: ReportUser
   isTargetHidden: boolean
   isTargetDeleted: boolean
@@ -49,10 +49,10 @@ export interface AdminReport {
 }
 
 export interface MyReport {
-  id: number
+  id: string
   targetType: ReportTargetType
-  targetId: number
-  topicId: number | null
+  targetId: string
+  topicId: string | null
   targetTitle: string | null
   reason: ReportReason
   details: string | null
@@ -97,9 +97,9 @@ const isReportUser = (value: unknown): value is ReportUser =>
 
 const isAdminReport = (value: unknown): value is AdminReport =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   (value.targetType === 'topic' || value.targetType === 'answer') &&
-  typeof value.targetId === 'number' &&
+  typeof value.targetId === 'string' &&
   typeof value.targetTitle === 'string' &&
   typeof value.targetBodyHtml === 'string' &&
   isReportUser(value.reporter) &&
@@ -110,15 +110,15 @@ const isAdminReport = (value: unknown): value is AdminReport =>
   (value.resolvedBy === null || isReportUser(value.resolvedBy)) &&
   (value.resolvedAtUtc === null || typeof value.resolvedAtUtc === 'string') &&
   (value.resolutionNote === null || typeof value.resolutionNote === 'string') &&
-  typeof value.topicId === 'number' && isReportUser(value.targetAuthor) &&
+  typeof value.topicId === 'string' && isReportUser(value.targetAuthor) &&
   typeof value.isTargetHidden === 'boolean' && typeof value.isTargetDeleted === 'boolean' &&
   (value.parentAnswerBodyHtml === null || typeof value.parentAnswerBodyHtml === 'string')
 
 const isMyReport = (value: unknown): value is MyReport =>
-  isRecord(value) && typeof value.id === 'number' &&
+  isRecord(value) && typeof value.id === 'string' &&
   (value.targetType === 'topic' || value.targetType === 'answer') &&
-  typeof value.targetId === 'number' &&
-  (value.topicId === null || typeof value.topicId === 'number') &&
+  typeof value.targetId === 'string' &&
+  (value.topicId === null || typeof value.topicId === 'string') &&
   (value.targetTitle === null || typeof value.targetTitle === 'string') &&
   isReportReason(value.reason) &&
   (value.details === null || typeof value.details === 'string') &&
@@ -130,9 +130,9 @@ const isMyReport = (value: unknown): value is MyReport =>
 const parseReportReceipt = (data: unknown): ReportReceipt => {
   if (
     !isRecord(data) ||
-    typeof data.id !== 'number' ||
+    typeof data.id !== 'string' ||
     (data.targetType !== 'topic' && data.targetType !== 'answer') ||
-    typeof data.targetId !== 'number' ||
+    typeof data.targetId !== 'string' ||
     !isReportReason(data.reason) ||
     (data.details !== null && typeof data.details !== 'string') ||
     data.status !== 'pending' ||
@@ -174,7 +174,7 @@ export const getAdminReports = async (
 }
 
 export const resolveReport = async (
-  reportId: number,
+  reportId: string,
   decision: 'accepted' | 'rejected',
   resolutionNote: string,
 ): Promise<AdminReport> => {

@@ -21,6 +21,7 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
+import { isGuid } from '../utils/ids'
 
 const PAGE_SIZE = 10
 const readPage = (value: string | null) => {
@@ -39,9 +40,9 @@ export const AdminTopicsPage = () => {
       ? (params.get('type') as 'article' | 'question')
       : ''
   const visibility = readVisibility(params.get('visibility'))
-  const categoryValue = Number(params.get('categoryId'))
-  const categoryId = Number.isInteger(categoryValue) && categoryValue > 0 ? categoryValue : undefined
-  const [previewId, setPreviewId] = useState<number | null>(null)
+  const categoryValue = params.get('categoryId')
+  const categoryId = isGuid(categoryValue) ? categoryValue.toLowerCase() : undefined
+  const [previewId, setPreviewId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ topic: AdminTopic; action: ModerationAction } | null>(null)
@@ -77,7 +78,7 @@ export const AdminTopicsPage = () => {
       categoryId: String(fields.get('categoryId') ?? ''),
     })
   }
-  const apply = async (reason: string, categoryId?: number) => {
+  const apply = async (reason: string, categoryId?: string) => {
     if (!selected || isSaving) return
     setActionError(null)
     setSuccess(null)

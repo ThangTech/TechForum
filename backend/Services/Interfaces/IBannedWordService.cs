@@ -9,5 +9,5 @@ public interface IBannedWordService
 
     Task<BannedWordWriteResult> AddAsync(string administratorId, SaveBannedWordRequest request, CancellationToken cancellationToken);
 
-    Task<BannedWordWriteResult> RemoveAsync(string administratorId, int id, CancellationToken cancellationToken);
+    Task<BannedWordWriteResult> RemoveAsync(string administratorId, Guid id, CancellationToken cancellationToken);
 }

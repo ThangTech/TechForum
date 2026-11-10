@@ -173,11 +173,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.AdminAuditLog", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Action")
                         .IsRequired()
@@ -226,11 +224,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.Answer", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AuthorId")
                         .IsRequired()
@@ -250,14 +246,14 @@ namespace TechForum.Api.Data.Migrations
                     b.Property<bool>("IsHiddenByModerator")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("ParentAnswerId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("ParentAnswerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Score")
                         .HasColumnType("int");
 
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("UpdatedAtUtc")
                         .HasColumnType("datetimeoffset");
@@ -277,8 +273,8 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.AnswerHelpfulVote", b =>
                 {
-                    b.Property<int>("AnswerId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("AnswerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("UserId")
                         .HasMaxLength(450)
@@ -384,11 +380,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.BannedWord", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
@@ -408,11 +402,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.Banner", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
@@ -452,11 +444,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.Category", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -490,14 +480,12 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.ContentReport", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AnswerId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("AnswerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
@@ -532,8 +520,8 @@ namespace TechForum.Api.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int?>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -569,8 +557,8 @@ namespace TechForum.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.PrimitiveCollection<string>("MediaIds")
                         .IsRequired()
@@ -590,8 +578,8 @@ namespace TechForum.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int?>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -643,8 +631,8 @@ namespace TechForum.Api.Data.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
-                    b.Property<int?>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("UploaderId")
                         .IsRequired()
@@ -668,11 +656,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.Notification", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
@@ -722,11 +708,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.RefreshToken", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
@@ -763,11 +747,9 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.Tag", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
                         .HasMaxLength(300)
@@ -796,14 +778,12 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.Topic", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AcceptedAnswerId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("AcceptedAnswerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AuthorId")
                         .IsRequired()
@@ -814,8 +794,8 @@ namespace TechForum.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("CoverImageUrl")
                         .HasMaxLength(300)
@@ -896,8 +876,8 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.TopicBookmark", b =>
                 {
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("UserId")
                         .HasMaxLength(450)
@@ -915,8 +895,8 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.TopicStar", b =>
                 {
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("UserId")
                         .HasMaxLength(450)
@@ -936,11 +916,11 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.TopicTag", b =>
                 {
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("TagId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("TopicId", "TagId");
 
@@ -951,8 +931,8 @@ namespace TechForum.Api.Data.Migrations
 
             modelBuilder.Entity("TechForum.Api.Models.TopicView", b =>
                 {
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("VisitorKeyHash")
                         .HasMaxLength(64)
@@ -1000,8 +980,8 @@ namespace TechForum.Api.Data.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("TagId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");
@@ -1022,8 +1002,8 @@ namespace TechForum.Api.Data.Migrations
                     b.Property<int>("TargetType")
                         .HasColumnType("int");
 
-                    b.Property<int>("TargetId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("datetimeoffset");

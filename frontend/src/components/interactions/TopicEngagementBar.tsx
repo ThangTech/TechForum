@@ -13,7 +13,7 @@ import { IconActionButton } from '../common/IconActionButton'
 
 interface TopicEngagementBarProps {
   title: string
-  topicId: number
+  topicId: string
 }
 
 export const TopicEngagementBar = ({ title, topicId }: TopicEngagementBarProps) => {

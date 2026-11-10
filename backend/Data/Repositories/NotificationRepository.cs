@@ -38,7 +38,7 @@ public sealed class NotificationRepository(TechForumDbContext dbContext) : INoti
         return true;
     }
 
-    public Task<Notification?> GetUnreadAsync(long id, string userId, CancellationToken cancellationToken) =>
+    public Task<Notification?> GetUnreadAsync(Guid id, string userId, CancellationToken cancellationToken) =>
         dbContext.Notifications.SingleOrDefaultAsync(
             notification => notification.Id == id && notification.UserId == userId && notification.ReadAtUtc == null,
             cancellationToken);

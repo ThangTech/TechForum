@@ -23,7 +23,7 @@ public sealed record AdminActivityData(
     DateTime Date, int NewMemberCount, int ArticleCount, int QuestionCount, int AnswerCount);
 
 public sealed record AdminCategoryActivityData(
-    int CategoryId, string CategoryName, int ArticleCount, int QuestionCount);
+    Guid CategoryId, string CategoryName, int ArticleCount, int QuestionCount);
 
 public sealed record AdminQuestionStatisticsData(
     int TotalCount, int UnansweredCount, int UnsolvedCount, int SolvedCount);

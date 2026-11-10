@@ -1,7 +1,7 @@
 import { ApiError, apiRequest } from './client'
 
 export interface AdminTag {
-  id: number
+  id: string
   name: string
   slug: string
   description: string | null
@@ -20,7 +20,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isAdminTag = (value: unknown): value is AdminTag =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.name === 'string' &&
   typeof value.slug === 'string' &&
   (value.description === null || typeof value.description === 'string') &&
@@ -46,13 +46,13 @@ export const createAdminTag = async (input: SaveTagInput): Promise<AdminTag> =>
     body: JSON.stringify(input),
   }))
 
-export const updateAdminTag = async (id: number, input: SaveTagInput): Promise<AdminTag> =>
+export const updateAdminTag = async (id: string, input: SaveTagInput): Promise<AdminTag> =>
   parseTag(await apiRequest(`/api/admin/tags/${id}`, {
     method: 'PUT',
     body: JSON.stringify(input),
   }))
 
-export const setAdminTagActive = async (id: number, isActive: boolean): Promise<AdminTag> =>
+export const setAdminTagActive = async (id: string, isActive: boolean): Promise<AdminTag> =>
   parseTag(await apiRequest(`/api/admin/tags/${id}/active`, {
     method: 'PUT',
     body: JSON.stringify({ isActive }),

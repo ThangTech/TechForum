@@ -9,7 +9,7 @@ import { VoteControl } from './VoteControl'
 import { getNextVote, type VoteDirection } from './voteLogic'
 
 // The vote ▲ ▼ of a post. A guest who presses an arrow is asked to sign in; the author cannot vote for their own post.
-export const TopicVoteButtons = ({ topicId, authorId }: { topicId: number; authorId: string }) => {
+export const TopicVoteButtons = ({ topicId, authorId }: { topicId: string; authorId: string }) => {
   const { user } = useAuth()
   const voteQuery = useTopicVote(topicId)
   const setVote = useSetTopicVote(topicId)

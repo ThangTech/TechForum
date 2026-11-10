@@ -6,7 +6,7 @@ namespace TechForum.Api.Data.Repositories;
 public sealed class SkillCommunityRepository(TechForumDbContext dbContext) : ISkillCommunityRepository
 {
     public async Task<SkillCommunityData?> GetAsync(
-        int tagId,
+        Guid tagId,
         int page,
         int pageSize,
         CancellationToken cancellationToken)

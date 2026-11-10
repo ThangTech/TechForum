@@ -1,7 +1,7 @@
 import { apiRequest } from './client'
 
 export interface Category {
-  id: number
+  id: string
   name: string
   slug: string
   description: string | null
@@ -15,7 +15,7 @@ const isCategory = (value: unknown): value is Category => {
 
   const category = value as Record<string, unknown>
   return (
-    typeof category.id === 'number' &&
+    typeof category.id === 'string' &&
     typeof category.name === 'string' &&
     typeof category.slug === 'string' &&
     (typeof category.description === 'string' || category.description === null) &&

@@ -18,7 +18,7 @@ export const estimateReadingMinutes = (text: string, imageCount = 0): number => 
 }
 
 // HTML được backend làm sạch trước khi lưu; DOMParser chỉ bổ sung điểm đến cho mục lục.
-export const prepareReadingContent = (html: string, topicId: number): PreparedReadingContent => {
+export const prepareReadingContent = (html: string, topicId: string): PreparedReadingContent => {
   const document = new DOMParser().parseFromString(html, 'text/html')
   const headings: ReadingHeading[] = []
   const usedIds = new Set(Array.from(document.querySelectorAll('[id]'), (element) => element.id))

@@ -5,9 +5,9 @@ namespace TechForum.Api.Data.Repositories;
 public interface ITopicEngagementRepository
 {
     Task<TopicEngagementDto?> RecordViewAsync(
-        int topicId,
+        Guid topicId,
         string visitorKeyHash,
         DateTimeOffset viewedAtUtc,
         CancellationToken cancellationToken);
-    Task<TopicEngagementDto?> RecordShareAsync(int topicId, CancellationToken cancellationToken);
+    Task<TopicEngagementDto?> RecordShareAsync(Guid topicId, CancellationToken cancellationToken);
 }

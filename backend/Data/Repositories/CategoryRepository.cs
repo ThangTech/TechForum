@@ -17,7 +17,7 @@ public sealed class CategoryRepository(TechForumDbContext dbContext) : ICategory
             .ToListAsync(cancellationToken);
     }
 
-    public Task<Category?> GetByIdAsync(int id, CancellationToken cancellationToken)
+    public Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return dbContext.Categories
             .AsNoTracking()
@@ -35,13 +35,13 @@ public sealed class CategoryRepository(TechForumDbContext dbContext) : ICategory
                 dbContext.Topics.Count(topic => topic.CategoryId == category.Id)))
             .ToListAsync(cancellationToken);
 
-    public Task<Category?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken) =>
+    public Task<Category?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Categories.SingleOrDefaultAsync(category => category.Id == id, cancellationToken);
 
-    public Task<int> GetTopicCountAsync(int id, CancellationToken cancellationToken) =>
+    public Task<int> GetTopicCountAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Topics.CountAsync(topic => topic.CategoryId == id, cancellationToken);
 
-    public Task<bool> SlugExistsAsync(string slug, int? exceptId, CancellationToken cancellationToken) =>
+    public Task<bool> SlugExistsAsync(string slug, Guid? exceptId, CancellationToken cancellationToken) =>
         dbContext.Categories.AnyAsync(
             category => category.Slug == slug && (!exceptId.HasValue || category.Id != exceptId.Value),
             cancellationToken);

@@ -23,5 +23,5 @@ public interface IUserSkillService
 
     Task<IReadOnlyList<SkillTagDto>> GetAsync(string userId, CancellationToken cancellationToken);
 
-    Task<UserSkillResult> ReplaceAsync(string userId, IReadOnlyCollection<int> tagIds, CancellationToken cancellationToken);
+    Task<UserSkillResult> ReplaceAsync(string userId, IReadOnlyCollection<Guid> tagIds, CancellationToken cancellationToken);
 }

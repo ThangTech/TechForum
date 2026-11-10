@@ -16,7 +16,7 @@ public sealed class TagRepository(TechForumDbContext dbContext) : ITagRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<Tag?> GetActiveByIdAsync(int id, CancellationToken cancellationToken)
+    public Task<Tag?> GetActiveByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return dbContext.Tags
             .AsNoTracking()
@@ -33,13 +33,13 @@ public sealed class TagRepository(TechForumDbContext dbContext) : ITagRepository
                 dbContext.TopicTags.Count(topicTag => topicTag.TagId == tag.Id)))
             .ToListAsync(cancellationToken);
 
-    public Task<Tag?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken) =>
+    public Task<Tag?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Tags.SingleOrDefaultAsync(tag => tag.Id == id, cancellationToken);
 
-    public Task<int> GetTopicCountAsync(int id, CancellationToken cancellationToken) =>
+    public Task<int> GetTopicCountAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.TopicTags.CountAsync(topicTag => topicTag.TagId == id, cancellationToken);
 
-    public Task<bool> SlugExistsAsync(string slug, int? exceptId, CancellationToken cancellationToken) =>
+    public Task<bool> SlugExistsAsync(string slug, Guid? exceptId, CancellationToken cancellationToken) =>
         dbContext.Tags.AnyAsync(
             tag => tag.Slug == slug && (!exceptId.HasValue || tag.Id != exceptId.Value),
             cancellationToken);

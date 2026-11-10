@@ -9,7 +9,7 @@ export interface AdminStatistics {
 }
 
 export interface AdminAuditLog {
-  id: number
+  id: string
   administrator: { id: string; displayName: string }
   action: string
   targetType: string
@@ -42,7 +42,7 @@ export interface AdminDashboard {
     answerCount: number
   }[]
   categories: {
-    categoryId: number
+    categoryId: string
     categoryName: string
     articleCount: number
     questionCount: number
@@ -52,9 +52,9 @@ export interface AdminDashboard {
   pendingReports: {
     count: number
     oldest: {
-      id: number
+      id: string
       targetType: string
-      targetId: number
+      targetId: string
       targetTitle: string
       reason: string
       reporter: { id: string; displayName: string }
@@ -78,7 +78,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 const isAuditLog = (value: unknown): value is AdminAuditLog =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   isRecord(value.administrator) &&
   typeof value.administrator.id === 'string' &&
   typeof value.administrator.displayName === 'string' &&
@@ -174,9 +174,9 @@ export const getAdminDashboard = async (
     !data.pendingReports.oldest.every(
       (item) =>
         isRecord(item) &&
-        typeof item.id === 'number' &&
+        typeof item.id === 'string' &&
         typeof item.targetType === 'string' &&
-        typeof item.targetId === 'number' &&
+        typeof item.targetId === 'string' &&
         typeof item.targetTitle === 'string' &&
         typeof item.reason === 'string' &&
         typeof item.createdAtUtc === 'string' &&

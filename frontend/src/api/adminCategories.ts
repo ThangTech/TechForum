@@ -1,7 +1,7 @@
 import { ApiError, apiRequest } from './client'
 
 export interface AdminCategory {
-  id: number
+  id: string
   name: string
   slug: string
   description: string | null
@@ -22,7 +22,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isAdminCategory = (value: unknown): value is AdminCategory =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.name === 'string' &&
   typeof value.slug === 'string' &&
   (value.description === null || typeof value.description === 'string') &&
@@ -52,7 +52,7 @@ export const createAdminCategory = async (input: SaveCategoryInput): Promise<Adm
   }))
 
 export const updateAdminCategory = async (
-  id: number,
+  id: string,
   input: SaveCategoryInput,
 ): Promise<AdminCategory> => parseCategory(await apiRequest(`/api/admin/categories/${id}`, {
   method: 'PUT',
@@ -60,7 +60,7 @@ export const updateAdminCategory = async (
 }))
 
 export const setAdminCategoryActive = async (
-  id: number,
+  id: string,
   isActive: boolean,
 ): Promise<AdminCategory> => parseCategory(await apiRequest(`/api/admin/categories/${id}/active`, {
   method: 'PUT',

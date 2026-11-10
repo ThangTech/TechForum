@@ -11,8 +11,8 @@ const parseEngagement = (data: unknown): TopicEngagement => {
   return data as TopicEngagement
 }
 
-export const recordTopicView = async (topicId: number, signal?: AbortSignal): Promise<TopicEngagement> =>
+export const recordTopicView = async (topicId: string, signal?: AbortSignal): Promise<TopicEngagement> =>
   parseEngagement(await apiRequest(`/api/topics/${topicId}/view`, { method: 'POST', signal }))
 
-export const recordTopicShare = async (topicId: number): Promise<TopicEngagement> =>
+export const recordTopicShare = async (topicId: string): Promise<TopicEngagement> =>
   parseEngagement(await apiRequest(`/api/topics/${topicId}/share`, { method: 'POST' }))

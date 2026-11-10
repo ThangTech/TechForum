@@ -10,7 +10,7 @@ public interface IAdminTopicRepository
         AdminTopicQuery query,
         TopicType? type,
         CancellationToken cancellationToken);
-    Task<Topic?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken);
-    Task<Category?> GetActiveCategoryAsync(int id, CancellationToken cancellationToken);
+    Task<Topic?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<Category?> GetActiveCategoryAsync(Guid id, CancellationToken cancellationToken);
     Task<bool> SaveWithAuditAsync(AdminAuditLog auditLog, Notification? notification, CancellationToken cancellationToken);
 }

@@ -3,7 +3,7 @@ namespace TechForum.Api.Dtos;
 public sealed record BookmarkStatusDto(int Count, bool HasBookmark);
 
 public sealed record SavedTopicDto(
-    int Id,
+    Guid Id,
     string Title,
     string Summary,
     string Type,

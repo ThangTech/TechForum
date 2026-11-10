@@ -7,7 +7,7 @@ public sealed record UpdateTopicRequest(
     [property: FilterProfanity] string? Summary,
     [property: FilterProfanity(IsHtml = true)] string? BodyHtml,
     string? Type,
-    int CategoryId,
-    IReadOnlyList<int>? TagIds,
+    Guid CategoryId,
+    IReadOnlyList<Guid>? TagIds,
     IReadOnlyList<Guid>? MediaIds,
     bool Publish);

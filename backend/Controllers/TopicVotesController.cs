@@ -8,13 +8,13 @@ namespace TechForum.Api.Controllers;
 
 // The upvotes and downvotes of a post. The sum is its score; the author earns reputation (see ReputationRules).
 [ApiController]
-[Route("api/topics/{topicId:int}/vote")]
+[Route("api/topics/{topicId:guid}/vote")]
 public sealed class TopicVotesController(IVoteService voteService) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<VoteDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<VoteDto>> Get(int topicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<VoteDto>> Get(Guid topicId, CancellationToken cancellationToken)
     {
         var vote = await voteService.GetTopicVoteAsync(topicId, User.GetUserIdOrNull(), cancellationToken);
         return vote is null ? NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy nội dung" }) : Ok(vote);
@@ -29,7 +29,7 @@ public sealed class TopicVotesController(IVoteService voteService) : ControllerB
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<VoteDto>> Set(
-        int topicId,
+        Guid topicId,
         [FromBody] SetVoteRequest request,
         CancellationToken cancellationToken) =>
         this.ToVoteResponse(await voteService.SetTopicVoteAsync(topicId, User.GetRequiredUserId(), request.Value, cancellationToken));

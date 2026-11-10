@@ -6,7 +6,7 @@ const snapshot = (overrides: Partial<DraftSnapshot> = {}): DraftSnapshot => ({
   summary: '',
   bodyHtml: '',
   type: 'article',
-  categoryId: 1,
+  categoryId: 'category-1',
   tagIds: [],
   mediaIds: [],
   ...overrides,
@@ -20,8 +20,8 @@ describe('getSnapshotKey', () => {
   })
 
   it('does not depend on the order of tags and media', () => {
-    expect(getSnapshotKey(snapshot({ tagIds: [3, 1, 2], mediaIds: ['b', 'a'] })))
-      .toBe(getSnapshotKey(snapshot({ tagIds: [1, 2, 3], mediaIds: ['a', 'b'] })))
+    expect(getSnapshotKey(snapshot({ tagIds: ['t3', 't1', 't2'], mediaIds: ['b', 'a'] })))
+      .toBe(getSnapshotKey(snapshot({ tagIds: ['t1', 't2', 't3'], mediaIds: ['a', 'b'] })))
   })
 })
 
@@ -39,7 +39,7 @@ describe('isBlankSnapshot', () => {
   })
 
   it('does not count the category or tags, which are chosen before anything is written', () => {
-    expect(isBlankSnapshot(snapshot({ categoryId: 3, tagIds: [1, 2] }))).toBe(true)
+    expect(isBlankSnapshot(snapshot({ categoryId: 'category-3', tagIds: ['t1', 't2'] }))).toBe(true)
   })
 })
 

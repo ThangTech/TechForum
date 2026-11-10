@@ -7,6 +7,7 @@ import type { TopicSummary } from '../../api/topics'
 import { toMediaUrl } from '../../api/media'
 import { appRoutes } from '../../appRoutes'
 import { isInitialLoading } from '../../queries/status'
+import { hashId } from '../../utils/ids'
 import { useTopicFeed } from '../../queries/topics'
 import { TagCover } from './TagCover'
 
@@ -36,7 +37,7 @@ const NewsCard = ({ topic }: { topic: TopicSummary }) => (
           aspectRatio: '16 / 9',
           overflow: 'hidden',
           borderRadius: '6px',
-          background: fallbackGradients[topic.id % fallbackGradients.length],
+          background: fallbackGradients[hashId(topic.id) % fallbackGradients.length],
         }}
       >
         {topic.coverImageUrl

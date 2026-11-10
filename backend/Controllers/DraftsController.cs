@@ -16,7 +16,7 @@ public sealed class DraftsController(IDraftService draftService) : ControllerBas
     [HttpGet]
     [ProducesResponseType<DraftDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<ActionResult<DraftDto>> Get([FromQuery] int? topicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<DraftDto>> Get([FromQuery] Guid? topicId, CancellationToken cancellationToken)
     {
         var draft = await draftService.GetAsync(User.GetRequiredUserId(), topicId, cancellationToken);
         return draft is null ? NoContent() : Ok(draft);
@@ -52,7 +52,7 @@ public sealed class DraftsController(IDraftService draftService) : ControllerBas
 
     [HttpDelete]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Delete([FromQuery] int? topicId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete([FromQuery] Guid? topicId, CancellationToken cancellationToken)
     {
         await draftService.DeleteAsync(User.GetRequiredUserId(), topicId, cancellationToken);
         return NoContent();

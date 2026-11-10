@@ -4,10 +4,10 @@ namespace TechForum.Api.Models;
 
 public sealed class ContentReport
 {
-    public int Id { get; set; }
-    public int? TopicId { get; set; }
+    public Guid Id { get; set; }
+    public Guid? TopicId { get; set; }
     public Topic? Topic { get; set; }
-    public int? AnswerId { get; set; }
+    public Guid? AnswerId { get; set; }
     public Answer? Answer { get; set; }
     public required string ReporterId { get; set; }
     public ApplicationUser Reporter { get; set; } = null!;

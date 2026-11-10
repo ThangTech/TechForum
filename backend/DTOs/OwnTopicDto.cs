@@ -1,7 +1,7 @@
 namespace TechForum.Api.Dtos;
 
 public sealed record OwnTopicDto(
-    int Id,
+    Guid Id,
     string Title,
     string Slug,
     string Summary,

@@ -47,13 +47,13 @@ public sealed class AdminTopicRepository(TechForumDbContext dbContext) : IAdminT
         return new AdminTopicPage(items, totalItems);
     }
 
-    public Task<Topic?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken) =>
+    public Task<Topic?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Topics
             .Include(topic => topic.Category)
             .Include(topic => topic.Author)
             .SingleOrDefaultAsync(topic => topic.Id == id, cancellationToken);
 
-    public Task<Category?> GetActiveCategoryAsync(int id, CancellationToken cancellationToken) =>
+    public Task<Category?> GetActiveCategoryAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Categories.SingleOrDefaultAsync(
             category => category.Id == id && category.IsActive,
             cancellationToken);
@@ -61,7 +61,7 @@ public sealed class AdminTopicRepository(TechForumDbContext dbContext) : IAdminT
     public async Task<bool> SaveWithAuditAsync(AdminAuditLog auditLog, Notification? notification, CancellationToken cancellationToken)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        var topicId = int.Parse(auditLog.TargetId);
+        var topicId = Guid.Parse(auditLog.TargetId);
         // Giữ khóa cập nhật đến khi commit để hai quản trị viên không lưu đè cùng trạng thái.
         var current = await dbContext.Topics
             .FromSqlInterpolated($"SELECT * FROM [Topics] WITH (UPDLOCK) WHERE [Id] = {topicId}")

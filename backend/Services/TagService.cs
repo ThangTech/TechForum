@@ -12,7 +12,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
         return tags.Select(MapToDto).ToList();
     }
 
-    public async Task<TagDto?> GetActiveByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<TagDto?> GetActiveByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var tag = await tagRepository.GetActiveByIdAsync(id, cancellationToken);
         return tag is null ? null : MapToDto(tag);
@@ -60,7 +60,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
 
     public async Task<TagWriteResult> UpdateAsync(
         string administratorId,
-        int id,
+        Guid id,
         SaveTagRequest request,
         CancellationToken cancellationToken)
     {
@@ -95,7 +95,7 @@ public sealed class TagService(ITagRepository tagRepository, IAdminAuditService 
 
     public async Task<TagWriteResult> SetActiveAsync(
         string administratorId,
-        int id,
+        Guid id,
         bool isActive,
         CancellationToken cancellationToken)
     {

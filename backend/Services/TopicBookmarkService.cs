@@ -11,7 +11,7 @@ public sealed class TopicBookmarkService(
     TimeProvider timeProvider) : ITopicBookmarkService
 {
     public async Task<BookmarkStatusDto?> GetStatusAsync(
-        int topicId,
+        Guid topicId,
         string? userId,
         CancellationToken cancellationToken)
     {
@@ -23,7 +23,7 @@ public sealed class TopicBookmarkService(
     }
 
     public async Task<BookmarkStatusDto?> AddAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         CancellationToken cancellationToken)
     {
@@ -36,7 +36,7 @@ public sealed class TopicBookmarkService(
     }
 
     public async Task<BookmarkStatusDto?> RemoveAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         CancellationToken cancellationToken)
     {
@@ -70,7 +70,7 @@ public sealed class TopicBookmarkService(
     }
 
     private async Task<BookmarkStatusDto> GetStatusCoreAsync(
-        int topicId,
+        Guid topicId,
         string? userId,
         CancellationToken cancellationToken)
     {

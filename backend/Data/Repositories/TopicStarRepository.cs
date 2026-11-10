@@ -6,11 +6,11 @@ namespace TechForum.Api.Data.Repositories;
 
 public sealed class TopicStarRepository(TechForumDbContext dbContext) : ITopicStarRepository
 {
-    public Task<int> CountAsync(int topicId, CancellationToken cancellationToken) =>
+    public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken) =>
         dbContext.TopicStars.CountAsync(star => star.TopicId == topicId, cancellationToken);
 
     public Task<bool> ExistsAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         CancellationToken cancellationToken) =>
         dbContext.TopicStars.AnyAsync(
@@ -18,7 +18,7 @@ public sealed class TopicStarRepository(TechForumDbContext dbContext) : ITopicSt
             cancellationToken);
 
     public async Task AddAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         DateTimeOffset createdAtUtc,
         CancellationToken cancellationToken)
@@ -72,7 +72,7 @@ public sealed class TopicStarRepository(TechForumDbContext dbContext) : ITopicSt
     }
 
     public Task RemoveAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         CancellationToken cancellationToken) =>
         dbContext.TopicStars

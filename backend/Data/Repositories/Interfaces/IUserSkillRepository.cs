@@ -1,6 +1,6 @@
 namespace TechForum.Api.Data.Repositories;
 
-public sealed record SkillTagData(int TagId, string Name, string Slug);
+public sealed record SkillTagData(Guid TagId, string Name, string Slug);
 
 public interface IUserSkillRepository
 {
@@ -8,8 +8,8 @@ public interface IUserSkillRepository
     Task<IReadOnlyList<SkillTagData>> GetChosenAsync(string userId, CancellationToken cancellationToken);
 
     // From the given ids, those that are tags which exist and are active.
-    Task<IReadOnlyList<int>> GetActiveTagIdsAsync(IReadOnlyCollection<int> tagIds, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Guid>> GetActiveTagIdsAsync(IReadOnlyCollection<Guid> tagIds, CancellationToken cancellationToken);
 
     // Makes the skills of the member exactly the given tags: the others are removed and the new ones are added.
-    Task ReplaceAsync(string userId, IReadOnlyCollection<int> tagIds, DateTimeOffset now, CancellationToken cancellationToken);
+    Task ReplaceAsync(string userId, IReadOnlyCollection<Guid> tagIds, DateTimeOffset now, CancellationToken cancellationToken);
 }

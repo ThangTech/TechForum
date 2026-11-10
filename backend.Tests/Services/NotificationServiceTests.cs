@@ -18,8 +18,8 @@ public sealed class NotificationServiceTests
 
         await service.AddNewAnswerAsync(
             "topic-author",
-            12,
-            35,
+            TestIds.Id(12),
+            TestIds.Id(35),
             "Thành viên B",
             "Cách tối ưu React",
             CancellationToken.None);
@@ -28,8 +28,8 @@ public sealed class NotificationServiceTests
         Assert.Equal("topic-author", notification.UserId);
         Assert.Equal("new-answer", notification.Type);
         Assert.Equal("Thành viên B đã trả lời trong “Cách tối ưu React”.", notification.Message);
-        Assert.Equal("/topics/12#answer-35", notification.Link);
-        Assert.Equal("new-answer:12:35", notification.SourceKey);
+        Assert.Equal($"/topics/{TestIds.Id(12)}#answer-{TestIds.Id(35)}", notification.Link);
+        Assert.Equal($"new-answer:{TestIds.Id(12)}:{TestIds.Id(35)}", notification.SourceKey);
         Assert.Equal(CurrentTime, notification.CreatedAtUtc);
         Assert.Equal(1, repository.SaveCount);
     }
@@ -41,7 +41,7 @@ public sealed class NotificationServiceTests
         var service = new NotificationService(repository, new FixedTimeProvider(CurrentTime));
 
         await service.AddNewAnswerAsync(
-            "topic-author", 12, 35, "Thành viên B", "Chủ đề", CancellationToken.None);
+            "topic-author", TestIds.Id(12), TestIds.Id(35), "Thành viên B", "Chủ đề", CancellationToken.None);
 
         Assert.Empty(repository.Added);
         Assert.Equal(0, repository.SaveCount);
@@ -74,7 +74,7 @@ public sealed class NotificationServiceTests
         }
 
         public Task<Notification?> GetUnreadAsync(
-            long id,
+            Guid id,
             string userId,
             CancellationToken cancellationToken) =>
             Task.FromResult<Notification?>(null);

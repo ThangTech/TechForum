@@ -7,16 +7,16 @@ namespace TechForum.Api.Data.Repositories;
 
 public sealed class TopicBookmarkRepository(TechForumDbContext dbContext) : ITopicBookmarkRepository
 {
-    public Task<int> CountAsync(int topicId, CancellationToken cancellationToken) =>
+    public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken) =>
         dbContext.TopicBookmarks.CountAsync(item => item.TopicId == topicId, cancellationToken);
 
-    public Task<bool> ExistsAsync(int topicId, string userId, CancellationToken cancellationToken) =>
+    public Task<bool> ExistsAsync(Guid topicId, string userId, CancellationToken cancellationToken) =>
         dbContext.TopicBookmarks.AnyAsync(
             item => item.TopicId == topicId && item.UserId == userId,
             cancellationToken);
 
     public async Task AddAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         DateTimeOffset createdAtUtc,
         CancellationToken cancellationToken)
@@ -44,7 +44,7 @@ public sealed class TopicBookmarkRepository(TechForumDbContext dbContext) : ITop
         }
     }
 
-    public Task RemoveAsync(int topicId, string userId, CancellationToken cancellationToken) =>
+    public Task RemoveAsync(Guid topicId, string userId, CancellationToken cancellationToken) =>
         dbContext.TopicBookmarks
             .Where(item => item.TopicId == topicId && item.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);

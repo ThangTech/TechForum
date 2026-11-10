@@ -4,7 +4,7 @@ namespace TechForum.Api.Models;
 // the case of the text but not its accents (so "các" is not mistaken for a word without accents).
 public sealed class BannedWord
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public required string Word { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
 }

@@ -5,14 +5,14 @@ using TechForum.Api.Services;
 namespace TechForum.Api.Controllers;
 
 [ApiController]
-[Route("api/topics/{topicId:int}/related")]
+[Route("api/topics/{topicId:guid}/related")]
 public sealed class RelatedTopicsController(IRelatedTopicService service) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<RelatedTopicDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<RelatedTopicDto>>> Get(
-        int topicId,
+        Guid topicId,
         CancellationToken cancellationToken)
     {
         var topics = await service.GetPublicRelatedAsync(topicId, cancellationToken);

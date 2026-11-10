@@ -13,80 +13,80 @@ public sealed class AnswerVisibilityTests
     [Fact]
     public void TopLevelAnswer_IsPublic()
     {
-        Assert.True(IsPublic(CreateAnswer(1)));
+        Assert.True(IsPublic(CreateAnswer(TestIds.Id(1))));
     }
 
     [Fact]
     public void DeletedOrHiddenTopLevelAnswer_IsNotPublic()
     {
-        Assert.False(IsPublic(CreateAnswer(1, isDeleted: true)));
-        Assert.False(IsPublic(CreateAnswer(2, isHidden: true)));
+        Assert.False(IsPublic(CreateAnswer(TestIds.Id(1), isDeleted: true)));
+        Assert.False(IsPublic(CreateAnswer(TestIds.Id(2), isHidden: true)));
     }
 
     [Fact]
     public void ReplyToAVisibleTopLevelAnswer_IsPublic()
     {
-        var parent = CreateAnswer(1);
+        var parent = CreateAnswer(TestIds.Id(1));
 
-        Assert.True(IsPublic(CreateReply(2, parent)));
+        Assert.True(IsPublic(CreateReply(TestIds.Id(2), parent)));
     }
 
     [Fact]
     public void ReplyWhoseParentIsDeleted_IsNotPublic()
     {
-        var parent = CreateAnswer(1, isDeleted: true);
+        var parent = CreateAnswer(TestIds.Id(1), isDeleted: true);
 
-        Assert.False(IsPublic(CreateReply(2, parent)));
+        Assert.False(IsPublic(CreateReply(TestIds.Id(2), parent)));
     }
 
     [Fact]
     public void ReplyWhoseParentIsHidden_IsNotPublic()
     {
-        var parent = CreateAnswer(1, isHidden: true);
+        var parent = CreateAnswer(TestIds.Id(1), isHidden: true);
 
-        Assert.False(IsPublic(CreateReply(2, parent)));
+        Assert.False(IsPublic(CreateReply(TestIds.Id(2), parent)));
     }
 
     [Fact]
     public void DeletedOrHiddenReply_IsNotPublicEvenWithAVisibleParent()
     {
-        var parent = CreateAnswer(1);
+        var parent = CreateAnswer(TestIds.Id(1));
 
-        Assert.False(IsPublic(CreateReply(2, parent, isDeleted: true)));
-        Assert.False(IsPublic(CreateReply(3, parent, isHidden: true)));
+        Assert.False(IsPublic(CreateReply(TestIds.Id(2), parent, isDeleted: true)));
+        Assert.False(IsPublic(CreateReply(TestIds.Id(3), parent, isHidden: true)));
     }
 
     [Fact]
     public void ReplyToAReply_IsNotPublic_BecauseOnlyOneLevelOfRepliesExists()
     {
-        var topLevel = CreateAnswer(1);
-        var reply = CreateReply(2, topLevel);
+        var topLevel = CreateAnswer(TestIds.Id(1));
+        var reply = CreateReply(TestIds.Id(2), topLevel);
 
-        Assert.False(IsPublic(CreateReply(3, reply)));
+        Assert.False(IsPublic(CreateReply(TestIds.Id(3), reply)));
     }
 
     [Fact]
     public void ReplyWhoseParentBelongsToAnotherTopic_IsNotPublic()
     {
-        var parentInAnotherTopic = CreateAnswer(1, topicId: 99);
+        var parentInAnotherTopic = CreateAnswer(TestIds.Id(1), topicId: TestIds.Id(99));
 
-        Assert.False(IsPublic(CreateReply(2, parentInAnotherTopic, topicId: 10)));
+        Assert.False(IsPublic(CreateReply(TestIds.Id(2), parentInAnotherTopic, topicId: TestIds.Id(10))));
     }
 
     [Fact]
     public void ReplyWhoseParentWasNotLoaded_IsNotPublic()
     {
-        var reply = CreateAnswer(2);
-        reply.ParentAnswerId = 1;
+        var reply = CreateAnswer(TestIds.Id(2));
+        reply.ParentAnswerId = TestIds.Id(1);
         reply.ParentAnswer = null;
 
         Assert.False(IsPublic(reply));
     }
 
-    private static Answer CreateAnswer(int id, int topicId = 10, bool isDeleted = false, bool isHidden = false) => new()
+    private static Answer CreateAnswer(Guid id, Guid topicId = default, bool isDeleted = false, bool isHidden = false) => new()
     {
         Id = id,
-        TopicId = topicId,
+        TopicId = topicId == default ? TestIds.Id(10) : topicId,
         AuthorId = "member-a",
         BodyHtml = "<p>Nội dung</p>",
         IsDeleted = isDeleted,
@@ -94,9 +94,9 @@ public sealed class AnswerVisibilityTests
     };
 
     private static Answer CreateReply(
-        int id,
+        Guid id,
         Answer parent,
-        int topicId = 10,
+        Guid topicId = default,
         bool isDeleted = false,
         bool isHidden = false)
     {

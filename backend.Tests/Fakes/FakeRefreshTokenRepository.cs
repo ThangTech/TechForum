@@ -13,7 +13,7 @@ public sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
 
     public Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
     {
-        refreshToken.Id = Tokens.Count + 1;
+        refreshToken.Id = TestIds.Id(Tokens.Count + 1);
         Tokens.Add(refreshToken);
         return Task.CompletedTask;
     }
@@ -22,7 +22,7 @@ public sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
         Task.FromResult(Tokens.SingleOrDefault(token => token.TokenHash == tokenHash));
 
     public Task<bool> RotateAsync(
-        long currentTokenId,
+        Guid currentTokenId,
         RefreshToken replacement,
         DateTimeOffset now,
         CancellationToken cancellationToken)
@@ -35,7 +35,7 @@ public sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
         var current = Tokens.Single(token => token.Id == currentTokenId);
         current.RevokedAtUtc = now;
         current.ReplacedByTokenHash = replacement.TokenHash;
-        replacement.Id = Tokens.Count + 1;
+        replacement.Id = TestIds.Id(Tokens.Count + 1);
         Tokens.Add(replacement);
         return Task.FromResult(true);
     }

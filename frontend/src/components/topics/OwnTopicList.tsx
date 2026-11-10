@@ -13,7 +13,7 @@ import { TopicTypeBadge } from './TopicTypeBadge'
 
 interface OwnTopicListProps {
   data: OwnTopicPage
-  onDelete: (id: number) => void
+  onDelete: (id: string) => void
   onPageChange: (page: number) => void
 }
 

@@ -108,7 +108,7 @@ public sealed class AdminOverviewService(
         // Dashboard chỉ đưa nhan đề còn công khai; xem nội dung vi phạm ở màn hình báo cáo riêng.
         var title = isPublic ? topic!.Title : "Nội dung không còn công khai";
         return new AdminPendingReportDto(
-            report.Id, report.TopicId.HasValue ? "topic" : "answer", report.TopicId ?? report.AnswerId ?? 0,
+            report.Id, report.TopicId.HasValue ? "topic" : "answer", report.TopicId ?? report.AnswerId ?? Guid.Empty,
             title, report.Reason, new ReportUserDto(report.Reporter.Id, report.Reporter.DisplayName), report.CreatedAtUtc);
     }
 }

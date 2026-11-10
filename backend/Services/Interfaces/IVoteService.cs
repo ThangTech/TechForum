@@ -47,10 +47,10 @@ public sealed record VoteResult(
 public interface IVoteService
 {
     // The score of a post and the vote of the member who asks (a guest has none). Null when the post cannot be seen.
-    Task<VoteDto?> GetTopicVoteAsync(int topicId, string? viewerId, CancellationToken cancellationToken);
+    Task<VoteDto?> GetTopicVoteAsync(Guid topicId, string? viewerId, CancellationToken cancellationToken);
 
     // value: 1 = upvote, -1 = downvote, 0 = take the vote back. The same value sent again changes nothing.
-    Task<VoteResult> SetTopicVoteAsync(int topicId, string userId, int value, CancellationToken cancellationToken);
+    Task<VoteResult> SetTopicVoteAsync(Guid topicId, string userId, int value, CancellationToken cancellationToken);
 
-    Task<VoteResult> SetAnswerVoteAsync(int topicId, int answerId, string userId, int value, CancellationToken cancellationToken);
+    Task<VoteResult> SetAnswerVoteAsync(Guid topicId, Guid answerId, string userId, int value, CancellationToken cancellationToken);
 }

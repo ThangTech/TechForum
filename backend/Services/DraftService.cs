@@ -19,7 +19,7 @@ public sealed partial class DraftService(
     private const int MaxTagCount = 5;
     private const int MaxMediaCount = 20;
 
-    public async Task<DraftDto?> GetAsync(string userId, int? topicId, CancellationToken cancellationToken)
+    public async Task<DraftDto?> GetAsync(string userId, Guid? topicId, CancellationToken cancellationToken)
     {
         var draft = await draftRepository.GetForTargetAsync(userId, topicId, cancellationToken);
         if (draft is null)
@@ -68,7 +68,7 @@ public sealed partial class DraftService(
         }
 
         var tagIds = (request.TagIds ?? []).Distinct().ToList();
-        if (tagIds.Count > MaxTagCount || tagIds.Any(tagId => tagId <= 0))
+        if (tagIds.Count > MaxTagCount || tagIds.Any(tagId => tagId == Guid.Empty))
         {
             return Invalid("tagIds", $"Chỉ được chọn tối đa {MaxTagCount} thẻ hợp lệ.");
         }
@@ -110,7 +110,7 @@ public sealed partial class DraftService(
         return DraftWriteResult.Success(Map(draft, media));
     }
 
-    private static Draft NewDraft(string userId, int? topicId, string title, string summary, string body) => new()
+    private static Draft NewDraft(string userId, Guid? topicId, string title, string summary, string body) => new()
     {
         Id = Guid.NewGuid(),
         UserId = userId,
@@ -126,26 +126,26 @@ public sealed partial class DraftService(
         string summary,
         string body,
         TopicType type,
-        int? categoryId,
-        List<int> tagIds,
+        Guid? categoryId,
+        List<Guid> tagIds,
         IReadOnlyList<MediaAsset> media)
     {
         draft.Title = title;
         draft.Summary = summary;
         draft.BodyHtml = body;
         draft.Type = type;
-        draft.CategoryId = categoryId is > 0 ? categoryId : null;
+        draft.CategoryId = categoryId is { } id && id != Guid.Empty ? id : null;
         draft.TagIds = tagIds;
         draft.MediaIds = media.Select(item => item.Id).ToList();
         draft.UpdatedAtUtc = timeProvider.GetUtcNow();
     }
 
-    public Task DeleteAsync(string userId, int? topicId, CancellationToken cancellationToken) =>
+    public Task DeleteAsync(string userId, Guid? topicId, CancellationToken cancellationToken) =>
         draftRepository.DeleteForTargetAsync(userId, topicId, cancellationToken);
 
     private async Task<IReadOnlyList<MediaAsset>> GetUsableMediaAsync(
         string userId,
-        int? topicId,
+        Guid? topicId,
         IReadOnlyCollection<Guid> mediaIds,
         CancellationToken cancellationToken)
     {

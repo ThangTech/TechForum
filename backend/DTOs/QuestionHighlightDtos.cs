@@ -1,7 +1,7 @@
 namespace TechForum.Api.Dtos;
 
 public sealed record QuestionHighlightDto(
-    int Id,
+    Guid Id,
     string Title,
     int AnswerCount,
     DateTimeOffset PublishedAtUtc);

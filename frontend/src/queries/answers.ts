@@ -5,19 +5,19 @@ import { useUserScope, userKey } from './userScope'
 export interface AnswerPageParams {
   page: number
   pageSize: number
-  aroundAnswerId?: number
+  aroundAnswerId?: string
   sort: AnswerSort
 }
 
 export const answerKeys = {
   // Every page of the answers of one topic. The helpful state of an answer depends on
   // who is looking, so the answers are stored per user.
-  all: (scope: string, topicId: number) => userKey(scope, 'topics', topicId, 'answers'),
-  page: (scope: string, topicId: number, params: AnswerPageParams) =>
+  all: (scope: string, topicId: string) => userKey(scope, 'topics', topicId, 'answers'),
+  page: (scope: string, topicId: string, params: AnswerPageParams) =>
     [...answerKeys.all(scope, topicId), params] as const,
 }
 
-export const useAnswers = (topicId: number, params: AnswerPageParams) => {
+export const useAnswers = (topicId: string, params: AnswerPageParams) => {
   const { scope, isReady } = useUserScope()
 
   return useQuery({

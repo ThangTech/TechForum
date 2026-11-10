@@ -18,7 +18,7 @@ public sealed record PublicProfileDto(
     // The reputation points of the member (see ReputationRules).
     int Reputation = 0);
 
-public sealed record ProfileSkillDto(int TagId, string Name, string Slug, int TopicCount, bool IsChosen);
+public sealed record ProfileSkillDto(Guid TagId, string Name, string Slug, int TopicCount, bool IsChosen);
 
 public sealed record ProfileBadgeDto(string Code, string Name, string Description);
 

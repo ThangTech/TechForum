@@ -184,11 +184,11 @@ export const BannerFormDialog = ({
         <TextField
           disabled={busy}
           error={isLinkInvalid}
-          helperText={isLinkInvalid ? bannerLinkRuleMessage : 'Để trống nếu không cần liên kết. Ví dụ: /topics/5 (bài viết trong trang) hoặc https://example.com.'}
+          helperText={isLinkInvalid ? bannerLinkRuleMessage : 'Để trống nếu không cần liên kết. Ví dụ: /articles (một trang trong site) hoặc https://example.com.'}
           id="banner-link"
           label="Liên kết khi bấm vào banner"
           onChange={(event) => setLinkUrl(event.target.value)}
-          placeholder="Ví dụ: /topics/5"
+          placeholder="Ví dụ: /articles"
           slotProps={{ htmlInput: { maxLength: 500 } }}
           value={linkUrl}
         />

@@ -33,7 +33,7 @@ public sealed class PublicProfileServiceTests
         var repository = new FakePublicProfileRepository
         {
             Profile = new PublicProfileData(user, 3, 5, 7, 2, 1, true,
-                [new ProfileSkillData(1, "React", "react", 3, true), new ProfileSkillData(2, "SQL Server", "sql-server", 1)],
+                [new ProfileSkillData(TestIds.Id(1), "React", "react", 3, true), new ProfileSkillData(TestIds.Id(2), "SQL Server", "sql-server", 1)],
                 [CreateTopic(user)])
         };
         var service = new PublicProfileService(repository);
@@ -78,17 +78,17 @@ public sealed class PublicProfileServiceTests
 
     private static Topic CreateTopic(ApplicationUser user)
     {
-        var tag = new Tag { Id = 1, Name = "React", Slug = "react" };
+        var tag = new Tag { Id = TestIds.Id(1), Name = "React", Slug = "react" };
         return new Topic
         {
-            Id = 1,
+            Id = TestIds.Id(1),
             Title = "Bài viết kiểm thử",
             Slug = "bai-viet-kiem-thu",
             Summary = "Tóm tắt",
             BodyHtml = "<p>Nội dung</p>",
             Type = TopicType.Article,
             Status = TopicStatus.Published,
-            Category = new Category { Id = 1, Name = "Frontend", Slug = "frontend" },
+            Category = new Category { Id = TestIds.Id(1), Name = "Frontend", Slug = "frontend" },
             AuthorId = user.Id,
             Author = user,
             CreatedAtUtc = DateTimeOffset.UtcNow,

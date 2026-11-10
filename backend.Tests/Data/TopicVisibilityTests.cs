@@ -14,39 +14,39 @@ public sealed class TopicVisibilityTests
     [Fact]
     public void PublishedTopic_IsPublic()
     {
-        Assert.True(IsPublic(CreateTopic(1)));
+        Assert.True(IsPublic(CreateTopic(TestIds.Id(1))));
     }
 
     [Fact]
     public void DraftTopic_IsNotPublic()
     {
-        Assert.False(IsPublic(CreateTopic(1, status: TopicStatus.Draft)));
+        Assert.False(IsPublic(CreateTopic(TestIds.Id(1), status: TopicStatus.Draft)));
     }
 
     [Fact]
     public void PublishedTopicWithoutPublishDate_IsNotPublic()
     {
-        Assert.False(IsPublic(CreateTopic(1, hasPublishDate: false)));
+        Assert.False(IsPublic(CreateTopic(TestIds.Id(1), hasPublishDate: false)));
     }
 
     [Fact]
     public void DeletedTopic_IsNotPublic()
     {
-        Assert.False(IsPublic(CreateTopic(1, isDeleted: true)));
+        Assert.False(IsPublic(CreateTopic(TestIds.Id(1), isDeleted: true)));
     }
 
     [Fact]
     public void TopicHiddenByModerator_IsNotPublic()
     {
-        Assert.False(IsPublic(CreateTopic(1, isHidden: true)));
+        Assert.False(IsPublic(CreateTopic(TestIds.Id(1), isHidden: true)));
     }
 
     [Fact]
     public void IsPublicTopic_GivesTheSameAnswerAsTheExpression()
     {
-        Assert.True(TopicVisibility.IsPublicTopic(CreateTopic(1)));
-        Assert.False(TopicVisibility.IsPublicTopic(CreateTopic(2, isHidden: true)));
-        Assert.False(TopicVisibility.IsPublicTopic(CreateTopic(3, status: TopicStatus.Draft)));
+        Assert.True(TopicVisibility.IsPublicTopic(CreateTopic(TestIds.Id(1))));
+        Assert.False(TopicVisibility.IsPublicTopic(CreateTopic(TestIds.Id(2), isHidden: true)));
+        Assert.False(TopicVisibility.IsPublicTopic(CreateTopic(TestIds.Id(3), status: TopicStatus.Draft)));
     }
 
     [Fact]
@@ -60,16 +60,16 @@ public sealed class TopicVisibilityTests
     {
         var answers = new[]
         {
-            CreateAnswer(1, CreateTopic(1)),
-            CreateAnswer(2, CreateTopic(2, status: TopicStatus.Draft)),
-            CreateAnswer(3, CreateTopic(3, isDeleted: true)),
-            CreateAnswer(4, CreateTopic(4, isHidden: true)),
-            CreateAnswer(5, CreateTopic(5))
+            CreateAnswer(TestIds.Id(1), CreateTopic(TestIds.Id(1))),
+            CreateAnswer(TestIds.Id(2), CreateTopic(TestIds.Id(2), status: TopicStatus.Draft)),
+            CreateAnswer(TestIds.Id(3), CreateTopic(TestIds.Id(3), isDeleted: true)),
+            CreateAnswer(TestIds.Id(4), CreateTopic(TestIds.Id(4), isHidden: true)),
+            CreateAnswer(TestIds.Id(5), CreateTopic(TestIds.Id(5)))
         }.AsQueryable();
 
         var publicIds = answers.WhereTopicIsPublic(answer => answer.Topic).Select(answer => answer.Id).ToList();
 
-        Assert.Equal(new[] { 1, 5 }, publicIds);
+        Assert.Equal(new[] { TestIds.Id(1), TestIds.Id(5) }, publicIds);
     }
 
     [Fact]
@@ -77,9 +77,9 @@ public sealed class TopicVisibilityTests
     {
         var answers = new[]
         {
-            CreateAnswer(1, CreateTopic(1), "a"),
-            CreateAnswer(2, CreateTopic(2), "b"),
-            CreateAnswer(3, CreateTopic(3, isHidden: true), "a")
+            CreateAnswer(TestIds.Id(1), CreateTopic(TestIds.Id(1)), "a"),
+            CreateAnswer(TestIds.Id(2), CreateTopic(TestIds.Id(2)), "b"),
+            CreateAnswer(TestIds.Id(3), CreateTopic(TestIds.Id(3), isHidden: true), "a")
         }.AsQueryable();
 
         var publicIds = answers
@@ -88,11 +88,11 @@ public sealed class TopicVisibilityTests
             .Select(answer => answer.Id)
             .ToList();
 
-        Assert.Equal(new[] { 1 }, publicIds);
+        Assert.Equal(new[] { TestIds.Id(1) }, publicIds);
     }
 
     private static Topic CreateTopic(
-        int id,
+        Guid id,
         TopicStatus status = TopicStatus.Published,
         bool hasPublishDate = true,
         bool isDeleted = false,
@@ -110,7 +110,7 @@ public sealed class TopicVisibilityTests
         IsHiddenByModerator = isHidden
     };
 
-    private static Answer CreateAnswer(int id, Topic topic, string authorId = "member-a") => new()
+    private static Answer CreateAnswer(Guid id, Topic topic, string authorId = "member-a") => new()
     {
         Id = id,
         AuthorId = authorId,

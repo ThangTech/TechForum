@@ -7,7 +7,7 @@ namespace TechForum.Api.Data.Repositories;
 public sealed class RelatedTopicRepository(TechForumDbContext dbContext) : IRelatedTopicRepository
 {
     public async Task<IReadOnlyList<RelatedTopicData>?> GetPublicRelatedAsync(
-        int topicId,
+        Guid topicId,
         int limit,
         CancellationToken cancellationToken)
     {

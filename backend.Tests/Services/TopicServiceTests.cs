@@ -19,9 +19,9 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Page = new TopicPage([CreateTopic()], 11, new Dictionary<int, TopicDiscussionDto>
+            Page = new TopicPage([CreateTopic()], 11, new Dictionary<Guid, TopicDiscussionDto>
             {
-                [10] = new(3, true, DateTimeOffset.Parse("2026-10-01T10:00:00Z"), 2, 1)
+                [TestIds.Id(10)] = new(3, true, DateTimeOffset.Parse("2026-10-01T10:00:00Z"), 2, 1)
             })
         };
         var service = CreateService(repository);
@@ -96,12 +96,12 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Page = new TopicPage([CreateTopic()], 12, new Dictionary<int, TopicDiscussionDto>
+            Page = new TopicPage([CreateTopic()], 12, new Dictionary<Guid, TopicDiscussionDto>
             {
-                [10] = new(3, true, null, 2, 1)
+                [TestIds.Id(10)] = new(3, true, null, 2, 1)
             })
         };
-        var query = new TopicQuery { Page = 2, PageSize = 5, CategoryId = 1, TagId = 2, Keyword = "kiểm thử", Sort = "weekly" };
+        var query = new TopicQuery { Page = 2, PageSize = 5, CategoryId = TestIds.Id(1), TagId = TestIds.Id(2), Keyword = "kiểm thử", Sort = "weekly" };
 
         var result = await CreateService(repository).GetFollowingPageAsync("member-b", query, default);
 
@@ -207,8 +207,8 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" },
-            Tags = [new Tag { Id = 4, Name = "TypeScript", Slug = "typescript", IsActive = true }]
+            Category = new Category { Id = TestIds.Id(2), Name = "Web & Mobile", Slug = "web-mobile" },
+            Tags = [new Tag { Id = TestIds.Id(4), Name = "TypeScript", Slug = "typescript", IsActive = true }]
         };
         var service = CreateService(repository);
         var request = new CreateTopicRequest(
@@ -216,8 +216,8 @@ public sealed class TopicServiceTests
             "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
             "<p onclick=\"alert(1)\">Nội dung hữu ích</p><script>alert(1)</script>",
             "article",
-            2,
-            [4],
+            TestIds.Id(2),
+            [TestIds.Id(4)],
             [],
             true);
 
@@ -225,7 +225,7 @@ public sealed class TopicServiceTests
 
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Topic);
-        Assert.Equal(99, result.Topic.Id);
+        Assert.Equal(TestIds.Id(99), result.Topic.Id);
         Assert.Equal("published", result.Topic.Status);
         Assert.Equal("bat-dau-typescript-an-toan", result.Topic.Slug);
         Assert.DoesNotContain("onclick", result.Topic.BodyHtml, StringComparison.OrdinalIgnoreCase);
@@ -243,7 +243,7 @@ public sealed class TopicServiceTests
             "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
             "<p>Nội dung hợp lệ.</p>",
             "question",
-            999,
+            TestIds.Id(999),
             [],
             [],
             false);
@@ -257,19 +257,19 @@ public sealed class TopicServiceTests
 
     private static Topic CreateTopic()
     {
-        var aspNet = new Tag { Id = 1, Name = "ASP.NET Core", Slug = "aspnet-core" };
-        var typeScript = new Tag { Id = 2, Name = "TypeScript", Slug = "typescript" };
+        var aspNet = new Tag { Id = TestIds.Id(1), Name = "ASP.NET Core", Slug = "aspnet-core" };
+        var typeScript = new Tag { Id = TestIds.Id(2), Name = "TypeScript", Slug = "typescript" };
         return new Topic
         {
-            Id = 10,
+            Id = TestIds.Id(10),
             Title = "Câu hỏi kiểm thử",
             Slug = "cau-hoi-kiem-thu",
             Summary = "Tóm tắt",
             BodyHtml = "<p>Nội dung</p>",
             Type = TopicType.Question,
             Status = TopicStatus.Published,
-            CategoryId = 1,
-            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
+            CategoryId = TestIds.Id(1),
+            Category = new Category { Id = TestIds.Id(1), Name = "Lập trình", Slug = "lap-trinh" },
             AuthorId = "member-a",
             Author = new ApplicationUser
             {
@@ -304,7 +304,7 @@ public sealed class TopicServiceTests
         };
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+            Category = new Category { Id = TestIds.Id(2), Name = "Web & Mobile", Slug = "web-mobile" }
         };
         var mediaRepository = new FakeMediaAssetRepository { Items = [media] };
         var service = CreateService(repository, mediaRepository);
@@ -313,7 +313,7 @@ public sealed class TopicServiceTests
             "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
             $"<p>Nội dung có ảnh.</p><img src=\"{media.PublicUrl}\" alt=\"Ảnh\">",
             "article",
-            2,
+            TestIds.Id(2),
             [],
             [mediaId],
             false);
@@ -341,7 +341,7 @@ public sealed class TopicServiceTests
         };
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+            Category = new Category { Id = TestIds.Id(2), Name = "Web & Mobile", Slug = "web-mobile" }
         };
         var service = CreateService(repository, new FakeMediaAssetRepository { Items = [media] });
         var request = new CreateTopicRequest(
@@ -349,7 +349,7 @@ public sealed class TopicServiceTests
             "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
             $"<p>Nội dung.</p><img src=\"{media.PublicUrl}\" alt=\"Ảnh\">",
             "article",
-            2,
+            TestIds.Id(2),
             [],
             [mediaId],
             true);
@@ -365,14 +365,14 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+            Category = new Category { Id = TestIds.Id(2), Name = "Web & Mobile", Slug = "web-mobile" }
         };
         var request = new CreateTopicRequest(
             "Bài viết không có ảnh",
             "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
             "<p>Chỉ có chữ.</p>",
             "article",
-            2,
+            TestIds.Id(2),
             [],
             [],
             true);
@@ -411,7 +411,7 @@ public sealed class TopicServiceTests
         var mediaId = Guid.NewGuid();
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" }
+            Category = new Category { Id = TestIds.Id(2), Name = "Web & Mobile", Slug = "web-mobile" }
         };
         var service = CreateService(repository, new FakeMediaAssetRepository());
         var request = new CreateTopicRequest(
@@ -419,7 +419,7 @@ public sealed class TopicServiceTests
             "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.",
             $"<p>Nội dung.</p><img src=\"/media/images/{mediaId:N}.png\">",
             "article",
-            2,
+            TestIds.Id(2),
             [],
             [mediaId],
             false);
@@ -468,7 +468,7 @@ public sealed class TopicServiceTests
         var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };
         var service = CreateService(repository);
 
-        var result = await service.SoftDeleteAsync(10, "member-b", CancellationToken.None);
+        var result = await service.SoftDeleteAsync(TestIds.Id(10), "member-b", CancellationToken.None);
 
         Assert.Equal(SoftDeleteTopicFailure.NotFound, result.Failure);
         Assert.False(repository.OwnedTopic.IsDeleted);
@@ -477,11 +477,11 @@ public sealed class TopicServiceTests
 
     [Theory]
     [InlineData("article", null)]
-    [InlineData("question", 42)]
-    public async Task UpdateAsync_KeepsAcceptedAnswerOnlyForQuestions(string type, int? expectedAnswerId)
+    [InlineData("question", true)]
+    public async Task UpdateAsync_KeepsAcceptedAnswerOnlyForQuestions(string type, bool keepsAnswer)
     {
         var existing = CreateTopic();
-        existing.AcceptedAnswerId = 42;
+        existing.AcceptedAnswerId = TestIds.Id(42);
         var repository = new FakeTopicRepository { OwnedTopic = existing, Category = existing.Category };
         var request = new UpdateTopicRequest(
             "Tiêu đề kiểm tra loại nội dung",
@@ -491,7 +491,7 @@ public sealed class TopicServiceTests
         var result = await CreateService(repository).UpdateAsync(existing.Id, existing.AuthorId, request, CancellationToken.None);
 
         Assert.True(result?.Succeeded);
-        Assert.Equal(expectedAnswerId, existing.AcceptedAnswerId);
+        Assert.Equal(keepsAnswer ? TestIds.Id(42) : (Guid?)null, existing.AcceptedAnswerId);
     }
 
     [Fact]
@@ -499,7 +499,7 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
+            Category = new Category { Id = TestIds.Id(1), Name = "Lập trình", Slug = "lap-trinh" },
             SlugConflicts = 1
         };
 
@@ -516,7 +516,7 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
+            Category = new Category { Id = TestIds.Id(1), Name = "Lập trình", Slug = "lap-trinh" },
             SlugConflicts = 2
         };
 
@@ -534,7 +534,7 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" },
+            Category = new Category { Id = TestIds.Id(1), Name = "Lập trình", Slug = "lap-trinh" },
             SlugConflicts = 100
         };
 
@@ -552,7 +552,7 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 1, Name = "Lập trình", Slug = "lap-trinh" }
+            Category = new Category { Id = TestIds.Id(1), Name = "Lập trình", Slug = "lap-trinh" }
         };
 
         var result = await CreateService(repository).CreateAsync("member-a", CreateRequest(), CancellationToken.None);
@@ -630,7 +630,7 @@ public sealed class TopicServiceTests
         };
         var service = CreateService(repository);
 
-        var result = await service.SoftDeleteAsync(10, "member-a", CancellationToken.None);
+        var result = await service.SoftDeleteAsync(TestIds.Id(10), "member-a", CancellationToken.None);
 
         Assert.Equal(SoftDeleteTopicFailure.HasPublicAnswers, result.Failure);
         Assert.False(repository.OwnedTopic.IsDeleted);
@@ -643,7 +643,7 @@ public sealed class TopicServiceTests
         var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };
         var service = CreateService(repository);
 
-        var result = await service.SoftDeleteAsync(10, "member-a", CancellationToken.None);
+        var result = await service.SoftDeleteAsync(TestIds.Id(10), "member-a", CancellationToken.None);
 
         Assert.True(result.Succeeded);
         Assert.True(repository.OwnedTopic.IsDeleted);
@@ -655,18 +655,18 @@ public sealed class TopicServiceTests
     {
         var repository = new FakeTopicRepository
         {
-            Category = new Category { Id = 2, Name = "Web & Mobile", Slug = "web-mobile" },
+            Category = new Category { Id = TestIds.Id(2), Name = "Web & Mobile", Slug = "web-mobile" },
             Tags = []
         };
         var drafts = new FakeDraftRepository();
         drafts.Drafts.Add(new Draft { Id = Guid.NewGuid(), UserId = "member-a", TopicId = null, Title = "Viết dở", Summary = "", BodyHtml = "<p>x</p>" });
         var request = new CreateTopicRequest(
-            "Tiêu đề đủ dài để xuất bản", "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.", "<p>Nội dung</p>", "article", 2, [], [], true);
+            "Tiêu đề đủ dài để xuất bản", "Tóm tắt hợp lệ có nhiều hơn hai mươi ký tự.", "<p>Nội dung</p>", "article", TestIds.Id(2), [], [], true);
 
         var result = await CreateService(repository, draftRepository: drafts).CreateAsync("member-a", request, CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.Equal([("member-a", (int?)null)], drafts.DeletedTargets);
+        Assert.Equal([("member-a", (Guid?)null)], drafts.DeletedTargets);
         Assert.Empty(drafts.Drafts);
     }
 
@@ -676,7 +676,7 @@ public sealed class TopicServiceTests
         var repository = new FakeTopicRepository { Category = null };
         var drafts = new FakeDraftRepository();
         drafts.Drafts.Add(new Draft { Id = Guid.NewGuid(), UserId = "member-a", TopicId = null, Title = "Viết dở", Summary = "", BodyHtml = "<p>x</p>" });
-        var request = new CreateTopicRequest("Ngắn", "Ngắn", "<p>x</p>", "article", 2, [], [], true);
+        var request = new CreateTopicRequest("Ngắn", "Ngắn", "<p>x</p>", "article", TestIds.Id(2), [], [], true);
 
         var result = await CreateService(repository, draftRepository: drafts).CreateAsync("member-a", request, CancellationToken.None);
 
@@ -699,7 +699,7 @@ public sealed class TopicServiceTests
         var result = await CreateService(repository, draftRepository: drafts).UpdateAsync(existing.Id, "member-a", request, CancellationToken.None);
 
         Assert.True(result!.Succeeded);
-        Assert.Equal([("member-a", (int?)existing.Id)], drafts.DeletedTargets);
+        Assert.Equal([("member-a", (Guid?)existing.Id)], drafts.DeletedTargets);
         Assert.Null(Assert.Single(drafts.Drafts).TopicId);
     }
 
@@ -709,16 +709,16 @@ public sealed class TopicServiceTests
         var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };
         var drafts = new FakeDraftRepository();
 
-        var result = await CreateService(repository, draftRepository: drafts).SoftDeleteAsync(10, "member-a", CancellationToken.None);
+        var result = await CreateService(repository, draftRepository: drafts).SoftDeleteAsync(TestIds.Id(10), "member-a", CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.Equal([("member-a", (int?)10)], drafts.DeletedTargets);
+        Assert.Equal([("member-a", (Guid?)TestIds.Id(10))], drafts.DeletedTargets);
     }
 
     private static CreateTopicRequest CreateRequest() => new(
         "Tiêu đề kiểm tra đường dẫn trùng",
         "Tóm tắt hợp lệ cho kiểm thử đường dẫn bị trùng.",
-        "<p>Nội dung kiểm tra.</p>", "article", 1, [], [], true);
+        "<p>Nội dung kiểm tra.</p>", "article", TestIds.Id(1), [], [], true);
 
     private static UpdateTopicRequest CreateUpdateRequest(Topic existing, bool publish) => new(
         "Tiêu đề kiểm tra chuyển bản nháp",
@@ -763,11 +763,11 @@ public sealed class TopicServiceTests
             return Task.FromResult(Page);
         }
 
-        public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) =>
+        public Task<Topic?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult(Page.Items.SingleOrDefault(topic => topic.Id == id));
 
         public Task<Topic?> GetOwnedByIdAsync(
-            int id,
+            Guid id,
             string authorId,
             CancellationToken cancellationToken) =>
             Task.FromResult(OwnedTopic is not null &&
@@ -786,18 +786,18 @@ public sealed class TopicServiceTests
             return Task.FromResult(OwnedPage);
         }
 
-        public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) =>
+        public Task<Category?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult(Category?.Id == id ? Category : null);
 
         public Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(
-            IReadOnlyCollection<int> ids,
+            IReadOnlyCollection<Guid> ids,
             CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<Tag>>(Tags.Where(tag => ids.Contains(tag.Id)).ToList());
 
         public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
             Task.FromResult(TakenSlugs.Contains(slug));
 
-        public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) =>
+        public Task<bool> HasPublicAnswersAsync(Guid topicId, CancellationToken cancellationToken) =>
             Task.FromResult(HasPublicAnswers);
 
         // How many times in a row the database says "this slug is taken", and the slugs that were tried.
@@ -815,7 +815,7 @@ public sealed class TopicServiceTests
                 return Task.FromResult(false);
             }
 
-            topic.Id = 99;
+            topic.Id = TestIds.Id(99);
             AddedTopic = topic;
             return Task.FromResult(true);
         }
@@ -853,7 +853,7 @@ public sealed class TopicServiceTests
         public Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
             IReadOnlyCollection<Guid> ids,
             string uploaderId,
-            int topicId,
+            Guid topicId,
             CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<MediaAsset>>(Items.Where(item =>
                 ids.Contains(item.Id) &&

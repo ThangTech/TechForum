@@ -9,13 +9,14 @@ import { SkillSummary } from '../components/skills/SkillSummary'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useSkillCommunity } from '../queries/skills'
 import { isInitialLoading } from '../queries/status'
+import { isGuid } from '../utils/ids'
 
 const readPage = (value: string | null) => { const page = Number(value); return Number.isInteger(page) && page > 0 ? page : 1 }
 
 export const SkillCommunityPage = () => {
   const { tagId = '' } = useParams()
-  const id = Number(tagId)
-  const isValidId = Number.isInteger(id) && id > 0
+  const id = tagId.toLowerCase()
+  const isValidId = isGuid(id)
   const [searchParams, setSearchParams] = useSearchParams()
   const page = readPage(searchParams.get('page'))
   const communityQuery = useSkillCommunity(id, page, isValidId)

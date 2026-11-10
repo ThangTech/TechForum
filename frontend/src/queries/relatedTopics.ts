@@ -2,10 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { getRelatedTopics } from '../api/relatedTopics'
 
 export const relatedTopicKeys = {
-  forTopic: (topicId: number) => ['topics', 'related', topicId] as const,
+  forTopic: (topicId: string) => ['topics', 'related', topicId] as const,
 }
 
-export const useRelatedTopics = (topicId: number) =>
+export const useRelatedTopics = (topicId: string) =>
   useQuery({
     queryKey: relatedTopicKeys.forTopic(topicId),
     queryFn: ({ signal }) => getRelatedTopics(topicId, signal),

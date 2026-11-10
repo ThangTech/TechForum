@@ -3,7 +3,7 @@ import type { TopicAuthor, TopicCategory, TopicTag, TopicType } from './topics'
 
 export interface BookmarkStatus { count: number; hasBookmark: boolean }
 export interface SavedTopic {
-  id: number
+  id: string
   title: string
   summary: string
   type: TopicType
@@ -26,7 +26,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isTag = (value: unknown): value is TopicTag =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.name === 'string' &&
   typeof value.slug === 'string'
 
@@ -39,21 +39,21 @@ const parseStatus = (data: unknown): BookmarkStatus => {
 
 const isSavedTopic = (value: unknown): value is SavedTopic =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.title === 'string' &&
   typeof value.summary === 'string' &&
   (value.type === 'article' || value.type === 'question') &&
-  isRecord(value.category) && typeof value.category.id === 'number' && typeof value.category.name === 'string' && typeof value.category.slug === 'string' &&
+  isRecord(value.category) && typeof value.category.id === 'string' && typeof value.category.name === 'string' && typeof value.category.slug === 'string' &&
   isRecord(value.author) && typeof value.author.id === 'string' && typeof value.author.displayName === 'string' &&
   Array.isArray(value.tags) && value.tags.every(isTag) &&
   typeof value.publishedAtUtc === 'string' &&
   typeof value.savedAtUtc === 'string'
 
-export const getBookmarkStatus = async (topicId: number, signal?: AbortSignal) =>
+export const getBookmarkStatus = async (topicId: string, signal?: AbortSignal) =>
   parseStatus(await apiRequest(`/api/topics/${topicId}/bookmark`, { signal }))
-export const addBookmark = async (topicId: number) =>
+export const addBookmark = async (topicId: string) =>
   parseStatus(await apiRequest(`/api/topics/${topicId}/bookmark`, { method: 'PUT' }))
-export const removeBookmark = async (topicId: number) =>
+export const removeBookmark = async (topicId: string) =>
   parseStatus(await apiRequest(`/api/topics/${topicId}/bookmark`, { method: 'DELETE' }))
 
 // A page of the posts that belong to the member (the saved posts and the starred posts have the same card).

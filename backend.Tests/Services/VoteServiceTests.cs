@@ -19,7 +19,7 @@ public sealed class VoteServiceTests
     private readonly FakeLimiter limiter = new();
     private readonly Topic topic = new()
     {
-        Id = 1, Title = "t", Slug = "t", Summary = "s", BodyHtml = "<p>x</p>", AuthorId = "author",
+        Id = TestIds.Id(1), Title = "t", Slug = "t", Summary = "s", BodyHtml = "<p>x</p>", AuthorId = "author",
         Type = TopicType.Question, Status = TopicStatus.Published, PublishedAtUtc = DateTimeOffset.UtcNow, Score = 3
     };
 
@@ -27,9 +27,9 @@ public sealed class VoteServiceTests
         new(new FakeTopics(topic), new FakeAnswers(answers), votes, accounts, limiter,
             Options.Create(new VoteLimitOptions { MinAccountAgeDays = 3 }), new FixedTime(Now));
 
-    private static Answer CreateAnswer(int id, string authorId) => new()
+    private static Answer CreateAnswer(Guid id, string authorId) => new()
     {
-        Id = id, TopicId = 1, AuthorId = authorId, BodyHtml = "<p>a</p>", CreatedAtUtc = DateTimeOffset.UtcNow
+        Id = id, TopicId = TestIds.Id(1), AuthorId = authorId, BodyHtml = "<p>a</p>", CreatedAtUtc = DateTimeOffset.UtcNow
     };
 
     [Theory]
@@ -38,11 +38,11 @@ public sealed class VoteServiceTests
     [InlineData(0)]
     public async Task SetTopicVoteAsync_SendsTheVoteWithTheAuthorOfThePost(int value)
     {
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", value, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", value, default);
 
         Assert.Equal(VoteFailure.None, result.Failure);
         var command = Assert.Single(votes.Commands);
-        Assert.Equal(("voter", VoteTargetType.Topic, 1, "author", value), (command.VoterId, command.TargetType, command.TargetId, command.AuthorId, command.NewValue));
+        Assert.Equal(("voter", VoteTargetType.Topic, TestIds.Id(1), "author", value), (command.VoterId, command.TargetType, command.TargetId, command.AuthorId, command.NewValue));
     }
 
     [Theory]
@@ -51,7 +51,7 @@ public sealed class VoteServiceTests
     [InlineData(100)]
     public async Task SetTopicVoteAsync_RefusesAValueThatIsNotOneMinusOneOrZero(int value)
     {
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", value, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", value, default);
 
         Assert.Equal(VoteFailure.InvalidValue, result.Failure);
         Assert.Empty(votes.Commands);
@@ -60,7 +60,7 @@ public sealed class VoteServiceTests
     [Fact]
     public async Task SetTopicVoteAsync_RefusesAVoteForOwnPost()
     {
-        var result = await CreateService().SetTopicVoteAsync(1, "author", 1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "author", 1, default);
 
         Assert.Equal(VoteFailure.OwnContent, result.Failure);
         Assert.Empty(votes.Commands);
@@ -76,7 +76,7 @@ public sealed class VoteServiceTests
         topic.IsHiddenByModerator = hidden;
         topic.IsDeleted = deleted;
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
         Assert.Equal(VoteFailure.NotFound, result.Failure);
         Assert.Empty(votes.Commands);
@@ -87,7 +87,7 @@ public sealed class VoteServiceTests
     {
         votes.ScoreAfter = 4;
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
         Assert.Equal(4, result.Vote!.Score);
         Assert.Equal(1, result.Vote.MyVote);
@@ -98,7 +98,7 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-5);
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
         Assert.Equal(VoteFailure.DownvoteNotAllowed, result.Failure);
         Assert.Equal(new DownvoteRequirement(7, 50, 2, 50), result.Downvote);
@@ -110,7 +110,7 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-5);
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
         Assert.Equal(VoteFailure.None, result.Failure);
     }
@@ -120,7 +120,7 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-7);
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
         Assert.Equal(VoteFailure.None, result.Failure);
     }
@@ -136,7 +136,7 @@ public sealed class VoteServiceTests
         accounts.CreatedAt["voter"] = Now.AddDays(-4);
         accounts.Reputation["voter"] = reputation;
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
         Assert.Equal(allowed ? VoteFailure.None : VoteFailure.DownvoteNotAllowed, result.Failure);
         if (!allowed) Assert.Equal(50 - Math.Max(0, reputation), result.Downvote!.ReputationLeft);
@@ -147,8 +147,8 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-4);
 
-        var down = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", -1, default);
-        var up = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", 1, default);
+        var down = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", -1, default);
+        var up = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
 
         Assert.Equal(VoteFailure.DownvoteNotAllowed, down.Failure);
         Assert.Equal(VoteFailure.None, up.Failure);
@@ -159,7 +159,7 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-4);
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 0, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 0, default);
 
         Assert.Equal(VoteFailure.None, result.Failure);
     }
@@ -193,7 +193,7 @@ public sealed class VoteServiceTests
         topic.Score = 8;
         votes.MyVote = 1;
 
-        var vote = await CreateService().GetTopicVoteAsync(1, "voter", default);
+        var vote = await CreateService().GetTopicVoteAsync(TestIds.Id(1), "voter", default);
 
         Assert.True(vote!.ScoreHidden);
         Assert.Equal(0, vote.Score);
@@ -206,7 +206,7 @@ public sealed class VoteServiceTests
         topic.PublishedAtUtc = Now.AddHours(-3);
         topic.Score = 8;
 
-        var vote = await CreateService().GetTopicVoteAsync(1, "voter", default);
+        var vote = await CreateService().GetTopicVoteAsync(TestIds.Id(1), "voter", default);
 
         Assert.False(vote!.ScoreHidden);
         Assert.Equal(8, vote.Score);
@@ -218,7 +218,7 @@ public sealed class VoteServiceTests
         topic.PublishedAtUtc = Now.AddMinutes(-10);
         votes.ScoreAfter = 5;
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
         Assert.Equal(new VoteDto(0, 1, true), result.Vote);
     }
@@ -227,14 +227,14 @@ public sealed class VoteServiceTests
     public async Task SetAnswerVoteAsync_HidesTheScoreOfANewAnswerOnly()
     {
         votes.ScoreAfter = 4;
-        var fresh = CreateAnswer(10, "answerer");
+        var fresh = CreateAnswer(TestIds.Id(10), "answerer");
         fresh.CreatedAtUtc = Now.AddMinutes(-20);
-        var old = CreateAnswer(11, "answerer");
+        var old = CreateAnswer(TestIds.Id(11), "answerer");
         old.CreatedAtUtc = Now.AddHours(-5);
         var service = CreateService(fresh, old);
 
-        var freshResult = await service.SetAnswerVoteAsync(1, 10, "voter", 1, default);
-        var oldResult = await service.SetAnswerVoteAsync(1, 11, "voter", 1, default);
+        var freshResult = await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
+        var oldResult = await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default);
 
         Assert.Equal(new VoteDto(0, 1, true), freshResult.Vote);
         Assert.Equal(new VoteDto(4, 1, false), oldResult.Vote);
@@ -271,7 +271,7 @@ public sealed class VoteServiceTests
     {
         votes.ScoreAfter = realScore;
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
         Assert.Equal(shown, result.Vote!.Score);
     }
@@ -281,7 +281,7 @@ public sealed class VoteServiceTests
     {
         topic.Score = -4;
 
-        var vote = await CreateService().GetTopicVoteAsync(1, "voter", default);
+        var vote = await CreateService().GetTopicVoteAsync(TestIds.Id(1), "voter", default);
 
         Assert.Equal(0, vote!.Score);
     }
@@ -299,35 +299,35 @@ public sealed class VoteServiceTests
     [Fact]
     public async Task SetAnswerVoteAsync_SendsTheVoteWithTheAuthorOfTheAnswer()
     {
-        var result = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", -1, default);
+        var result = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", -1, default);
 
         Assert.Equal(VoteFailure.None, result.Failure);
         var command = Assert.Single(votes.Commands);
-        Assert.Equal((VoteTargetType.Answer, 10, "answerer", -1), (command.TargetType, command.TargetId, command.AuthorId, command.NewValue));
+        Assert.Equal((VoteTargetType.Answer, TestIds.Id(10), "answerer", -1), (command.TargetType, command.TargetId, command.AuthorId, command.NewValue));
     }
 
     [Fact]
     public async Task SetAnswerVoteAsync_RefusesOwnAnswerAndAnAnswerOfAnotherPost()
     {
-        var service = CreateService(CreateAnswer(10, "answerer"), new Answer { Id = 11, TopicId = 2, AuthorId = "x", BodyHtml = "<p>b</p>" });
+        var service = CreateService(CreateAnswer(TestIds.Id(10), "answerer"), new Answer { Id = TestIds.Id(11), TopicId = TestIds.Id(2), AuthorId = "x", BodyHtml = "<p>b</p>" });
 
-        Assert.Equal(VoteFailure.OwnContent, (await service.SetAnswerVoteAsync(1, 10, "answerer", 1, default)).Failure);
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(1, 11, "voter", 1, default)).Failure);
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(1, 99, "voter", 1, default)).Failure);
+        Assert.Equal(VoteFailure.OwnContent, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "answerer", 1, default)).Failure);
+        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default)).Failure);
+        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(99), "voter", 1, default)).Failure);
         Assert.Empty(votes.Commands);
     }
 
     [Fact]
     public async Task SetAnswerVoteAsync_RefusesADeletedOrHiddenAnswer()
     {
-        var deleted = CreateAnswer(10, "answerer");
+        var deleted = CreateAnswer(TestIds.Id(10), "answerer");
         deleted.IsDeleted = true;
-        var hidden = CreateAnswer(11, "answerer");
+        var hidden = CreateAnswer(TestIds.Id(11), "answerer");
         hidden.IsHiddenByModerator = true;
         var service = CreateService(deleted, hidden);
 
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(1, 10, "voter", 1, default)).Failure);
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(1, 11, "voter", 1, default)).Failure);
+        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default)).Failure);
+        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default)).Failure);
     }
 
     [Fact]
@@ -335,8 +335,8 @@ public sealed class VoteServiceTests
     {
         votes.MyVote = -1;
 
-        var member = await CreateService().GetTopicVoteAsync(1, "voter", default);
-        var guest = await CreateService().GetTopicVoteAsync(1, null, default);
+        var member = await CreateService().GetTopicVoteAsync(TestIds.Id(1), "voter", default);
+        var guest = await CreateService().GetTopicVoteAsync(TestIds.Id(1), null, default);
 
         Assert.Equal((3, -1), (member!.Score, member.MyVote));
         Assert.Equal((3, 0), (guest!.Score, guest.MyVote));
@@ -347,7 +347,7 @@ public sealed class VoteServiceTests
     {
         topic.IsDeleted = true;
 
-        Assert.Null(await CreateService().GetTopicVoteAsync(1, "voter", default));
+        Assert.Null(await CreateService().GetTopicVoteAsync(TestIds.Id(1), "voter", default));
     }
 
     [Fact]
@@ -355,8 +355,8 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-1);
 
-        var up = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
-        var down = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+        var up = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
+        var down = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
         Assert.Equal(VoteFailure.AccountTooNew, up.Failure);
         Assert.Equal(2, up.DaysLeft);
@@ -369,7 +369,7 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-2).AddHours(-23);
 
-        var result = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", 1, default);
+        var result = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
 
         Assert.Equal(VoteFailure.AccountTooNew, result.Failure);
         Assert.Equal(1, result.DaysLeft);
@@ -381,7 +381,7 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddDays(-3);
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
         Assert.Equal(VoteFailure.None, result.Failure);
     }
@@ -391,7 +391,7 @@ public sealed class VoteServiceTests
     {
         accounts.CreatedAt["voter"] = Now.AddHours(-1);
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 0, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 0, default);
 
         Assert.Equal(VoteFailure.None, result.Failure);
         Assert.Equal(0, Assert.Single(votes.Commands).NewValue);
@@ -403,7 +403,7 @@ public sealed class VoteServiceTests
         limiter.Allow = false;
         limiter.RetryAfter = TimeSpan.FromSeconds(44.2);
 
-        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+        var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
         Assert.Equal(VoteFailure.RateLimited, result.Failure);
         Assert.Equal(45, result.RetryAfterSeconds);
@@ -415,7 +415,7 @@ public sealed class VoteServiceTests
     {
         limiter.Allow = false;
 
-        var result = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", 1, default);
+        var result = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
 
         Assert.Equal(VoteFailure.RateLimited, result.Failure);
         Assert.True(result.RetryAfterSeconds >= 1);
@@ -424,7 +424,7 @@ public sealed class VoteServiceTests
     [Fact]
     public async Task SetTopicVoteAsync_AWrongValueDoesNotUseAPlaceOfTheLimit()
     {
-        await CreateService().SetTopicVoteAsync(1, "voter", 9, default);
+        await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 9, default);
 
         Assert.Equal(0, limiter.Calls);
     }
@@ -432,8 +432,8 @@ public sealed class VoteServiceTests
     [Fact]
     public async Task SetTopicVoteAsync_EveryAcceptedRequestUsesAPlaceOfTheLimit()
     {
-        await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
-        await CreateService().SetTopicVoteAsync(1, "voter", 0, default);
+        await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
+        await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 0, default);
 
         Assert.Equal(2, limiter.Calls);
     }
@@ -513,23 +513,23 @@ public sealed class VoteServiceTests
             return Task.FromResult(new VoteOutcome(0, command.NewValue, ScoreAfter));
         }
 
-        public Task<int> GetMyVoteAsync(string userId, VoteTargetType targetType, int targetId, CancellationToken cancellationToken) =>
+        public Task<int> GetMyVoteAsync(string userId, VoteTargetType targetType, Guid targetId, CancellationToken cancellationToken) =>
             Task.FromResult(MyVote);
     }
 
     private sealed class FakeTopics(Topic topic) : ITopicRepository
     {
-        public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken) =>
+        public Task<Topic?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult(id == topic.Id && topic.Status == TopicStatus.Published && topic.PublishedAtUtc is not null &&
                 !topic.IsDeleted && !topic.IsHiddenByModerator ? topic : null);
-        public Task<Topic?> GetOwnedByIdAsync(int id, string authorId, CancellationToken cancellationToken) => Task.FromResult<Topic?>(null);
+        public Task<Topic?> GetOwnedByIdAsync(Guid id, string authorId, CancellationToken cancellationToken) => Task.FromResult<Topic?>(null);
         public Task<TopicPage> GetPublicPageAsync(TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
         public Task<TopicPage> GetFollowingPageAsync(string followerId, TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
         public Task<TopicPage> GetOwnedPageAsync(string authorId, TopicQuery query, CancellationToken cancellationToken) => Task.FromResult(new TopicPage([], 0));
-        public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) => Task.FromResult<Category?>(null);
-        public Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(IReadOnlyCollection<int> ids, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<Tag>>([]);
+        public Task<Category?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<Category?>(null);
+        public Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<Tag>>([]);
         public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<bool> HasPublicAnswersAsync(Guid topicId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<bool> TryAddAsync(Topic topic, CancellationToken cancellationToken) => Task.FromResult(true);
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
@@ -537,17 +537,17 @@ public sealed class VoteServiceTests
     // Only the lookup that the vote service uses; the rest of the interface is not needed here.
     private sealed class FakeAnswers(Answer[] answers) : IAnswerRepository
     {
-        public Task<Answer?> GetVisibleByIdAsync(int topicId, int answerId, CancellationToken cancellationToken) =>
+        public Task<Answer?> GetVisibleByIdAsync(Guid topicId, Guid answerId, CancellationToken cancellationToken) =>
             Task.FromResult(answers.SingleOrDefault(answer => answer.Id == answerId && answer.TopicId == topicId &&
                 !answer.IsDeleted && !answer.IsHiddenByModerator));
 
-        public Task<AnswerPage?> GetPublicPageAsync(int topicId, int page, int pageSize, int? aroundAnswerId, string sort, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(IReadOnlyCollection<int> answerIds, string? viewerId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<AnswerPage?> GetPublicPageAsync(Guid topicId, int page, int pageSize, Guid? aroundAnswerId, string sort, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(IReadOnlyCollection<Guid> answerIds, string? viewerId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task RemoveHelpfulAsync(int answerId, string userId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task RemoveHelpfulAsync(Guid answerId, string userId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AddAsync(Answer answer, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<Answer?> GetOwnedByIdAsync(int topicId, int answerId, string authorId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Answer?> GetOwnedByIdAsync(Guid topicId, Guid answerId, string authorId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task SaveChangesAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

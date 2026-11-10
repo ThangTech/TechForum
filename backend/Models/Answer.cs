@@ -2,10 +2,10 @@ namespace TechForum.Api.Models;
 
 public sealed class Answer
 {
-    public int Id { get; set; }
-    public int TopicId { get; set; }
+    public Guid Id { get; set; }
+    public Guid TopicId { get; set; }
     public Topic Topic { get; set; } = null!;
-    public int? ParentAnswerId { get; set; }
+    public Guid? ParentAnswerId { get; set; }
     public Answer? ParentAnswer { get; set; }
     public required string AuthorId { get; set; }
     public ApplicationUser Author { get; set; } = null!;

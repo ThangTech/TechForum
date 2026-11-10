@@ -10,8 +10,8 @@ import { PanelList } from '../common/PanelList'
 
 interface NotificationListProps {
   data: NotificationPage
-  busyId: number | null
-  onOpen: (id: number, link: string, isRead: boolean) => void
+  busyId: string | null
+  onOpen: (id: string, link: string, isRead: boolean) => void
   onPageChange: (page: number) => void
 }
 

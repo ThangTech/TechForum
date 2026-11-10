@@ -22,16 +22,16 @@ public sealed class AdminCategoriesController(ICategoryService categoryService) 
         CancellationToken cancellationToken) =>
         ToActionResult(await categoryService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken), true);
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<AdminCategoryDto>> Update(
-        int id,
+        Guid id,
         [FromBody] SaveCategoryRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await categoryService.UpdateAsync(User.GetRequiredUserId(), id, request, cancellationToken));
 
-    [HttpPut("{id:int}/active")]
+    [HttpPut("{id:guid}/active")]
     public async Task<ActionResult<AdminCategoryDto>> SetActive(
-        int id,
+        Guid id,
         [FromBody] SetActiveRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await categoryService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken));

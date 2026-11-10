@@ -1,8 +1,8 @@
 namespace TechForum.Api.Dtos;
 
-public sealed record TopicCategoryDto(int Id, string Name, string Slug);
+public sealed record TopicCategoryDto(Guid Id, string Name, string Slug);
 public sealed record TopicAuthorDto(string Id, string DisplayName);
-public sealed record TopicTagDto(int Id, string Name, string Slug);
+public sealed record TopicTagDto(Guid Id, string Name, string Slug);
 public sealed record TopicDiscussionDto(
     int AnswerCount,
     bool HasAcceptedAnswer,
@@ -11,7 +11,7 @@ public sealed record TopicDiscussionDto(
     int BookmarkCount);
 
 public sealed record TopicSummaryDto(
-    int Id,
+    Guid Id,
     string Title,
     string Slug,
     string Summary,
@@ -31,7 +31,7 @@ public sealed record TopicSummaryDto(
     bool ScoreHidden = false);
 
 public sealed record TopicDetailDto(
-    int Id,
+    Guid Id,
     string Title,
     string Slug,
     string Summary,

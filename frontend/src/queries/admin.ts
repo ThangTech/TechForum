@@ -72,7 +72,7 @@ export const useAdminCategories = () => {
 }
 
 // Creates a category, or changes it when editingId is set.
-export const useSaveAdminCategory = (editingId: number | null) => {
+export const useSaveAdminCategory = (editingId: string | null) => {
   const queryClient = useQueryClient()
   const invalidateAdminData = useInvalidateAdminData()
 
@@ -112,7 +112,7 @@ export const useAdminTags = () => {
 }
 
 // Creates a tag, or changes it when editingId is set.
-export const useSaveAdminTag = (editingId: number | null) => {
+export const useSaveAdminTag = (editingId: string | null) => {
   const queryClient = useQueryClient()
   const invalidateAdminData = useInvalidateAdminData()
 
@@ -164,7 +164,7 @@ export const useRemoveBannedWord = () => {
   const invalidateAdminData = useInvalidateAdminData()
 
   return useMutation({
-    mutationFn: (id: number) => removeBannedWord(id),
+    mutationFn: (id: string) => removeBannedWord(id),
     onSuccess: () => { void invalidateAdminData() },
   })
 }
@@ -193,7 +193,7 @@ const useRefreshBanners = () => {
 }
 
 // Creates a banner, or changes it when editingId is set.
-export const useSaveAdminBanner = (editingId: number | null) => {
+export const useSaveAdminBanner = (editingId: string | null) => {
   const refreshBanners = useRefreshBanners()
 
   return useMutation<AdminBanner, Error, SaveBannerInput>({
@@ -285,7 +285,7 @@ export const useResolveReport = () => {
   const invalidateAdminData = useInvalidateAdminData()
 
   return useMutation({
-    mutationFn: (input: { reportId: number; decision: 'accepted' | 'rejected'; note: string }) =>
+    mutationFn: (input: { reportId: string; decision: 'accepted' | 'rejected'; note: string }) =>
       resolveReport(input.reportId, input.decision, input.note),
     onSuccess: () => {
       void invalidateAdminData()
@@ -307,7 +307,7 @@ export const useAdminTopics = (params: AdminTopicParams) => {
   })
 }
 
-export const useAdminTopicDetail = (topicId: number) => {
+export const useAdminTopicDetail = (topicId: string) => {
   const { scope, isEnabled } = useAdminQueryState()
 
   return useQuery({
@@ -323,10 +323,10 @@ export const useModerateTopic = () => {
 
   return useMutation({
     mutationFn: (input: {
-      topicId: number
+      topicId: string
       action: ModerationAction
       reason: string
-      categoryId?: number
+      categoryId?: string
     }) => moderateTopic(input.topicId, input.action, input.reason, input.categoryId),
     onSuccess: () => {
       void invalidateAdminData()

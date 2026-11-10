@@ -13,8 +13,8 @@ interface TagPanelProps {
   isLoading: boolean
   error: string | null
   onRetry: () => void
-  selectedId?: number
-  onSelect?: (id: number) => void
+  selectedId?: string
+  onSelect?: (id: string) => void
 }
 
 const messageSx = { p: 2.5, color: 'text.secondary', fontSize: '0.875rem', lineHeight: '1.5rem' } as const

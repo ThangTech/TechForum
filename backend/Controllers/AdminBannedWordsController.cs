@@ -36,10 +36,10 @@ public sealed class AdminBannedWordsController(IBannedWordService bannedWordServ
         };
     }
 
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Remove(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Remove(Guid id, CancellationToken cancellationToken)
     {
         var result = await bannedWordService.RemoveAsync(User.GetRequiredUserId(), id, cancellationToken);
         return result.Failure == BannedWordFailure.None

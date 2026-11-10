@@ -17,7 +17,7 @@ export const BannerAdminCard = ({
   onDelete,
 }: {
   banner: AdminBanner
-  busyId: number | null
+  busyId: string | null
   onEdit: (banner: AdminBanner) => void
   onToggleActive: (banner: AdminBanner) => void
   onDelete: (banner: AdminBanner) => void

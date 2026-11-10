@@ -1,7 +1,7 @@
 namespace TechForum.Api.Dtos;
 
 public sealed record AdminTopicDto(
-    int Id,
+    Guid Id,
     string Title,
     string Type,
     TopicCategoryDto Category,
@@ -22,11 +22,11 @@ public sealed class AdminTopicQuery
     public int PageSize { get; init; } = 20;
     public string? Keyword { get; init; }
     public string? Type { get; init; }
-    public int? CategoryId { get; init; }
+    public Guid? CategoryId { get; init; }
     public string? Visibility { get; init; }
 }
 
 public sealed record ModerateTopicRequest(
     string? Action,
-    int? CategoryId,
+    Guid? CategoryId,
     string? Reason);

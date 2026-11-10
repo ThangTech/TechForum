@@ -22,22 +22,22 @@ public sealed class AdminBannersController(IBannerService bannerService) : Contr
         CancellationToken cancellationToken) =>
         ToActionResult(await bannerService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken), true);
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<AdminBannerDto>> Update(
-        int id,
+        Guid id,
         [FromBody] SaveBannerRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await bannerService.UpdateAsync(User.GetRequiredUserId(), id, request, cancellationToken));
 
-    [HttpPut("{id:int}/active")]
+    [HttpPut("{id:guid}/active")]
     public async Task<ActionResult<AdminBannerDto>> SetActive(
-        int id,
+        Guid id,
         [FromBody] SetActiveRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await bannerService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken));
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await bannerService.DeleteAsync(User.GetRequiredUserId(), id, cancellationToken);
         return result.Failure == BannerWriteFailure.None ? NoContent() : NotFoundResult(result);

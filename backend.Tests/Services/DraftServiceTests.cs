@@ -46,15 +46,15 @@ public sealed class DraftServiceTests
     public async Task SaveAsync_NewTopicAndEditedTopic_AreTwoDrafts()
     {
         var drafts = new FakeDraftRepository();
-        drafts.OwnedTopics.Add((Member, 7));
+        drafts.OwnedTopics.Add((Member, TestIds.Id(7)));
         var service = CreateService(drafts);
 
         await service.SaveAsync(Member, Request(title: "Bài mới"), default);
-        await service.SaveAsync(Member, Request(title: "Sửa bài 7", topicId: 7), default);
+        await service.SaveAsync(Member, Request(title: "Sửa bài 7", topicId: TestIds.Id(7)), default);
 
         Assert.Equal(2, drafts.Drafts.Count);
         Assert.Equal("Bài mới", (await service.GetAsync(Member, null, default))!.Title);
-        Assert.Equal("Sửa bài 7", (await service.GetAsync(Member, 7, default))!.Title);
+        Assert.Equal("Sửa bài 7", (await service.GetAsync(Member, TestIds.Id(7), default))!.Title);
     }
 
     [Fact]
@@ -124,8 +124,8 @@ public sealed class DraftServiceTests
         var service = CreateService();
 
         var badType = await service.SaveAsync(Member, Request(title: "x", type: "blog"), default);
-        var tooManyTags = await service.SaveAsync(Member, Request(title: "x", tagIds: [1, 2, 3, 4, 5, 6]), default);
-        var badTag = await service.SaveAsync(Member, Request(title: "x", tagIds: [0]), default);
+        var tooManyTags = await service.SaveAsync(Member, Request(title: "x", tagIds: [TestIds.Id(1), TestIds.Id(2), TestIds.Id(3), TestIds.Id(4), TestIds.Id(5), TestIds.Id(6)]), default);
+        var badTag = await service.SaveAsync(Member, Request(title: "x", tagIds: [TestIds.Id(0)]), default);
         var tooManyMedia = await service.SaveAsync(Member, Request(title: "x", mediaIds: Enumerable.Range(0, 21).Select(_ => Guid.NewGuid()).ToList()), default);
 
         Assert.Equal("type", badType.Field);
@@ -151,9 +151,9 @@ public sealed class DraftServiceTests
     public async Task SaveAsync_ForATopicOfAnotherMember_IsNotFoundAndSavesNothing()
     {
         var drafts = new FakeDraftRepository();
-        drafts.OwnedTopics.Add(("member-b", 9));
+        drafts.OwnedTopics.Add(("member-b", TestIds.Id(9)));
 
-        var result = await CreateService(drafts).SaveAsync(Member, Request(title: "Sửa bài người khác", topicId: 9), default);
+        var result = await CreateService(drafts).SaveAsync(Member, Request(title: "Sửa bài người khác", topicId: TestIds.Id(9)), default);
 
         Assert.Equal(DraftWriteFailure.NotFound, result.Failure);
         Assert.Empty(drafts.Drafts);
@@ -189,15 +189,15 @@ public sealed class DraftServiceTests
     public async Task DeleteAsync_RemovesOnlyThatTarget()
     {
         var drafts = new FakeDraftRepository();
-        drafts.OwnedTopics.Add((Member, 7));
+        drafts.OwnedTopics.Add((Member, TestIds.Id(7)));
         var service = CreateService(drafts);
         await service.SaveAsync(Member, Request(title: "Bài mới"), default);
-        await service.SaveAsync(Member, Request(title: "Sửa bài 7", topicId: 7), default);
+        await service.SaveAsync(Member, Request(title: "Sửa bài 7", topicId: TestIds.Id(7)), default);
 
         await service.DeleteAsync(Member, null, default);
 
         var left = Assert.Single(drafts.Drafts);
-        Assert.Equal(7, left.TopicId);
+        Assert.Equal(TestIds.Id(7), left.TopicId);
     }
 
     private static DraftService CreateService(FakeDraftRepository? drafts = null, FakeMediaRepository? media = null) =>
@@ -208,8 +208,8 @@ public sealed class DraftServiceTests
         string? summary = null,
         string? body = null,
         string? type = "article",
-        int? topicId = null,
-        IReadOnlyList<int>? tagIds = null,
+        Guid? topicId = null,
+        IReadOnlyList<Guid>? tagIds = null,
         IReadOnlyList<Guid>? mediaIds = null) =>
         new(topicId, title, summary, body, type, null, tagIds, mediaIds);
 
@@ -227,7 +227,7 @@ public sealed class DraftServiceTests
                 assets.Where(item => ids.Contains(item.Id) && item.UploaderId == uploaderId && item.TopicId == null).ToList());
 
         public Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
-            IReadOnlyCollection<Guid> ids, string uploaderId, int topicId, CancellationToken cancellationToken) =>
+            IReadOnlyCollection<Guid> ids, string uploaderId, Guid topicId, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<MediaAsset>>(
                 assets.Where(item => ids.Contains(item.Id) && item.UploaderId == uploaderId &&
                     (item.TopicId == null || item.TopicId == topicId)).ToList());

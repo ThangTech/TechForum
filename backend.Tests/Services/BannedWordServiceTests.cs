@@ -69,9 +69,9 @@ public sealed class BannedWordServiceTests
     [Fact]
     public async Task RemoveAsync_DeletesTheWord_RecordsItAndRefreshesTheCache()
     {
-        repository.Items.Add(new BannedWord { Id = 4, Word = "bazqux", CreatedAtUtc = DateTimeOffset.UtcNow });
+        repository.Items.Add(new BannedWord { Id = TestIds.Id(4), Word = "bazqux", CreatedAtUtc = DateTimeOffset.UtcNow });
 
-        var result = await CreateService().RemoveAsync("admin", 4, default);
+        var result = await CreateService().RemoveAsync("admin", TestIds.Id(4), default);
 
         Assert.Equal(BannedWordFailure.None, result.Failure);
         Assert.Empty(repository.Items);
@@ -82,7 +82,7 @@ public sealed class BannedWordServiceTests
     [Fact]
     public async Task RemoveAsync_ForAWordThatDoesNotExist_ReturnsNotFound()
     {
-        var result = await CreateService().RemoveAsync("admin", 99, default);
+        var result = await CreateService().RemoveAsync("admin", TestIds.Id(99), default);
 
         Assert.Equal(BannedWordFailure.NotFound, result.Failure);
         Assert.Empty(audit.Actions);
@@ -92,7 +92,7 @@ public sealed class BannedWordServiceTests
     [Fact]
     public async Task GetAllAsync_ReturnsTheWords()
     {
-        repository.Items.Add(new BannedWord { Id = 1, Word = "bazqux", CreatedAtUtc = DateTimeOffset.UtcNow });
+        repository.Items.Add(new BannedWord { Id = TestIds.Id(1), Word = "bazqux", CreatedAtUtc = DateTimeOffset.UtcNow });
 
         var words = await CreateService().GetAllAsync(default);
 

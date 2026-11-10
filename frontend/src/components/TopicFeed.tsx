@@ -16,7 +16,7 @@ interface TopicFeedProps {
   isLoading: boolean
   onPageChange: (page: number) => void
   onRetry: () => void
-  onFilter: (key: 'categoryId' | 'tagId', value: number) => void
+  onFilter: (key: 'categoryId' | 'tagId', value: string) => void
   selectedType?: TopicType
   isDiscussion?: boolean
   feed?: TopicFeedMode

@@ -12,7 +12,7 @@ import { useDiscardGuard } from '../feedback/useDiscardGuard'
 interface ReportDialogProps {
   isOpen: boolean
   onClose: () => void
-  targetId: number
+  targetId: string
   targetType: ReportTargetType
 }
 

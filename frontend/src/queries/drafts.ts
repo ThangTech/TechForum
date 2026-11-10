@@ -5,12 +5,12 @@ import { useUserScope, userKey } from './userScope'
 
 export const draftKeys = {
   all: (scope: string) => userKey(scope, 'drafts'),
-  target: (scope: string, topicId: number | null) => [...draftKeys.all(scope), topicId ?? 'new'] as const,
+  target: (scope: string, topicId: string | null) => [...draftKeys.all(scope), topicId ?? 'new'] as const,
 }
 
 // Loads the draft of the form that is opening. It is read once, when the page opens: the form decides what to do with
 // it (offer to restore it), and the draft that the form saves itself must not come back and replace what was typed.
-export const useDraft = (topicId: number | null, isEnabled: boolean) => {
+export const useDraft = (topicId: string | null, isEnabled: boolean) => {
   const { scope, isReady, isSignedIn } = useUserScope()
 
   return useQuery({
@@ -24,12 +24,12 @@ export const useDraft = (topicId: number | null, isEnabled: boolean) => {
   })
 }
 
-export const useSaveDraft = (topicId: number | null) =>
+export const useSaveDraft = (topicId: string | null) =>
   useMutation({
     mutationFn: (snapshot: DraftSnapshot) => saveDraft(topicId, snapshot),
   })
 
-export const useDeleteDraft = (topicId: number | null) => {
+export const useDeleteDraft = (topicId: string | null) => {
   const queryClient = useQueryClient()
   const { scope } = useUserScope()
 

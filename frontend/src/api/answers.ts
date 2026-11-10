@@ -2,9 +2,9 @@ import { ApiError, apiRequest } from './client'
 import type { TopicAuthor } from './topics'
 
 export interface Answer {
-  id: number
-  topicId: number
-  parentAnswerId: number | null
+  id: string
+  topicId: string
+  parentAnswerId: string | null
   replyingTo: TopicAuthor | null
   bodyHtml: string
   author: TopicAuthor
@@ -40,9 +40,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isAnswer = (value: unknown): value is Answer =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
-  typeof value.topicId === 'number' &&
-  (value.parentAnswerId === null || typeof value.parentAnswerId === 'number') &&
+  typeof value.id === 'string' &&
+  typeof value.topicId === 'string' &&
+  (value.parentAnswerId === null || typeof value.parentAnswerId === 'string') &&
   (value.replyingTo === null || (isRecord(value.replyingTo) &&
     typeof value.replyingTo.id === 'string' && typeof value.replyingTo.displayName === 'string')) &&
   typeof value.bodyHtml === 'string' &&
@@ -67,11 +67,11 @@ const parseAnswer = (data: unknown): Answer => {
 }
 
 export const getAnswers = async (
-  topicId: number,
+  topicId: string,
   page: number,
   pageSize: number,
   signal?: AbortSignal,
-  aroundAnswerId?: number,
+  aroundAnswerId?: string,
   sort: AnswerSort = 'oldest',
 ): Promise<AnswerPage> => {
   const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize), sort })
@@ -96,29 +96,29 @@ export const getAnswers = async (
   return data as unknown as AnswerPage
 }
 
-export const createAnswer = async (topicId: number, bodyHtml: string, parentAnswerId?: number): Promise<Answer> =>
+export const createAnswer = async (topicId: string, bodyHtml: string, parentAnswerId?: string): Promise<Answer> =>
   parseAnswer(await apiRequest(`/api/topics/${topicId}/answers`, {
     method: 'POST',
     body: JSON.stringify({ bodyHtml, parentAnswerId }),
   }))
 
-export const acceptAnswer = async (topicId: number, answerId: number): Promise<Answer> =>
+export const acceptAnswer = async (topicId: string, answerId: string): Promise<Answer> =>
   parseAnswer(await apiRequest(`/api/topics/${topicId}/answers/${answerId}/accepted`, {
     method: 'PUT',
   }))
 
-export const updateAnswer = async (topicId: number, answerId: number, bodyHtml: string): Promise<Answer> =>
+export const updateAnswer = async (topicId: string, answerId: string, bodyHtml: string): Promise<Answer> =>
   parseAnswer(await apiRequest(`/api/topics/${topicId}/answers/${answerId}`, {
     method: 'PUT',
     body: JSON.stringify({ bodyHtml }),
   }))
 
-export const deleteAnswer = async (topicId: number, answerId: number): Promise<void> =>
+export const deleteAnswer = async (topicId: string, answerId: string): Promise<void> =>
   apiRequest(`/api/topics/${topicId}/answers/${answerId}`, { method: 'DELETE' })
 
 export const setAnswerHelpful = async (
-  topicId: number,
-  answerId: number,
+  topicId: string,
+  answerId: string,
   isHelpful: boolean,
 ): Promise<AnswerHelpfulState> => {
   const data: unknown = await apiRequest(`/api/topics/${topicId}/answers/${answerId}/helpful`, {

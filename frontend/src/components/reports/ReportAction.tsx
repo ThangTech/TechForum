@@ -7,7 +7,7 @@ import { IconActionButton } from '../common/IconActionButton'
 import { ReportDialog } from './ReportDialog'
 
 interface ReportActionProps {
-  targetId: number
+  targetId: string
   targetType: ReportTargetType
 }
 

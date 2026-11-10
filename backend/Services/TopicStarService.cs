@@ -9,7 +9,7 @@ public sealed class TopicStarService(
     TimeProvider timeProvider) : ITopicStarService
 {
     public async Task<TopicStarDto?> GetAsync(
-        int topicId,
+        Guid topicId,
         string? userId,
         CancellationToken cancellationToken)
     {
@@ -23,7 +23,7 @@ public sealed class TopicStarService(
     }
 
     public async Task<TopicStarDto?> AddAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         CancellationToken cancellationToken)
     {
@@ -57,7 +57,7 @@ public sealed class TopicStarService(
     }
 
     public async Task<TopicStarDto?> RemoveAsync(
-        int topicId,
+        Guid topicId,
         string userId,
         CancellationToken cancellationToken)
     {
@@ -72,7 +72,7 @@ public sealed class TopicStarService(
     }
 
     private async Task<TopicStarDto> GetStatusAsync(
-        int topicId,
+        Guid topicId,
         string? userId,
         CancellationToken cancellationToken)
     {

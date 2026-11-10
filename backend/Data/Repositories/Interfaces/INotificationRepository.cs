@@ -12,7 +12,7 @@ public interface INotificationRepository
 
     Task<bool> AddIfMissingAsync(Notification notification, CancellationToken cancellationToken);
 
-    Task<Notification?> GetUnreadAsync(long id, string userId, CancellationToken cancellationToken);
+    Task<Notification?> GetUnreadAsync(Guid id, string userId, CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }

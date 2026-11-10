@@ -38,7 +38,7 @@ public sealed class BannedWordService(
 
     public async Task<BannedWordWriteResult> RemoveAsync(
         string administratorId,
-        int id,
+        Guid id,
         CancellationToken cancellationToken)
     {
         var word = await repository.GetByIdAsync(id, cancellationToken);

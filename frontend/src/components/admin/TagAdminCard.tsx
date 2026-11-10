@@ -10,7 +10,7 @@ export const TagAdminCard = ({
   onEdit,
   onToggleActive,
 }: {
-  busyId: number | null
+  busyId: string | null
   tag: AdminTag
   onEdit: (tag: AdminTag) => void
   onToggleActive: (tag: AdminTag) => void

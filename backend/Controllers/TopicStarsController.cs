@@ -7,14 +7,14 @@ using TechForum.Api.Services;
 namespace TechForum.Api.Controllers;
 
 [ApiController]
-[Route("api/topics/{topicId:int}/star")]
+[Route("api/topics/{topicId:guid}/star")]
 public sealed class TopicStarsController(ITopicStarService topicStarService) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType<TopicStarDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicStarDto>> Get(
-        int topicId,
+        Guid topicId,
         CancellationToken cancellationToken)
     {
         var status = await topicStarService.GetAsync(
@@ -29,7 +29,7 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
     [ProducesResponseType<TopicStarDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicStarDto>> Add(
-        int topicId,
+        Guid topicId,
         CancellationToken cancellationToken)
     {
         var status = await topicStarService.AddAsync(topicId, User.GetRequiredUserId(), cancellationToken);
@@ -41,7 +41,7 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
     [ProducesResponseType<TopicStarDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicStarDto>> Remove(
-        int topicId,
+        Guid topicId,
         CancellationToken cancellationToken)
     {
         var status = await topicStarService.RemoveAsync(topicId, User.GetRequiredUserId(), cancellationToken);

@@ -12,7 +12,7 @@ public interface IRefreshTokenRepository
     // Returns false when the current token was already used, revoked or expired,
     // for example when two requests try to refresh with the same token.
     Task<bool> RotateAsync(
-        long currentTokenId,
+        Guid currentTokenId,
         RefreshToken replacement,
         DateTimeOffset now,
         CancellationToken cancellationToken);

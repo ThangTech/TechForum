@@ -52,7 +52,7 @@ export const useSaveMySkills = () => {
   const { scope } = useUserScope()
 
   return useMutation({
-    mutationFn: (tagIds: number[]) => saveMySkills(tagIds),
+    mutationFn: (tagIds: string[]) => saveMySkills(tagIds),
     onSuccess: (skills) => {
       queryClient.setQueryData(userKey(scope, 'profiles', 'my-skills'), skills)
       // The public profile shows these skills too.

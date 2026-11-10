@@ -15,7 +15,7 @@ public sealed class VoteService(
     IOptions<VoteLimitOptions> limitOptions,
     TimeProvider timeProvider) : IVoteService
 {
-    public async Task<VoteDto?> GetTopicVoteAsync(int topicId, string? viewerId, CancellationToken cancellationToken)
+    public async Task<VoteDto?> GetTopicVoteAsync(Guid topicId, string? viewerId, CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
         if (topic is null) return null;
@@ -27,7 +27,7 @@ public sealed class VoteService(
         return new VoteDto(ReputationRules.ShownScore(topic.Score, isHidden), myVote, isHidden);
     }
 
-    public async Task<VoteResult> SetTopicVoteAsync(int topicId, string userId, int value, CancellationToken cancellationToken)
+    public async Task<VoteResult> SetTopicVoteAsync(Guid topicId, string userId, int value, CancellationToken cancellationToken)
     {
         var refused = CheckValueAndSpeed(userId, value);
         if (refused is not null) return refused;
@@ -42,8 +42,8 @@ public sealed class VoteService(
     }
 
     public async Task<VoteResult> SetAnswerVoteAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string userId,
         int value,
         CancellationToken cancellationToken)
@@ -108,7 +108,7 @@ public sealed class VoteService(
     private async Task<VoteResult> ApplyAsync(
         string userId,
         VoteTargetType targetType,
-        int targetId,
+        Guid targetId,
         string authorId,
         int value,
         DateTimeOffset? postedAtUtc,

@@ -22,16 +22,16 @@ public sealed class AdminTagsController(ITagService tagService) : ControllerBase
         CancellationToken cancellationToken) =>
         ToActionResult(await tagService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken), true);
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<AdminTagDto>> Update(
-        int id,
+        Guid id,
         [FromBody] SaveTagRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await tagService.UpdateAsync(User.GetRequiredUserId(), id, request, cancellationToken));
 
-    [HttpPut("{id:int}/active")]
+    [HttpPut("{id:guid}/active")]
     public async Task<ActionResult<AdminTagDto>> SetActive(
-        int id,
+        Guid id,
         [FromBody] SetActiveRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await tagService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken));

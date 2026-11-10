@@ -9,12 +9,12 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [ProfanityFilter]
-[Route("api/topics/{topicId:int}/answers")]
+[Route("api/topics/{topicId:guid}/answers")]
 public sealed class AnswersController(IAnswerService answerService, IVoteService voteService) : ControllerBase
 {
     // Upvote (1), downvote (-1) or take the vote back (0). The score and the reputation of the author change with it.
     [Authorize]
-    [HttpPut("{answerId:int}/vote")]
+    [HttpPut("{answerId:guid}/vote")]
     [ProducesResponseType<VoteDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -22,8 +22,8 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<VoteDto>> SetVote(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         [FromBody] SetVoteRequest request,
         CancellationToken cancellationToken) =>
         this.ToVoteResponse(await voteService.SetAnswerVoteAsync(
@@ -34,7 +34,7 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PagedResultDto<AnswerDto>>> GetAll(
-        int topicId,
+        Guid topicId,
         [FromQuery] AnswerQuery query,
         CancellationToken cancellationToken)
     {
@@ -66,26 +66,26 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     }
 
     [Authorize]
-    [HttpPut("{answerId:int}/helpful")]
+    [HttpPut("{answerId:guid}/helpful")]
     [ProducesResponseType<AnswerHelpfulDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AnswerHelpfulDto>> AddHelpful(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         CancellationToken cancellationToken) =>
         ToHelpfulResponse(await answerService.SetHelpfulAsync(
             topicId, answerId, User.GetRequiredUserId(), true, cancellationToken));
 
     [Authorize]
-    [HttpDelete("{answerId:int}/helpful")]
+    [HttpDelete("{answerId:guid}/helpful")]
     [ProducesResponseType<AnswerHelpfulDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AnswerHelpfulDto>> RemoveHelpful(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         CancellationToken cancellationToken) =>
         ToHelpfulResponse(await answerService.SetHelpfulAsync(
             topicId, answerId, User.GetRequiredUserId(), false, cancellationToken));
@@ -117,7 +117,7 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AnswerDto>> Create(
-        int topicId,
+        Guid topicId,
         [FromBody] CreateAnswerRequest request,
         CancellationToken cancellationToken)
     {
@@ -157,14 +157,14 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     }
 
     [Authorize]
-    [HttpPut("{answerId:int}/accepted")]
+    [HttpPut("{answerId:guid}/accepted")]
     [ProducesResponseType<AnswerDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AnswerDto>> Accept(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         CancellationToken cancellationToken)
     {
         var authorId = User.GetUserIdOrNull();
@@ -198,10 +198,10 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     }
 
     [Authorize]
-    [HttpPut("{answerId:int}")]
+    [HttpPut("{answerId:guid}")]
     public async Task<ActionResult<AnswerDto>> Update(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         [FromBody] CreateAnswerRequest request,
         CancellationToken cancellationToken)
     {
@@ -223,10 +223,10 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     }
 
     [Authorize]
-    [HttpDelete("{answerId:int}")]
+    [HttpDelete("{answerId:guid}")]
     public async Task<IActionResult> Delete(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         CancellationToken cancellationToken)
     {
         var deleted = await answerService.DeleteAsync(
@@ -251,7 +251,7 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
         {
             errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
         }
-        if (query.AroundAnswerId is <= 0)
+        if (query.AroundAnswerId == Guid.Empty)
         {
             errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
         }

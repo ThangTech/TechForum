@@ -29,6 +29,7 @@ import { useDeleteDraft, useDraft, useSaveDraft } from '../queries/drafts'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useTags } from '../queries/tags'
 import { useMyTopicForEdit, useSaveTopic } from '../queries/topics'
+import { isGuid } from '../utils/ids'
 
 export const WriteTopicPage = () => {
   const { id } = useParams()
@@ -45,13 +46,13 @@ interface WriteTopicFormProps {
 
 // Loads what the form needs: the categories, the tags and, when editing, the topic itself.
 const WriteTopicForm = ({ id, requestedType }: WriteTopicFormProps) => {
-  const editingId = id ? Number(id) : null
+  const editingId = id ? id.toLowerCase() : null
   const isEditing = id !== undefined
-  const isEditingIdValid = editingId !== null && Number.isInteger(editingId) && editingId > 0
+  const isEditingIdValid = isGuid(editingId)
 
   const categoriesQuery = useCategories()
   const tagsQuery = useTags()
-  const topicQuery = useMyTopicForEdit(editingId ?? 0, isEditing && isEditingIdValid)
+  const topicQuery = useMyTopicForEdit(editingId ?? '', isEditing && isEditingIdValid)
   const draftQuery = useDraft(editingId, !isEditing || isEditingIdValid)
 
   const categories = categoriesQuery.data
@@ -106,7 +107,7 @@ interface WriteTopicEditorProps {
   categories: Category[]
   // The automatic draft found when the form opened, or null.
   draft: Draft | null
-  editingId: number | null
+  editingId: string | null
   existingTopic: OwnTopic | null
   requestedType: TopicType
   tags: Tag[]
@@ -124,7 +125,7 @@ const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, request
     if (existingTopic) return String(existingTopic.category.id)
     return categories[0] ? String(categories[0].id) : ''
   })
-  const [tagIds, setTagIds] = useState<number[]>(existingTopic?.tags.map((tag) => tag.id) ?? [])
+  const [tagIds, setTagIds] = useState<string[]>(existingTopic?.tags.map((tag) => tag.id) ?? [])
   const [media, setMedia] = useState<UploadedMedia[]>(existingTopic ? toEditableMedia(existingTopic.media) : [])
   const [isMediaUploading, setIsMediaUploading] = useState(false)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
@@ -145,7 +146,7 @@ const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, request
     summary,
     bodyHtml: toStoredMediaHtml(bodyHtml, media),
     type,
-    categoryId: categoryId === '' ? null : Number(categoryId),
+    categoryId: categoryId === '' ? null : categoryId,
     tagIds,
     mediaIds: media.map((item) => item.id),
   }), [title, summary, bodyHtml, media, type, categoryId, tagIds])
@@ -247,7 +248,7 @@ const WriteTopicEditor = ({ categories, draft, editingId, existingTopic, request
         summary,
         bodyHtml: toStoredMediaHtml(bodyHtml, media),
         type,
-        categoryId: Number(categoryId),
+        categoryId,
         tagIds,
         mediaIds: media.map((item) => item.id),
         publish,

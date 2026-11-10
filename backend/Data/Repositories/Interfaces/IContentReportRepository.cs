@@ -5,19 +5,19 @@ namespace TechForum.Api.Data.Repositories;
 
 public interface IContentReportRepository
 {
-    Task<Answer?> GetPublicAnswerAsync(int answerId, CancellationToken cancellationToken);
-    Task<bool> PendingExistsAsync(string reporterId, int? topicId, int? answerId, CancellationToken cancellationToken);
+    Task<Answer?> GetPublicAnswerAsync(Guid answerId, CancellationToken cancellationToken);
+    Task<bool> PendingExistsAsync(string reporterId, Guid? topicId, Guid? answerId, CancellationToken cancellationToken);
     Task<bool> AddAsync(ContentReport report, CancellationToken cancellationToken);
     Task<ContentReportPage> GetPageAsync(
         ReportStatus? status,
         int page,
         int pageSize,
         CancellationToken cancellationToken);
-    Task<ContentReport?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<ContentReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<ContentReportPage> GetMineAsync(string reporterId, ReportStatus? status,
         int page, int pageSize, CancellationToken cancellationToken);
     Task<bool> ResolvePendingAsync(
-        int id,
+        Guid id,
         ReportStatus status,
         string administratorId,
         DateTimeOffset resolvedAtUtc,

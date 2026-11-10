@@ -23,10 +23,10 @@ public sealed class BannerRepository(TechForumDbContext dbContext) : IBannerRepo
             .ThenBy(banner => banner.Id)
             .ToListAsync(cancellationToken);
 
-    public Task<Banner?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken) =>
+    public Task<Banner?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Banners.SingleOrDefaultAsync(banner => banner.Id == id, cancellationToken);
 
-    public Task<bool> ImageUrlInUseAsync(string imageUrl, int exceptId, CancellationToken cancellationToken) =>
+    public Task<bool> ImageUrlInUseAsync(string imageUrl, Guid exceptId, CancellationToken cancellationToken) =>
         dbContext.Banners.AnyAsync(banner => banner.ImageUrl == imageUrl && banner.Id != exceptId, cancellationToken);
 
     public async Task AddAsync(Banner banner, CancellationToken cancellationToken)

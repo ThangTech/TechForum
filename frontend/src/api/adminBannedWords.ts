@@ -2,7 +2,7 @@ import { ApiError, apiRequest } from './client'
 
 // A word that the API replaces by "***" in posts and answers.
 export interface BannedWord {
-  id: number
+  id: string
   word: string
   createdAtUtc: string
 }
@@ -12,7 +12,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isBannedWord = (value: unknown): value is BannedWord =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.word === 'string' &&
   typeof value.createdAtUtc === 'string'
 
@@ -33,5 +33,5 @@ export const addBannedWord = async (word: string): Promise<BannedWord> => {
   return data
 }
 
-export const removeBannedWord = (id: number) =>
+export const removeBannedWord = (id: string) =>
   apiRequest<void>(`/api/admin/banned-words/${id}`, { method: 'DELETE' })

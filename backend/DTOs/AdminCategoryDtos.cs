@@ -1,7 +1,7 @@
 namespace TechForum.Api.Dtos;
 
 public sealed record AdminCategoryDto(
-    int Id,
+    Guid Id,
     string Name,
     string Slug,
     string? Description,

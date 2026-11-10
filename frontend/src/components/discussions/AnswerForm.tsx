@@ -15,7 +15,7 @@ const answerLabels = { title: 'tiêu đề', summary: 'tóm tắt', bodyHtml: 'c
 
 interface AnswerFormProps {
   parentAnswer?: Answer
-  topicId: number
+  topicId: string
   onCreated: (answer: Answer) => void
   onCancel?: () => void
 }

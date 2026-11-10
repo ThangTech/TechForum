@@ -18,10 +18,10 @@ public interface ITopicService
         TopicQuery query,
         CancellationToken cancellationToken);
 
-    Task<TopicDetailDto?> GetPublicByIdAsync(int id, CancellationToken cancellationToken);
+    Task<TopicDetailDto?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task<OwnTopicDto?> GetOwnedByIdAsync(
-        int id,
+        Guid id,
         string authorId,
         CancellationToken cancellationToken);
 
@@ -31,13 +31,13 @@ public interface ITopicService
         CancellationToken cancellationToken);
 
     Task<CreateTopicResult?> UpdateAsync(
-        int id,
+        Guid id,
         string authorId,
         UpdateTopicRequest request,
         CancellationToken cancellationToken);
 
     Task<SoftDeleteTopicResult> SoftDeleteAsync(
-        int id,
+        Guid id,
         string authorId,
         CancellationToken cancellationToken);
 }

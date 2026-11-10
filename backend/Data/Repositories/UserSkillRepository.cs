@@ -15,8 +15,8 @@ public sealed class UserSkillRepository(TechForumDbContext dbContext) : IUserSki
             .Select(skill => new SkillTagData(skill.TagId, skill.Tag.Name, skill.Tag.Slug))
             .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<int>> GetActiveTagIdsAsync(
-        IReadOnlyCollection<int> tagIds,
+    public async Task<IReadOnlyList<Guid>> GetActiveTagIdsAsync(
+        IReadOnlyCollection<Guid> tagIds,
         CancellationToken cancellationToken) =>
         await dbContext.Tags
             .AsNoTracking()
@@ -26,7 +26,7 @@ public sealed class UserSkillRepository(TechForumDbContext dbContext) : IUserSki
 
     public async Task ReplaceAsync(
         string userId,
-        IReadOnlyCollection<int> tagIds,
+        IReadOnlyCollection<Guid> tagIds,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {

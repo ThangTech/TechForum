@@ -6,9 +6,9 @@ export type TopicFeedMode = 'latest' | 'following' | 'weekly' | 'hot' | 'top'
 // The time of the posts in the tab "Top".
 export type TopicRange = 'day' | 'week' | 'month' | 'all'
 
-export interface TopicCategory { id: number; name: string; slug: string }
+export interface TopicCategory { id: string; name: string; slug: string }
 export interface TopicAuthor { id: string; displayName: string }
-export interface TopicTag { id: number; name: string; slug: string }
+export interface TopicTag { id: string; name: string; slug: string }
 export interface TopicMedia { id: string; path: string; contentType: string }
 export interface TopicDiscussion {
   answerCount: number
@@ -19,7 +19,7 @@ export interface TopicDiscussion {
 }
 
 export interface TopicSummary {
-  id: number
+  id: string
   title: string
   slug: string
   summary: string
@@ -59,8 +59,8 @@ export interface TopicFilters {
   pageSize?: number
   keyword?: string
   type?: 'Article' | 'Question'
-  categoryId?: number
-  tagId?: number
+  categoryId?: string
+  tagId?: string
   sort?: 'discussion' | 'weekly' | 'hot' | 'top'
   // For sort=top.
   range?: TopicRange
@@ -72,14 +72,14 @@ export interface CreateTopicInput {
   summary: string
   bodyHtml: string
   type: TopicType
-  categoryId: number
-  tagIds: number[]
+  categoryId: string
+  tagIds: string[]
   mediaIds: string[]
   publish: boolean
 }
 
 export interface OwnTopic {
-  id: number
+  id: string
   title: string
   slug: string
   summary: string
@@ -94,7 +94,7 @@ export interface OwnTopic {
 }
 
 export interface OwnTopicSummary {
-  id: number
+  id: string
   title: string
   summary: string
   type: TopicType
@@ -121,19 +121,19 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isTopicTag = (value: unknown): value is TopicTag =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.name === 'string' &&
   typeof value.slug === 'string'
 
 export const isTopicSummary = (value: unknown): value is TopicSummary => {
   if (!isRecord(value) || !isRecord(value.category) || !isRecord(value.author)) return false
   return (
-    typeof value.id === 'number' &&
+    typeof value.id === 'string' &&
     typeof value.title === 'string' &&
     typeof value.slug === 'string' &&
     typeof value.summary === 'string' &&
     (value.type === 'article' || value.type === 'question') &&
-    typeof value.category.id === 'number' &&
+    typeof value.category.id === 'string' &&
     typeof value.category.name === 'string' &&
     typeof value.category.slug === 'string' &&
     typeof value.author.id === 'string' &&
@@ -193,7 +193,7 @@ const getTopicPage = async (
   return data as unknown as TopicPage
 }
 
-export const getTopic = async (id: number, signal?: AbortSignal): Promise<TopicDetail> => {
+export const getTopic = async (id: string, signal?: AbortSignal): Promise<TopicDetail> => {
   const data: unknown = await apiRequest(`/api/topics/${id}`, { signal })
   if (
     !isTopicSummary(data) ||
@@ -216,7 +216,7 @@ const isTopicMedia = (value: unknown): value is TopicMedia =>
 const parseOwnTopic = (data: unknown): OwnTopic => {
   if (
     !isRecord(data) ||
-    typeof data.id !== 'number' ||
+    typeof data.id !== 'string' ||
     typeof data.title !== 'string' ||
     typeof data.slug !== 'string' ||
     typeof data.summary !== 'string' ||
@@ -224,7 +224,7 @@ const parseOwnTopic = (data: unknown): OwnTopic => {
     (data.type !== 'article' && data.type !== 'question') ||
     (data.status !== 'draft' && data.status !== 'published') ||
     !isRecord(data.category) ||
-    typeof data.category.id !== 'number' ||
+    typeof data.category.id !== 'string' ||
     typeof data.category.name !== 'string' ||
     typeof data.category.slug !== 'string' ||
     !Array.isArray(data.tags) ||
@@ -245,28 +245,28 @@ export const createTopic = async (input: CreateTopicInput): Promise<OwnTopic> =>
     body: JSON.stringify(input),
   }))
 
-export const getMyTopic = async (id: number, signal?: AbortSignal): Promise<OwnTopic> =>
+export const getMyTopic = async (id: string, signal?: AbortSignal): Promise<OwnTopic> =>
   parseOwnTopic(await apiRequest(`/api/topics/mine/${id}`, { signal }))
 
-export const updateTopic = async (id: number, input: CreateTopicInput): Promise<OwnTopic> =>
+export const updateTopic = async (id: string, input: CreateTopicInput): Promise<OwnTopic> =>
   parseOwnTopic(await apiRequest(`/api/topics/${id}`, {
     method: 'PUT',
     body: JSON.stringify(input),
   }))
 
-export const deleteTopic = async (id: number): Promise<void> => {
+export const deleteTopic = async (id: string): Promise<void> => {
   await apiRequest(`/api/topics/${id}`, { method: 'DELETE' })
 }
 
 const isOwnTopicSummary = (value: unknown): value is OwnTopicSummary =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.title === 'string' &&
   typeof value.summary === 'string' &&
   (value.type === 'article' || value.type === 'question') &&
   (value.status === 'draft' || value.status === 'published') &&
   isRecord(value.category) &&
-  typeof value.category.id === 'number' &&
+  typeof value.category.id === 'string' &&
   typeof value.category.name === 'string' &&
   typeof value.category.slug === 'string' &&
   Array.isArray(value.tags) &&

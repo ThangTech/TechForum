@@ -9,10 +9,10 @@ namespace TechForum.Api.Data.Repositories;
 public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider timeProvider) : IAnswerRepository
 {
     public async Task<AnswerPage?> GetPublicPageAsync(
-        int topicId,
+        Guid topicId,
         int page,
         int pageSize,
-        int? aroundAnswerId,
+        Guid? aroundAnswerId,
         string sort,
         CancellationToken cancellationToken)
     {
@@ -20,10 +20,10 @@ public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider 
         // An answer that is new has its score hidden, so in the order by score it counts as 0 (the order must not tell it).
         var hiddenSince = timeProvider.GetUtcNow().AddHours(-ReputationRules.ScoreHiddenHours);
 
-        // The answer that the author of a question chose is shown first in every order. 0 means there is none (an
-        // answer id is never 0), so the comparisons below simply never match.
+        // The answer that the author of a question chose is shown first in every order. an empty id means there is none (an
+        // answer id is never empty), so the comparisons below simply never match.
         var pinnedId = await GetPinnedAnswerIdAsync(topicId, answers, cancellationToken);
-        var hasPinned = pinnedId != 0;
+        var hasPinned = pinnedId != Guid.Empty;
         var unpinned = answers.Where(answer => answer.Id != pinnedId);
 
         if (aroundAnswerId.HasValue)
@@ -81,10 +81,10 @@ public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider 
         return new AnswerPage(items, totalItems, page);
     }
 
-    // The accepted answer of a question, when it can be seen by everyone; 0 when there is none. An article has no accepted
+    // The accepted answer of a question, when it can be seen by everyone; an empty id when there is none. An article has no accepted
     // answer, and an answer that was deleted or hidden is not in the list, so it cannot be pinned.
-    private async Task<int> GetPinnedAnswerIdAsync(
-        int topicId,
+    private async Task<Guid> GetPinnedAnswerIdAsync(
+        Guid topicId,
         IQueryable<Answer> visibleAnswers,
         CancellationToken cancellationToken)
     {
@@ -92,8 +92,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider 
             .Where(topic => topic.Id == topicId && topic.Type == TopicType.Question)
             .Select(topic => topic.AcceptedAnswerId)
             .SingleOrDefaultAsync(cancellationToken);
-        if (acceptedId is null) return 0;
-        return await visibleAnswers.AnyAsync(answer => answer.Id == acceptedId.Value, cancellationToken) ? acceptedId.Value : 0;
+        if (acceptedId is null) return Guid.Empty;
+        return await visibleAnswers.AnyAsync(answer => answer.Id == acceptedId.Value, cancellationToken) ? acceptedId.Value : Guid.Empty;
     }
 
     // Adds (or takes away, when delta is negative) reputation points of a member. It is only used for the bonus of an
@@ -103,7 +103,7 @@ public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider 
             .ExecuteUpdateAsync(set => set.SetProperty(user => user.Reputation, user => user.Reputation + delta), cancellationToken);
 
     public async Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
-        IReadOnlyCollection<int> answerIds,
+        IReadOnlyCollection<Guid> answerIds,
         string? viewerId,
         CancellationToken cancellationToken) =>
         await dbContext.Answers.AsNoTracking()
@@ -139,14 +139,14 @@ public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider 
         }
     }
 
-    public async Task RemoveHelpfulAsync(int answerId, string userId, CancellationToken cancellationToken)
+    public async Task RemoveHelpfulAsync(Guid answerId, string userId, CancellationToken cancellationToken)
     {
         await dbContext.AnswerHelpfulVotes
             .Where(vote => vote.AnswerId == answerId && vote.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);
     }
 
-    private IQueryable<Answer> PublicAnswers(int topicId) =>
+    private IQueryable<Answer> PublicAnswers(Guid topicId) =>
         dbContext.Answers.AsNoTracking()
             .Where(answer => answer.TopicId == topicId)
             .Where(AnswerVisibility.IsPublic);
@@ -159,8 +159,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider 
     }
 
     public Task<Answer?> GetVisibleByIdAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         CancellationToken cancellationToken) =>
         PublicAnswers(topicId)
             .Include(answer => answer.Author)
@@ -171,8 +171,8 @@ public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider 
                 cancellationToken);
 
     public Task<Answer?> GetOwnedByIdAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string authorId,
         CancellationToken cancellationToken) =>
         dbContext.Answers

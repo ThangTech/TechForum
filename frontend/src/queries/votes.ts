@@ -4,10 +4,10 @@ import { useUserScope, userKey } from './userScope'
 
 export const voteKeys = {
   // The vote of the member for a post depends on the member, so the key is user-scoped.
-  topic: (scope: string, topicId: number) => userKey(scope, 'topics', topicId, 'vote'),
+  topic: (scope: string, topicId: string) => userKey(scope, 'topics', topicId, 'vote'),
 }
 
-export const useTopicVote = (topicId: number) => {
+export const useTopicVote = (topicId: string) => {
   const { scope, isReady } = useUserScope()
 
   return useQuery({
@@ -18,7 +18,7 @@ export const useTopicVote = (topicId: number) => {
 }
 
 // value: 1 = upvote, -1 = downvote, 0 = take the vote back.
-export const useSetTopicVote = (topicId: number) => {
+export const useSetTopicVote = (topicId: string) => {
   const queryClient = useQueryClient()
   const { scope } = useUserScope()
 

@@ -3,7 +3,7 @@ namespace TechForum.Api.Models;
 // A picture of the slider at the top of the home page. Administrators manage the banners.
 public sealed class Banner
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     // Short text. It is also the alternative text of the picture.
     public required string Title { get; set; }
@@ -11,7 +11,7 @@ public sealed class Banner
     // Address of the uploaded picture, for example /media/banners/abc.png.
     public required string ImageUrl { get; set; }
 
-    // Where a click on the banner goes: a page of the site ("/topics/5") or a full http(s) address.
+    // Where a click on the banner goes: a page of the site ("/articles") or a full http(s) address.
     public string? LinkUrl { get; set; }
 
     // Smaller numbers come first.

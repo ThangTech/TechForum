@@ -38,7 +38,7 @@ public sealed class AdminOverviewServiceTests
                     new(new DateTime(2026, 10, 1), 2, 0, 0, 0),
                     new(new DateTime(2026, 10, 1), 0, 3, 1, 0),
                     new(new DateTime(2026, 10, 3), 0, 0, 0, 4)],
-                Categories = [new(7, "Lập trình", 3, 1)]
+                Categories = [new(TestIds.Id(7), "Lập trình", 3, 1)]
             }
         };
         var result = await CreateService(repository).GetDashboardAsync(
@@ -108,10 +108,10 @@ public sealed class AdminOverviewServiceTests
         var report = CreateReport(topic);
         report.TopicId = null;
         report.Topic = null;
-        report.AnswerId = 9;
+        report.AnswerId = TestIds.Id(9);
         report.Answer = new Answer
         {
-            Id = 9, TopicId = topic.Id, Topic = topic, AuthorId = "member", BodyHtml = "Reply",
+            Id = TestIds.Id(9), TopicId = topic.Id, Topic = topic, AuthorId = "member", BodyHtml = "Reply",
             IsHiddenByModerator = true
         };
         var repository = new FakeRepository
@@ -123,7 +123,7 @@ public sealed class AdminOverviewServiceTests
 
         var item = Assert.Single(result.Dashboard!.PendingReports.Oldest);
         Assert.Equal("answer", item.TargetType);
-        Assert.Equal(9, item.TargetId);
+        Assert.Equal(TestIds.Id(9), item.TargetId);
         Assert.Equal("Nội dung không còn công khai", item.TargetTitle);
     }
 
@@ -165,14 +165,14 @@ public sealed class AdminOverviewServiceTests
 
     private static Topic CreateTopic() => new()
     {
-        Id = 1, AuthorId = "member", Title = "Bản nháp bí mật", Slug = "private",
+        Id = TestIds.Id(1), AuthorId = "member", Title = "Bản nháp bí mật", Slug = "private",
         Summary = "Summary", BodyHtml = "Body", Status = TopicStatus.Published,
         PublishedAtUtc = CurrentTime
     };
 
     private static ContentReport CreateReport(Topic topic) => new()
     {
-        Id = 1, TopicId = topic.Id, Topic = topic, ReporterId = "reporter", Reason = "spam",
+        Id = TestIds.Id(1), TopicId = topic.Id, Topic = topic, ReporterId = "reporter", Reason = "spam",
         Reporter = new ApplicationUser { Id = "reporter", DisplayName = "Người báo cáo" }
     };
 

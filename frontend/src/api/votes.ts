@@ -21,12 +21,12 @@ export const parseVoteState = (data: unknown): VoteState => {
   return { score, myVote, scoreHidden: scoreHidden === true }
 }
 
-export const getTopicVote = async (topicId: number, signal?: AbortSignal): Promise<VoteState> =>
+export const getTopicVote = async (topicId: string, signal?: AbortSignal): Promise<VoteState> =>
   parseVoteState(await apiRequest(`/api/topics/${topicId}/vote`, { signal }))
 
 // value: 1 = upvote, -1 = downvote, 0 = take the vote back.
-export const setTopicVote = async (topicId: number, value: number): Promise<VoteState> =>
+export const setTopicVote = async (topicId: string, value: number): Promise<VoteState> =>
   parseVoteState(await apiRequest(`/api/topics/${topicId}/vote`, { method: 'PUT', body: JSON.stringify({ value }) }))
 
-export const setAnswerVote = async (topicId: number, answerId: number, value: number): Promise<VoteState> =>
+export const setAnswerVote = async (topicId: string, answerId: string, value: number): Promise<VoteState> =>
   parseVoteState(await apiRequest(`/api/topics/${topicId}/answers/${answerId}/vote`, { method: 'PUT', body: JSON.stringify({ value }) }))

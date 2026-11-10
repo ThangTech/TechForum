@@ -24,14 +24,14 @@ export const topicKeys = {
   // Every public list of topics. Invalidate this after a topic is created, changed or deleted.
   lists: ['topics', 'list'] as const,
   list: (filters: TopicFilters) => ['topics', 'list', filters] as const,
-  detail: (topicId: number) => ['topics', 'detail', topicId] as const,
+  detail: (topicId: string) => ['topics', 'detail', topicId] as const,
 }
 
 // The topics written by the signed-in user, including drafts. They are stored per user.
 export const ownTopicKeys = {
   all: (scope: string) => userKey(scope, 'topics', 'mine'),
   list: (scope: string, filters: TopicFilters) => [...ownTopicKeys.all(scope), 'list', filters] as const,
-  detail: (scope: string, topicId: number) => [...ownTopicKeys.all(scope), 'detail', topicId] as const,
+  detail: (scope: string, topicId: string) => [...ownTopicKeys.all(scope), 'detail', topicId] as const,
 }
 
 // The home feed. "Following" depends on who is signed in, so it is stored per user
@@ -51,7 +51,7 @@ export const useTopicFeed = (feed: TopicFeedMode, filters: TopicFilters) => {
 }
 
 // isValidId is false when the id in the URL is not a positive number; no request is sent then.
-export const useTopic = (topicId: number, isValidId: boolean) =>
+export const useTopic = (topicId: string, isValidId: boolean) =>
   useQuery({
     queryKey: topicKeys.detail(topicId),
     queryFn: ({ signal }) => getTopic(topicId, signal),
@@ -61,7 +61,7 @@ export const useTopic = (topicId: number, isValidId: boolean) =>
 // The view and share counts are part of the topic, so the cached topic is updated with the new counts.
 const updateEngagement = (
   queryClient: ReturnType<typeof useQueryClient>,
-  topicId: number,
+  topicId: string,
   engagement: TopicEngagement,
 ) => {
   queryClient.setQueryData<TopicDetail>(topicKeys.detail(topicId), (topic) =>
@@ -72,7 +72,7 @@ export const useRecordTopicView = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (topicId: number) => recordTopicView(topicId),
+    mutationFn: (topicId: string) => recordTopicView(topicId),
     onSuccess: (engagement, topicId) => updateEngagement(queryClient, topicId, engagement),
   })
 }
@@ -81,7 +81,7 @@ export const useRecordTopicShare = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (topicId: number) => recordTopicShare(topicId),
+    mutationFn: (topicId: string) => recordTopicShare(topicId),
     onSuccess: (engagement, topicId) => updateEngagement(queryClient, topicId, engagement),
   })
 }
@@ -99,7 +99,7 @@ export const useMyTopics = (filters: TopicFilters) => {
 // Loads one own topic to edit it. The form copies the values once, so a reload in the
 // background must not replace what the user typed: the data never becomes old, and it
 // is dropped as soon as the page closes, so the next edit starts from the server's data.
-export const useMyTopicForEdit = (topicId: number, isEditing: boolean) => {
+export const useMyTopicForEdit = (topicId: string, isEditing: boolean) => {
   const { scope, isReady, isSignedIn } = useUserScope()
 
   return useQuery({
@@ -112,7 +112,7 @@ export const useMyTopicForEdit = (topicId: number, isEditing: boolean) => {
 }
 
 // Creates a topic, or changes it when editingId is set.
-export const useSaveTopic = (editingId: number | null) => {
+export const useSaveTopic = (editingId: string | null) => {
   const queryClient = useQueryClient()
   const { scope } = useUserScope()
 
@@ -134,7 +134,7 @@ export const useDeleteTopic = () => {
   const { scope } = useUserScope()
 
   return useMutation({
-    mutationFn: (topicId: number) => deleteTopic(topicId),
+    mutationFn: (topicId: string) => deleteTopic(topicId),
     onSuccess: (_result, topicId) => {
       void queryClient.invalidateQueries({ queryKey: ownTopicKeys.all(scope) })
       void queryClient.invalidateQueries({ queryKey: topicKeys.lists })

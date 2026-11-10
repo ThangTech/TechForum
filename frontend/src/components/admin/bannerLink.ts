@@ -1,4 +1,4 @@
-// The same rule as the API: empty, a path inside the site ("/topics/5", but not "//host"), or an http/https address.
+// The same rule as the API: empty, a path inside the site ("/articles", but not "//host"), or an http/https address.
 export const isValidBannerLink = (link: string): boolean => {
   const value = link.trim()
   if (value === '') return true
@@ -12,4 +12,4 @@ export const isValidBannerLink = (link: string): boolean => {
   }
 }
 
-export const bannerLinkRuleMessage = 'Dùng đường dẫn trong trang như /topics/5, hoặc địa chỉ đầy đủ như https://example.com.'
+export const bannerLinkRuleMessage = 'Dùng đường dẫn trong trang như /articles, hoặc địa chỉ đầy đủ như https://example.com.'

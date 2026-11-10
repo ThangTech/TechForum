@@ -4,7 +4,7 @@ namespace TechForum.Api.Models;
 
 public sealed class Topic
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public required string Title { get; set; }
     public required string Slug { get; set; }
     public required string Summary { get; set; }
@@ -13,7 +13,7 @@ public sealed class Topic
     public string? CoverImageUrl { get; set; }
     public TopicType Type { get; set; }
     public TopicStatus Status { get; set; }
-    public int CategoryId { get; set; }
+    public Guid CategoryId { get; set; }
     public Category Category { get; set; } = null!;
     public required string AuthorId { get; set; }
     public ApplicationUser Author { get; set; } = null!;
@@ -28,7 +28,7 @@ public sealed class Topic
     public int ShareCount { get; set; }
     // The sum of the votes (+1 and -1) of the members. Kept in step with the table of votes in one transaction.
     public int Score { get; set; }
-    public int? AcceptedAnswerId { get; set; }
+    public Guid? AcceptedAnswerId { get; set; }
     public Answer? AcceptedAnswer { get; set; }
     public ICollection<TopicTag> TopicTags { get; set; } = [];
     public ICollection<MediaAsset> MediaAssets { get; set; } = [];

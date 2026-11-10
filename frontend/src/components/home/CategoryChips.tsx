@@ -10,8 +10,8 @@ interface CategoryChipsProps {
   error: string | null
   isLoading: boolean
   onRetry: () => void
-  selectedId?: number
-  onSelect: (id?: number) => void
+  selectedId?: string
+  onSelect: (id?: string) => void
 }
 
 const chipSx = (isSelected: boolean) => ({

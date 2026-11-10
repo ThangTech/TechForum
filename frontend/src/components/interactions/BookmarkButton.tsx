@@ -9,7 +9,7 @@ import { openAuthDialog } from '../../auth/authDialogStore'
 import { BookmarkActionIcon } from '../common/ActionIcons'
 import { IconActionButton } from '../common/IconActionButton'
 
-export const BookmarkButton = ({ topicId }: { topicId: number }) => {
+export const BookmarkButton = ({ topicId }: { topicId: string }) => {
   const { user } = useAuth()
   const statusQuery = useBookmarkStatus(topicId)
   const toggleMutation = useToggleBookmark(topicId)

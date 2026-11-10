@@ -26,6 +26,7 @@ import { RelatedTopics } from '../components/topics/RelatedTopics'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
 import { useTopic } from '../queries/topics'
+import { isGuid } from '../utils/ids'
 import { prepareReadingContent } from '../utils/readingContent'
 import '../styles/topicReading.css'
 
@@ -37,9 +38,9 @@ const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 export const TopicDetailPage = () => {
   const { id } = useParams()
   const location = useLocation()
-  const topicId = Number(id)
+  const topicId = (id ?? '').toLowerCase()
   const { user } = useAuth()
-  const isValidId = Number.isInteger(topicId) && topicId > 0
+  const isValidId = isGuid(topicId)
   const topicQuery = useTopic(topicId, isValidId)
   const topic = topicQuery.data ?? null
   const isLoading = isValidId && isInitialLoading(topicQuery)

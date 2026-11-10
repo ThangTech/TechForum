@@ -200,7 +200,7 @@ public sealed class MediaStorageServiceTests : IDisposable
     {
         var service = CreateService();
         var upload = await service.StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
-        repository.Items[0].TopicId = 10;
+        repository.Items[0].TopicId = TestIds.Id(10);
 
         var result = await service.DeleteUnusedAsync(UserId, upload.Media!.Id, default);
 
@@ -369,7 +369,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         public Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
             IReadOnlyCollection<Guid> ids,
             string uploaderId,
-            int topicId,
+            Guid topicId,
             CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<MediaAsset>>(Items.Where(item =>
                 ids.Contains(item.Id) &&

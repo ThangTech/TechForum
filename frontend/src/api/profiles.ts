@@ -21,9 +21,9 @@ export interface PublicProfile {
 }
 
 // isChosen: the member picked this skill; otherwise it was found from the tags of their public content.
-export interface ProfileSkill { tagId: number; name: string; slug: string; topicCount: number; isChosen: boolean }
+export interface ProfileSkill { tagId: string; name: string; slug: string; topicCount: number; isChosen: boolean }
 // A skill the member chose, as the personal page edits it (a tag that already exists).
-export interface SkillTag { tagId: number; name: string; slug: string }
+export interface SkillTag { tagId: string; name: string; slug: string }
 // The most skills a member can choose (the same limit as the API).
 export const maxChosenSkills = 12
 export interface ProfileBadge { code: string; name: string; description: string }
@@ -54,7 +54,7 @@ export const getPublicProfile = async (
     typeof data.isFollowedByViewer !== 'boolean' ||
     typeof data.reputation !== 'number' ||
     !Array.isArray(data.skills) || !data.skills.every((skill) => isRecord(skill) &&
-      typeof skill.tagId === 'number' && typeof skill.name === 'string' &&
+      typeof skill.tagId === 'string' && typeof skill.name === 'string' &&
       typeof skill.slug === 'string' && typeof skill.topicCount === 'number' && typeof skill.isChosen === 'boolean') ||
     !Array.isArray(data.badges) || !data.badges.every((badge) => isRecord(badge) &&
       typeof badge.code === 'string' && typeof badge.name === 'string' && typeof badge.description === 'string') ||
@@ -68,7 +68,7 @@ export const getPublicProfile = async (
 }
 
 const isSkillTag = (value: unknown): value is SkillTag =>
-  isRecord(value) && typeof value.tagId === 'number' && typeof value.name === 'string' && typeof value.slug === 'string'
+  isRecord(value) && typeof value.tagId === 'string' && typeof value.name === 'string' && typeof value.slug === 'string'
 
 const parseSkillTags = (data: unknown): SkillTag[] => {
   if (!Array.isArray(data) || !data.every(isSkillTag)) {
@@ -82,7 +82,7 @@ export const getMySkills = async (signal?: AbortSignal): Promise<SkillTag[]> =>
   parseSkillTags(await apiRequest<unknown>('/api/profiles/me/skills', { signal }))
 
 // Replaces the whole list: a skill that is not in tagIds is removed.
-export const saveMySkills = async (tagIds: number[]): Promise<SkillTag[]> =>
+export const saveMySkills = async (tagIds: string[]): Promise<SkillTag[]> =>
   parseSkillTags(await apiRequest<unknown>('/api/profiles/me/skills', { method: 'PUT', body: JSON.stringify({ tagIds }) }))
 
 const parseFollowStatus =(data: unknown): FollowStatus => {

@@ -51,6 +51,14 @@ thái tải/rỗng/lỗi, bộ lọc và phân trang. API vẫn kiểm tra quy�
   hình hoặc vượt giới hạn. Backend README có cấu hình SMTP; giao diện không
   tự giả lập gửi email thành công.
 
+## Mã định danh là GUID
+
+Id của bài viết, câu trả lời, chuyên mục, thẻ, banner, thông báo và báo cáo là **chuỗi GUID**, không còn là số. Kiểu TypeScript
+là `string`; `utils/ids.ts` có `isGuid` (kiểm tra id trong địa chỉ như `/topics/:id`, `?categoryId=`, `#answer-…`, trang nào thấy id
+sai thì báo "đường dẫn không hợp lệ" mà không gọi API) và `hashId` (số nhỏ cố định từ id, dùng chọn màu nền cho thẻ không có ảnh).
+Id lấy từ địa chỉ được chuyển về chữ thường trước khi so sánh với dữ liệu từ API. Các hàm kiểm tra dữ liệu API (`typeof … === 'string'`)
+cũng đã đổi theo.
+
 ## Chạy môi trường phát triển
 
 API mặc định được gọi tại `http://localhost:5045`. Có thể đổi địa chỉ bằng cách

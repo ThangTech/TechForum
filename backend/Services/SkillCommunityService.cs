@@ -6,7 +6,7 @@ namespace TechForum.Api.Services;
 public sealed class SkillCommunityService(ISkillCommunityRepository repository) : ISkillCommunityService
 {
     public async Task<SkillCommunityDto?> GetAsync(
-        int tagId,
+        Guid tagId,
         int page,
         int pageSize,
         CancellationToken cancellationToken)

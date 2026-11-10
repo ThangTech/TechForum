@@ -20,11 +20,12 @@ import { openAuthDialog } from '../../auth/authDialogStore'
 import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
 import { AnswerForm } from './AnswerForm'
 import { AnswerList } from './AnswerList'
+import { isGuid } from '../../utils/ids'
 
 interface DiscussionSectionProps {
   isLocked: boolean
   topicAuthorId: string
-  topicId: number
+  topicId: string
   topicType: 'article' | 'question'
 }
 
@@ -49,8 +50,8 @@ export const DiscussionSection = ({
   const navigate = useNavigate()
   const page = readPositiveInteger(new URLSearchParams(location.search).get('answerPage')) ?? 1
   const sort = readSort(new URLSearchParams(location.search).get('answerSort'))
-  const answerHash = /^#answer-(\d+)$/.exec(location.hash)
-  const aroundAnswerId = readPositiveInteger(answerHash?.[1] ?? null)
+  const answerHash = /^#answer-([0-9a-fA-F-]{36})$/.exec(location.hash)
+  const aroundAnswerId = isGuid(answerHash?.[1]) ? answerHash![1].toLowerCase() : undefined
   const queryClient = useQueryClient()
   const { scope } = useUserScope()
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -84,7 +85,7 @@ export const DiscussionSection = ({
   }
 
   const acceptMutation = useMutation({
-    mutationFn: (answerId: number) => acceptAnswer(topicId, answerId),
+    mutationFn: (answerId: string) => acceptAnswer(topicId, answerId),
     onSuccess: (_answer, answerId) => {
       patchAnswers((current) => ({
         ...current,
@@ -117,7 +118,7 @@ export const DiscussionSection = ({
     document.getElementById(`answer-${aroundAnswerId}`)?.scrollIntoView({ block: 'start' })
   }, [aroundAnswerId, data, error, isLoading])
 
-  const changePage = (nextPage: number, answerId?: number) => {
+  const changePage = (nextPage: number, answerId?: string) => {
     const search = new URLSearchParams(location.search)
     if (nextPage === 1) search.delete('answerPage')
     else search.set('answerPage', String(nextPage))
@@ -143,7 +144,7 @@ export const DiscussionSection = ({
     void navigate({ pathname: location.pathname, search: search.toString(), hash: answerHash ? '' : location.hash })
   }
 
-  const handleAccept = async (answerId: number) => {
+  const handleAccept = async (answerId: string) => {
     if (acceptingAnswerId !== null) return
 
     setActionError(null)

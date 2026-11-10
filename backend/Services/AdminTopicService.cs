@@ -13,7 +13,7 @@ public sealed class AdminTopicService(
     private static readonly HashSet<string> Actions = new(StringComparer.OrdinalIgnoreCase)
     { "hide", "restore", "lock", "unlock", "pin", "unpin", "move" };
 
-    public async Task<AdminTopicDetailDto?> GetByIdAsync(int topicId, CancellationToken cancellationToken)
+    public async Task<AdminTopicDetailDto?> GetByIdAsync(Guid topicId, CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetTrackedByIdAsync(topicId, cancellationToken);
         return topic is null ? null : new AdminTopicDetailDto(Map(topic), contentSanitizer.Sanitize(topic.BodyHtml));
@@ -23,7 +23,7 @@ public sealed class AdminTopicService(
         AdminTopicQuery query,
         CancellationToken cancellationToken)
     {
-        if (query.Page < 1 || query.PageSize is < 1 or > 50 || query.Keyword?.Trim().Length > 100 || query.CategoryId is <= 0)
+        if (query.Page < 1 || query.PageSize is < 1 or > 50 || query.Keyword?.Trim().Length > 100 || query.CategoryId == Guid.Empty)
         {
             return null;
         }
@@ -51,7 +51,7 @@ public sealed class AdminTopicService(
     }
 
     public async Task<AdminTopicWriteResult> ModerateAsync(
-        int topicId,
+        Guid topicId,
         string administratorId,
         ModerateTopicRequest request,
         CancellationToken cancellationToken)

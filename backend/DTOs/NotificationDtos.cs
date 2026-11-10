@@ -1,7 +1,7 @@
 namespace TechForum.Api.Dtos;
 
 public sealed record NotificationDto(
-    long Id,
+    Guid Id,
     string Type,
     string Title,
     string Message,

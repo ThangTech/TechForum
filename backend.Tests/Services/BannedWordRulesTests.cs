@@ -80,7 +80,7 @@ public sealed class BannedWordSeederTests
     [Fact]
     public async Task SeedIfEmptyAsync_DoesNothingWhenTheTableAlreadyHasWords()
     {
-        repository.Items.Add(new BannedWord { Id = 1, Word = "kept", CreatedAtUtc = DateTimeOffset.UtcNow });
+        repository.Items.Add(new BannedWord { Id = TestIds.Id(1), Word = "kept", CreatedAtUtc = DateTimeOffset.UtcNow });
 
         var added = await CreateSeeder().SeedIfEmptyAsync(["foobar", "bazqux"], default);
 

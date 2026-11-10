@@ -5,7 +5,7 @@ export type TopicVisibility = '' | 'visible' | 'draft' | 'hidden' | 'deleted'
 export type ModerationAction = 'hide' | 'restore' | 'lock' | 'unlock' | 'pin' | 'unpin' | 'move'
 
 export interface AdminTopic {
-  id: number
+  id: string
   title: string
   type: TopicType
   category: TopicCategory
@@ -31,11 +31,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 const isAdminTopic = (value: unknown): value is AdminTopic =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.title === 'string' &&
   (value.type === 'article' || value.type === 'question') &&
   isRecord(value.category) &&
-  typeof value.category.id === 'number' &&
+  typeof value.category.id === 'string' &&
   typeof value.category.name === 'string' &&
   typeof value.category.slug === 'string' &&
   isRecord(value.author) &&
@@ -59,7 +59,7 @@ export const getAdminTopics = async (
     keyword: string
     type: '' | TopicType
     visibility: TopicVisibility
-    categoryId?: number
+    categoryId?: string
     page: number
     pageSize: number
   },
@@ -86,10 +86,10 @@ export const getAdminTopics = async (
 }
 
 export const moderateTopic = async (
-  topicId: number,
+  topicId: string,
   action: ModerationAction,
   reason: string,
-  categoryId?: number,
+  categoryId?: string,
 ): Promise<AdminTopic> =>
   parseTopic(
     await apiRequest(`/api/admin/topics/${topicId}/moderation`, {
@@ -99,7 +99,7 @@ export const moderateTopic = async (
   )
 
 export const getAdminTopicDetail = async (
-  topicId: number,
+  topicId: string,
   signal?: AbortSignal,
 ): Promise<{ topic: AdminTopic; bodyHtml: string }> => {
   const data: unknown = await apiRequest(`/api/admin/topics/${topicId}`, { signal })

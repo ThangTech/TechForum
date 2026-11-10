@@ -7,7 +7,7 @@ import { isInitialLoading } from '../../queries/status'
 import { TopicTypeBadge } from './TopicTypeBadge'
 
 interface Props {
-  topicId: number
+  topicId: string
 }
 
 export const RelatedTopics = ({ topicId }: Props) => {

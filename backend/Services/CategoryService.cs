@@ -14,7 +14,7 @@ public sealed class CategoryService(
         return categories.Select(MapToDto).ToList();
     }
 
-    public async Task<CategoryDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<CategoryDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var category = await categoryRepository.GetByIdAsync(id, cancellationToken);
         return category is null ? null : MapToDto(category);
@@ -68,7 +68,7 @@ public sealed class CategoryService(
 
     public async Task<CategoryWriteResult> UpdateAsync(
         string administratorId,
-        int id,
+        Guid id,
         SaveCategoryRequest request,
         CancellationToken cancellationToken)
     {
@@ -106,7 +106,7 @@ public sealed class CategoryService(
 
     public async Task<CategoryWriteResult> SetActiveAsync(
         string administratorId,
-        int id,
+        Guid id,
         bool isActive,
         CancellationToken cancellationToken)
     {

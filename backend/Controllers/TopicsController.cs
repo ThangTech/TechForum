@@ -90,11 +90,11 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     }
 
     [Authorize]
-    [HttpGet("mine/{id:int}")]
+    [HttpGet("mine/{id:guid}")]
     [ProducesResponseType<OwnTopicDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OwnTopicDto>> GetMineById(
-        int id,
+        Guid id,
         CancellationToken cancellationToken)
     {
         var topic = await topicService.GetOwnedByIdAsync(id, User.GetRequiredUserId(), cancellationToken);
@@ -103,11 +103,11 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
             : Ok(topic);
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType<TopicDetailDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicDetailDto>> GetById(
-        int id,
+        Guid id,
         CancellationToken cancellationToken)
     {
         var topic = await topicService.GetPublicByIdAsync(id, cancellationToken);
@@ -158,13 +158,13 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     }
 
     [Authorize]
-    [HttpPut("{id:int}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType<OwnTopicDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<OwnTopicDto>> Update(
-        int id,
+        Guid id,
         [FromBody] UpdateTopicRequest request,
         CancellationToken cancellationToken)
     {
@@ -197,11 +197,11 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     }
 
     [Authorize]
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await topicService.SoftDeleteAsync(id, User.GetRequiredUserId(), cancellationToken);
         return result.Failure switch
@@ -248,12 +248,12 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
             errors["type"] = ["Loại nội dung không hợp lệ."];
         }
 
-        if (query.CategoryId is <= 0)
+        if (query.CategoryId == Guid.Empty)
         {
             errors["categoryId"] = ["Mã chuyên mục phải lớn hơn 0."];
         }
 
-        if (query.TagId is <= 0)
+        if (query.TagId == Guid.Empty)
         {
             errors["tagId"] = ["Mã thẻ phải lớn hơn 0."];
         }

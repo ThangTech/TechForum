@@ -16,7 +16,7 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
             .Include(item => item.Reporter)
             .Include(item => item.ResolvedBy);
 
-    public Task<Answer?> GetPublicAnswerAsync(int answerId, CancellationToken cancellationToken) =>
+    public Task<Answer?> GetPublicAnswerAsync(Guid answerId, CancellationToken cancellationToken) =>
         dbContext.Answers.AsNoTracking().Include(item => item.Topic)
             .Where(AnswerVisibility.IsPublic)
             .WhereTopicIsPublic(item => item.Topic)
@@ -24,8 +24,8 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
 
     public Task<bool> PendingExistsAsync(
         string reporterId,
-        int? topicId,
-        int? answerId,
+        Guid? topicId,
+        Guid? answerId,
         CancellationToken cancellationToken) =>
         dbContext.ContentReports.AnyAsync(item =>
             item.ReporterId == reporterId &&
@@ -73,7 +73,7 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
         return new ContentReportPage(items, totalItems);
     }
 
-    public Task<ContentReport?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
+    public Task<ContentReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         DetailedQuery().AsNoTracking().SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
 
     public async Task<ContentReportPage> GetMineAsync(string reporterId, ReportStatus? status,
@@ -95,7 +95,7 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
     }
 
     public async Task<bool> ResolvePendingAsync(
-        int id,
+        Guid id,
         ReportStatus status,
         string administratorId,
         DateTimeOffset resolvedAtUtc,

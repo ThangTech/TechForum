@@ -15,7 +15,7 @@ public sealed partial class AnswerService(
     TimeProvider timeProvider) : IAnswerService
 {
     public async Task<PagedResultDto<AnswerDto>?> GetPublicPageAsync(
-        int topicId,
+        Guid topicId,
         AnswerQuery query,
         CancellationToken cancellationToken,
         string? viewerId = null)
@@ -38,7 +38,7 @@ public sealed partial class AnswerService(
             return null;
         }
         var helpfulStates = page.Items.Count == 0
-            ? new Dictionary<int, AnswerHelpfulState>()
+            ? new Dictionary<Guid, AnswerHelpfulState>()
             : (await answerRepository.GetHelpfulStatesAsync(
                 page.Items.Select(answer => answer.Id).ToArray(), viewerId, cancellationToken))
                 .ToDictionary(state => state.AnswerId);
@@ -56,8 +56,8 @@ public sealed partial class AnswerService(
     }
 
     public async Task<AnswerHelpfulResult> SetHelpfulAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string userId,
         bool isHelpful,
         CancellationToken cancellationToken)
@@ -97,7 +97,7 @@ public sealed partial class AnswerService(
     }
 
     public async Task<CreateAnswerResult> CreateAsync(
-        int topicId,
+        Guid topicId,
         string authorId,
         CreateAnswerRequest request,
         CancellationToken cancellationToken)
@@ -182,8 +182,8 @@ public sealed partial class AnswerService(
     }
 
     public async Task<AcceptAnswerResult> AcceptAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string authorId,
         CancellationToken cancellationToken)
     {
@@ -234,8 +234,8 @@ public sealed partial class AnswerService(
     }
 
     public async Task<UpdateAnswerResult> UpdateAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string authorId,
         CreateAnswerRequest request,
         CancellationToken cancellationToken)
@@ -266,8 +266,8 @@ public sealed partial class AnswerService(
     }
 
     public async Task<bool> DeleteAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string authorId,
         CancellationToken cancellationToken)
     {
@@ -296,8 +296,8 @@ public sealed partial class AnswerService(
     // The author of the answer that was chosen earns the bonus; the author of the answer that was chosen before loses it.
     // Nobody earns anything from choosing their own answer.
     private async Task MoveAcceptedBonusAsync(
-        int topicId,
-        int? previousAcceptedId,
+        Guid topicId,
+        Guid? previousAcceptedId,
         Answer accepted,
         string topicAuthorId,
         CancellationToken cancellationToken)
@@ -318,11 +318,11 @@ public sealed partial class AnswerService(
         }
     }
 
-    private static int? AcceptedAnswerIdFor(Topic topic) =>
+    private static Guid? AcceptedAnswerIdFor(Topic topic) =>
         topic.Type == TopicType.Question ? topic.AcceptedAnswerId : null;
 
     private async Task<AnswerHelpfulState> GetHelpfulStateAsync(
-        int answerId,
+        Guid answerId,
         string viewerId,
         CancellationToken cancellationToken)
     {
@@ -332,7 +332,7 @@ public sealed partial class AnswerService(
 
     private AnswerDto MapAnswer(
         Answer answer,
-        int? acceptedAnswerId,
+        Guid? acceptedAnswerId,
         TopicAuthorDto? replyingTo = null,
         AnswerHelpfulState? helpfulState = null) => new(
         answer.Id,

@@ -19,7 +19,7 @@ public interface IMediaAssetRepository
     Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
         IReadOnlyCollection<Guid> ids,
         string uploaderId,
-        int topicId,
+        Guid topicId,
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<MediaAsset>> GetOrphansOlderThanAsync(

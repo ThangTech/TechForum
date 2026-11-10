@@ -5,15 +5,15 @@ namespace TechForum.Api.Data.Repositories;
 public interface IAnswerRepository
 {
     Task<AnswerPage?> GetPublicPageAsync(
-        int topicId,
+        Guid topicId,
         int page,
         int pageSize,
-        int? aroundAnswerId,
+        Guid? aroundAnswerId,
         string sort,
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
-        IReadOnlyCollection<int> answerIds,
+        IReadOnlyCollection<Guid> answerIds,
         string? viewerId,
         CancellationToken cancellationToken);
 
@@ -21,18 +21,18 @@ public interface IAnswerRepository
 
     Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken);
 
-    Task RemoveHelpfulAsync(int answerId, string userId, CancellationToken cancellationToken);
+    Task RemoveHelpfulAsync(Guid answerId, string userId, CancellationToken cancellationToken);
 
     Task AddAsync(Answer answer, CancellationToken cancellationToken);
 
     Task<Answer?> GetVisibleByIdAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         CancellationToken cancellationToken);
 
     Task<Answer?> GetOwnedByIdAsync(
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string authorId,
         CancellationToken cancellationToken);
 

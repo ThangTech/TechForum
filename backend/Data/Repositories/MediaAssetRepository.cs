@@ -33,7 +33,7 @@ public sealed class MediaAssetRepository(TechForumDbContext dbContext) : IMediaA
     public async Task<IReadOnlyList<MediaAsset>> GetOwnedAvailableForTopicByIdsAsync(
         IReadOnlyCollection<Guid> ids,
         string uploaderId,
-        int topicId,
+        Guid topicId,
         CancellationToken cancellationToken) =>
         await dbContext.MediaAssets
             .Where(item =>

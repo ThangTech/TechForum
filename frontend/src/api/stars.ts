@@ -24,15 +24,15 @@ const parseStarStatus = (data: unknown): TopicStarStatus => {
 }
 
 export const getTopicStar = async (
-  topicId: number,
+  topicId: string,
   signal?: AbortSignal,
 ): Promise<TopicStarStatus> =>
   parseStarStatus(await apiRequest(`/api/topics/${topicId}/star`, { signal }))
 
-export const addTopicStar = async (topicId: number): Promise<TopicStarStatus> =>
+export const addTopicStar = async (topicId: string): Promise<TopicStarStatus> =>
   parseStarStatus(await apiRequest(`/api/topics/${topicId}/star`, { method: 'PUT' }))
 
-export const removeTopicStar = async (topicId: number): Promise<TopicStarStatus> =>
+export const removeTopicStar = async (topicId: string): Promise<TopicStarStatus> =>
   parseStarStatus(await apiRequest(`/api/topics/${topicId}/star`, { method: 'DELETE' }))
 
 // The posts that the member gave a star, the newest star first.

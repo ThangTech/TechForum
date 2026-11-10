@@ -36,10 +36,10 @@ public sealed class NotificationsController(INotificationService notificationSer
             User.GetRequiredUserId(), page, pageSize, cancellationToken));
     }
 
-    [HttpPut("{id:long}/read")]
+    [HttpPut("{id:guid}/read")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> MarkRead(long id, CancellationToken cancellationToken)
+    public async Task<IActionResult> MarkRead(Guid id, CancellationToken cancellationToken)
     {
         var updated = await notificationService.MarkReadAsync(id, User.GetRequiredUserId(), cancellationToken);
         return updated ? NoContent() : NotFound(new ProblemDetails

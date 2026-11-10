@@ -35,7 +35,7 @@ export const MyTopicsPage = () => {
   })
   const deleteMutation = useDeleteTopic()
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const data = topicsQuery.data ?? null
   const isLoading = isInitialLoading(topicsQuery)
   const isDeleting = deleteMutation.isPending

@@ -3,9 +3,9 @@ using TechForum.Api.Filters;
 namespace TechForum.Api.Dtos;
 
 public sealed record AnswerDto(
-    int Id,
-    int TopicId,
-    int? ParentAnswerId,
+    Guid Id,
+    Guid TopicId,
+    Guid? ParentAnswerId,
     TopicAuthorDto? ReplyingTo,
     string BodyHtml,
     TopicAuthorDto Author,
@@ -22,12 +22,12 @@ public sealed record AnswerDto(
 
 public sealed record AnswerHelpfulDto(int HelpfulCount, bool IsHelpful);
 
-public sealed record CreateAnswerRequest([property: FilterProfanity(IsHtml = true)] string? BodyHtml, int? ParentAnswerId = null);
+public sealed record CreateAnswerRequest([property: FilterProfanity(IsHtml = true)] string? BodyHtml, Guid? ParentAnswerId = null);
 
 public sealed class AnswerQuery
 {
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
-    public int? AroundAnswerId { get; init; }
+    public Guid? AroundAnswerId { get; init; }
     public string Sort { get; init; } = "oldest";
 }

@@ -7,13 +7,13 @@ using TechForum.Api.Services;
 namespace TechForum.Api.Controllers;
 
 [ApiController]
-[Route("api/topics/{topicId:int}")]
+[Route("api/topics/{topicId:guid}")]
 public sealed class TopicEngagementsController(ITopicEngagementService engagementService) : ControllerBase
 {
     private const string VisitorCookie = "TechForum.Visitor";
 
     [HttpPost("view")]
-    public async Task<ActionResult<TopicEngagementDto>> RecordView(int topicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<TopicEngagementDto>> RecordView(Guid topicId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserIdOrNull();
         var visitorKey = userId is null ? GetOrCreateVisitorKey() : $"user:{userId}";
@@ -23,7 +23,7 @@ public sealed class TopicEngagementsController(ITopicEngagementService engagemen
 
     [HttpPost("share")]
     [Authorize]
-    public async Task<ActionResult<TopicEngagementDto>> RecordShare(int topicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<TopicEngagementDto>> RecordShare(Guid topicId, CancellationToken cancellationToken)
     {
         var result = await engagementService.RecordShareAsync(topicId, cancellationToken);
         return result is null ? NotFound() : Ok(result);

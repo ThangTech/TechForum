@@ -17,22 +17,22 @@ public interface ITopicRepository
         TopicQuery query,
         CancellationToken cancellationToken);
 
-    Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken);
+    Task<Topic?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task<Topic?> GetOwnedByIdAsync(
-        int id,
+        Guid id,
         string authorId,
         CancellationToken cancellationToken);
 
-    Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken);
+    Task<Category?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(
-        IReadOnlyCollection<int> ids,
+        IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken);
 
     Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken);
 
-    Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken);
+    Task<bool> HasPublicAnswersAsync(Guid topicId, CancellationToken cancellationToken);
 
     // Saves a new topic. Returns false when another topic already uses the same slug.
     // The topic stays tracked, so the caller can change the slug and call this again.

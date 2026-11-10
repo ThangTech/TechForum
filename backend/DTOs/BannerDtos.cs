@@ -1,10 +1,10 @@
 namespace TechForum.Api.Dtos;
 
 // What the home page needs to show a banner.
-public sealed record BannerDto(int Id, string Title, string ImageUrl, string? LinkUrl);
+public sealed record BannerDto(Guid Id, string Title, string ImageUrl, string? LinkUrl);
 
 public sealed record AdminBannerDto(
-    int Id,
+    Guid Id,
     string Title,
     string ImageUrl,
     string? LinkUrl,

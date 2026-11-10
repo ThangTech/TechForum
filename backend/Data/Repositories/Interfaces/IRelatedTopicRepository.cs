@@ -3,7 +3,7 @@ namespace TechForum.Api.Data.Repositories;
 public interface IRelatedTopicRepository
 {
     Task<IReadOnlyList<RelatedTopicData>?> GetPublicRelatedAsync(
-        int topicId,
+        Guid topicId,
         int limit,
         CancellationToken cancellationToken);
 }

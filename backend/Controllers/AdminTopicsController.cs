@@ -23,8 +23,8 @@ public sealed class AdminTopicsController(IAdminTopicService topicService) : Con
             : Ok(result);
     }
 
-    [HttpGet("{topicId:int}")]
-    public async Task<ActionResult<AdminTopicDetailDto>> GetById(int topicId, CancellationToken cancellationToken)
+    [HttpGet("{topicId:guid}")]
+    public async Task<ActionResult<AdminTopicDetailDto>> GetById(Guid topicId, CancellationToken cancellationToken)
     {
         var result = await topicService.GetByIdAsync(topicId, cancellationToken);
         return result is null
@@ -32,9 +32,9 @@ public sealed class AdminTopicsController(IAdminTopicService topicService) : Con
             : Ok(result);
     }
 
-    [HttpPut("{topicId:int}/moderation")]
+    [HttpPut("{topicId:guid}/moderation")]
     public async Task<ActionResult<AdminTopicDto>> Moderate(
-        int topicId,
+        Guid topicId,
         [FromBody] ModerateTopicRequest request,
         CancellationToken cancellationToken)
     {

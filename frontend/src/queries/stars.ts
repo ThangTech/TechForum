@@ -8,10 +8,10 @@ export const starKeys = {
   starred: (scope: string) => userKey(scope, 'starred'),
   starredPage: (scope: string, page: number, pageSize: number) => [...starKeys.starred(scope), { page, pageSize }] as const,
   // Whether the signed-in user gave a star depends on the user, so the key is user-scoped.
-  status: (scope: string, topicId: number) => userKey(scope, 'topics', topicId, 'star'),
+  status: (scope: string, topicId: string) => userKey(scope, 'topics', topicId, 'star'),
 }
 
-export const useTopicStar = (topicId: number) => {
+export const useTopicStar = (topicId: string) => {
   const { scope, isReady } = useUserScope()
 
   return useQuery({
@@ -22,7 +22,7 @@ export const useTopicStar = (topicId: number) => {
 }
 
 // Pass the current value of hasStar: true removes the star, false adds it.
-export const useToggleTopicStar = (topicId: number) => {
+export const useToggleTopicStar = (topicId: string) => {
   const queryClient = useQueryClient()
   const { scope } = useUserScope()
 

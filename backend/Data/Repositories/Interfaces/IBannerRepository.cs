@@ -9,10 +9,10 @@ public interface IBannerRepository
 
     Task<IReadOnlyList<Banner>> GetAllAsync(CancellationToken cancellationToken);
 
-    Task<Banner?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken);
+    Task<Banner?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken);
 
     // True when another banner (not `exceptId`) uses the same picture address.
-    Task<bool> ImageUrlInUseAsync(string imageUrl, int exceptId, CancellationToken cancellationToken);
+    Task<bool> ImageUrlInUseAsync(string imageUrl, Guid exceptId, CancellationToken cancellationToken);
 
     Task AddAsync(Banner banner, CancellationToken cancellationToken);
 

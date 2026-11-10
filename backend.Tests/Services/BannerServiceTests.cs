@@ -96,7 +96,7 @@ public sealed class BannerServiceTests
         context.Banners.Items.Add(NewBanner(1));
 
         var result = await context.Service.UpdateAsync(
-            "admin", 1, Request(title: "Tiêu đề mới", imageUrl: "/media/banners/new.png"), default);
+            "admin", TestIds.Id(1), Request(title: "Tiêu đề mới", imageUrl: "/media/banners/new.png"), default);
 
         Assert.Equal(BannerWriteFailure.None, result.Failure);
         Assert.Equal("Tiêu đề mới", context.Banners.Items[0].Title);
@@ -110,7 +110,7 @@ public sealed class BannerServiceTests
         var context = new Context();
         context.Banners.Items.Add(NewBanner(1));
 
-        await context.Service.UpdateAsync("admin", 1, Request(title: "Chỉ đổi tiêu đề"), default);
+        await context.Service.UpdateAsync("admin", TestIds.Id(1), Request(title: "Chỉ đổi tiêu đề"), default);
 
         Assert.Empty(context.Images.Deleted);
     }
@@ -122,7 +122,7 @@ public sealed class BannerServiceTests
         context.Banners.Items.Add(NewBanner(1));
         context.Banners.Items.Add(NewBanner(2));
 
-        await context.Service.UpdateAsync("admin", 1, Request(imageUrl: "/media/banners/new.png"), default);
+        await context.Service.UpdateAsync("admin", TestIds.Id(1), Request(imageUrl: "/media/banners/new.png"), default);
 
         Assert.Empty(context.Images.Deleted);
     }
@@ -134,7 +134,7 @@ public sealed class BannerServiceTests
         context.Banners.Items.Add(NewBanner(1));
         context.Banners.Items.Add(NewBanner(2));
 
-        await context.Service.DeleteAsync("admin", 1, default);
+        await context.Service.DeleteAsync("admin", TestIds.Id(1), default);
 
         Assert.Empty(context.Images.Deleted);
     }
@@ -142,7 +142,7 @@ public sealed class BannerServiceTests
     [Fact]
     public async Task Update_ReturnsNotFoundForAnUnknownBanner()
     {
-        var result = await new Context().Service.UpdateAsync("admin", 99, Request(), default);
+        var result = await new Context().Service.UpdateAsync("admin", TestIds.Id(99), Request(), default);
 
         Assert.Equal(BannerWriteFailure.NotFound, result.Failure);
     }
@@ -153,9 +153,9 @@ public sealed class BannerServiceTests
         var context = new Context();
         context.Banners.Items.Add(NewBanner(1));
 
-        await context.Service.SetActiveAsync("admin", 1, false, default);
+        await context.Service.SetActiveAsync("admin", TestIds.Id(1), false, default);
         Assert.False(context.Banners.Items[0].IsActive);
-        await context.Service.SetActiveAsync("admin", 1, true, default);
+        await context.Service.SetActiveAsync("admin", TestIds.Id(1), true, default);
 
         Assert.True(context.Banners.Items[0].IsActive);
         Assert.Equal(["banner-deactivated", "banner-activated"], context.Audit.Actions);
@@ -167,7 +167,7 @@ public sealed class BannerServiceTests
         var context = new Context();
         context.Banners.Items.Add(NewBanner(1));
 
-        var result = await context.Service.DeleteAsync("admin", 1, default);
+        var result = await context.Service.DeleteAsync("admin", TestIds.Id(1), default);
 
         Assert.Equal(BannerWriteFailure.None, result.Failure);
         Assert.Empty(context.Banners.Items);
@@ -178,7 +178,7 @@ public sealed class BannerServiceTests
     [Fact]
     public async Task Delete_ReturnsNotFoundForAnUnknownBanner()
     {
-        var result = await new Context().Service.DeleteAsync("admin", 99, default);
+        var result = await new Context().Service.DeleteAsync("admin", TestIds.Id(99), default);
 
         Assert.Equal(BannerWriteFailure.NotFound, result.Failure);
     }
@@ -193,7 +193,7 @@ public sealed class BannerServiceTests
 
         Assert.Equal(Now, context.Banners.LastShownTime);
         var dto = Assert.Single(shown);
-        Assert.Equal(new BannerDto(1, "Banner 1", ImageUrl, "/topics/1"), dto);
+        Assert.Equal(new BannerDto(TestIds.Id(1), "Banner 1", ImageUrl, "/topics/1"), dto);
     }
 
     private static SaveBannerRequest Request(
@@ -204,13 +204,13 @@ public sealed class BannerServiceTests
         DateTimeOffset? ends = null) =>
         new(title, imageUrl, link, 1, starts, ends);
 
-    private static Banner NewBanner(int id) => new()
+    private static Banner NewBanner(int number) => new()
     {
-        Id = id,
-        Title = "Banner " + id,
+        Id = TestIds.Id(number),
+        Title = "Banner " + number,
         ImageUrl = ImageUrl,
-        LinkUrl = "/topics/" + id,
-        DisplayOrder = id,
+        LinkUrl = "/topics/" + number,
+        DisplayOrder = number,
         CreatedAtUtc = Now
     };
 
@@ -241,15 +241,15 @@ public sealed class BannerServiceTests
         public Task<IReadOnlyList<Banner>> GetAllAsync(CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<Banner>>(Items.ToList());
 
-        public Task<Banner?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken) =>
+        public Task<Banner?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult(Items.SingleOrDefault(banner => banner.Id == id));
 
-        public Task<bool> ImageUrlInUseAsync(string imageUrl, int exceptId, CancellationToken cancellationToken) =>
+        public Task<bool> ImageUrlInUseAsync(string imageUrl, Guid exceptId, CancellationToken cancellationToken) =>
             Task.FromResult(Items.Any(banner => banner.ImageUrl == imageUrl && banner.Id != exceptId));
 
         public Task AddAsync(Banner banner, CancellationToken cancellationToken)
         {
-            banner.Id = Items.Count + 1;
+            banner.Id = TestIds.Id(Items.Count + 1);
             Items.Add(banner);
             return Task.CompletedTask;
         }

@@ -3,7 +3,7 @@ namespace TechForum.Api.Models;
 // One row per refresh token. Only the SHA-256 hash is stored, never the token itself.
 public sealed class RefreshToken
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
 
     public required string UserId { get; set; }
 

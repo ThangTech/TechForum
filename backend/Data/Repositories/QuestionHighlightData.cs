@@ -1,7 +1,7 @@
 namespace TechForum.Api.Data.Repositories;
 
 public sealed record QuestionHighlightData(
-    int Id,
+    Guid Id,
     string Title,
     int AnswerCount,
     DateTimeOffset PublishedAtUtc);

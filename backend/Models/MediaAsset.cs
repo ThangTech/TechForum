@@ -10,6 +10,6 @@ public sealed class MediaAsset
     public required string ContentType { get; set; }
     public long Length { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
-    public int? TopicId { get; set; }
+    public Guid? TopicId { get; set; }
     public Topic? Topic { get; set; }
 }

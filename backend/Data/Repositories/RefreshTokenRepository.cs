@@ -17,7 +17,7 @@ public sealed class RefreshTokenRepository(TechForumDbContext dbContext) : IRefr
             .SingleOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
 
     public async Task<bool> RotateAsync(
-        long currentTokenId,
+        Guid currentTokenId,
         RefreshToken replacement,
         DateTimeOffset now,
         CancellationToken cancellationToken)

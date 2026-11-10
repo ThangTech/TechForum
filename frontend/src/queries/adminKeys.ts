@@ -17,7 +17,7 @@ export interface AdminTopicParams {
   keyword: string
   type: '' | TopicType
   visibility: TopicVisibility
-  categoryId?: number
+  categoryId?: string
   page: number
   pageSize: number
 }
@@ -36,7 +36,7 @@ export const adminKeys = {
     [...adminKeys.all(scope), 'reports', { status, page, pageSize }] as const,
   topics: (scope: string, params: AdminTopicParams) =>
     [...adminKeys.all(scope), 'topics', params] as const,
-  topicDetail: (scope: string, topicId: number) =>
+  topicDetail: (scope: string, topicId: string) =>
     [...adminKeys.all(scope), 'topic', topicId] as const,
   dashboard: (scope: string, startDate: string, endDate: string) =>
     [...adminKeys.all(scope), 'dashboard', { startDate, endDate }] as const,

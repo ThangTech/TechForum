@@ -16,10 +16,10 @@ public sealed class CategoriesController(ICategoryService categoryService) : Con
         return Ok(categories);
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:guid}")]
     [ProducesResponseType<CategoryDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CategoryDto>> GetById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<CategoryDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var category = await categoryService.GetByIdAsync(id, cancellationToken);
         if (category is null)

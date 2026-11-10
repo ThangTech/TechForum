@@ -2,7 +2,7 @@ import { ApiError, apiRequest } from './client'
 
 // A picture of the slider on the home page.
 export interface Banner {
-  id: number
+  id: string
   title: string
   imageUrl: string
   linkUrl: string | null
@@ -13,7 +13,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isBanner = (value: unknown): value is Banner =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.title === 'string' &&
   typeof value.imageUrl === 'string' &&
   (value.linkUrl === null || typeof value.linkUrl === 'string')

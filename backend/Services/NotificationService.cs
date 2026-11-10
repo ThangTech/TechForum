@@ -29,8 +29,8 @@ public sealed class NotificationService(
 
     public Task AddAcceptedAnswerAsync(
         string recipientId,
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string topicTitle,
         CancellationToken cancellationToken) =>
         notificationRepository.AddIfMissingAsync(new Notification
@@ -46,8 +46,8 @@ public sealed class NotificationService(
 
     public async Task AddNewAnswerAsync(
         string recipientId,
-        int topicId,
-        int answerId,
+        Guid topicId,
+        Guid answerId,
         string answerAuthorName,
         string topicTitle,
         CancellationToken cancellationToken)
@@ -70,7 +70,7 @@ public sealed class NotificationService(
     }
 
     public async Task<bool> MarkReadAsync(
-        long id,
+        Guid id,
         string userId,
         CancellationToken cancellationToken)
     {

@@ -10,7 +10,7 @@ public sealed class TopicEngagementService(
     TimeProvider timeProvider) : ITopicEngagementService
 {
     public Task<TopicEngagementDto?> RecordViewAsync(
-        int topicId,
+        Guid topicId,
         string visitorKey,
         CancellationToken cancellationToken)
     {
@@ -18,6 +18,6 @@ public sealed class TopicEngagementService(
         return repository.RecordViewAsync(topicId, hash, timeProvider.GetUtcNow(), cancellationToken);
     }
 
-    public Task<TopicEngagementDto?> RecordShareAsync(int topicId, CancellationToken cancellationToken) =>
+    public Task<TopicEngagementDto?> RecordShareAsync(Guid topicId, CancellationToken cancellationToken) =>
         repository.RecordShareAsync(topicId, cancellationToken);
 }

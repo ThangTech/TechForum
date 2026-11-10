@@ -27,7 +27,7 @@ public sealed record AdminActivityPointDto(
     DateOnly Date, int NewMemberCount, int ArticleCount, int QuestionCount, int AnswerCount);
 
 public sealed record AdminCategoryActivityDto(
-    int CategoryId, string CategoryName, int ArticleCount, int QuestionCount, int TopicCount);
+    Guid CategoryId, string CategoryName, int ArticleCount, int QuestionCount, int TopicCount);
 
 public sealed record AdminQuestionStatisticsDto(
     int TotalCount, int UnansweredCount, int UnsolvedCount, int SolvedCount);
@@ -35,9 +35,9 @@ public sealed record AdminQuestionStatisticsDto(
 public sealed record AdminPendingReportsDto(int Count, IReadOnlyList<AdminPendingReportDto> Oldest);
 
 public sealed record AdminPendingReportDto(
-    int Id,
+    Guid Id,
     string TargetType,
-    int TargetId,
+    Guid TargetId,
     string TargetTitle,
     string Reason,
     ReportUserDto Reporter,
@@ -73,7 +73,7 @@ public sealed class AdminAuditQuery : IValidatableObject
 }
 
 public sealed record AdminAuditLogDto(
-    long Id,
+    Guid Id,
     ReportUserDto Administrator,
     string Action,
     string TargetType,

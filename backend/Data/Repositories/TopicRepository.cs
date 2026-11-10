@@ -217,7 +217,7 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
         return new TopicPage(items, totalItems);
     }
 
-    public Task<Topic?> GetPublicByIdAsync(int id, CancellationToken cancellationToken)
+    public Task<Topic?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return PublicTopics()
             .Include(topic => topic.Category)
@@ -229,7 +229,7 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
     }
 
     public Task<Topic?> GetOwnedByIdAsync(
-        int id,
+        Guid id,
         string authorId,
         CancellationToken cancellationToken) =>
         dbContext.Topics
@@ -244,13 +244,13 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
                 !topic.IsDeleted,
                 cancellationToken);
 
-    public Task<Category?> GetCategoryByIdAsync(int id, CancellationToken cancellationToken) =>
+    public Task<Category?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Categories
             .AsNoTracking()
             .SingleOrDefaultAsync(category => category.Id == id && category.IsActive, cancellationToken);
 
     public async Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(
-        IReadOnlyCollection<int> ids,
+        IReadOnlyCollection<Guid> ids,
         CancellationToken cancellationToken) =>
         await dbContext.Tags
             .AsNoTracking()
@@ -262,7 +262,7 @@ public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider t
     public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken) =>
         dbContext.Topics.AnyAsync(topic => topic.Slug == slug, cancellationToken);
 
-    public Task<bool> HasPublicAnswersAsync(int topicId, CancellationToken cancellationToken) =>
+    public Task<bool> HasPublicAnswersAsync(Guid topicId, CancellationToken cancellationToken) =>
         dbContext.Answers
             .Where(answer => answer.TopicId == topicId)
             .Where(AnswerVisibility.IsPublic)

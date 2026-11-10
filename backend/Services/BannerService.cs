@@ -52,7 +52,7 @@ public sealed class BannerService(
 
     public async Task<BannerWriteResult> UpdateAsync(
         string administratorId,
-        int id,
+        Guid id,
         SaveBannerRequest request,
         CancellationToken cancellationToken)
     {
@@ -89,7 +89,7 @@ public sealed class BannerService(
 
     public async Task<BannerWriteResult> SetActiveAsync(
         string administratorId,
-        int id,
+        Guid id,
         bool isActive,
         CancellationToken cancellationToken)
     {
@@ -108,7 +108,7 @@ public sealed class BannerService(
         return BannerWriteResult.Success(MapAdminDto(banner));
     }
 
-    public async Task<BannerWriteResult> DeleteAsync(string administratorId, int id, CancellationToken cancellationToken)
+    public async Task<BannerWriteResult> DeleteAsync(string administratorId, Guid id, CancellationToken cancellationToken)
     {
         var banner = await bannerRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (banner is null)
@@ -129,7 +129,7 @@ public sealed class BannerService(
         imageStorage.SaveAsync(file, cancellationToken);
 
     // Two banners may point to the same picture, so the file is only removed when no other banner uses it.
-    private async Task DeleteImageIfUnusedAsync(string imageUrl, int bannerId, CancellationToken cancellationToken)
+    private async Task DeleteImageIfUnusedAsync(string imageUrl, Guid bannerId, CancellationToken cancellationToken)
     {
         if (!await bannerRepository.ImageUrlInUseAsync(imageUrl, bannerId, cancellationToken))
         {

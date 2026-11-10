@@ -10,7 +10,7 @@ export const CategoryAdminCard = ({
   onEdit,
   onToggleActive,
 }: {
-  busyId: number | null
+  busyId: string | null
   category: AdminCategory
   onEdit: (category: AdminCategory) => void
   onToggleActive: (category: AdminCategory) => void

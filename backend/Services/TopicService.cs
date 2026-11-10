@@ -55,14 +55,14 @@ public sealed partial class TopicService(
             totalPages);
     }
 
-    public async Task<TopicDetailDto?> GetPublicByIdAsync(int id, CancellationToken cancellationToken)
+    public async Task<TopicDetailDto?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetPublicByIdAsync(id, cancellationToken);
         return topic is null ? null : MapDetail(topic, timeProvider.GetUtcNow());
     }
 
     public async Task<OwnTopicDto?> GetOwnedByIdAsync(
-        int id,
+        Guid id,
         string authorId,
         CancellationToken cancellationToken)
     {
@@ -140,7 +140,7 @@ public sealed partial class TopicService(
     }
 
     public async Task<CreateTopicResult?> UpdateAsync(
-        int id,
+        Guid id,
         string authorId,
         UpdateTopicRequest request,
         CancellationToken cancellationToken)
@@ -217,7 +217,7 @@ public sealed partial class TopicService(
     }
 
     public async Task<SoftDeleteTopicResult> SoftDeleteAsync(
-        int id,
+        Guid id,
         string authorId,
         CancellationToken cancellationToken)
     {
@@ -245,8 +245,8 @@ public sealed partial class TopicService(
         string? Summary,
         string? Type,
         string? BodyHtml,
-        int CategoryId,
-        IReadOnlyList<int>? TagIds,
+        Guid CategoryId,
+        IReadOnlyList<Guid>? TagIds,
         IReadOnlyList<Guid>? MediaIds);
 
     // The form after every check passed: text trimmed, HTML cleaned, and the category, tags and
@@ -258,7 +258,7 @@ public sealed partial class TopicService(
         string SanitizedBody,
         Category Category,
         IReadOnlyList<Tag> Tags,
-        int[] TagIds,
+        Guid[] TagIds,
         Guid[] MediaIds,
         IReadOnlyList<MediaAsset> MediaAssets);
 
@@ -292,7 +292,7 @@ public sealed partial class TopicService(
     private async Task<TopicValidation> ValidateFormAsync(
         TopicForm form,
         string authorId,
-        int? editingTopicId,
+        Guid? editingTopicId,
         CancellationToken cancellationToken)
     {
         var title = form.Title?.Trim();
@@ -330,7 +330,7 @@ public sealed partial class TopicService(
         }
 
         var tagIds = (form.TagIds ?? []).Distinct().ToArray();
-        if (tagIds.Length > 5 || tagIds.Any(tagId => tagId <= 0))
+        if (tagIds.Length > 5 || tagIds.Any(tagId => tagId == Guid.Empty))
         {
             return TopicValidation.Invalid("tagIds", "Chỉ được chọn tối đa 5 thẻ hợp lệ.");
         }

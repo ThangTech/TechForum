@@ -11,14 +11,14 @@ public sealed class Draft
     public Guid Id { get; set; }
     public required string UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
-    public int? TopicId { get; set; }
+    public Guid? TopicId { get; set; }
     public Topic? Topic { get; set; }
     public required string Title { get; set; }
     public required string Summary { get; set; }
     public required string BodyHtml { get; set; }
     public TopicType Type { get; set; }
-    public int? CategoryId { get; set; }
-    public List<int> TagIds { get; set; } = [];
+    public Guid? CategoryId { get; set; }
+    public List<Guid> TagIds { get; set; } = [];
     // The pictures and videos of the body. The cleanup of unused uploads keeps them while the draft exists.
     public List<Guid> MediaIds { get; set; } = [];
     public DateTimeOffset UpdatedAtUtc { get; set; }

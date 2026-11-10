@@ -8,7 +8,7 @@ namespace TechForum.Api.Data.Repositories;
 public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : ITopicEngagementRepository
 {
     public async Task<TopicEngagementDto?> RecordViewAsync(
-        int topicId,
+        Guid topicId,
         string visitorKeyHash,
         DateTimeOffset viewedAtUtc,
         CancellationToken cancellationToken)
@@ -49,7 +49,7 @@ public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : IT
         return new TopicEngagementDto(updated.ViewCount, updated.ShareCount);
     }
 
-    public async Task<TopicEngagementDto?> RecordShareAsync(int topicId, CancellationToken cancellationToken)
+    public async Task<TopicEngagementDto?> RecordShareAsync(Guid topicId, CancellationToken cancellationToken)
     {
         var topic = await GetPublicTopicAsync(topicId, cancellationToken);
         if (topic is null)
@@ -66,7 +66,7 @@ public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : IT
         return new TopicEngagementDto(updated.ViewCount, updated.ShareCount);
     }
 
-    private Task<Topic?> GetPublicTopicAsync(int topicId, CancellationToken cancellationToken) =>
+    private Task<Topic?> GetPublicTopicAsync(Guid topicId, CancellationToken cancellationToken) =>
         dbContext.Topics
             .Where(TopicVisibility.IsPublic)
             .SingleOrDefaultAsync(topic => topic.Id == topicId, cancellationToken);

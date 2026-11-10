@@ -11,7 +11,7 @@ import { BookmarkIcon, CommentIcon, StarIcon, ViewIcon } from '../common/StatIco
 interface TopicSummaryItemProps {
   topic: TopicSummary
   showAuthor?: boolean
-  onFilter?: (key: 'categoryId' | 'tagId', value: number) => void
+  onFilter?: (key: 'categoryId' | 'tagId', value: string) => void
   isDiscussion?: boolean
   // The tabs Hot and Top order by the score, so the card shows it (a dot while it is hidden for a new post).
   showScore?: boolean

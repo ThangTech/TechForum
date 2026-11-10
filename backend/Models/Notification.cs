@@ -2,7 +2,7 @@ namespace TechForum.Api.Models;
 
 public sealed class Notification
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
     public required string UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
     public required string Type { get; set; }

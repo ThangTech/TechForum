@@ -1,7 +1,7 @@
 import { ApiError, apiRequest } from './client'
 
 export interface Tag {
-  id: number
+  id: string
   name: string
   slug: string
   description: string | null
@@ -11,7 +11,7 @@ const isTag = (value: unknown): value is Tag => {
   if (typeof value !== 'object' || value === null) return false
   const tag = value as Record<string, unknown>
   return (
-    typeof tag.id === 'number' &&
+    typeof tag.id === 'string' &&
     typeof tag.name === 'string' &&
     typeof tag.slug === 'string' &&
     (typeof tag.description === 'string' || tag.description === null)

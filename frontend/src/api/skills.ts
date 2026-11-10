@@ -14,9 +14,9 @@ export interface SkillCommunity {
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
 
-export const getSkillCommunity = async (tagId: number, page: number, signal?: AbortSignal): Promise<SkillCommunity> => {
+export const getSkillCommunity = async (tagId: string, page: number, signal?: AbortSignal): Promise<SkillCommunity> => {
   const data = await apiRequest<unknown>(`/api/tags/${tagId}/community?page=${page}&pageSize=20`, { signal })
-  if (!isRecord(data) || !isRecord(data.tag) || typeof data.tag.id !== 'number' ||
+  if (!isRecord(data) || !isRecord(data.tag) || typeof data.tag.id !== 'string' ||
       typeof data.tag.name !== 'string' || typeof data.tag.slug !== 'string' ||
       (data.tag.description !== null && typeof data.tag.description !== 'string') ||
       typeof data.topicCount !== 'number' || typeof data.memberCount !== 'number' ||

@@ -23,15 +23,15 @@ import { AnswerEditDialog } from './AnswerEditDialog'
 import { AnswerForm } from './AnswerForm'
 
 interface AnswerListProps {
-  acceptingAnswerId: number | null
+  acceptingAnswerId: string | null
   canAcceptAnswers: boolean
   data: AnswerPage
   isLocked: boolean
-  onAccept: (answerId: number) => void
-  onDeleted: (answerId: number) => void
+  onAccept: (answerId: string) => void
+  onDeleted: (answerId: string) => void
   onLoginRequired: () => void
-  onHelpfulChanged: (answerId: number, helpful: AnswerHelpfulState) => void
-  onVoteChanged: (answerId: number, vote: VoteState) => void
+  onHelpfulChanged: (answerId: string, helpful: AnswerHelpfulState) => void
+  onVoteChanged: (answerId: string, vote: VoteState) => void
   onPageChange: (page: number) => void
   onReplyCreated: (answer: Answer) => void
   onUpdated: (answer: Answer) => void
@@ -80,8 +80,8 @@ export const AnswerList = ({
   const [isDeleting, setIsDeleting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<Answer | null>(null)
-  const [votingAnswerId, setVotingAnswerId] = useState<number | null>(null)
-  const [scoringAnswerId, setScoringAnswerId] = useState<number | null>(null)
+  const [votingAnswerId, setVotingAnswerId] = useState<string | null>(null)
+  const [scoringAnswerId, setScoringAnswerId] = useState<string | null>(null)
 
   // The vote ▲ ▼ for the answer (it counts for the score and the reputation of its author).
   const voteForAnswer = async (answer: Answer, direction: VoteDirection) => {

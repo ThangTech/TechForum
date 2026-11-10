@@ -20,7 +20,7 @@ const readPage = (value: string | null) => {
 }
 
 const safeNotificationLink = (value: string) =>
-  /^\/topics\/\d+(?:#answer-\d+)?$/.test(value) || value === '/reports' || value === '/notifications' ? value : '/'
+  /^\/topics\/[0-9a-f-]{36}(?:#answer-[0-9a-f-]{36})?$/i.test(value) || value === '/reports' || value === '/notifications' ? value : '/'
 
 export const NotificationsPage = () => {
   const navigate = useNavigate()
@@ -29,8 +29,8 @@ export const NotificationsPage = () => {
   const notificationsQuery = useNotifications(page, 10)
   const markReadMutation = useMarkNotificationRead()
   const [actionError, setActionError] = useState<string | null>(null)
-  const [busyId, setBusyId] = useState<number | null>(null)
-  const [openedId, setOpenedId] = useState<number | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [openedId, setOpenedId] = useState<string | null>(null)
   const data = notificationsQuery.data ?? null
   const isLoading = isInitialLoading(notificationsQuery)
   const error = actionError ?? getErrorMessage(notificationsQuery.error, 'Không thể tải thông báo.')
@@ -45,7 +45,7 @@ export const NotificationsPage = () => {
     void notificationsQuery.refetch()
   }
 
-  const openNotification = async (id: number, link: string, isRead: boolean) => {
+  const openNotification = async (id: string, link: string, isRead: boolean) => {
     if (busyId !== null) return
     setBusyId(id); setActionError(null)
     try {
