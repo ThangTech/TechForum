@@ -14,11 +14,23 @@ public enum VoteFailure
     // The account is younger than the minimum age for voting (see VoteLimitOptions).
     AccountTooNew,
     // The member sent votes faster than the limits allow.
-    RateLimited
+    RateLimited,
+    // A downvote needs an older account or more reputation (see VoteLimitOptions).
+    DownvoteNotAllowed
 }
 
+// What a member needs to give a downvote, and what is still missing. The member may downvote when the account is old
+// enough OR the reputation is high enough.
+public sealed record DownvoteRequirement(int RequiredDays, int RequiredReputation, int DaysLeft, int ReputationLeft);
+
 // DaysLeft: for AccountTooNew, about how many days until the member can vote. RetryAfterSeconds: for RateLimited.
-public sealed record VoteResult(VoteFailure Failure, VoteDto? Vote, int DaysLeft = 0, int RetryAfterSeconds = 0)
+// Downvote: for DownvoteNotAllowed.
+public sealed record VoteResult(
+    VoteFailure Failure,
+    VoteDto? Vote,
+    int DaysLeft = 0,
+    int RetryAfterSeconds = 0,
+    DownvoteRequirement? Downvote = null)
 {
     public static VoteResult Success(VoteDto vote) => new(VoteFailure.None, vote);
 
@@ -27,6 +39,9 @@ public sealed record VoteResult(VoteFailure Failure, VoteDto? Vote, int DaysLeft
     public static VoteResult TooNew(int daysLeft) => new(VoteFailure.AccountTooNew, null, DaysLeft: daysLeft);
 
     public static VoteResult Limited(int retryAfterSeconds) => new(VoteFailure.RateLimited, null, RetryAfterSeconds: retryAfterSeconds);
+
+    public static VoteResult DownvoteLocked(DownvoteRequirement requirement) =>
+        new(VoteFailure.DownvoteNotAllowed, null, Downvote: requirement);
 }
 
 public interface IVoteService

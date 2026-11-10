@@ -377,7 +377,7 @@ trực tiếp trong SQL (`Score = Score + @thay_đổi`) nên hai người bình
 của cùng một người đến cùng lúc gặp deadlock hoặc khóa chính thì được đọc lại và thử tối đa 4 lần, nên kết quả
 chỉ là một phiếu. Bảng điểm (`ReputationRules`): upvote câu trả lời +10, upvote bài viết +5, downvote −2, câu trả
 lời được chọn là đúng +15 (người chọn không tự nhận điểm khi chọn câu của chính mình; đổi hoặc xóa câu đã chọn thì
-trừ lại). Rút phiếu hoặc đổi phiếu tự hoàn lại và tính lại điểm. **Điểm hiển thị không bao giờ dưới 0**: điểm của bài, của
+trừ lại). Người bấm ▼ cũng mất 1 điểm (xem giới hạn bên dưới). Rút phiếu hoặc đổi phiếu tự hoàn lại và tính lại điểm. **Điểm hiển thị không bao giờ dưới 0**: điểm của bài, của
 câu trả lời và điểm danh tiếng đều được cắt về 0 ở mọi chỗ trả ra (`ReputationRules.ForDisplay`), để vài lượt
 downvote không hiện số âm hay kéo theo "ném đá" hàng loạt. CSDL vẫn giữ số thật (có thể âm) nên rút hoặc đổi
 phiếu luôn hoàn lại chính xác: ví dụ bài mới bị downvote có điểm thật −1 (hiện 0), đổi sang upvote thì thành +1.
@@ -387,6 +387,13 @@ Giới hạn chống bình chọn gian lận (cấu hình `VoteLimits` trong `ap
 - **Tài khoản phải tồn tại ít nhất 3 ngày** (`MinAccountAgeDays`) mới được bình chọn, để một tài khoản tạo ra
   chỉ nhằm đẩy hoặc dìm điểm không bình chọn được ngay. Dưới 3 ngày, `PUT` với `1` hoặc `-1` trả `403` kèm số ngày
   còn lại. Rút phiếu (`0`) luôn được phép.
+- **Downvote khắt khe hơn upvote** vì đây là phiếu dễ bị dùng để gây hại: ngoài 3 ngày tuổi, tài khoản phải tồn tại **ít nhất
+  7 ngày hoặc có từ 50 điểm danh tiếng** (`DownvoteMinAccountAgeDays`, `DownvoteMinReputation`) mới được bình chọn
+  ▼ (kể cả đổi từ ▲ sang ▼). Không đủ thì `403` kèm số ngày còn lại hoặc số điểm còn thiếu. Điểm thật được so với 50
+  (điểm hiển thị không bao giờ dưới 0 nhưng điểm thật có thể âm). Rút phiếu luôn được phép.
+- **Phí downvote:** người bấm ▼ bị trừ **1 điểm danh tiếng** (`ReputationRules.DownvoteCost`), cộng thêm việc tác giả
+  bị trừ 2. Điểm này được hoàn lại khi họ rút phiếu hoặc đổi sang ▲; việc trừ và hoàn nằm trong cùng transaction với
+  phiếu nên mười lăm yêu cầu ▼ cùng lúc chỉ trừ một lần. Phí áp dụng cho cả bài viết và câu trả lời.
 - **Giới hạn tốc độ** cho mỗi thành viên: tối đa 30 lượt mỗi phút (`PerMinute`) và 200 lượt mỗi ngày (`PerDay`),
   quá thì `429` kèm header `Retry-After` (số giây chờ thật, vì cửa sổ cố định biết chính xác khi nào bắt đầu lại)
   và câu thông báo tiếng Việt ("thử lại sau 45 giây", "sau 6 giờ"). Mọi yêu cầu bình chọn đều được tính, kể cả

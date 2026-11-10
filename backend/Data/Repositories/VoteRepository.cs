@@ -94,6 +94,16 @@ public sealed class VoteRepository(TechForumDbContext dbContext) : IVoteReposito
                         .ExecuteUpdateAsync(set => set.SetProperty(user => user.Reputation, user => user.Reputation + points), cancellationToken);
                     if (users != 1) throw new InvalidOperationException("Không tìm thấy tác giả của nội dung được bình chọn.");
                 }
+
+                // 4. the cost of a downvote for the member who votes: paid when the vote becomes a downvote, given back when it
+                // stops being one (taken back, or changed to an upvote)
+                var cost = ReputationRules.ForVoter(command.NewValue) - ReputationRules.ForVoter(previous);
+                if (cost != 0)
+                {
+                    var voters = await dbContext.Users.Where(user => user.Id == command.VoterId)
+                        .ExecuteUpdateAsync(set => set.SetProperty(user => user.Reputation, user => user.Reputation + cost), cancellationToken);
+                    if (voters != 1) throw new InvalidOperationException("Không tìm thấy người bình chọn.");
+                }
             }
 
             var score = command.TargetType == VoteTargetType.Topic

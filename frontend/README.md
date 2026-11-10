@@ -133,7 +133,8 @@ trong bài viết và câu trả lời mới; thêm/xóa có hiệu lực ngay.
 
 Bài viết và câu trả lời có nút bình chọn **▲ điểm ▼** (`VoteControl`), tách riêng với sao ⭐ "hữu ích"
 (lời cảm ơn/yêu thích, không đổi điểm danh tiếng). Bấm ▲ hoặc ▼ đang sáng thì rút phiếu, bấm mũi tên còn lại thì
-đổi phiếu; khách bấm thì hiện hộp đăng nhập, tác giả không tự bình chọn được (nút mờ kèm lý do). Câu trả lời
+đổi phiếu; khách bấm thì hiện hộp đăng nhập, tác giả không tự bình chọn được (nút mờ kèm lý do). Rê chuột vào ▼ báo trước: tốn 1 điểm danh tiếng (hoàn lại khi bỏ
+phiếu) và cần tài khoản từ 7 ngày hoặc 50 điểm danh tiếng; không đủ điều kiện thì hiện lý do cụ thể. Câu trả lời
 sắp xếp thêm được theo **Điểm cao nhất** (`?answerSort=score`; câu được chọn vẫn đứng đầu). Hồ sơ công khai hiện
 **điểm danh tiếng**. Trang `/starred` ("Bài đã thả sao", cũng có ở menu tài khoản và thanh điều hướng) liệt kê các
 bài đã thả sao ⭐ để đọc lại; nó dùng chung danh sách `PersonalTopicList` với trang "Đã lưu".

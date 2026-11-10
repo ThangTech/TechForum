@@ -33,9 +33,14 @@ export const VoteControl = ({ subject, score, myVote, onVote, isBusy = false, di
       ? (isOn ? `Bỏ bình chọn tốt cho ${subject}` : `Bình chọn tốt cho ${subject}`)
       : (isOn ? `Bỏ bình chọn chưa tốt cho ${subject}` : `Bình chọn chưa tốt cho ${subject}`)
     const onColor = direction === 1 ? 'success.main' : 'error.main'
+    // A downvote costs the voter 1 reputation point and needs an older account or more reputation: the member is told
+    // before pressing (the points come back when the vote is taken back).
+    const hint = direction === -1 && !isOn
+      ? `${label}. Tốn 1 điểm danh tiếng của bạn (hoàn lại khi bỏ phiếu). Cần tài khoản từ 7 ngày hoặc có từ 50 điểm danh tiếng.`
+      : label
 
     return (
-      <Tooltip arrow title={disabledReason ?? label}>
+      <Tooltip arrow title={disabledReason ?? hint}>
         <span style={{ display: 'inline-flex' }}>
           <ButtonBase
             aria-label={label}

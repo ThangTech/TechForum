@@ -93,6 +93,99 @@ public sealed class VoteServiceTests
         Assert.Equal(1, result.Vote.MyVote);
     }
 
+    [Fact]
+    public async Task SetTopicVoteAsync_ADownvoteNeedsSevenDaysOrFiftyReputation()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-5);
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+
+        Assert.Equal(VoteFailure.DownvoteNotAllowed, result.Failure);
+        Assert.Equal(new DownvoteRequirement(7, 50, 2, 50), result.Downvote);
+        Assert.Empty(votes.Commands);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_AnAccountOfFiveDaysMayUpvote()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-5);
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", 1, default);
+
+        Assert.Equal(VoteFailure.None, result.Failure);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_AnAccountOfExactlySevenDaysMayDownvote()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-7);
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+
+        Assert.Equal(VoteFailure.None, result.Failure);
+    }
+
+    [Theory]
+    [InlineData(50, true)]
+    [InlineData(120, true)]
+    [InlineData(49, false)]
+    [InlineData(0, false)]
+    [InlineData(-8, false)]
+    public async Task SetTopicVoteAsync_AYoungAccountMayDownvoteOnlyWithFiftyReputation(int reputation, bool allowed)
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-4);
+        accounts.Reputation["voter"] = reputation;
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+
+        Assert.Equal(allowed ? VoteFailure.None : VoteFailure.DownvoteNotAllowed, result.Failure);
+        if (!allowed) Assert.Equal(50 - Math.Max(0, reputation), result.Downvote!.ReputationLeft);
+    }
+
+    [Fact]
+    public async Task SetAnswerVoteAsync_ADownvoteOfAnAnswerHasTheSameRule()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-4);
+
+        var down = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", -1, default);
+        var up = await CreateService(CreateAnswer(10, "answerer")).SetAnswerVoteAsync(1, 10, "voter", 1, default);
+
+        Assert.Equal(VoteFailure.DownvoteNotAllowed, down.Failure);
+        Assert.Equal(VoteFailure.None, up.Failure);
+    }
+
+    [Fact]
+    public async Task SetTopicVoteAsync_AYoungAccountMayAlwaysTakeADownvoteBack()
+    {
+        accounts.CreatedAt["voter"] = Now.AddDays(-4);
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", 0, default);
+
+        Assert.Equal(VoteFailure.None, result.Failure);
+    }
+
+    [Theory]
+    [InlineData(-1, -1)]
+    [InlineData(1, 0)]
+    [InlineData(0, 0)]
+    public void ReputationRules_ForVoter_OnlyADownvoteCosts(int value, int expected)
+    {
+        Assert.Equal(expected, ReputationRules.ForVoter(value));
+    }
+
+    [Theory]
+    // previous vote, new vote, change of the reputation of the voter
+    [InlineData(0, -1, -1)]  // a new downvote costs 1
+    [InlineData(-1, 0, 1)]   // taking it back gives the 1 back
+    [InlineData(-1, 1, 1)]   // changing it to an upvote gives the 1 back
+    [InlineData(1, -1, -1)]  // changing an upvote to a downvote costs 1
+    [InlineData(1, 0, 0)]    // an upvote never cost anything
+    [InlineData(-1, -1, 0)]  // the same vote again changes nothing
+    public void ReputationRules_TheCostOfADownvoteIsPaidAndGivenBackExactly(int previous, int next, int expectedChange)
+    {
+        Assert.Equal(expectedChange, ReputationRules.ForVoter(next) - ReputationRules.ForVoter(previous));
+    }
+
     [Theory]
     [InlineData(-5, 0)]
     [InlineData(-1, 0)]
@@ -312,13 +405,15 @@ public sealed class VoteServiceTests
     private sealed class FakeAccounts : IAccountRepository
     {
         public Dictionary<string, DateTimeOffset> CreatedAt { get; } = [];
+        public Dictionary<string, int> Reputation { get; } = [];
 
         public Task<ApplicationUser?> FindByIdAsync(string userId) =>
             Task.FromResult<ApplicationUser?>(new ApplicationUser
             {
                 Id = userId,
                 DisplayName = userId,
-                CreatedAtUtc = CreatedAt.GetValueOrDefault(userId, Now.AddDays(-30))
+                CreatedAtUtc = CreatedAt.GetValueOrDefault(userId, Now.AddDays(-30)),
+                Reputation = Reputation.GetValueOrDefault(userId)
             });
 
         public Task<ApplicationUser?> FindByEmailAsync(string email) => throw new NotSupportedException();

@@ -10,6 +10,10 @@ public static class ReputationRules
     public const int TopicUpvote = 5;
     // A downvote takes points away, for a post and for an answer.
     public const int Downvote = -2;
+    // The member who gives a downvote pays this much reputation for it, so a downvote is not given without thinking. The
+    // points come back when the member takes the vote back or changes it to an upvote.
+    public const int DownvoteCost = -1;
+
     // The author of a question chose this answer as the right one.
     public const int AcceptedAnswer = 15;
 
@@ -17,6 +21,9 @@ public static class ReputationRules
     // downvotes must not show a negative number or invite others to pile on. The database keeps the real number (it can be
     // below 0), so taking a vote back or changing it still gives the points back exactly.
     public static int ForDisplay(int points) => Math.Max(0, points);
+
+    // The points that a vote of this value costs the member who gives it (only a downvote costs).
+    public static int ForVoter(int value) => value < 0 ? DownvoteCost : 0;
 
     // The points that a vote of this value (+1, -1 or 0 for no vote) gives to the author.
     public static int ForVote(VoteTargetType targetType, int value) => value switch

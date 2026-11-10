@@ -74,18 +74,34 @@ public sealed class VoteService(
         return null;
     }
 
-    // A new account cannot give a vote. Taking a vote back (value 0) is always allowed.
+    // A new account cannot give a vote, and a downvote needs more: an account of at least DownvoteMinAccountAgeDays or a member
+    // with at least DownvoteMinReputation points. Taking a vote back (value 0) is always allowed.
     private async Task<VoteResult?> CheckAccountAgeAsync(string userId, int value, CancellationToken cancellationToken)
     {
         if (value == 0) return null;
 
-        var minimumAge = TimeSpan.FromDays(limitOptions.Value.MinAccountAgeDays);
+        var limits = limitOptions.Value;
         var user = await accountRepository.FindByIdAsync(userId);
         if (user is null) return VoteResult.Failed(VoteFailure.NotFound);
 
         var age = timeProvider.GetUtcNow() - user.CreatedAtUtc;
-        if (age >= minimumAge) return null;
-        return VoteResult.TooNew((int)Math.Ceiling((minimumAge - age).TotalDays));
+        var minimumAge = TimeSpan.FromDays(limits.MinAccountAgeDays);
+        if (age < minimumAge) return VoteResult.TooNew((int)Math.Ceiling((minimumAge - age).TotalDays));
+
+        if (value < 0)
+        {
+            var downvoteAge = TimeSpan.FromDays(limits.DownvoteMinAccountAgeDays);
+            // The real reputation counts (the one shown is never below 0, the real one can be).
+            if (age < downvoteAge && user.Reputation < limits.DownvoteMinReputation)
+            {
+                return VoteResult.DownvoteLocked(new DownvoteRequirement(
+                    limits.DownvoteMinAccountAgeDays,
+                    limits.DownvoteMinReputation,
+                    (int)Math.Ceiling((downvoteAge - age).TotalDays),
+                    limits.DownvoteMinReputation - Math.Max(0, user.Reputation)));
+            }
+        }
+        return null;
     }
 
     private async Task<VoteResult> ApplyAsync(

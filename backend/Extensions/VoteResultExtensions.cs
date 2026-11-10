@@ -27,6 +27,15 @@ public static class VoteResultExtensions
                     Title = "Tài khoản chưa đủ lâu để bình chọn",
                     Detail = $"Tài khoản cần được tạo ít nhất vài ngày mới được bình chọn. Bạn có thể bình chọn sau khoảng {result.DaysLeft} ngày nữa."
                 });
+            case VoteFailure.DownvoteNotAllowed:
+                var need = result.Downvote!;
+                return controller.StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+                {
+                    Status = 403,
+                    Title = "Chưa thể bình chọn chưa tốt",
+                    Detail = $"Để bình chọn chưa tốt, tài khoản cần tồn tại ít nhất {need.RequiredDays} ngày hoặc có từ {need.RequiredReputation} điểm danh tiếng. " +
+                             $"Bạn còn khoảng {need.DaysLeft} ngày nữa, hoặc cần thêm {need.ReputationLeft} điểm danh tiếng."
+                });
             case VoteFailure.RateLimited:
                 controller.Response.Headers.RetryAfter = result.RetryAfterSeconds.ToString(CultureInfo.InvariantCulture);
                 return controller.StatusCode(StatusCodes.Status429TooManyRequests, new ProblemDetails
