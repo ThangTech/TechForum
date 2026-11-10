@@ -1,3 +1,5 @@
+import { getProblemMessage } from './problemMessage'
+
 const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 
 export const apiBaseUrl = (configuredBaseUrl || 'http://localhost:5045').replace(/\/$/, '')
@@ -54,8 +56,8 @@ const readProblem = async (response: Response): Promise<ProblemDetails | null> =
 }
 
 const toApiError = (response: Response, problem: ProblemDetails | null) => {
-  const message =
-    problem?.detail || problem?.title || `API trả về mã lỗi ${response.status}.`
+  // Never the English title that ASP.NET writes by itself: see getProblemMessage.
+  const message = getProblemMessage(problem, response.status)
   return new ApiError(response.status, message, problem?.errors)
 }
 

@@ -7,6 +7,7 @@ using Microsoft.Extensions.FileProviders;
 using TechForum.Api.Configuration;
 using TechForum.Api.Data;
 using TechForum.Api.Data.Repositories;
+using TechForum.Api.Filters;
 using TechForum.Api.Middleware;
 using TechForum.Api.Models;
 using TechForum.Api.Services;
@@ -21,7 +22,33 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "Set ConnectionStrings__DefaultConnection or add it to a local settings file.");
 }
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => options.Filters.Add<ValidationProblemMessageFilter>())
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // A request that does not pass the validation of its body (before the action runs) answers in Vietnamese.
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value is { Errors.Count: > 0 })
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors.Select(error => error.ErrorMessage).ToArray());
+            var problem = new ValidationProblemDetails(errors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Instance = context.HttpContext.Request.Path
+            };
+            problem.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+            ApiErrorMessages.Apply(problem);
+            return new BadRequestObjectResult(problem) { ContentTypes = { "application/problem+json" } };
+        };
+
+        // The title of an answer without a body (a plain 404, 401...) is Vietnamese too.
+        foreach (var (status, title) in ApiErrorMessages.ClientErrorTitles)
+        {
+            if (options.ClientErrorMapping.TryGetValue(status, out var mapping)) mapping.Title = title;
+        }
+    });
 // Unexpected errors answer with problem details JSON and a trace id (see ServerErrorResponse).
 builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = ServerErrorResponse.Customize);

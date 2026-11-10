@@ -50,8 +50,21 @@ describe('apiRequest', () => {
     await expect(request).rejects.toBeInstanceOf(ApiError)
     await expect(request).rejects.toMatchObject({
       status: 400,
-      message: 'Dữ liệu chưa hợp lệ',
+      // With no "detail", the first message of a field is shown: it says what is wrong.
+      message: 'Tên hiển thị quá ngắn.',
       fieldErrors: { displayName: ['Tên hiển thị quá ngắn.'] },
+    })
+  })
+
+  it('never shows the English title of ASP.NET for a validation error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(jsonResponse({
+      title: 'One or more validation errors occurred.',
+      errors: { title: ['The Title field is required.'] },
+    }, 400)))
+
+    await expect(apiRequest('/api/example')).rejects.toMatchObject({
+      status: 400,
+      message: 'Dữ liệu gửi lên chưa hợp lệ. Vui lòng kiểm tra lại.',
     })
   })
 
