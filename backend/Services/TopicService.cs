@@ -512,7 +512,7 @@ public sealed partial class TopicService(
         topic.IsDiscussionLocked,
         topic.ViewCount,
         topic.ShareCount,
-        topic.Score);
+        ReputationRules.ForDisplay(topic.Score));
 
     private static OwnTopicSummaryDto MapOwnedSummary(Topic topic) => new(
         topic.Id,

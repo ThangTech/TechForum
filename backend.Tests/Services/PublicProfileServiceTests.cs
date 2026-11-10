@@ -8,6 +8,24 @@ namespace TechForum.Api.Tests.Services;
 
 public sealed class PublicProfileServiceTests
 {
+    [Theory]
+    [InlineData(-12, 0)]
+    [InlineData(0, 0)]
+    [InlineData(35, 35)]
+    public async Task GetByUserIdAsync_NeverShowsAReputationBelowZero(int realReputation, int shown)
+    {
+        var user = CreateUser();
+        user.Reputation = realReputation;
+        var service = new PublicProfileService(new FakePublicProfileRepository
+        {
+            Profile = new PublicProfileData(user, 0, 0, 0, 0, 0, false, [], [])
+        });
+
+        var result = await service.GetByUserIdAsync(user.Id, null, CancellationToken.None);
+
+        Assert.Equal(shown, result!.Reputation);
+    }
+
     [Fact]
     public async Task GetByUserIdAsync_MapsPublicFieldsWithoutEmail()
     {

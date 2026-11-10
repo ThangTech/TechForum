@@ -377,8 +377,10 @@ trực tiếp trong SQL (`Score = Score + @thay_đổi`) nên hai người bình
 của cùng một người đến cùng lúc gặp deadlock hoặc khóa chính thì được đọc lại và thử tối đa 4 lần, nên kết quả
 chỉ là một phiếu. Bảng điểm (`ReputationRules`): upvote câu trả lời +10, upvote bài viết +5, downvote −2, câu trả
 lời được chọn là đúng +15 (người chọn không tự nhận điểm khi chọn câu của chính mình; đổi hoặc xóa câu đã chọn thì
-trừ lại). Rút phiếu hoặc đổi phiếu tự hoàn lại và tính lại điểm. Điểm danh tiếng không bị chặn ở 0 để việc hoàn lại
-luôn chính xác.
+trừ lại). Rút phiếu hoặc đổi phiếu tự hoàn lại và tính lại điểm. **Điểm hiển thị không bao giờ dưới 0**: điểm của bài, của
+câu trả lời và điểm danh tiếng đều được cắt về 0 ở mọi chỗ trả ra (`ReputationRules.ForDisplay`), để vài lượt
+downvote không hiện số âm hay kéo theo "ném đá" hàng loạt. CSDL vẫn giữ số thật (có thể âm) nên rút hoặc đổi
+phiếu luôn hoàn lại chính xác: ví dụ bài mới bị downvote có điểm thật −1 (hiện 0), đổi sang upvote thì thành +1.
 
 Giới hạn chống bình chọn gian lận (cấu hình `VoteLimits` trong `appsettings.json`, đọc bằng `VoteLimitOptions`):
 
@@ -403,6 +405,20 @@ Tác giả của một Câu hỏi chọn (hoặc đổi) câu trả lời đúng
 ở cả hai kiểu sắp xếp (cũ nhất, hữu ích nhất); các câu còn lại giữ nguyên thứ tự. Việc ghim nằm trong
 `AnswerRepository`, và tham số `aroundAnswerId` vẫn tìm đúng trang khi có câu được ghim. Câu bị xóa hoặc bị
 ẩn thì không được ghim; Bài viết (không phải Câu hỏi) không có câu được chọn.
+
+## Thông báo lỗi bằng tiếng Việt
+
+Mọi lỗi mà API trả cho người dùng đều bằng tiếng Việt, kể cả những lỗi ASP.NET tự sinh (`ApiErrorMessages`):
+
+- lỗi kiểm tra dữ liệu của body (trước khi action chạy) trả `400` với `title` "Dữ liệu chưa hợp lệ", `detail` là
+  câu lỗi đầu tiên và `errors` theo từng trường; câu mặc định của framework như "The Title field is required." hay
+  "The JSON value could not be converted..." được thay bằng câu tiếng Việt;
+- `ValidationProblemMessageFilter` làm điều tương tự cho các lỗi controller tự tạo bằng `new ValidationProblemDetails(...)`,
+  nên tiêu đề "One or more validation errors occurred." không còn xuất hiện;
+- phản hồi không có body (404, 401, 403, 409, 429...) có `title` tiếng Việt qua `ClientErrorMapping`.
+
+Phía frontend, `getProblemMessage` chọn câu hiện cho người dùng theo thứ tự: `detail`, câu lỗi đầu tiên của một trường,
+`title` (nếu không phải tiêu đề tiếng Anh mặc định), rồi câu theo mã trạng thái.
 
 ## Lọc từ ngữ không phù hợp
 

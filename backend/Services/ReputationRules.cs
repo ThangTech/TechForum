@@ -13,6 +13,11 @@ public static class ReputationRules
     // The author of a question chose this answer as the right one.
     public const int AcceptedAnswer = 15;
 
+    // What a member sees. The score of a post or answer and the reputation of a member are never shown below 0: a few
+    // downvotes must not show a negative number or invite others to pile on. The database keeps the real number (it can be
+    // below 0), so taking a vote back or changing it still gives the points back exactly.
+    public static int ForDisplay(int points) => Math.Max(0, points);
+
     // The points that a vote of this value (+1, -1 or 0 for no vote) gives to the author.
     public static int ForVote(VoteTargetType targetType, int value) => value switch
     {

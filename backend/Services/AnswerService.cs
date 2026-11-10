@@ -348,7 +348,7 @@ public sealed partial class AnswerService(
         answer.Id == acceptedAnswerId,
         helpfulState?.HelpfulCount ?? 0,
         helpfulState?.IsHelpful ?? false,
-        helpfulState?.Score ?? answer.Score,
+        ReputationRules.ForDisplay(helpfulState?.Score ?? answer.Score),
         helpfulState?.MyVote ?? 0);
 
     private static bool HasMeaningfulContent(string html)

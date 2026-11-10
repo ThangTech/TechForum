@@ -93,6 +93,40 @@ public sealed class VoteServiceTests
         Assert.Equal(1, result.Vote.MyVote);
     }
 
+    [Theory]
+    [InlineData(-5, 0)]
+    [InlineData(-1, 0)]
+    [InlineData(0, 0)]
+    [InlineData(7, 7)]
+    public async Task SetTopicVoteAsync_NeverShowsAScoreBelowZero(int realScore, int shown)
+    {
+        votes.ScoreAfter = realScore;
+
+        var result = await CreateService().SetTopicVoteAsync(1, "voter", -1, default);
+
+        Assert.Equal(shown, result.Vote!.Score);
+    }
+
+    [Fact]
+    public async Task GetTopicVoteAsync_NeverShowsAScoreBelowZero()
+    {
+        topic.Score = -4;
+
+        var vote = await CreateService().GetTopicVoteAsync(1, "voter", default);
+
+        Assert.Equal(0, vote!.Score);
+    }
+
+    [Theory]
+    [InlineData(-30, 0)]
+    [InlineData(-1, 0)]
+    [InlineData(0, 0)]
+    [InlineData(12, 12)]
+    public void ReputationRules_ForDisplay_IsNeverBelowZero(int points, int expected)
+    {
+        Assert.Equal(expected, ReputationRules.ForDisplay(points));
+    }
+
     [Fact]
     public async Task SetAnswerVoteAsync_SendsTheVoteWithTheAuthorOfTheAnswer()
     {

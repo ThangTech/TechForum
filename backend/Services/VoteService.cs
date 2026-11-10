@@ -23,7 +23,7 @@ public sealed class VoteService(
         var myVote = string.IsNullOrWhiteSpace(viewerId)
             ? 0
             : await voteRepository.GetMyVoteAsync(viewerId, VoteTargetType.Topic, topicId, cancellationToken);
-        return new VoteDto(topic.Score, myVote);
+        return new VoteDto(ReputationRules.ForDisplay(topic.Score), myVote);
     }
 
     public async Task<VoteResult> SetTopicVoteAsync(int topicId, string userId, int value, CancellationToken cancellationToken)
@@ -99,6 +99,6 @@ public sealed class VoteService(
         var outcome = await voteRepository.ApplyAsync(
             new VoteCommand(userId, targetType, targetId, authorId, value, timeProvider.GetUtcNow()),
             cancellationToken);
-        return VoteResult.Success(new VoteDto(outcome.Score, outcome.NewValue));
+        return VoteResult.Success(new VoteDto(ReputationRules.ForDisplay(outcome.Score), outcome.NewValue));
     }
 }
