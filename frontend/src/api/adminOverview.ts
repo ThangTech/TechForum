@@ -164,8 +164,9 @@ export const getAdminDashboard = async (
     !data.categories.every(
       (item) =>
         isRecord(item) &&
+        typeof item.categoryId === 'string' &&
         typeof item.categoryName === 'string' &&
-        hasNumbers(item, ['categoryId', 'articleCount', 'questionCount', 'topicCount']),
+        hasNumbers(item, ['articleCount', 'questionCount', 'topicCount']),
     ) ||
     !hasNumbers(data.questions, ['totalCount', 'unansweredCount', 'unsolvedCount', 'solvedCount']) ||
     !isRecord(data.pendingReports) ||
