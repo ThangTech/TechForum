@@ -1,0 +1,53 @@
+name: Build React and .NET 9
+on:
+  push:
+    branches: [ "master", "main" ]
+
+jobs:
+  build_frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy code từ repo
+        uses: actions/checkout@v4
+
+      - name: Cài đặt Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cài thư viện và Build
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Lưu file sau khi build (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 1
+  build_backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy code từ repo
+        uses: actions/checkout@v4
+
+      - name: Cài đặt .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build và Publish
+        run: |
+          cd backend
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet publish -c Release -o out --no-build
+
+      - name: Lưu file backend (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-out
+          path: backend/out/
+          retention-days: 1
