@@ -42,3 +42,4 @@ test_backend:
   script:
     - cd backend
     - dotnet test --no-restore --verbosity normal
+#CI/CD
