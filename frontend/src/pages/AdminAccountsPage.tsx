@@ -19,6 +19,7 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
+import { usePageParam } from '../hooks/usePageParam'
 
 export const AdminAccountsPage = () => {
   const [params, setParams] = useSearchParams()
@@ -29,8 +30,7 @@ export const AdminAccountsPage = () => {
   const role = ['administrator', 'member'].includes(params.get('role') ?? '')
     ? (params.get('role') ?? '')
     : ''
-  const pageValue = Number(params.get('page'))
-  const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
+  const page = usePageParam()
   const [actionError, setActionError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [selected, setSelected] = useState<AdminAccount | null>(null)

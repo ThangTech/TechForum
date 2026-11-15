@@ -13,18 +13,14 @@ import { appRoutes } from '../appRoutes'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
 import { useDeleteTopic, useMyTopics } from '../queries/topics'
-
-const readPositiveInteger = (value: string | null) => {
-  const parsed = Number(value)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
-}
+import { usePageParam } from '../hooks/usePageParam'
 
 const readTopicType = (value: string | null): TopicType | undefined =>
   value === 'article' || value === 'question' ? value : undefined
 
 export const MyTopicsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const page = readPositiveInteger(searchParams.get('page'))
+  const page = usePageParam()
   const keyword = searchParams.get('keyword')?.trim() ?? ''
   const type = readTopicType(searchParams.get('type'))
   const topicsQuery = useMyTopics({

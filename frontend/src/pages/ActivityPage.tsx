@@ -7,15 +7,11 @@ import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { useMyActivity } from '../queries/activity'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
-
-const readPage = (value: string | null) => {
-  const page = Number(value)
-  return Number.isInteger(page) && page > 0 ? page : 1
-}
+import { usePageParam } from '../hooks/usePageParam'
 
 export const ActivityPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const page = readPage(searchParams.get('page'))
+  const [, setSearchParams] = useSearchParams()
+  const page = usePageParam()
   const activityQuery = useMyActivity(page, 20)
   const data = activityQuery.data ?? null
   const isLoading = isInitialLoading(activityQuery)

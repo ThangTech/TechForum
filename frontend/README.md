@@ -59,6 +59,16 @@ sai thì báo "đường dẫn không hợp lệ" mà không gọi API) và `has
 Id lấy từ địa chỉ được chuyển về chữ thường trước khi so sánh với dữ liệu từ API. Các hàm kiểm tra dữ liệu API (`typeof … === 'string'`)
 cũng đã đổi theo.
 
+## Mã dùng chung và tải lười
+
+- `hooks/usePageParam.ts`: đọc số trang từ địa chỉ (`?page=`, hoặc tên khác như `answerPage` của danh sách câu trả lời). Mọi màn hình có
+  phân trang đều dùng hook này, nên giá trị sai (chữ, số âm, số thập phân, số lớn hơn mức API nhận) luôn thành trang 1.
+- `api/guards.ts`: `isRecord` (dữ liệu là một object) và `hasPaging` (có đủ `page`, `pageSize`, `totalItems`, `totalPages`). Các file
+  trong `api/` dùng chung hai hàm này để kiểm tra dữ liệu API thay vì mỗi file tự viết lại.
+- Khu quản trị (`AdminLayout` và 9 trang `Admin*Page`, kể cả thư viện biểu đồ của trang tổng quan) được **tải lười** bằng `lazy()` trong
+  `App.tsx`: khách và thành viên không tải phần này. Menu quản trị vẫn hiện trong lúc một trang quản trị đang tải (`Suspense` quanh `Outlet`
+  trong `AdminLayout`). Gói JavaScript chính giảm từ khoảng 1.130 kB xuống 645 kB (gzip 342 kB xuống 202 kB).
+
 ## Chạy môi trường phát triển
 
 API mặc định được gọi tại `http://localhost:5045`. Có thể đổi địa chỉ bằng cách

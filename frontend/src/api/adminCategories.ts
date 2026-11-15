@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { isRecord } from './guards'
 
 export interface AdminCategory {
   id: string
@@ -16,9 +17,6 @@ export interface SaveCategoryInput {
   description: string | null
   displayOrder: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isAdminCategory = (value: unknown): value is AdminCategory =>
   isRecord(value) &&

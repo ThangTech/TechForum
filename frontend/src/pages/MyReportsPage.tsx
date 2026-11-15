@@ -18,6 +18,7 @@ import { AsyncStatePanel } from '../components/feedback/AsyncStatePanel'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useMyReports } from '../queries/reports'
 import { isInitialLoading } from '../queries/status'
+import { usePageParam } from '../hooks/usePageParam'
 
 const statusLabels: Record<ReportStatus, string> = {
   pending: 'Chờ xử lý',
@@ -52,8 +53,7 @@ export const MyReportsPage = () => {
     requestedStatus === 'pending' || requestedStatus === 'accepted' || requestedStatus === 'rejected'
       ? requestedStatus
       : ''
-  const pageValue = Number(searchParams.get('page'))
-  const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
+  const page = usePageParam()
   const reportsQuery = useMyReports(status, page, 10)
   const data = reportsQuery.data ?? null
   const isLoading = isInitialLoading(reportsQuery)

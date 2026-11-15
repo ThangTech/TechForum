@@ -1,4 +1,5 @@
 import { ApiError, apiBaseUrl } from './client'
+import { isRecord } from './guards'
 
 export interface UploadedMedia {
   id: string
@@ -12,9 +13,6 @@ export interface UploadedMedia {
 const isFullAddress = (path: string): boolean => path.startsWith('https://')
 
 const isMediaAddress = (path: string): boolean => path.startsWith('/media/') || isFullAddress(path)
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 export const parseUploadedMedia = (response: unknown): UploadedMedia => {
   let data: unknown = response

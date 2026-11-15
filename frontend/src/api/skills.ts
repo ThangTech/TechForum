@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from './client'
 import type { Tag } from './tags'
+import { isRecord } from './guards'
 
 export interface SkillMember { id: string; displayName: string; topicCount: number }
 export interface SkillCommunity {
@@ -11,8 +12,6 @@ export interface SkillCommunity {
   pageSize: number
   totalPages: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
 
 export const getSkillCommunity = async (tagId: string, page: number, signal?: AbortSignal): Promise<SkillCommunity> => {
   const data = await apiRequest<unknown>(`/api/tags/${tagId}/community?page=${page}&pageSize=20`, { signal })

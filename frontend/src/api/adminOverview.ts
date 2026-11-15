@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { hasPaging, isRecord } from './guards'
 
 export interface AdminStatistics {
   accountCount: number
@@ -74,8 +75,6 @@ export interface AuditFilters {
   to?: string
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 const isAuditLog = (value: unknown): value is AdminAuditLog =>
   isRecord(value) &&
   typeof value.id === 'string' &&
@@ -120,10 +119,7 @@ export const getAdminAuditLogs = async (
     !isRecord(data) ||
     !Array.isArray(data.items) ||
     !data.items.every(isAuditLog) ||
-    typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' ||
-    typeof data.totalPages !== 'number'
+    !hasPaging(data)
   ) {
     throw new ApiError(500, 'Nhật ký quản trị từ API không đúng định dạng.')
   }

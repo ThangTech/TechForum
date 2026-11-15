@@ -3,15 +3,11 @@ import { PageHeading } from '../components/common/PageHeading'
 import { PageShell } from '../components/common/PageShell'
 import { PersonalTopicList } from '../components/topics/PersonalTopicList'
 import { useSavedTopics } from '../queries/bookmarks'
-
-const readPage = (value: string | null) => {
-  const page = Number(value)
-  return Number.isInteger(page) && page > 0 ? page : 1
-}
+import { usePageParam } from '../hooks/usePageParam'
 
 export const SavedTopicsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const page = readPage(searchParams.get('page'))
+  const page = usePageParam()
   const savedQuery = useSavedTopics(page, 10)
 
   const changePage = (nextPage: number) => {

@@ -10,15 +10,14 @@ import { getErrorMessage } from '../queries/errorMessage'
 import { useSkillCommunity } from '../queries/skills'
 import { isInitialLoading } from '../queries/status'
 import { isGuid } from '../utils/ids'
-
-const readPage = (value: string | null) => { const page = Number(value); return Number.isInteger(page) && page > 0 ? page : 1 }
+import { usePageParam } from '../hooks/usePageParam'
 
 export const SkillCommunityPage = () => {
   const { tagId = '' } = useParams()
   const id = tagId.toLowerCase()
   const isValidId = isGuid(id)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const page = readPage(searchParams.get('page'))
+  const [, setSearchParams] = useSearchParams()
+  const page = usePageParam()
   const communityQuery = useSkillCommunity(id, page, isValidId)
   const data = communityQuery.data ?? null
 

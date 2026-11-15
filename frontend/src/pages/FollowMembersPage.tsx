@@ -13,20 +13,16 @@ import { FollowMemberList } from '../components/profile/FollowMemberList'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useFollowMembers } from '../queries/profiles'
 import { isInitialLoading } from '../queries/status'
+import { usePageParam } from '../hooks/usePageParam'
 
 interface FollowMembersPageProps {
   kind: 'followers' | 'following'
 }
 
-const readPage = (value: string | null) => {
-  const page = Number(value)
-  return Number.isInteger(page) && page > 0 ? page : 1
-}
-
 export const FollowMembersPage = ({ kind }: FollowMembersPageProps) => {
   const { userId = '' } = useParams()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const page = readPage(searchParams.get('page'))
+  const [, setSearchParams] = useSearchParams()
+  const page = usePageParam()
   const membersQuery = useFollowMembers(userId, kind, page)
   const data = membersQuery.data ?? null
   const isLoading = isInitialLoading(membersQuery)

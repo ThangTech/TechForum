@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from './client'
 import { isTopicSummary, type TopicSummary } from './topics'
+import { hasPaging, isRecord } from './guards'
 
 export interface PublicProfile {
   id: string
@@ -30,9 +31,6 @@ export interface ProfileBadge { code: string; name: string; description: string 
 export interface FollowStatus { isFollowing: boolean; followerCount: number }
 export interface FollowMember { id: string; displayName: string; bio: string | null; publishedTopicCount: number; followedAtUtc: string }
 export interface FollowMemberPage { items: FollowMember[]; page: number; pageSize: number; totalItems: number; totalPages: number }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 export const getPublicProfile = async (
   userId: string,
@@ -110,8 +108,7 @@ export const getFollowMembers = async (
   if (!isRecord(data) || !Array.isArray(data.items) || !data.items.every((item) =>
     isRecord(item) && typeof item.id === 'string' && typeof item.displayName === 'string' &&
     (item.bio === null || typeof item.bio === 'string') && typeof item.publishedTopicCount === 'number' &&
-    typeof item.followedAtUtc === 'string') || typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' || typeof data.totalItems !== 'number' || typeof data.totalPages !== 'number') {
+    typeof item.followedAtUtc === 'string') || !hasPaging(data)) {
     throw new ApiError(500, 'Danh sách theo dõi không đúng định dạng.')
   }
   return data as unknown as FollowMemberPage

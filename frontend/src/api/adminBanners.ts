@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { isRecord } from './guards'
 
 export interface AdminBanner {
   id: string
@@ -20,9 +21,6 @@ export interface SaveBannerInput {
   startsAtUtc: string | null
   endsAtUtc: string | null
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isNullableString = (value: unknown) => value === null || typeof value === 'string'
 

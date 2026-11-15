@@ -12,11 +12,11 @@ import { useAdminAuditLogs, useAdministrators } from '../queries/admin'
 import { getErrorMessage } from '../queries/errorMessage'
 import { isInitialLoading } from '../queries/status'
 import TextField from '@mui/material/TextField'
+import { usePageParam } from '../hooks/usePageParam'
 
 export const AdminAuditPage = () => {
   const [params, setParams] = useSearchParams()
-  const pageValue = Number(params.get('page'))
-  const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
+  const page = usePageParam()
   const keyword = params.get('keyword') ?? ''
   const action = params.get('action') ?? ''
   const from = params.get('from') ?? ''

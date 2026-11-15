@@ -13,19 +13,15 @@ import { NotificationList } from '../components/notifications/NotificationList'
 import { getErrorMessage } from '../queries/errorMessage'
 import { useMarkNotificationRead, useNotifications } from '../queries/notifications'
 import { isInitialLoading } from '../queries/status'
-
-const readPage = (value: string | null) => {
-  const page = Number(value)
-  return Number.isInteger(page) && page > 0 ? page : 1
-}
+import { usePageParam } from '../hooks/usePageParam'
 
 const safeNotificationLink = (value: string) =>
   /^\/topics\/[0-9a-f-]{36}(?:#answer-[0-9a-f-]{36})?$/i.test(value) || value === '/reports' || value === '/notifications' ? value : '/'
 
 export const NotificationsPage = () => {
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const page = readPage(searchParams.get('page'))
+  const [, setSearchParams] = useSearchParams()
+  const page = usePageParam()
   const notificationsQuery = useNotifications(page, 10)
   const markReadMutation = useMarkNotificationRead()
   const [actionError, setActionError] = useState<string | null>(null)

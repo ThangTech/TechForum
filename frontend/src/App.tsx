@@ -15,28 +15,30 @@ import { SavedTopicsPage } from './pages/SavedTopicsPage'
 import { StarredTopicsPage } from './pages/StarredTopicsPage'
 import { appRoutes } from './appRoutes'
 import { LegacyRouteRedirect } from './components/LegacyRouteRedirect'
-import { AdminReportsPage } from './pages/AdminReportsPage'
-import { AdminCategoriesPage } from './pages/AdminCategoriesPage'
-import { AdminTagsPage } from './pages/AdminTagsPage'
-import { AdminBannersPage } from './pages/AdminBannersPage'
-import { AdminBannedWordsPage } from './pages/AdminBannedWordsPage'
-import { AdminAccountsPage } from './pages/AdminAccountsPage'
-import { AdminTopicsPage } from './pages/AdminTopicsPage'
-import { AdminOverviewPage } from './pages/AdminOverviewPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SkillCommunityPage } from './pages/SkillCommunityPage'
 import { CommunitiesPage } from './pages/CommunitiesPage'
 import { FollowMembersPage } from './pages/FollowMembersPage'
-import { AdminLayout } from './components/admin/AdminLayout'
-import { AdminAuditPage } from './pages/AdminAuditPage'
 import { MyReportsPage } from './pages/MyReportsPage'
 import { ForgotPasswordPage, ResetPasswordPage } from './pages/PasswordRecoveryPage'
 
 const WriteTopicPage = lazy(() => import('./pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
 })))
+
+// The admin area is only downloaded when an administrator opens it, so visitors do not pay for its pages and charts.
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout').then((module) => ({ default: module.AdminLayout })))
+const AdminAccountsPage = lazy(() => import('./pages/AdminAccountsPage').then((module) => ({ default: module.AdminAccountsPage })))
+const AdminAuditPage = lazy(() => import('./pages/AdminAuditPage').then((module) => ({ default: module.AdminAuditPage })))
+const AdminBannedWordsPage = lazy(() => import('./pages/AdminBannedWordsPage').then((module) => ({ default: module.AdminBannedWordsPage })))
+const AdminBannersPage = lazy(() => import('./pages/AdminBannersPage').then((module) => ({ default: module.AdminBannersPage })))
+const AdminCategoriesPage = lazy(() => import('./pages/AdminCategoriesPage').then((module) => ({ default: module.AdminCategoriesPage })))
+const AdminOverviewPage = lazy(() => import('./pages/AdminOverviewPage').then((module) => ({ default: module.AdminOverviewPage })))
+const AdminReportsPage = lazy(() => import('./pages/AdminReportsPage').then((module) => ({ default: module.AdminReportsPage })))
+const AdminTagsPage = lazy(() => import('./pages/AdminTagsPage').then((module) => ({ default: module.AdminTagsPage })))
+const AdminTopicsPage = lazy(() => import('./pages/AdminTopicsPage').then((module) => ({ default: module.AdminTopicsPage })))
 
 const App = () => {
   return (
@@ -125,7 +127,16 @@ const App = () => {
           <Route path="tai-khoan" element={<LegacyRouteRedirect to={appRoutes.account} />} />
           <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
         </Route>
-        <Route path="admin" element={<ProtectedRoute requiredRole="Administrator"><AdminLayout /></ProtectedRoute>}>
+        <Route
+          path="admin"
+          element={
+            <ProtectedRoute requiredRole="Administrator">
+              <Suspense fallback={<div className="route-status">Đang tải khu quản trị…</div>}>
+                <AdminLayout />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<AdminOverviewPage />} />
           <Route path="topics" element={<AdminTopicsPage />} />
           <Route path="reports" element={<AdminReportsPage />} />

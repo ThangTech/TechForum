@@ -21,6 +21,7 @@ import { AsyncStatePanel } from '../feedback/AsyncStatePanel'
 import { AnswerForm } from './AnswerForm'
 import { AnswerList } from './AnswerList'
 import { isGuid } from '../../utils/ids'
+import { usePageParam } from '../../hooks/usePageParam'
 
 interface DiscussionSectionProps {
   isLocked: boolean
@@ -30,11 +31,6 @@ interface DiscussionSectionProps {
 }
 
 const PAGE_SIZE = 20
-
-const readPositiveInteger = (value: string | null) => {
-  const number = Number(value)
-  return Number.isInteger(number) && number > 0 && number <= 2147483647 ? number : undefined
-}
 
 // The order of the answers is in the address (?answerSort=). Anything unknown gives the default order.
 const readSort = (value: string | null): AnswerSort => (value === 'helpful' || value === 'score' ? value : 'oldest')
@@ -48,7 +44,7 @@ export const DiscussionSection = ({
   const { user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const page = readPositiveInteger(new URLSearchParams(location.search).get('answerPage')) ?? 1
+  const page = usePageParam('answerPage')
   const sort = readSort(new URLSearchParams(location.search).get('answerSort'))
   const answerHash = /^#answer-([0-9a-fA-F-]{36})$/.exec(location.hash)
   const aroundAnswerId = isGuid(answerHash?.[1]) ? answerHash![1].toLowerCase() : undefined

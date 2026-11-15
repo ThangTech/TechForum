@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { hasPaging, isRecord } from './guards'
 
 export type ReportTargetType = 'topic' | 'answer'
 export type ReportReason = 'spam' | 'harassment' | 'misinformation' | 'copyright' | 'other'
@@ -77,9 +78,6 @@ export interface AdminReportPage {
   totalItems: number
   totalPages: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const reportReasons: ReportReason[] = [
   'spam',
@@ -162,10 +160,7 @@ export const getAdminReports = async (
     !isRecord(data) ||
     !Array.isArray(data.items) ||
     !data.items.every(isAdminReport) ||
-    typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' ||
-    typeof data.totalPages !== 'number'
+    !hasPaging(data)
   ) {
     throw new ApiError(500, 'Danh sách báo cáo từ API không đúng định dạng.')
   }
@@ -196,8 +191,7 @@ export const getMyReports = async (
   if (status) params.set('status', status)
   const data: unknown = await apiRequest(`/api/reports/mine?${params.toString()}`, { signal })
   if (!isRecord(data) || !Array.isArray(data.items) || !data.items.every(isMyReport) ||
-    typeof data.page !== 'number' || typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' || typeof data.totalPages !== 'number') {
+    !hasPaging(data)) {
     throw new ApiError(500, 'Danh sách báo cáo của bạn từ API không đúng định dạng.')
   }
   return data as unknown as MyReportPage

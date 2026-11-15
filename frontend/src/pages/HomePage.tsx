@@ -30,6 +30,7 @@ import { isInitialLoading } from '../queries/status'
 import { useTags } from '../queries/tags'
 import { useTopicFeed } from '../queries/topics'
 import { isGuid } from '../utils/ids'
+import { usePageParam } from '../hooks/usePageParam'
 
 interface HomePageProps {
   fixedType?: 'Article' | 'Question'
@@ -39,11 +40,6 @@ interface HomePageProps {
   showTour?: boolean
   // Shows the banner slider and the technology news above the list (only on the first page without filters).
   showHighlights?: boolean
-}
-
-const readPositiveInteger = (value: string | null) => {
-  const parsed = Number(value)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
 // A category or a tag in the address (?categoryId=, ?tagId=) is a GUID; anything else is ignored.
@@ -63,7 +59,7 @@ export const HomePage = ({
   const feedParam = searchParams.get('feed')
   const feed: TopicFeedMode = sort ? 'latest' : parseFeed(feedParam)
   const range = parseRange(searchParams.get('range'))
-  const page = readPositiveInteger(searchParams.get('page')) ?? 1
+  const page = usePageParam()
   const categoryId = readId(searchParams.get('categoryId'))
   const tagId = readId(searchParams.get('tagId'))
   const keyword = searchParams.get('keyword')?.trim() ?? ''

@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from './client'
 import type { TopicAuthor, TopicCategory, TopicTag, TopicType } from './topics'
+import { hasPaging, isRecord } from './guards'
 
 export interface BookmarkStatus { count: number; hasBookmark: boolean }
 export interface SavedTopic {
@@ -20,9 +21,6 @@ export interface SavedTopicPage {
   totalItems: number
   totalPages: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isTag = (value: unknown): value is TopicTag =>
   isRecord(value) &&
@@ -60,8 +58,7 @@ export const removeBookmark = async (topicId: string) =>
 export const getPersonalTopicPage = async (path: string, errorText: string, signal?: AbortSignal): Promise<SavedTopicPage> => {
   const data: unknown = await apiRequest(path, { signal })
   if (!isRecord(data) || !Array.isArray(data.items) || !data.items.every(isSavedTopic) ||
-      typeof data.page !== 'number' || typeof data.pageSize !== 'number' ||
-      typeof data.totalItems !== 'number' || typeof data.totalPages !== 'number') {
+      !hasPaging(data)) {
     throw new ApiError(500, errorText)
   }
   return data as unknown as SavedTopicPage

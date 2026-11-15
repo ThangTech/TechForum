@@ -1,6 +1,7 @@
 import { ApiError, apiRequest } from './client'
 import type { TopicType } from './topics'
 import type { DraftSnapshot } from '../utils/draftSnapshot'
+import { isRecord } from './guards'
 
 // The automatic draft of the write form. topicId is null for a new topic, or the id of the topic that is edited.
 export interface Draft {
@@ -15,9 +16,6 @@ export interface Draft {
   media: { id: string; path: string; contentType: string }[]
   updatedAtUtc: string
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const parseDraft = (data: unknown): Draft => {
   if (

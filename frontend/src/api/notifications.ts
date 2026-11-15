@@ -1,4 +1,5 @@
 import { apiRequest } from './client'
+import { hasPaging } from './guards'
 
 export interface NotificationItem {
   id: string
@@ -36,9 +37,7 @@ export const getNotifications = async (
   const data = await apiRequest<unknown>(`/api/notifications?page=${page}&pageSize=${pageSize}`, { signal })
   if (typeof data !== 'object' || data === null) throw new Error('API trả về danh sách thông báo không hợp lệ.')
   const value = data as Record<string, unknown>
-  if (!Array.isArray(value.items) || !value.items.every(isNotification) ||
-      typeof value.page !== 'number' || typeof value.pageSize !== 'number' ||
-      typeof value.totalItems !== 'number' || typeof value.totalPages !== 'number' ||
+  if (!Array.isArray(value.items) || !value.items.every(isNotification) || !hasPaging(value) ||
       typeof value.unreadCount !== 'number') {
     throw new Error('API trả về danh sách thông báo không hợp lệ.')
   }

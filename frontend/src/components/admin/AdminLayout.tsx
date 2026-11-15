@@ -1,5 +1,5 @@
 import Button from '@mui/material/Button'
-import { useRef, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { appRoutes } from '../../appRoutes'
 import { useAuth } from '../../auth/authState'
@@ -99,7 +99,10 @@ export const AdminLayout = () => {
         </header>
         <main className="admin-main" id="main-content">
           <AdminFeedback error={error} />
-          <Outlet />
+          {/* Each admin page is downloaded when it is first opened; the menu stays on screen while it loads. */}
+          <Suspense fallback={<div className="route-status">Đang tải trang…</div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

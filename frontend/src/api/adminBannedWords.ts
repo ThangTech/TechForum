@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { isRecord } from './guards'
 
 // A word that the API replaces by "***" in posts and answers.
 export interface BannedWord {
@@ -6,9 +7,6 @@ export interface BannedWord {
   word: string
   createdAtUtc: string
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isBannedWord = (value: unknown): value is BannedWord =>
   isRecord(value) &&

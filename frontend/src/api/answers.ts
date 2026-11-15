@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from './client'
 import type { TopicAuthor } from './topics'
+import { hasPaging, isRecord } from './guards'
 
 export interface Answer {
   id: string
@@ -34,9 +35,6 @@ export interface AnswerPage {
   totalItems: number
   totalPages: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isAnswer = (value: unknown): value is Answer =>
   isRecord(value) &&
@@ -85,10 +83,7 @@ export const getAnswers = async (
     !isRecord(data) ||
     !Array.isArray(data.items) ||
     !data.items.every(isAnswer) ||
-    typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' ||
-    typeof data.totalPages !== 'number'
+    !hasPaging(data)
   ) {
     throw new ApiError(500, 'Danh sách câu trả lời từ API không đúng định dạng.')
   }

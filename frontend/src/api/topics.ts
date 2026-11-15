@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { hasPaging, isRecord } from './guards'
 
 export type TopicType = 'article' | 'question'
 export type QuestionStatus = 'unanswered' | 'unsolved' | 'solved'
@@ -116,9 +117,6 @@ export interface OwnTopicPage {
   totalPages: number
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
 const isTopicTag = (value: unknown): value is TopicTag =>
   isRecord(value) &&
   typeof value.id === 'string' &&
@@ -183,10 +181,7 @@ const getTopicPage = async (
     !isRecord(data) ||
     !Array.isArray(data.items) ||
     !data.items.every(isTopicSummary) ||
-    typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' ||
-    typeof data.totalPages !== 'number'
+    !hasPaging(data)
   ) {
     throw new ApiError(500, 'Dữ liệu chủ đề từ API không đúng định dạng.')
   }
@@ -290,10 +285,7 @@ export const getMyTopics = async (
     !isRecord(data) ||
     !Array.isArray(data.items) ||
     !data.items.every(isOwnTopicSummary) ||
-    typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' ||
-    typeof data.totalPages !== 'number'
+    !hasPaging(data)
   ) {
     throw new ApiError(500, 'Dữ liệu nội dung cá nhân từ API không đúng định dạng.')
   }

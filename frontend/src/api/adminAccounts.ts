@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { hasPaging, isRecord } from './guards'
 
 export interface AdminAccount {
   id: string
@@ -18,9 +19,6 @@ export interface AdminAccountPage {
   totalItems: number
   totalPages: number
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isAdminAccount = (value: unknown): value is AdminAccount =>
   isRecord(value) &&
@@ -55,10 +53,7 @@ export const getAdminAccounts = async (
     !isRecord(data) ||
     !Array.isArray(data.items) ||
     !data.items.every(isAdminAccount) ||
-    typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' ||
-    typeof data.totalPages !== 'number'
+    !hasPaging(data)
   ) {
     throw new ApiError(500, 'Danh sách tài khoản từ API không đúng định dạng.')
   }

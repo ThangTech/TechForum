@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from './client'
 import type { TopicAuthor, TopicCategory, TopicType } from './topics'
+import { hasPaging, isRecord } from './guards'
 
 export type TopicVisibility = '' | 'visible' | 'draft' | 'hidden' | 'deleted'
 export type ModerationAction = 'hide' | 'restore' | 'lock' | 'unlock' | 'pin' | 'unpin' | 'move'
@@ -27,8 +28,6 @@ export interface AdminTopicPage {
   totalPages: number
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 const isAdminTopic = (value: unknown): value is AdminTopic =>
   isRecord(value) &&
   typeof value.id === 'string' &&
@@ -75,10 +74,7 @@ export const getAdminTopics = async (
     !isRecord(data) ||
     !Array.isArray(data.items) ||
     !data.items.every(isAdminTopic) ||
-    typeof data.page !== 'number' ||
-    typeof data.pageSize !== 'number' ||
-    typeof data.totalItems !== 'number' ||
-    typeof data.totalPages !== 'number'
+    !hasPaging(data)
   ) {
     throw new ApiError(500, 'Danh sách kiểm duyệt từ API không đúng định dạng.')
   }

@@ -1,5 +1,6 @@
 import { ApiError, apiRequest } from './client'
 import type { TopicAuthor, TopicCategory, TopicType } from './topics'
+import { isRecord } from './guards'
 
 export interface RelatedTopic {
   id: string
@@ -12,9 +13,6 @@ export interface RelatedTopic {
   sharedTagCount: number
   isSameCategory: boolean
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isRelatedTopic = (value: unknown): value is RelatedTopic =>
   isRecord(value) &&

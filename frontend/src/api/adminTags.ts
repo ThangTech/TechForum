@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { isRecord } from './guards'
 
 export interface AdminTag {
   id: string
@@ -14,9 +15,6 @@ export interface SaveTagInput {
   slug: string
   description: string | null
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isAdminTag = (value: unknown): value is AdminTag =>
   isRecord(value) &&

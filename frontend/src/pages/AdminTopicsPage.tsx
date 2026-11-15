@@ -22,18 +22,15 @@ import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import { isGuid } from '../utils/ids'
+import { usePageParam } from '../hooks/usePageParam'
 
 const PAGE_SIZE = 10
-const readPage = (value: string | null) => {
-  const page = Number(value)
-  return Number.isInteger(page) && page > 0 ? page : 1
-}
 const readVisibility = (value: string | null): TopicVisibility =>
   value === 'visible' || value === 'draft' || value === 'hidden' || value === 'deleted' ? value : ''
 
 export const AdminTopicsPage = () => {
   const [params, setParams] = useSearchParams()
-  const page = readPage(params.get('page'))
+  const page = usePageParam()
   const keyword = params.get('keyword')?.trim() ?? ''
   const type =
     params.get('type') === 'article' || params.get('type') === 'question'

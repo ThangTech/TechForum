@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { hasPaging } from './guards'
 
 export interface ActivityItem {
   type: 'topic-created' | 'answer-created'
@@ -28,9 +29,7 @@ export const getMyActivity = async (page: number, pageSize: number, signal?: Abo
   const data = await apiRequest<unknown>(`/api/activity/mine?page=${page}&pageSize=${pageSize}`, { signal })
   if (typeof data !== 'object' || data === null) throw new ApiError(500, 'Dữ liệu lịch sử không đúng định dạng.')
   const result = data as Record<string, unknown>
-  if (!Array.isArray(result.items) || !result.items.every(isActivity) ||
-      typeof result.page !== 'number' || typeof result.pageSize !== 'number' ||
-      typeof result.totalItems !== 'number' || typeof result.totalPages !== 'number') {
+  if (!Array.isArray(result.items) || !result.items.every(isActivity) || !hasPaging(result)) {
     throw new ApiError(500, 'Dữ liệu lịch sử không đúng định dạng.')
   }
   return result as unknown as ActivityPage

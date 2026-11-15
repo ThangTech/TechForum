@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client'
+import { isRecord } from './guards'
 
 // A picture of the slider on the home page.
 export interface Banner {
@@ -7,9 +8,6 @@ export interface Banner {
   imageUrl: string
   linkUrl: string | null
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isBanner = (value: unknown): value is Banner =>
   isRecord(value) &&

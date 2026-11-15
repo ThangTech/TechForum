@@ -21,6 +21,7 @@ import TableRow from '@mui/material/TableRow'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
+import { usePageParam } from '../hooks/usePageParam'
 
 const PAGE_SIZE = 10
 const statuses: { label: string; value: ReportStatus }[] = [
@@ -29,17 +30,12 @@ const statuses: { label: string; value: ReportStatus }[] = [
   { value: 'rejected', label: 'Đã bác bỏ' },
 ]
 
-const readPage = (value: string | null) => {
-  const page = Number(value)
-  return Number.isInteger(page) && page > 0 ? page : 1
-}
-
 const readStatus = (value: string | null): ReportStatus =>
   value === 'accepted' || value === 'rejected' ? value : 'pending'
 
 export const AdminReportsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const page = readPage(searchParams.get('page'))
+  const page = usePageParam()
   const status = readStatus(searchParams.get('status'))
   const [actionError, setActionError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)

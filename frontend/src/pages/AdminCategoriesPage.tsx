@@ -19,13 +19,13 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
+import { usePageParam } from '../hooks/usePageParam'
 
 export const AdminCategoriesPage = () => {
   const [params, setParams] = useSearchParams()
   const keyword = params.get('keyword')?.trim() ?? ''
   const status = params.get('status') ?? ''
-  const pageValue = Number(params.get('page'))
-  const requestedPage = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1
+  const requestedPage = usePageParam()
 
   const [actionError, setActionError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
