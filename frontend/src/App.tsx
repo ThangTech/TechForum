@@ -15,7 +15,6 @@ import { SavedTopicsPage } from './pages/SavedTopicsPage'
 import { StarredTopicsPage } from './pages/StarredTopicsPage'
 import { appRoutes } from './appRoutes'
 import { LegacyRouteRedirect } from './components/layout/LegacyRouteRedirect'
-import { SettingsPage } from './pages/SettingsPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SkillCommunityPage } from './pages/SkillCommunityPage'
@@ -111,7 +110,6 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
           <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />

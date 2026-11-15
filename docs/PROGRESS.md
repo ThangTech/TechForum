@@ -216,7 +216,7 @@ kiểm chứng cũ bên dưới được giữ để tra cứu lịch sử.
   hồ sơ công khai không trả email.
 - [x] Avatar tùy chọn dùng upload xác thực PNG/JPEG/WebP tối đa 2 MB; header và
   hồ sơ công khai dùng ảnh thật, fallback về chữ cái khi chưa có ảnh.
-- [x] Tùy chỉnh có thao tác chạy lại tour thật.
+- [x] Chạy lại tour bằng liên kết "Hướng dẫn sử dụng" ở cuối trang (trang Tùy chỉnh đã bỏ ngày 2026-11-15).
 - [x] Thông báo “câu trả lời mới” và “câu trả lời được chấp nhận” có bản ghi
   backend chống trùng, danh sách riêng tư, đánh dấu đã đọc và số chưa đọc thật.
 - [x] Intro.js 8.6.0 build được với React/Vite; tour có bước phù hợp khách/thành

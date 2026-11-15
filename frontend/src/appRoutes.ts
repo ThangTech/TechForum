@@ -1,5 +1,7 @@
 export const appRoutes = {
   home: '/',
+  // The home page with its short guide started (see HomeTour).
+  homeTour: '/?tour=1',
   search: '/search',
   articles: '/articles',
   questions: '/questions',
@@ -9,7 +11,6 @@ export const appRoutes = {
   saved: '/saved',
   starred: '/starred',
   account: '/account',
-  settings: '/settings',
   notifications: '/notifications',
   activity: '/activity',
   communities: '/communities',

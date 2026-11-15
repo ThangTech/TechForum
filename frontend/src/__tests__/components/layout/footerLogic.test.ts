@@ -29,6 +29,13 @@ describe('exploreLinks', () => {
   })
 })
 
+describe('the guide link', () => {
+  it('opens the home page with the guide started', () => {
+    const guide = exploreLinks.find((link) => link.label === 'Hướng dẫn sử dụng')
+    expect(guide?.to).toBe('/?tour=1')
+  })
+})
+
 describe('toTopicList', () => {
   it('opens a page at its list', () => {
     expect(toTopicList('/articles', 'categoryId=2')).toBe('/articles?categoryId=2#topic-list')

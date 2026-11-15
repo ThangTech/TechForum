@@ -13,6 +13,8 @@ export const exploreLinks: FooterLink[] = [
   { label: 'Cộng đồng', to: appRoutes.communities },
   // Not a page: it takes the visitor to the search box in the header, wherever they are (the id is in HeaderSearch).
   { label: 'Tìm kiếm', to: '#header-search' },
+  // Opens the home page and starts its short guide, for a guest and for a member.
+  { label: 'Hướng dẫn sử dụng', to: appRoutes.homeTour },
 ]
 
 // The "Của bạn" column: a member gets the pages of their own, a guest gets the way in.

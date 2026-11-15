@@ -38,7 +38,6 @@ export const AccountMenu = () => {
     { id: 'starred', label: 'Bài đã thả sao', onClick: () => navigate(appRoutes.starred) },
     { id: 'activity', label: 'Lịch sử hoạt động', onClick: () => navigate(appRoutes.activity) },
     { id: 'reports', label: 'Báo cáo của tôi', onClick: () => navigate(appRoutes.myReports) },
-    { id: 'settings', label: 'Tùy chỉnh', onClick: () => navigate(appRoutes.settings) },
     { id: 'write', label: 'Viết nội dung', onClick: () => navigate(appRoutes.write) },
     ...(user.roles.includes('Administrator')
       ? [

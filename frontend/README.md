@@ -110,7 +110,6 @@ Các route chính:
 - `/register`: đăng ký thành viên và tự tạo phiên.
 - `/account`: route riêng tư, cập nhật avatar tùy chọn, tên hiển thị/giới thiệu
   công khai, đổi mật khẩu và đăng xuất. Avatar lỗi/không có ảnh dùng chữ cái đầu.
-- `/settings`: tùy chỉnh cá nhân, hiện cho phép chạy lại tour hướng dẫn trang Bài viết.
 - `/notifications`: thông báo riêng của tài khoản, hiển thị số chưa đọc thật trên header.
 - `/activity`: lịch sử nội dung và câu trả lời công khai của tài khoản hiện tại.
 - `/skills/:tagId`: thống kê nội dung và thành viên sử dụng một kỹ năng/thẻ.
@@ -138,7 +137,7 @@ và danh sách cá nhân chỉ chứa nội dung còn công khai.
 
 Trang chủ dùng Intro.js 8.6.0 cho tour tìm kiếm, loại nội dung, viết bài và tài
 khoản. Trạng thái hoàn tất được lưu riêng theo khách/tài khoản trong trình duyệt;
-thành viên có thể chạy lại từ menu **Tùy chỉnh**. Intro.js dùng giấy phép
+khách và thành viên chạy lại bằng liên kết **Hướng dẫn sử dụng** ở cuối trang (`/?tour=1`); trang Tùy chỉnh đã bỏ vì chỉ có nút này. Intro.js dùng giấy phép
 AGPL-3.0; phù hợp với đồ án phi thương mại khi dự án tuân thủ điều kiện giấy
 phép. Nếu triển khai thương mại, cần rà soát và mua license phù hợp từ Intro.js.
 
