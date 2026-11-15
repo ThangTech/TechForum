@@ -1,7 +1,7 @@
 import Typography from '@mui/material/Typography'
 import { useState, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { AuthRequiredDialog } from '../components/AuthRequiredDialog'
+import { AuthRequiredDialog } from '../components/layout/AuthRequiredDialog'
 import { PageShell } from '../components/common/PageShell'
 import { Panel } from '../components/common/Panel'
 import { useAuth } from './authState'

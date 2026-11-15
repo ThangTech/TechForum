@@ -69,6 +69,17 @@ cũng đã đổi theo.
   `App.tsx`: khách và thành viên không tải phần này. Menu quản trị vẫn hiện trong lúc một trang quản trị đang tải (`Suspense` quanh `Outlet`
   trong `AdminLayout`). Gói JavaScript chính giảm từ khoảng 1.130 kB xuống 645 kB (gzip 342 kB xuống 202 kB).
 
+## Cấu trúc thư mục `src`
+
+- `components/common/`: thành phần dùng chung thật sự (nút, ô nhập, phân trang, khung, trạng thái rỗng…).
+- `components/layout/`: khung của trang công khai: `SiteLayout`, `SiteHeader`, `SiteFooter`, ô tìm kiếm, menu Viết, nút đổi giao diện,
+  nút lên đầu trang, `ScrollManager`, hộp thoại yêu cầu đăng nhập và `LegacyRouteRedirect`. Khung của khu quản trị nằm ở `components/admin/`.
+- `components/<tên nghiệp vụ>/`: phần giao diện của từng nghiệp vụ (`topics/` có `TopicFeed`, `home/` có `TagPanel`, `discussions/`, `admin/`…).
+- `pages/`: mỗi địa chỉ một trang; `queries/`: hook lấy và ghi dữ liệu (TanStack Query); `api/`: gọi API và kiểm tra dữ liệu trả về;
+  `hooks/`: hook dùng chung không gắn với một nghiệp vụ.
+- `__tests__/`: **mọi file kiểm thử**, xếp theo đúng thư mục của mã được kiểm thử (`src/api/answers.ts` → `src/__tests__/api/answers.test.ts`).
+  Vitest chỉ tìm test trong thư mục này. Test không vào bản build.
+
 ## Chạy môi trường phát triển
 
 API mặc định được gọi tại `http://localhost:5045`. Có thể đổi địa chỉ bằng cách
