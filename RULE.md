@@ -67,20 +67,19 @@ frontend/src/styles/	CSS chung, token màu/khoảng cách khi cần
 7. Cấu trúc ASP.NET Core backend
 Ưu tiên một project API với luồng Controller → Service → Repository → DbContext → SQL Server, giống nguyên tắc tầng dữ liệu của sport-social-app. Không sao chép code thể thao sang diễn đàn.
 Vị trí đề xuất	Trách nhiệm
-backend/Controllers/	Nhận HTTP request, model validation, lấy danh tính, gọi service, trả HTTP
-backend/Services/	Quy tắc nghiệp vụ, kiểm tra quyền tài nguyên, phối hợp thao tác
-backend/Services/Interfaces/	Hợp đồng DI cần thiết cho service
-backend/Repositories/	Truy vấn/lưu EF Core theo từng nghiệp vụ
-backend/Repositories/Interfaces/	Hợp đồng repository cần dùng
+backend/Controllers/<Nhóm>/	Nhận HTTP request, model validation, lấy danh tính, gọi service, trả HTTP
+backend/Services/<Nhóm>/	Quy tắc nghiệp vụ, kiểm tra quyền tài nguyên, phối hợp thao tác; interface (IXxxService) đặt cạnh lớp cài đặt
+backend/Data/Repositories/<Nhóm>/	Truy vấn/lưu EF Core theo từng nghiệp vụ; interface (IXxxRepository) đặt cạnh lớp cài đặt
 backend/Data/	AppDbContext, cấu hình EF, seed phát triển khi cần
 backend/Entities/	Thực thể lưu trữ và quan hệ
-backend/DTOs/	Request/response theo nghiệp vụ
+backend/DTOs/<Nhóm>/	Request/response theo nghiệp vụ
 backend/Enums/	Trạng thái/vai trò có tên, tránh số magic
 backend/Migrations/	Migration EF Core
 backend/Program.cs	Đăng ký DI và middleware, không chứa toàn bộ nghiệp vụ
 
 
 - Nếu repo dùng Models thay Entities hoặc đặt interface cùng implementation, giữ convention hợp lý hiện có.
+- <Nhóm> là cùng một bộ thư mục chức năng ở mọi tầng: Auth, Topics, Answers, Interactions, Members, Catalog, Media, Moderation, Notifications, Banners, Admin, Statistics. Chức năng mới thì thêm vào nhóm hợp nghĩa nhất hoặc tạo nhóm mới ở mọi tầng cần dùng. Thư mục chỉ để sắp xếp: namespace giữ theo tầng (TechForum.Api.Services, TechForum.Api.Data.Repositories, TechForum.Api.Dtos, TechForum.Api.Controllers), nên di chuyển file giữa các nhóm không phải sửa `using`. Test trong backend.Tests chia theo cùng các nhóm.
 - Nếu M1 đang có tầng Data, chuyển sang Repository theo phần chức năng cần làm; không đổi tên/di chuyển hàng loạt chỉ để khớp bảng trên.
 - Controller không truy vấn DbContext trực tiếp. Repository không quyết định quyền nghiệp vụ hoặc trả HTTP response.
 - Service nhận danh tính đáng tin cậy từ server; không tin userId/role do FE gửi để cấp quyền.

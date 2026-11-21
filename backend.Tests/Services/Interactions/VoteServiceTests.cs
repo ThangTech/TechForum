@@ -20,7 +20,7 @@ public sealed class VoteServiceTests
     private readonly Topic topic = new()
     {
         Id = TestIds.Id(1), Title = "t", Slug = "t", Summary = "s", BodyHtml = "<p>x</p>", AuthorId = "author",
-        Type = TopicType.Question, Status = TopicStatus.Published, PublishedAtUtc = DateTimeOffset.UtcNow, Score = 3
+        Type = TopicType.Question, Status = TopicStatus.Published, PublishedAtUtc = Now.AddDays(-1), Score = 3
     };
 
     private VoteService CreateService(params Answer[] answers) =>
@@ -29,7 +29,7 @@ public sealed class VoteServiceTests
 
     private static Answer CreateAnswer(Guid id, string authorId) => new()
     {
-        Id = id, TopicId = TestIds.Id(1), AuthorId = authorId, BodyHtml = "<p>a</p>", CreatedAtUtc = DateTimeOffset.UtcNow
+        Id = id, TopicId = TestIds.Id(1), AuthorId = authorId, BodyHtml = "<p>a</p>", CreatedAtUtc = Now.AddDays(-1)
     };
 
     [Theory]

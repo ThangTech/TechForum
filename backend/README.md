@@ -113,6 +113,19 @@ khai phải bật mã hóa và dùng chứng thư hợp lệ.
 từng nhóm dữ liệu khi bảng `Categories` hoặc `Tags` tương ứng đang rỗng. Các môi
 trường khác không tự migrate và không seed.
 
+## Cấu trúc thư mục
+
+Vẫn ba tầng Controller → Service → Repository → DbContext, nhưng **bên trong mỗi tầng** file được chia theo cùng một bộ nhóm chức năng:
+`Auth`, `Topics`, `Answers`, `Interactions` (bình chọn, sao, lưu bài, danh tiếng), `Members` (hồ sơ, theo dõi, kỹ năng, hoạt động, avatar),
+`Catalog` (chuyên mục, thẻ), `Media`, `Moderation` (lọc từ cấm, kiểm tra nội dung, báo cáo vi phạm), `Notifications`, `Banners`, `Admin`,
+`Statistics`. Ví dụ bình chọn nằm ở `Controllers/Interactions/`, `Services/Interactions/`, `Data/Repositories/Interactions/`, `DTOs/Interactions/`.
+
+- Interface nằm cạnh lớp cài đặt (`Services/Interactions/IVoteService.cs` cạnh `VoteService.cs`); không còn thư mục `Interfaces` riêng.
+- Thư mục chỉ để sắp xếp: namespace vẫn theo tầng (`TechForum.Api.Services`, `TechForum.Api.Data.Repositories`, `TechForum.Api.Dtos`,
+  `TechForum.Api.Controllers`), nên chuyển file giữa các nhóm không phải sửa `using`.
+- `Models/`, `Configuration/`, `Filters/`, `Middleware/`, `Enums/`, `Data/Migrations/` giữ nguyên; `DTOs/PagedResultDto.cs` dùng chung nên ở gốc.
+- `backend.Tests/Services/<Nhóm>/` và `backend.Tests/Data/<Nhóm>/` chia theo cùng các nhóm.
+
 ## Mã định danh (GUID)
 
 Mọi bảng có khóa chính riêng (`Topics`, `Answers`, `Categories`, `Tags`, `Banners`, `BannedWords`, `ContentReports`,
