@@ -3,9 +3,6 @@ import { isTopicSummary } from '../../topics/api/topics'
 
 import { hasPaging, isRecord } from '../../../shared/api/guards'
 import type { FollowMemberPage, FollowStatus, PublicProfile, SkillTag } from '../types/profiles'
-// The most skills a member can choose (the same limit as the API).
-export const maxChosenSkills = 12
-
 export const getPublicProfile = async (
   userId: string,
   signal?: AbortSignal,

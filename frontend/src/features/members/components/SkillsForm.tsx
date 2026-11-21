@@ -7,14 +7,13 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { ApiError } from '../../../shared/api/client'
-import { maxChosenSkills } from '../api/profiles'
 import type { SkillTag } from '../types/profiles'
 import type { Tag } from '../../catalog/types/tags'
 import { useMySkills, useSaveMySkills } from '../hooks/profiles'
 import { useTags } from '../../catalog/hooks/tags'
 import { Panel } from '../../../shared/components/Panel'
 import { useToast } from '../../../shared/feedback/toastState'
-import { hasSameIds } from '../utils/skillSelection'
+import { hasSameIds, maxChosenSkills } from '../utils/skillSelection'
 
 interface SkillsEditorProps {
   tags: Tag[]

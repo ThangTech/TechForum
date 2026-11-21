@@ -6,7 +6,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
-import { updateAnswer } from '../api/answers'
+import { useAnswerWrites } from '../hooks/answers'
 import type { Answer } from '../types/answers'
 import { ApiError } from '../../../shared/api/client'
 import { useDiscardGuard } from '../../../shared/feedback/useDiscardGuard'
@@ -21,6 +21,7 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
   onClose: () => void
   onUpdated: (answer: Answer) => void
 }) => {
+  const writes = useAnswerWrites()
   const [content, setContent] = useState(() => toAnswerText(answer.bodyHtml))
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +34,7 @@ export const AnswerEditDialog = ({ answer, onClose, onUpdated }: {
   const save = async () => {
     if (!content.trim()) { setError('Câu trả lời không được để trống.'); return }
     setIsSaving(true); setError(null)
-    try { onUpdated(await updateAnswer(answer.topicId, answer.id, toAnswerHtml(content))) }
+    try { onUpdated(await writes.update(answer.topicId, answer.id, toAnswerHtml(content))) }
     catch (requestError) { setError(requestError instanceof ApiError ? requestError.message : 'Không thể sửa câu trả lời.') }
     finally { setIsSaving(false) }
   }

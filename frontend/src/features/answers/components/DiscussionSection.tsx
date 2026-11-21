@@ -9,11 +9,10 @@ import Typography from '@mui/material/Typography'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { acceptAnswer } from '../api/answers'
 import type { Answer, AnswerPage, AnswerSort } from '../types/answers'
 import { ApiError } from '../../../shared/api/client'
 import { useAuth } from '../../auth/hooks/authState'
-import { answerKeys, useAnswers } from '../hooks/answers'
+import { answerKeys, useAnswers, useAnswerWrites } from '../hooks/answers'
 import { isInitialLoading } from '../../../shared/query/status'
 import { topicKeys } from '../../topics/hooks/topics'
 import { useUserScope } from '../../auth/hooks/userScope'
@@ -42,6 +41,7 @@ export const DiscussionSection = ({
   topicId,
   topicType,
 }: DiscussionSectionProps) => {
+  const writes = useAnswerWrites()
   const { user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -82,7 +82,7 @@ export const DiscussionSection = ({
   }
 
   const acceptMutation = useMutation({
-    mutationFn: (answerId: string) => acceptAnswer(topicId, answerId),
+    mutationFn: (answerId: string) => writes.accept(topicId, answerId),
     onSuccess: (_answer, answerId) => {
       patchAnswers((current) => ({
         ...current,

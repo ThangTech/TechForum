@@ -40,21 +40,22 @@ Quy tắc phát triển TechForum dành cho Codex
 - Nếu môi trường thiếu SQL Server hoặc công cụ, hoàn thành phần kiểm chứng được, báo giới hạn và lệnh người dùng cần chạy; không giả lập kết quả kiểm tra.
 - Khi kiểm tra thất bại, sửa và kiểm tra lại phần liên quan. Không bỏ qua lỗi mới để chuyển chức năng khác.
 6. Cấu trúc React frontend
-Giữ cấu trúc đang hoạt động nếu tương đương. Chỉ tạo thư mục/file khi có code sử dụng, không scaffold hàng loạt thư mục rỗng.
-Vị trí đề xuất	Trách nhiệm
-frontend/src/main.tsx	Khởi tạo ứng dụng và provider cần thiết
-frontend/src/App.tsx	Kết nối bố cục/router, không chứa toàn bộ nghiệp vụ
-frontend/src/pages/	Trang theo route: đăng nhập, danh sách chủ đề, chi tiết, quản trị
-frontend/src/components/common/	Thành phần dùng chung thực sự: nút, input, trạng thái
-frontend/src/components/layout/	Header, điều hướng, layout công khai và quản trị
-frontend/src/components/topics/	Các phần giao diện chủ đề khi đã có chức năng
-frontend/src/services/apiClient.ts	Base URL, request, lỗi và cơ chế xác thực thống nhất
-frontend/src/services/	Hàm API theo nghiệp vụ, không chứa JSX
-frontend/src/types/	DTO/kiểu dữ liệu bám contract backend
-frontend/src/hooks/	Custom hook có trách nhiệm rõ khi thật sự cần
-frontend/src/context/	Trạng thái toàn ứng dụng cần chia sẻ, ví dụ xác thực
-frontend/src/styles/	CSS chung, token màu/khoảng cách khi cần
-
+Code frontend chia theo chức năng (module), không chia theo loại file. Chỉ tạo thư mục/file khi có code sử dụng, không scaffold hàng loạt thư mục rỗng.
+Vị trí	Trách nhiệm
+frontend/src/main.tsx	Khởi tạo ứng dụng, provider và khôi phục phiên đăng nhập
+frontend/src/app/	App.tsx (router, tải lười khu quản trị), appRoutes.ts, CSS toàn trang
+frontend/src/shared/api/	client.ts (base URL, request, lỗi, token, làm mới phiên), guards.ts, problemMessage.ts, upload media
+frontend/src/shared/components/, shared/feedback/, shared/layout/	Thành phần dùng chung thật sự; trạng thái tải/lỗi/rỗng, hộp thoại; header, footer, khung trang công khai
+frontend/src/shared/hooks/, shared/utils/, shared/types/, shared/query/	Hook, hàm thuần, type và tiện ích React Query dùng chung cho nhiều module
+frontend/src/features/<module>/api/	Hàm API của module: chỉ gọi API và kiểm tra dữ liệu trả về; không JSX, không khai báo type
+frontend/src/features/<module>/types/	DTO/kiểu dữ liệu bám contract backend
+frontend/src/features/<module>/hooks/	Hook lấy/ghi dữ liệu (TanStack Query) và hook của từng trang (useXxxPage) chứa state, query, xử lý sự kiện
+frontend/src/features/<module>/components/	Phần giao diện của module; không gọi thẳng api/, chỉ dùng hook
+frontend/src/features/<module>/pages/	Trang theo route: chỉ gọi hook của trang rồi hiển thị; không useState/useEffect/query trong page
+frontend/src/features/<module>/utils/	Hàm thuần của module, có test khi có quy tắc nghiệp vụ
+frontend/src/features/auth/store/	Store Zustand cho trạng thái toàn ứng dụng (phiên đăng nhập, hộp thoại yêu cầu đăng nhập)
+frontend/src/__tests__/	Mọi file test, xếp theo đúng cây thư mục của mã được kiểm thử
+<module> hiện có: auth, topics, answers, interactions, members, catalog, notifications, reports, moderation, home, admin. Chức năng mới thêm vào module hợp nghĩa nhất, hoặc tạo module mới cùng khuôn. Module này dùng thứ của module khác qua hook, type hoặc component của module đó.
 
 - Dùng function component và TypeScript rõ kiểu. Tránh any, ép kiểu để che lỗi và non-null assertion tùy tiện.
 - Với state cục bộ dùng useState; dùng Context khi cần chia sẻ. Không thêm Redux/Zustand chỉ vì danh mục skill đề xuất.

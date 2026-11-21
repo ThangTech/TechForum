@@ -4,7 +4,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
-import { createReport } from '../api/reports'
+import { useReportWrites } from '../hooks/reports'
 import type { ReportReason, ReportTargetType } from '../types/reports'
 import { ApiError } from '../../../shared/api/client'
 import { DialogFrame } from '../../../shared/feedback/DialogFrame'
@@ -26,6 +26,7 @@ const reasonOptions: { label: string; value: ReportReason }[] = [
 ]
 
 export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDialogProps) => {
+  const writes = useReportWrites()
   const [reason, setReason] = useState<ReportReason>('spam')
   const [details, setDetails] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -56,7 +57,7 @@ export const ReportDialog = ({ isOpen, onClose, targetId, targetType }: ReportDi
     setIsSubmitting(true)
     setError(null)
     try {
-      await createReport({
+      await writes.create({
         targetType,
         targetId,
         reason,

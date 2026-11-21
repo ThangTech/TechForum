@@ -54,31 +54,55 @@ thái tải/rỗng/lỗi, bộ lọc và phân trang. API vẫn kiểm tra quy�
 ## Mã định danh là GUID
 
 Id của bài viết, câu trả lời, chuyên mục, thẻ, banner, thông báo và báo cáo là **chuỗi GUID**, không còn là số. Kiểu TypeScript
-là `string`; `utils/ids.ts` có `isGuid` (kiểm tra id trong địa chỉ như `/topics/:id`, `?categoryId=`, `#answer-…`, trang nào thấy id
+là `string`; `shared/utils/ids.ts` có `isGuid` (kiểm tra id trong địa chỉ như `/topics/:id`, `?categoryId=`, `#answer-…`, trang nào thấy id
 sai thì báo "đường dẫn không hợp lệ" mà không gọi API) và `hashId` (số nhỏ cố định từ id, dùng chọn màu nền cho thẻ không có ảnh).
 Id lấy từ địa chỉ được chuyển về chữ thường trước khi so sánh với dữ liệu từ API. Các hàm kiểm tra dữ liệu API (`typeof … === 'string'`)
 cũng đã đổi theo.
 
-## Mã dùng chung và tải lười
-
-- `hooks/usePageParam.ts`: đọc số trang từ địa chỉ (`?page=`, hoặc tên khác như `answerPage` của danh sách câu trả lời). Mọi màn hình có
-  phân trang đều dùng hook này, nên giá trị sai (chữ, số âm, số thập phân, số lớn hơn mức API nhận) luôn thành trang 1.
-- `api/guards.ts`: `isRecord` (dữ liệu là một object) và `hasPaging` (có đủ `page`, `pageSize`, `totalItems`, `totalPages`). Các file
-  trong `api/` dùng chung hai hàm này để kiểm tra dữ liệu API thay vì mỗi file tự viết lại.
-- Khu quản trị (`AdminLayout` và 9 trang `Admin*Page`, kể cả thư viện biểu đồ của trang tổng quan) được **tải lười** bằng `lazy()` trong
-  `App.tsx`: khách và thành viên không tải phần này. Menu quản trị vẫn hiện trong lúc một trang quản trị đang tải (`Suspense` quanh `Outlet`
-  trong `AdminLayout`). Gói JavaScript chính giảm từ khoảng 1.130 kB xuống 645 kB (gzip 342 kB xuống 202 kB).
-
 ## Cấu trúc thư mục `src`
 
-- `components/common/`: thành phần dùng chung thật sự (nút, ô nhập, phân trang, khung, trạng thái rỗng…).
-- `components/layout/`: khung của trang công khai: `SiteLayout`, `SiteHeader`, `SiteFooter`, ô tìm kiếm, menu Viết, nút đổi giao diện,
-  nút lên đầu trang, `ScrollManager`, hộp thoại yêu cầu đăng nhập và `LegacyRouteRedirect`. Khung của khu quản trị nằm ở `components/admin/`.
-- `components/<tên nghiệp vụ>/`: phần giao diện của từng nghiệp vụ (`topics/` có `TopicFeed`, `home/` có `TagPanel`, `discussions/`, `admin/`…).
-- `pages/`: mỗi địa chỉ một trang; `queries/`: hook lấy và ghi dữ liệu (TanStack Query); `api/`: gọi API và kiểm tra dữ liệu trả về;
-  `hooks/`: hook dùng chung không gắn với một nghiệp vụ.
-- `__tests__/`: **mọi file kiểm thử**, xếp theo đúng thư mục của mã được kiểm thử (`src/api/answers.ts` → `src/__tests__/api/answers.test.ts`).
-  Vitest chỉ tìm test trong thư mục này. Test không vào bản build.
+Code chia theo **chức năng (module)**, không chia theo loại file. Mỗi module có cùng một khuôn, nên một chức năng nằm gọn trong một thư mục:
+
+```
+src/
+  main.tsx              điểm khởi động (provider, phiên đăng nhập)
+  app/                  App.tsx (router, tải lười khu quản trị), appRoutes.ts, CSS toàn trang
+  shared/               chỉ những thứ nhiều module dùng
+    api/                client.ts (gọi API, token, làm mới phiên), guards.ts, problemMessage.ts, fieldErrors.ts, media.ts
+    types/              type của client và media
+    query/              queryClient, isInitialLoading, getErrorMessage
+    hooks/              usePageParam, useListParams, useActionFeedback, useDebounce
+    utils/              ids (isGuid, hashId), searchParams, paginate, scrollTarget...
+    components/         nút, panel, phân trang, tiêu đề trang, trạng thái rỗng...
+    feedback/           AsyncStatePanel, ConfirmDialog, DialogFrame, toast, useDiscardGuard
+    layout/             khung trang công khai: header, footer, ô tìm kiếm, menu Viết, ScrollManager
+    theme/, styles/     giao diện sáng/tối, reset.css
+  features/<module>/    auth, topics, answers, interactions, members, catalog, notifications, reports, moderation, home, admin
+    api/                chỉ gọi API và kiểm tra dữ liệu trả về (không JSX, không type)
+    types/              type bám theo DTO của backend
+    hooks/              hook lấy/ghi dữ liệu (TanStack Query) và hook của từng trang (useXxxPage)
+    components/         phần giao diện của module
+    pages/              trang theo route: chỉ gọi hook của trang rồi vẽ giao diện
+    utils/              hàm thuần (không React) của module, có test
+    store/              (chỉ auth) store Zustand
+  __tests__/            mọi file test, xếp theo đúng cây thư mục của mã (src/features/x/utils/a.ts → src/__tests__/features/x/utils/a.test.ts)
+```
+
+Quy tắc:
+
+- **Page chỉ hiển thị.** Mọi `useState`, `useEffect`, query, mutation và xử lý sự kiện nằm trong hook của trang
+  (`features/<module>/hooks/useXxxPage.ts`). Trang gọi hook đó rồi vẽ những gì hook trả về. Ví dụ trang viết bài dùng
+  `useWriteTopicForm` (tải dữ liệu biểu mẫu), `useTopicEditor` (ô nhập, xem trước, gửi bài) và `useDraftAutosave` (tự lưu bản nháp).
+- **Component không gọi thẳng `api/`**, chỉ dùng hook. Module này dùng thứ của module khác qua hook, type hoặc component của module đó.
+- **Hook dùng chung** cho các trang danh sách: `usePageParam` (đọc `?page=`, giá trị sai thành trang 1), `useListParams` (bộ lọc và trang
+  trong địa chỉ: gửi form lọc, xóa lọc, đổi trang) và `useActionFeedback` (một dòng thông báo thành công/lỗi sau khi lưu, xóa, khóa...;
+  lỗi lấy câu tiếng Việt của API).
+- `shared/api/guards.ts`: `isRecord` và `hasPaging` dùng chung để kiểm tra dữ liệu API.
+- Khu quản trị (`AdminLayout`, 9 trang `Admin*Page` và thư viện biểu đồ) được **tải lười** bằng `lazy()` trong `app/App.tsx`, nên khách và
+  thành viên không tải phần này; menu quản trị vẫn hiện trong lúc một trang quản trị đang tải. Gói JavaScript chính khoảng 645 kB (gzip 202 kB).
+- Hook dữ liệu của khu quản trị chia theo từng khu (`categoryQueries`, `tagQueries`, `bannerQueries`, `bannedWordQueries`,
+  `accountQueries`, `reportQueries`, `topicQueries`, `overviewQueries`).
+- Vitest chỉ tìm test trong `src/__tests__/`. Test không vào bản build.
 
 ## Chạy môi trường phát triển
 
@@ -197,7 +221,7 @@ là danh sách Bài viết; không còn mục Trang chủ trùng nghĩa. Giao di
 cho nội dung và Open Sans cho tiêu đề; font được tải từ Google Fonts nên khi máy
 không có mạng sẽ dùng fallback hệ thống.
 
-Phiên đăng nhập dùng JWT, được giữ trong store Zustand (`src/auth/authStore.ts`):
+Phiên đăng nhập dùng JWT, được giữ trong store Zustand (`src/features/auth/store/authStore.ts`):
 
 - Access token chỉ nằm trong bộ nhớ, không lưu trong localStorage. API client gửi
   nó bằng header `Authorization: Bearer`.
@@ -208,7 +232,7 @@ Phiên đăng nhập dùng JWT, được giữ trong store Zustand (`src/auth/au
   một refresh token.
 - Đổi mật khẩu đăng xuất mọi thiết bị, nên giao diện đưa người dùng về `/login`.
 
-Dữ liệu từ API được tải bằng TanStack React Query (`src/queries/`):
+Dữ liệu từ API được tải bằng TanStack React Query (các file `features/<module>/hooks/`):
 
 - Mỗi nhóm dữ liệu có một file hook (`useCategories`, `useTopic`, `useNotifications`...).
   Trang chỉ gọi hook, không tự viết `useEffect`, `AbortController` hay đếm số lần thử lại.
@@ -225,9 +249,9 @@ Dữ liệu từ API được tải bằng TanStack React Query (`src/queries/`)
 
 Trạng thái giao diện dùng chung nằm trong store Zustand:
 
-- `src/auth/authStore.ts`: người dùng hiện tại và access token.
-- `src/auth/authDialogStore.ts`: hộp thoại "Bạn cần đăng nhập". Chỉ có một hộp thoại, gắn một lần ở
-  `App.tsx` (`AuthRequiredDialogHost`). Component nào cần cũng gọi `openAuthDialog()`, không tự giữ
+- `src/features/auth/store/authStore.ts`: người dùng hiện tại và access token.
+- `src/features/auth/store/authDialogStore.ts`: hộp thoại "Bạn cần đăng nhập". Chỉ có một hộp thoại, gắn một lần ở
+  `app/App.tsx` (`AuthRequiredDialogHost`). Component nào cần cũng gọi `openAuthDialog()`, không tự giữ
   trạng thái mở/đóng. Hộp thoại tự đóng khi chuyển trang. `ProtectedRoute` vẫn dùng hộp thoại riêng vì
   khi đóng nó phải đưa người dùng về trang chủ.
 - Trạng thái chỉ một component dùng (menu đang mở, nội dung ô tìm kiếm, tour hướng dẫn) vẫn dùng

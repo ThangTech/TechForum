@@ -5,7 +5,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../../shared/api/client'
-import { createAnswer } from '../api/answers'
+import { useAnswerWrites } from '../hooks/answers'
 import type { Answer } from '../types/answers'
 import { ProfanityNotice } from '../../moderation/components/ProfanityNotice'
 import { useContentCheck } from '../../moderation/hooks/moderation'
@@ -22,6 +22,7 @@ interface AnswerFormProps {
 }
 
 export const AnswerForm = ({ parentAnswer, topicId, onCreated, onCancel }: AnswerFormProps) => {
+  const writes = useAnswerWrites()
   const [content, setContent] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,7 +42,7 @@ export const AnswerForm = ({ parentAnswer, topicId, onCreated, onCancel }: Answe
     setError(null)
     setIsSubmitting(true)
     try {
-      const answer = await createAnswer(topicId, toAnswerHtml(content), parentAnswer?.id)
+      const answer = await writes.create(topicId, toAnswerHtml(content), parentAnswer?.id)
       setContent('')
       onCreated(answer)
     } catch (requestError) {

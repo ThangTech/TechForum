@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getAnswers } from '../api/answers'
+import { acceptAnswer, createAnswer, deleteAnswer, getAnswers, setAnswerHelpful, updateAnswer } from '../api/answers'
 import type { AnswerSort } from '../types/answers'
 import { useUserScope, userKey } from '../../auth/hooks/userScope'
 
@@ -28,3 +28,14 @@ export const useAnswers = (topicId: string, params: AnswerPageParams) => {
     enabled: isReady,
   })
 }
+
+// The writes of answers (post, edit, delete, helpful, accept). The components of the discussion keep their own busy
+// and error states and update the list themselves, so the hook gives the calls as they are; a component never imports
+// from api/.
+export const useAnswerWrites = () => ({
+  create: createAnswer,
+  update: updateAnswer,
+  remove: deleteAnswer,
+  setHelpful: setAnswerHelpful,
+  accept: acceptAnswer,
+})

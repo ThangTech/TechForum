@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { RichHtml } from '../../../shared/components/RichHtml'
-import { deleteAnswer, setAnswerHelpful } from '../api/answers'
+import { useAnswerWrites } from '../hooks/answers'
 import type { Answer, AnswerHelpfulState, AnswerPage } from '../types/answers'
 import { setAnswerVote } from '../../interactions/api/votes'
 import type { VoteState } from '../../interactions/types/votes'
@@ -76,6 +76,7 @@ export const AnswerList = ({
   onReplyCreated,
   onUpdated,
 }: AnswerListProps) => {
+  const writes = useAnswerWrites()
   const { user } = useAuth()
   const [editing, setEditing] = useState<Answer | null>(null)
   const [deleting, setDeleting] = useState<Answer | null>(null)
@@ -107,7 +108,7 @@ export const AnswerList = ({
     setVotingAnswerId(answer.id)
     setActionError(null)
     try {
-      const helpful = await setAnswerHelpful(answer.topicId, answer.id, !answer.isHelpful)
+      const helpful = await writes.setHelpful(answer.topicId, answer.id, !answer.isHelpful)
       onHelpfulChanged(answer.id, helpful)
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401) onLoginRequired()
@@ -120,7 +121,7 @@ export const AnswerList = ({
   const confirmDelete = async () => {
     if (!deleting || isDeleting) return
     setIsDeleting(true); setActionError(null)
-    try { await deleteAnswer(deleting.topicId, deleting.id); onDeleted(deleting.id); setDeleting(null) }
+    try { await writes.remove(deleting.topicId, deleting.id); onDeleted(deleting.id); setDeleting(null) }
     catch (requestError) { setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể xóa câu trả lời.'); setDeleting(null) }
     finally { setIsDeleting(false) }
   }
