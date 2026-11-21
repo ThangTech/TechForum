@@ -1,0 +1,21 @@
+import { ApiError, apiRequest } from '../../../shared/api/client'
+import type { Tag } from '../types/tags'
+
+const isTag = (value: unknown): value is Tag => {
+  if (typeof value !== 'object' || value === null) return false
+  const tag = value as Record<string, unknown>
+  return (
+    typeof tag.id === 'string' &&
+    typeof tag.name === 'string' &&
+    typeof tag.slug === 'string' &&
+    (typeof tag.description === 'string' || tag.description === null)
+  )
+}
+
+export const getTags = async (signal?: AbortSignal): Promise<Tag[]> => {
+  const data: unknown = await apiRequest('/api/tags', { signal })
+  if (!Array.isArray(data) || !data.every(isTag)) {
+    throw new ApiError(500, 'Dữ liệu thẻ từ API không đúng định dạng.')
+  }
+  return data
+}

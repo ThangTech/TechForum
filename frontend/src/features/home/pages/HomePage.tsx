@@ -1,0 +1,305 @@
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
+import MenuItem from '@mui/material/MenuItem'
+import Stack from '@mui/material/Stack'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+import { useEffect, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import type { TopicType, QuestionStatus, TopicFeedMode } from '../../topics/types/topics'
+import { ApiError } from '../../../shared/api/client'
+import { useAuth } from '../../auth/hooks/authState'
+import { createAuthUrl } from '../../auth/utils/returnUrl'
+import { TagPanel } from '../components/TagPanel'
+import { TopicFeed } from '../../topics/components/TopicFeed'
+import { BannerSlider } from '../components/BannerSlider'
+import { CategoryChips } from '../components/CategoryChips'
+import { ExploreNav } from '../components/ExploreNav'
+import { HomeHero } from '../components/HomeHero'
+import { TechNewsSection } from '../components/TechNewsSection'
+import { HomeTour } from '../components/HomeTour'
+import { QuestionHighlightsPanel } from '../../topics/components/QuestionHighlightsPanel'
+import { useCategories } from '../../catalog/hooks/categories'
+import { getErrorMessage } from '../../../shared/query/errorMessage'
+import { useQuestionHighlights } from '../../topics/hooks/questionHighlights'
+import { describeFeed, feedTabs, getFeedSort, parseFeed, parseRange, topRanges } from '../utils/feedLogic'
+import { isInitialLoading } from '../../../shared/query/status'
+import { useTags } from '../../catalog/hooks/tags'
+import { useTopicFeed } from '../../topics/hooks/topics'
+import { isGuid } from '../../../shared/utils/ids'
+import { usePageParam } from '../../../shared/hooks/usePageParam'
+
+interface HomePageProps {
+  fixedType?: 'Article' | 'Question'
+  title?: string
+  description?: string
+  sort?: 'discussion'
+  showTour?: boolean
+  // Shows the banner slider and the technology news above the list (only on the first page without filters).
+  showHighlights?: boolean
+}
+
+// A category or a tag in the address (?categoryId=, ?tagId=) is a GUID; anything else is ignored.
+const readId = (value: string | null) => (isGuid(value) ? value.toLowerCase() : undefined)
+
+export const HomePage = ({
+  fixedType,
+  title = 'Cùng học hỏi, chia sẻ và làm chủ công nghệ.',
+  description = 'Khám phá các bài viết và câu hỏi mới nhất từ cộng đồng TechForum.',
+  sort,
+  showTour = false,
+  showHighlights = false,
+}: HomePageProps) => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const { user, isLoading: isAuthLoading } = useAuth()
+  const feedParam = searchParams.get('feed')
+  const feed: TopicFeedMode = sort ? 'latest' : parseFeed(feedParam)
+  const range = parseRange(searchParams.get('range'))
+  const page = usePageParam()
+  const categoryId = readId(searchParams.get('categoryId'))
+  const tagId = readId(searchParams.get('tagId'))
+  const keyword = searchParams.get('keyword')?.trim() ?? ''
+  const typeParam = searchParams.get('type')
+  const selectedType = fixedType ?? (typeParam === 'Article' || typeParam === 'Question' ? typeParam : undefined)
+  const statusParam = searchParams.get('questionStatus')
+  const questionStatus: QuestionStatus | undefined = selectedType !== 'Article' &&
+    (statusParam === 'unanswered' || statusParam === 'unsolved' || statusParam === 'solved') ? statusParam : undefined
+
+  const areHighlightsShown = showHighlights && feed === 'latest' && page === 1 &&
+    !categoryId && !tagId && !keyword && !questionStatus
+
+  const [areFiltersOpen, setAreFiltersOpen] = useState(() => window.matchMedia('(min-width: 761px)').matches)
+
+  const categoriesQuery = useCategories()
+  const tagsQuery = useTags()
+  const highlightsQuery = useQuestionHighlights()
+  const topicsQuery = useTopicFeed(feed, {
+    page,
+    pageSize: 10,
+    keyword: keyword || undefined,
+    type: selectedType,
+    categoryId,
+    tagId,
+    sort: getFeedSort(feed, sort),
+    range: feed === 'top' ? range : undefined,
+    questionStatus,
+  })
+
+  const categories = categoriesQuery.data ?? []
+  const tags = tagsQuery.data ?? []
+
+  // The "following" feed answers 401 for a guest. That is shown as "log in", not as an error.
+  const followingUnauthorized = feed === 'following' &&
+    topicsQuery.error instanceof ApiError && topicsQuery.error.status === 401
+  const topicError = followingUnauthorized ? null : getErrorMessage(topicsQuery.error)
+
+  // A page number past the last page (for example after a filter) goes back to the last page.
+  const lastPage = topicsQuery.data ? Math.max(1, topicsQuery.data.totalPages) : null
+  const isPageOutOfRange = lastPage !== null && page > lastPage
+  const topics = isPageOutOfRange ? null : topicsQuery.data ?? null
+  // The "following" feed waits for the login session before it can run.
+  const areTopicsLoading = isInitialLoading(topicsQuery) || isPageOutOfRange ||
+    (feed === 'following' && isAuthLoading)
+
+  useEffect(() => {
+    if (lastPage === null || page <= lastPage) return
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (lastPage === 1) next.delete('page')
+      else next.set('page', String(lastPage))
+      return next
+    }, { replace: true })
+  }, [lastPage, page, setSearchParams])
+
+  const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
+    const next = new URLSearchParams(searchParams)
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === '') next.delete(key)
+      else next.set(key, String(value))
+    })
+    setSearchParams(next)
+  }
+
+  const handleFilter = (key: 'categoryId' | 'tagId', value: string) => {
+    updateSearchParams({ [key]: value, page: undefined })
+  }
+
+  return (
+    <main className="main-area" id="main-content">
+      {showTour && <HomeTour />}
+      <div className="page-content">
+        <HomeHero title={title} description={description} />
+
+        <div className="content-grid">
+          <aside className="browse-filters" aria-label="Lọc nội dung">
+            <ExploreNav currentPath={location.pathname} />
+            <details open={areFiltersOpen} onToggle={(event) => setAreFiltersOpen(event.currentTarget.open)}>
+              <summary>Lọc theo thẻ</summary>
+              <TagPanel tags={tags} error={getErrorMessage(tagsQuery.error)}
+                isLoading={isInitialLoading(tagsQuery)}
+                onRetry={() => void tagsQuery.refetch()}
+                selectedId={tagId}
+                onSelect={(id) => updateSearchParams({ tagId: id === tagId ? undefined : id, page: undefined })} />
+            </details>
+          </aside>
+          <Box sx={{ minWidth: 0 }}>
+            {areHighlightsShown && (
+              <>
+                <BannerSlider />
+                <TechNewsSection />
+              </>
+            )}
+            {/* The anchor of the list: footer links such as "/articles?categoryId=1#topic-list" scroll here. */}
+            <Box id="topic-list" sx={{ scrollMarginTop: '16px' }} />
+            <CategoryChips
+              categories={categories}
+              error={getErrorMessage(categoriesQuery.error)}
+              isLoading={isInitialLoading(categoriesQuery)}
+              onRetry={() => void categoriesQuery.refetch()}
+              onSelect={(id) => updateSearchParams({ categoryId: id, page: undefined })}
+              selectedId={categoryId}
+            />
+            {!sort && (
+              <Tabs
+                aria-label="Bảng tin cộng đồng"
+                onChange={(_, value: TopicFeedMode) => updateSearchParams({ feed: value === 'latest' ? undefined : value, page: undefined })}
+                sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
+                value={feed}
+                variant="fullWidth"
+              >
+                {feedTabs.map(([value, label]) => (
+                  <Tab
+                    key={value}
+                    label={label}
+                    sx={{ color: 'text.secondary', '&.Mui-selected': { color: 'primary.main' } }}
+                    value={value}
+                  />
+                ))}
+              </Tabs>
+            )}
+            <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
+              <Typography color="text.secondary" variant="body2">{sort === 'discussion'
+                ? 'Theo phản hồi mới nhất (gồm chỉnh sửa)'
+                : describeFeed(feed, range)}</Typography>
+              {feed === 'top' && (
+                <TextField
+                  fullWidth={false}
+                  label="Khoảng thời gian"
+                  onChange={(event) => updateSearchParams({ range: parseRange(event.target.value), page: undefined })}
+                  select
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ minWidth: 170 }}
+                  value={range}
+                >
+                  {topRanges.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+                </TextField>
+              )}
+              {!fixedType && (
+                <TextField
+                  fullWidth={false}
+                  label="Loại nội dung"
+                  onChange={(event) => updateSearchParams({ type: event.target.value, questionStatus: undefined, page: undefined })}
+                  select
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
+                  sx={{ minWidth: 160 }}
+                  value={selectedType ?? ''}
+                >
+                  <MenuItem value="">Tất cả</MenuItem>
+                  <MenuItem value="Article">Bài viết</MenuItem>
+                  <MenuItem value="Question">Câu hỏi</MenuItem>
+                </TextField>
+              )}
+              {selectedType !== 'Article' && (
+                <TextField
+                  fullWidth={false}
+                  label="Trạng thái hỏi đáp"
+                  onChange={(event) => updateSearchParams({ questionStatus: event.target.value, page: undefined })}
+                  select
+                  size="small"
+                  slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
+                  sx={{ minWidth: 230, maxWidth: '100%' }}
+                  value={questionStatus ?? ''}
+                >
+                  <MenuItem value="">Tất cả</MenuItem>
+                  <MenuItem value="unanswered">Chưa có trả lời</MenuItem>
+                  <MenuItem value="unsolved">Có trả lời, chưa giải quyết</MenuItem>
+                  <MenuItem value="solved">Đã giải quyết</MenuItem>
+                </TextField>
+              )}
+            </Stack>
+            {(categoryId || tagId || keyword || questionStatus) && (
+              <Stack aria-label="Bộ lọc đang áp dụng" direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                {keyword && <Typography component="span" variant="body2">Từ khóa: “{keyword}”</Typography>}
+                {categoryId && (
+                  <Chip
+                    clickable
+                    label={`Bỏ chuyên mục: ${categories.find((item) => item.id === categoryId)?.name ?? categoryId}`}
+                    onClick={() => updateSearchParams({ categoryId: undefined, page: undefined })}
+                    onDelete={() => updateSearchParams({ categoryId: undefined, page: undefined })}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+                {tagId && (
+                  <Chip
+                    clickable
+                    label={`Bỏ thẻ: ${tags.find((item) => item.id === tagId)?.name ?? tagId}`}
+                    onClick={() => updateSearchParams({ tagId: undefined, page: undefined })}
+                    onDelete={() => updateSearchParams({ tagId: undefined, page: undefined })}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+                {questionStatus && (
+                  <Chip
+                    clickable
+                    label="Bỏ trạng thái hỏi đáp"
+                    onClick={() => updateSearchParams({ questionStatus: undefined, page: undefined })}
+                    onDelete={() => updateSearchParams({ questionStatus: undefined, page: undefined })}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+                <Button
+                  onClick={() => updateSearchParams({ keyword: undefined, categoryId: undefined, tagId: undefined, questionStatus: undefined, page: undefined })}
+                  size="small"
+                  sx={{ textDecoration: 'underline' }}
+                >Xóa bộ lọc</Button>
+              </Stack>
+            )}
+          <TopicFeed
+            key={keyword}
+            data={topics}
+            error={topicError}
+            isLoading={areTopicsLoading}
+            onFilter={handleFilter}
+            onPageChange={(nextPage) => updateSearchParams({ page: nextPage <= 1 ? undefined : nextPage })}
+            onRetry={() => void topicsQuery.refetch()}
+            selectedType={selectedType?.toLowerCase() as TopicType | undefined}
+            isDiscussion={sort === 'discussion'}
+            feed={feed}
+            requiresLogin={feed === 'following' && !isAuthLoading && (!user || followingUnauthorized)}
+            loginUrl={createAuthUrl('/login', `${location.pathname}${location.search}`)}
+            onShowLatest={() => updateSearchParams({ feed: undefined, page: undefined })}
+          />
+          </Box>
+
+          <aside className="browse-questions" aria-label="Câu hỏi cộng đồng">
+            <QuestionHighlightsPanel
+              data={highlightsQuery.data ?? null}
+              error={getErrorMessage(highlightsQuery.error, 'Không thể tải câu hỏi nổi bật.')}
+              isLoading={isInitialLoading(highlightsQuery)}
+              onRetry={() => void highlightsQuery.refetch()}
+            />
+          </aside>
+        </div>
+      </div>
+    </main>
+  )
+}

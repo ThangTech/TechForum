@@ -1,0 +1,75 @@
+import type { AdminReport } from '../../reports/types/reports'
+import { reportReasonLabels, reportStatusLabels } from '../utils/reportLabels'
+import { StatusBadge, type BadgeTone } from './StatusBadge'
+import TableCell from '@mui/material/TableCell'
+import Typography from '@mui/material/Typography'
+import TableRow from '@mui/material/TableRow'
+
+const getReportTone = (status: AdminReport['status']): BadgeTone => {
+  if (status === 'pending') return 'amber'
+  if (status === 'accepted') return 'green'
+  return 'neutral'
+}
+
+export const ReportReviewCard = ({
+  report,
+  onResolve,
+  onPreview,
+}: {
+  report: AdminReport
+  onResolve: (report: AdminReport, decision: 'accepted' | 'rejected') => void
+  onPreview: (report: AdminReport) => void
+}) => (
+  <TableRow>
+    <TableCell>
+      <button
+        className="admin-table-primary admin-table-link"
+        onClick={() => onPreview(report)}
+        type="button"
+      >
+        {report.targetTitle}
+      </button>
+      <span className="admin-table-secondary">
+        Báo cáo #{report.id} · {report.targetType === 'topic' ? 'Chủ đề' : 'Câu trả lời'}
+      </span>
+    </TableCell>
+    <TableCell>
+      {reportReasonLabels[report.reason]}
+      {report.details && (
+        <Typography
+          className="admin-table-secondary"
+          sx={{ maxWidth: 240, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+        >
+          {report.details}
+        </Typography>
+      )}
+    </TableCell>
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reporter.displayName}</TableCell>
+    <TableCell>
+      <StatusBadge tone={getReportTone(report.status)}>
+        {reportStatusLabels[report.status]}
+      </StatusBadge>
+      {report.resolvedBy && <span className="admin-table-secondary">{report.resolvedBy.displayName}</span>}
+    </TableCell>
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+      {new Date(report.createdAtUtc).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+    </TableCell>
+    <TableCell>
+      <div className="admin-table-actions">
+        <button onClick={() => onPreview(report)} type="button">
+          Xem chi tiết
+        </button>
+        {report.status === 'pending' && (
+          <>
+            <button onClick={() => onResolve(report, 'accepted')} type="button">
+              Chấp nhận
+            </button>
+            <button onClick={() => onResolve(report, 'rejected')} type="button">
+              Bác bỏ
+            </button>
+          </>
+        )}
+      </div>
+    </TableCell>
+  </TableRow>
+)
