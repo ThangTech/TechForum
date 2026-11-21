@@ -4,113 +4,38 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import { useState } from 'react'
-import type { AdminBanner, SaveBannerInput } from '../types/adminBanners'
-import { ApiError } from '../../../shared/api/client'
+import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
+import { ConfirmDialog } from '../../../shared/feedback/ConfirmDialog'
 import { AdminEmptyState } from '../components/AdminEmptyState'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminPageHeading } from '../components/AdminPageHeading'
 import { BannerAdminCard } from '../components/BannerAdminCard'
 import { BannerFormDialog } from '../components/BannerFormDialog'
-import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
-import { ConfirmDialog } from '../../../shared/feedback/ConfirmDialog'
-import {
-  useAdminBanners,
-  useDeleteAdminBanner,
-  useSaveAdminBanner,
-  useToggleAdminBanner,
-  useUploadAdminBannerImage,
-} from '../hooks/admin'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { isInitialLoading } from '../../../shared/query/status'
+import { useAdminBannersPage } from '../hooks/useAdminBannersPage'
 
 export const AdminBannersPage = () => {
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [editing, setEditing] = useState<AdminBanner | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [deleting, setDeleting] = useState<AdminBanner | null>(null)
-
-  const bannersQuery = useAdminBanners()
-  const saveMutation = useSaveAdminBanner(editing?.id ?? null)
-  const toggleMutation = useToggleAdminBanner()
-  const deleteMutation = useDeleteAdminBanner()
-  const uploadMutation = useUploadAdminBannerImage()
-  const banners = bannersQuery.data ?? []
-  const isLoading = isInitialLoading(bannersQuery)
-  const error = getErrorMessage(bannersQuery.error, 'Không thể tải danh sách banner.')
-  const isSaving = saveMutation.isPending
-  const busyId = toggleMutation.isPending ? toggleMutation.variables.id : null
-
-  const openForm = (banner: AdminBanner | null) => {
-    setEditing(banner)
-    setActionError(null)
-    setIsFormOpen(true)
-  }
-
-  const save = async (input: SaveBannerInput) => {
-    if (isSaving) return
-    setActionError(null)
-    setSuccessMessage(null)
-    try {
-      // The list and the slider of the home page load again after the save.
-      await saveMutation.mutateAsync(input)
-      setSuccessMessage(editing ? 'Đã cập nhật banner.' : 'Đã thêm banner.')
-      setIsFormOpen(false)
-    } catch (requestError) {
-      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể lưu banner.')
-    }
-  }
-
-  const toggleActive = async (banner: AdminBanner) => {
-    if (busyId !== null) return
-    setActionError(null)
-    setSuccessMessage(null)
-    try {
-      const updated = await toggleMutation.mutateAsync(banner)
-      setSuccessMessage(updated.isActive ? 'Đã bật banner.' : 'Đã tắt banner, banner không còn hiện ở trang chủ.')
-    } catch (requestError) {
-      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể đổi trạng thái banner.')
-    }
-  }
-
-  const confirmDelete = async () => {
-    if (!deleting || deleteMutation.isPending) return
-    setActionError(null)
-    setSuccessMessage(null)
-    try {
-      await deleteMutation.mutateAsync(deleting)
-      setSuccessMessage('Đã xóa banner.')
-    } catch (requestError) {
-      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể xóa banner.')
-    } finally {
-      setDeleting(null)
-    }
-  }
+  const view = useAdminBannersPage()
+  const { form, removal } = view
+  const isReady = !view.isLoading && !view.error
 
   return (
     <section className="admin-page">
       <div>
         <AdminPageHeading
-          actions={<Button onClick={() => openForm(null)} variant="contained">Thêm banner</Button>}
+          actions={<Button onClick={() => form.open(null)} variant="contained">Thêm banner</Button>}
           description="Các ảnh trượt ở đầu trang chủ. Banner chỉ hiện khi đang bật và nằm trong khoảng thời gian đã đặt."
           eyebrow="Quản trị giao diện"
           title="Banner trang chủ"
         />
 
-        <AdminFeedback error={isFormOpen ? null : actionError} success={successMessage} />
+        <AdminFeedback error={view.feedback.error} success={view.feedback.success} />
 
         <div>
-          <AsyncStatePanel
-            error={error}
-            isLoading={isLoading}
-            loadingText="Đang tải banner…"
-            onRetry={() => void bannersQuery.refetch()}
-          />
-          {!isLoading && !error && banners.length === 0 && (
+          <AsyncStatePanel error={view.error} isLoading={view.isLoading} loadingText="Đang tải banner…" onRetry={view.retry} />
+          {isReady && view.banners.length === 0 && (
             <AdminEmptyState>Chưa có banner nào. Bấm "Thêm banner" để tạo banner đầu tiên.</AdminEmptyState>
           )}
-          {!isLoading && !error && banners.length > 0 && (
+          {isReady && view.banners.length > 0 && (
             <div className="admin-table-scroll">
               <Table className="admin-table" size="small">
                 <caption className="sr-only">Danh sách banner trang chủ</caption>
@@ -125,14 +50,14 @@ export const AdminBannersPage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {banners.map((banner) => (
+                  {view.banners.map((banner) => (
                     <BannerAdminCard
                       banner={banner}
-                      busyId={busyId}
+                      busyId={view.busyId}
                       key={banner.id}
-                      onDelete={setDeleting}
-                      onEdit={openForm}
-                      onToggleActive={(item) => void toggleActive(item)}
+                      onDelete={removal.ask}
+                      onEdit={form.open}
+                      onToggleActive={(item) => void view.toggleActive(item)}
                     />
                   ))}
                 </TableBody>
@@ -142,26 +67,23 @@ export const AdminBannersPage = () => {
         </div>
       </div>
 
-      {isFormOpen && (
+      {form.isOpen && (
         <BannerFormDialog
-          banner={editing}
-          isBusy={isSaving}
-          onClose={() => {
-            setActionError(null)
-            setIsFormOpen(false)
-          }}
-          onSubmit={(input) => void save(input)}
-          onUploadImage={(file) => uploadMutation.mutateAsync(file)}
-          requestError={actionError}
+          banner={form.editing}
+          isBusy={form.isSaving}
+          onClose={form.close}
+          onSubmit={(input) => void form.save(input)}
+          onUploadImage={form.uploadImage}
+          requestError={form.error}
         />
       )}
       <ConfirmDialog
         confirmLabel="Xóa banner"
-        description={`Banner "${deleting?.title ?? ''}" sẽ bị xóa cùng ảnh của nó. Việc này không hoàn tác được. Nếu chỉ muốn tạm ẩn, hãy dùng nút Tắt.`}
-        isBusy={deleteMutation.isPending}
-        isOpen={deleting !== null}
-        onCancel={() => setDeleting(null)}
-        onConfirm={() => void confirmDelete()}
+        description={`Banner "${removal.banner?.title ?? ''}" sẽ bị xóa cùng ảnh của nó. Việc này không hoàn tác được. Nếu chỉ muốn tạm ẩn, hãy dùng nút Tắt.`}
+        isBusy={removal.isBusy}
+        isOpen={removal.banner !== null}
+        onCancel={removal.cancel}
+        onConfirm={() => void removal.confirm()}
         title="Xóa banner này?"
       />
     </section>

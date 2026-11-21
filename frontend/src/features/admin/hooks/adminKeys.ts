@@ -51,3 +51,10 @@ export const useInvalidateAdminData = () => {
 
   return () => queryClient.invalidateQueries({ queryKey: adminKeys.all(scope) })
 }
+
+// The administration pages are only opened by signed-in administrators. Their data waits for the
+// session restore, like all data of one user.
+export const useAdminQueryState = () => {
+  const { scope, isReady, isSignedIn } = useUserScope()
+  return { scope, isEnabled: isReady && isSignedIn }
+}

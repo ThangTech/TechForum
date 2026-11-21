@@ -1,64 +1,19 @@
 import Button from '@mui/material/Button'
-import { useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { AdminPagination } from '../components/AdminPagination'
-import { AuditLogList } from '../components/AuditLogList'
-import { auditActionLabels } from '../utils/auditActionLabels'
+import TextField from '@mui/material/TextField'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
 import { AdminEmptyState } from '../components/AdminEmptyState'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminPageHeading } from '../components/AdminPageHeading'
-import { useAdminAuditLogs, useAdministrators } from '../hooks/admin'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { isInitialLoading } from '../../../shared/query/status'
-import TextField from '@mui/material/TextField'
-import { usePageParam } from '../../../shared/hooks/usePageParam'
+import { AdminPagination } from '../components/AdminPagination'
+import { AuditLogList } from '../components/AuditLogList'
+import { useAdminAuditPage } from '../hooks/useAdminAuditPage'
+import { auditActionLabels } from '../utils/auditActionLabels'
 
 export const AdminAuditPage = () => {
-  const [params, setParams] = useSearchParams()
-  const page = usePageParam()
-  const keyword = params.get('keyword') ?? ''
-  const action = params.get('action') ?? ''
-  const from = params.get('from') ?? ''
-  const to = params.get('to') ?? ''
-  const administratorId = params.get('administratorId') ?? ''
-  const [validationError, setValidationError] = useState<string | null>(null)
+  const view = useAdminAuditPage()
+  const { administrators, data } = view
+  const { keyword, action, administratorId, from, to } = view.filters
 
-  const administratorsQuery = useAdministrators()
-  const auditQuery = useAdminAuditLogs({ page, pageSize: 15, keyword, action, administratorId, from, to })
-  const administrators = administratorsQuery.data ?? []
-  const administratorError = administratorsQuery.error
-    ? 'Không thể tải bộ lọc quản trị viên. Bạn vẫn có thể tìm theo tên trong ô tìm kiếm.'
-    : null
-  const data = auditQuery.data ?? null
-  const isLoading = isInitialLoading(auditQuery)
-  const error = getErrorMessage(auditQuery.error, 'Không thể tải nhật ký quản trị.')
-
-  const retry = () => {
-    if (administratorsQuery.error) void administratorsQuery.refetch()
-    void auditQuery.refetch()
-  }
-  const filter = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const fields = new FormData(event.currentTarget)
-    const next = new URLSearchParams()
-    for (const key of ['keyword', 'action', 'administratorId', 'from', 'to']) {
-      const value = String(fields.get(key) ?? '').trim()
-      if (value) next.set(key, value)
-    }
-    if (next.get('from') && next.get('to') && String(next.get('from')) > String(next.get('to'))) {
-      setValidationError('Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.')
-      return
-    }
-    setValidationError(null)
-    setParams(next)
-  }
-  const changePage = (value: number) => {
-    const next = new URLSearchParams(params)
-    if (value > 1) next.set('page', String(value))
-    else next.delete('page')
-    setParams(next)
-  }
   return (
     <section className="admin-page">
       <AdminPageHeading
@@ -69,7 +24,7 @@ export const AdminAuditPage = () => {
       <form
         className="admin-toolbar"
         key={`${keyword}-${action}-${administratorId}-${from}-${to}`}
-        onSubmit={filter}
+        onSubmit={view.submitFilters}
       >
         <TextField size="small" label="Tìm kiếm" defaultValue={keyword} name="keyword" placeholder="Tên quản trị viên, đối tượng hoặc lý do" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
         <TextField size="small" label="Quản trị viên" defaultValue={administratorId} name="administratorId" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
@@ -94,31 +49,18 @@ export const AdminAuditPage = () => {
         <TextField size="small" label="Từ ngày" defaultValue={from} name="from" type="date" slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 150 }} />
         <TextField size="small" label="Đến ngày" defaultValue={to} name="to" type="date" slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 150 }} />
         <Button type="submit" variant="contained">Lọc nhật ký</Button>
-        <Button
-          onClick={() => {
-            setParams({})
-            setValidationError(null)
-          }}
-          variant="text"
-        >
-          Xóa lọc
-        </Button>
+        <Button onClick={view.clearFilters} variant="text">Xóa lọc</Button>
       </form>
-      <AdminFeedback error={validationError} info={administratorError} />
-      <AsyncStatePanel
-        error={error}
-        isLoading={isLoading}
-        loadingText="Đang tải nhật ký…"
-        onRetry={retry}
-      />
-      {!isLoading && !error && data && (
+      <AdminFeedback error={view.validationError} info={view.administratorError} />
+      <AsyncStatePanel error={view.error} isLoading={view.isLoading} loadingText="Đang tải nhật ký…" onRetry={view.retry} />
+      {!view.isLoading && !view.error && data && (
         <>
           {data.items.length ? (
             <AuditLogList items={data.items} />
           ) : (
             <AdminEmptyState>Không có thao tác phù hợp với bộ lọc.</AdminEmptyState>
           )}
-          <AdminPagination {...data} onChange={changePage} />
+          <AdminPagination {...data} onChange={view.changePage} />
         </>
       )}
     </section>

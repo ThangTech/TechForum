@@ -1,100 +1,25 @@
 import Button from '@mui/material/Button'
-import { useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import type { AdminTopic, ModerationAction, TopicVisibility } from '../types/adminTopics'
-import { ApiError } from '../../../shared/api/client'
-import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
-import { AdminEmptyState } from '../components/AdminEmptyState'
-import { AdminFeedback } from '../components/AdminFeedback'
-import { AdminPageHeading } from '../components/AdminPageHeading'
-import { TopicModerationCard } from '../components/TopicModerationCard'
-import { AdminPagination } from '../components/AdminPagination'
-import { TopicPreviewDialog } from '../components/TopicPreviewDialog'
-import { TopicModerationDialog } from '../components/TopicModerationDialog'
-import { useAdminTopics, useModerateTopic } from '../hooks/admin'
-import { useCategories } from '../../catalog/hooks/categories'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { isInitialLoading } from '../../../shared/query/status'
-import TextField from '@mui/material/TextField'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import { isGuid } from '../../../shared/utils/ids'
-import { usePageParam } from '../../../shared/hooks/usePageParam'
-
-const PAGE_SIZE = 10
-const readVisibility = (value: string | null): TopicVisibility =>
-  value === 'visible' || value === 'draft' || value === 'hidden' || value === 'deleted' ? value : ''
+import TextField from '@mui/material/TextField'
+import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
+import { AdminEmptyState } from '../components/AdminEmptyState'
+import { AdminFeedback } from '../components/AdminFeedback'
+import { AdminPageHeading } from '../components/AdminPageHeading'
+import { AdminPagination } from '../components/AdminPagination'
+import { TopicModerationCard } from '../components/TopicModerationCard'
+import { TopicModerationDialog } from '../components/TopicModerationDialog'
+import { TopicPreviewDialog } from '../components/TopicPreviewDialog'
+import { useAdminTopicsPage } from '../hooks/useAdminTopicsPage'
 
 export const AdminTopicsPage = () => {
-  const [params, setParams] = useSearchParams()
-  const page = usePageParam()
-  const keyword = params.get('keyword')?.trim() ?? ''
-  const type =
-    params.get('type') === 'article' || params.get('type') === 'question'
-      ? (params.get('type') as 'article' | 'question')
-      : ''
-  const visibility = readVisibility(params.get('visibility'))
-  const categoryValue = params.get('categoryId')
-  const categoryId = isGuid(categoryValue) ? categoryValue.toLowerCase() : undefined
-  const [previewId, setPreviewId] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [selected, setSelected] = useState<{ topic: AdminTopic; action: ModerationAction } | null>(null)
-
-  const topicsQuery = useAdminTopics({ keyword, type, visibility, categoryId, page, pageSize: PAGE_SIZE })
-  const categoriesQuery = useCategories()
-  const moderateMutation = useModerateTopic()
-  const data = topicsQuery.data ?? null
-  const categories = categoriesQuery.data ?? []
-  const isLoading = isInitialLoading(topicsQuery) || isInitialLoading(categoriesQuery)
-  const error = getErrorMessage(topicsQuery.error, 'Không thể tải nội dung kiểm duyệt.') ??
-    getErrorMessage(categoriesQuery.error, 'Không thể tải nội dung kiểm duyệt.')
-  const isSaving = moderateMutation.isPending
-
-  const retry = () => {
-    if (topicsQuery.error) void topicsQuery.refetch()
-    if (categoriesQuery.error) void categoriesQuery.refetch()
-  }
-
-  const update = (changes: Record<string, string>, resetPage = true) => {
-    const next = new URLSearchParams(params)
-    Object.entries(changes).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)))
-    if (resetPage) next.delete('page')
-    setParams(next)
-  }
-  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const fields = new FormData(event.currentTarget)
-    update({
-      keyword: String(fields.get('keyword') ?? '').trim(),
-      type: String(fields.get('type') ?? ''),
-      visibility: String(fields.get('visibility') ?? ''),
-      categoryId: String(fields.get('categoryId') ?? ''),
-    })
-  }
-  const apply = async (reason: string, categoryId?: string) => {
-    if (!selected || isSaving) return
-    setActionError(null)
-    setSuccess(null)
-    try {
-      // The list loads again after the change.
-      await moderateMutation.mutateAsync({
-        topicId: selected.topic.id,
-        action: selected.action,
-        reason,
-        categoryId,
-      })
-      setSuccess('Đã cập nhật trạng thái nội dung và ghi nhật ký quản trị.')
-      setSelected(null)
-    } catch (requestError) {
-      setActionError(
-        requestError instanceof ApiError ? requestError.message : 'Không thể kiểm duyệt nội dung.',
-      )
-    }
-  }
+  const view = useAdminTopicsPage()
+  const { categories, data, filters, moderation, preview } = view
+  const { keyword, type, visibility, categoryId } = filters
+  const isReady = !view.isLoading && !view.error
 
   return (
     <section className="admin-page">
@@ -107,7 +32,7 @@ export const AdminTopicsPage = () => {
         <form
           className="admin-toolbar"
           key={`${keyword}-${type}-${visibility}-${categoryId ?? ''}`}
-          onSubmit={submitSearch}
+          onSubmit={view.submitFilters}
         >
           <TextField size="small" label="Tìm nội dung" defaultValue={keyword} name="keyword" placeholder="Tìm theo tiêu đề" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
           <TextField size="small" label="Loại nội dung" defaultValue={type} name="type" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
@@ -134,20 +59,15 @@ export const AdminTopicsPage = () => {
               ))}
             </TextField>
           <Button type="submit" variant="contained">Lọc nội dung</Button>
-          <Button onClick={() => setParams({})} variant="text">Xóa lọc</Button>
+          <Button onClick={view.clearFilters} variant="text">Xóa lọc</Button>
         </form>
-        <AdminFeedback error={selected ? null : actionError} success={success} />
+        <AdminFeedback error={view.feedback.error} success={view.feedback.success} />
         <div>
-          <AsyncStatePanel
-            error={error}
-            isLoading={isLoading}
-            loadingText="Đang tải nội dung…"
-            onRetry={retry}
-          />
-          {!isLoading && !error && data?.items.length === 0 && (
+          <AsyncStatePanel error={view.error} isLoading={view.isLoading} loadingText="Đang tải nội dung…" onRetry={view.retry} />
+          {isReady && data?.items.length === 0 && (
             <AdminEmptyState>Không có nội dung phù hợp.</AdminEmptyState>
           )}
-          {!isLoading && !error && data && data.items.length > 0 && (
+          {isReady && data && data.items.length > 0 && (
             <div className="admin-table-scroll">
               <Table className="admin-table" size="small">
                 <caption className="sr-only">Danh sách nội dung kiểm duyệt</caption>
@@ -165,11 +85,8 @@ export const AdminTopicsPage = () => {
                   {data.items.map((topic) => (
                     <TopicModerationCard
                       key={topic.id}
-                      onAction={(action) => {
-                        setActionError(null)
-                        setSelected({ topic, action })
-                      }}
-                      onPreview={() => setPreviewId(topic.id)}
+                      onAction={(action) => moderation.choose(topic, action)}
+                      onPreview={() => preview.open(topic.id)}
                       topic={topic}
                     />
                   ))}
@@ -177,25 +94,22 @@ export const AdminTopicsPage = () => {
               </Table>
             </div>
           )}
-          {!isLoading && !error && data && (
-            <AdminPagination {...data} onChange={(nextPage) => update({ page: String(nextPage) }, false)} />
+          {isReady && data && (
+            <AdminPagination {...data} onChange={view.changePage} />
           )}
         </div>
       </div>
-      {previewId !== null && (
-        <TopicPreviewDialog key={previewId} onClose={() => setPreviewId(null)} topicId={previewId} />
+      {preview.topicId !== null && (
+        <TopicPreviewDialog key={preview.topicId} onClose={preview.close} topicId={preview.topicId} />
       )}
-      {selected && (
+      {moderation.selected && (
         <TopicModerationDialog
-          action={selected.action}
-          categories={categories.filter((category) => category.id !== selected.topic.category.id)}
-          isBusy={isSaving}
-          onClose={() => {
-            setActionError(null)
-            setSelected(null)
-          }}
-          onConfirm={(reason, categoryId) => void apply(reason, categoryId)}
-          requestError={actionError}
+          action={moderation.selected.action}
+          categories={categories.filter((category) => category.id !== moderation.selected?.topic.category.id)}
+          isBusy={moderation.isBusy}
+          onClose={moderation.close}
+          onConfirm={(reason, newCategoryId) => void moderation.confirm(reason, newCategoryId)}
+          requestError={moderation.error}
         />
       )}
     </section>

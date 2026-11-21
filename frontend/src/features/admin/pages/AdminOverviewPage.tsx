@@ -14,144 +14,22 @@ import { BarChart } from '@mui/x-charts/BarChart'
 import { LineChart } from '@mui/x-charts/LineChart'
 import { PieChart } from '@mui/x-charts/PieChart'
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart'
-import { useState, type FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/appRoutes'
 import { AuditLogList } from '../components/AuditLogList'
 import { StatusBadge } from '../components/StatusBadge'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
 import { AdminEmptyState } from '../components/AdminEmptyState'
 import { AdminFeedback } from '../components/AdminFeedback'
-import { useAdminDashboard } from '../hooks/admin'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { isInitialLoading } from '../../../shared/query/status'
+import { useAdminOverviewPage } from '../hooks/useAdminOverviewPage'
+import { chartColors } from '../utils/dashboardCards'
 
-// Màu biểu đồ khớp với palette trong DESIGN.md: bài viết xanh dương, câu hỏi hổ phách, trả lời xanh lá.
-const chartColors = {
-  article: '#1463d6',
-  question: '#b45309',
-  answer: '#15803d',
-  member: '#7c3aed',
-  warning: '#b45309',
-}
-
-const today = () =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
-const daysBefore = (date: string, count: number) => {
-  const value = new Date(`${date}T12:00:00Z`)
-  value.setUTCDate(value.getUTCDate() - count)
-  return value.toISOString().slice(0, 10)
-}
-const readDate = (value: string | null, fallback: string) =>
-  value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime()) ? value : fallback
 const numberFormat = new Intl.NumberFormat('vi-VN')
 const shortDate = (date: string) => date.slice(5).split('-').reverse().join('/')
 
-interface StatCard {
-  label: string
-  value: number
-  period: number | null
-  suffix: string
-  color: string
-  trend: number[] | null
-}
-
 export const AdminOverviewPage = () => {
-  const [params, setParams] = useSearchParams()
-  const endDate = readDate(params.get('endDate'), today())
-  const startDate = readDate(params.get('startDate'), daysBefore(endDate, 29))
-  const [validationError, setValidationError] = useState<string | null>(null)
-  const dashboardQuery = useAdminDashboard(startDate, endDate)
-  const dashboard = dashboardQuery.data ?? null
-  const isLoading = isInitialLoading(dashboardQuery)
-  const error = getErrorMessage(dashboardQuery.error, 'Không thể tải tổng quan quản trị.')
-
-  const setRange = (days: number) => {
-    const end = today()
-    setValidationError(null)
-    setParams({ startDate: daysBefore(end, days - 1), endDate: end })
-  }
-  const applyRange = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const values = new FormData(event.currentTarget)
-    const from = String(values.get('startDate'))
-    const to = String(values.get('endDate'))
-    if (from > to) {
-      setValidationError('Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.')
-      return
-    }
-    if ((new Date(to).getTime() - new Date(from).getTime()) / 86400000 > 365) {
-      setValidationError('Vui lòng chọn tối đa 366 ngày.')
-      return
-    }
-    setValidationError(null)
-    setParams({ startDate: from, endDate: to })
-  }
-
-  const activeRange = (() => {
-    if (endDate !== today()) return null
-    if (startDate === daysBefore(endDate, 6)) return 7
-    if (startDate === daysBefore(endDate, 29)) return 30
-    return null
-  })()
-
-  const stats: StatCard[] = dashboard
-    ? [
-        {
-          label: 'Tổng thành viên',
-          value: dashboard.totals.accountCount,
-          period: dashboard.period.newMemberCount,
-          suffix: 'thành viên mới',
-          color: chartColors.member,
-          trend: dashboard.activitySeries.map((item) => item.newMemberCount),
-        },
-        {
-          label: 'Bài viết công khai',
-          value: dashboard.totals.publishedArticleCount,
-          period: dashboard.period.articleCount,
-          suffix: 'bài viết trong kỳ',
-          color: chartColors.article,
-          trend: dashboard.activitySeries.map((item) => item.articleCount),
-        },
-        {
-          label: 'Câu hỏi công khai',
-          value: dashboard.totals.publishedQuestionCount,
-          period: dashboard.period.questionCount,
-          suffix: 'câu hỏi trong kỳ',
-          color: chartColors.question,
-          trend: dashboard.activitySeries.map((item) => item.questionCount),
-        },
-        {
-          label: 'Câu trả lời công khai',
-          value: dashboard.totals.visibleAnswerCount,
-          period: dashboard.period.answerCount,
-          suffix: 'câu trả lời trong kỳ',
-          color: chartColors.answer,
-          trend: dashboard.activitySeries.map((item) => item.answerCount),
-        },
-        {
-          label: 'Báo cáo chờ xử lý',
-          value: dashboard.totals.pendingReportCount,
-          period: null,
-          suffix: 'Cần quản trị viên xem xét',
-          color: chartColors.warning,
-          trend: null,
-        },
-      ]
-    : []
-
-  const questionSlices = dashboard
-    ? [
-        { id: 0, label: 'Chưa có câu trả lời', value: dashboard.questions.unansweredCount, color: '#cb8a36' },
-        { id: 1, label: 'Có trả lời, chưa giải quyết', value: dashboard.questions.unsolvedCount, color: '#4b79bc' },
-        { id: 2, label: 'Đã có đáp án được chấp nhận', value: dashboard.questions.solvedCount, color: '#4b9271' },
-      ]
-    : []
+  const view = useAdminOverviewPage()
+  const { dashboard, endDate, questionSlices, startDate, stats } = view
 
   return (
     <section className="admin-page">
@@ -161,13 +39,13 @@ export const AdminOverviewPage = () => {
           <Typography component="h1" sx={{ fontWeight: 800 }}>Tổng quan diễn đàn</Typography>
           <p className="admin-page-description">Theo dõi đóng góp của cộng đồng và công việc cần xử lý.</p>
         </div>
-        <form className="admin-date-toolbar" key={`${startDate}-${endDate}`} onSubmit={applyRange}>
+        <form className="admin-date-toolbar" key={`${startDate}-${endDate}`} onSubmit={view.applyRange}>
           <ToggleButtonGroup
             aria-label="Khoảng thời gian nhanh"
             exclusive
-            onChange={(_, days: number | null) => days && setRange(days)}
+            onChange={(_, days: number | null) => days && view.setRange(days)}
             size="small"
-            value={activeRange}
+            value={view.activeRange}
           >
             <ToggleButton value={7}>7 ngày</ToggleButton>
             <ToggleButton value={30}>30 ngày</ToggleButton>
@@ -193,16 +71,16 @@ export const AdminOverviewPage = () => {
           <Button type="submit" variant="outlined">Áp dụng</Button>
         </form>
       </div>
-      <AdminFeedback error={validationError} />
+      <AdminFeedback error={view.validationError} />
       <Box sx={{ mt: 3 }}>
         <AsyncStatePanel
-          error={error}
-          isLoading={isLoading}
+          error={view.error}
+          isLoading={view.isLoading}
           loadingText="Đang tải dữ liệu tổng quan…"
-          onRetry={() => void dashboardQuery.refetch()}
+          onRetry={view.retry}
         />
       </Box>
-      {!isLoading && !error && dashboard && (
+      {!view.isLoading && !view.error && dashboard && (
         <>
           <section aria-label="Số liệu diễn đàn" className="admin-stats-grid">
             {stats.map((item) => (
