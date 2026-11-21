@@ -5,7 +5,7 @@ import MuiLink from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import type { ReportReason, ReportStatus } from '../types/reports'
 import { StatusBadge, type BadgeTone } from '../../admin/components/StatusBadge'
 import { EmptyPanel } from '../../../shared/components/EmptyPanel'
@@ -15,10 +15,7 @@ import { Pager } from '../../../shared/components/Pager'
 import { Panel } from '../../../shared/components/Panel'
 import { PanelList } from '../../../shared/components/PanelList'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { useMyReports } from '../hooks/reports'
-import { isInitialLoading } from '../../../shared/query/status'
-import { usePageParam } from '../../../shared/hooks/usePageParam'
+import { useMyReportsPage } from '../hooks/useMyReportsPage'
 
 const statusLabels: Record<ReportStatus, string> = {
   pending: 'Chờ xử lý',
@@ -47,24 +44,8 @@ const formatDate = (value: string) =>
 const longTextSx = { lineHeight: '1.5rem', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' } as const
 
 export const MyReportsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const requestedStatus = searchParams.get('status')
-  const status: ReportStatus | '' =
-    requestedStatus === 'pending' || requestedStatus === 'accepted' || requestedStatus === 'rejected'
-      ? requestedStatus
-      : ''
-  const page = usePageParam()
-  const reportsQuery = useMyReports(status, page, 10)
-  const data = reportsQuery.data ?? null
-  const isLoading = isInitialLoading(reportsQuery)
-  const error = getErrorMessage(reportsQuery.error, 'Không thể tải báo cáo.')
-
-  const changePage = (nextPage: number) => {
-    const next = new URLSearchParams(searchParams)
-    if (nextPage <= 1) next.delete('page')
-    else next.set('page', String(nextPage))
-    setSearchParams(next)
-  }
+  const view = useMyReportsPage()
+  const { data, page, status } = view
 
   return (
     <PageShell compact maxWidth={1240}>
@@ -78,7 +59,7 @@ export const MyReportsPage = () => {
         <TextField
           fullWidth={false}
           label="Trạng thái"
-          onChange={(event) => setSearchParams(event.target.value ? { status: event.target.value } : {})}
+          onChange={(event) => view.changeStatus(event.target.value)}
           select
           size="small"
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
@@ -95,12 +76,12 @@ export const MyReportsPage = () => {
         </MuiLink>
       </Stack>
       <AsyncStatePanel
-        error={error}
-        isLoading={isLoading}
+        error={view.error}
+        isLoading={view.isLoading}
         loadingText="Đang tải báo cáo…"
-        onRetry={() => void reportsQuery.refetch()}
+        onRetry={view.retry}
       />
-      {!isLoading && !error && data && (
+      {!view.isLoading && !view.error && data && (
         <>
           <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">{data.totalItems} báo cáo</Typography>
           {data.items.length === 0 ? (
@@ -151,11 +132,11 @@ export const MyReportsPage = () => {
           )}
           {page > Math.max(1, data.totalPages) && (
             <Box sx={{ mt: 2.5 }}>
-              <Button onClick={() => changePage(Math.max(1, data.totalPages))} variant="outlined">Về trang có dữ liệu</Button>
+              <Button onClick={() => view.changePage(Math.max(1, data.totalPages))} variant="outlined">Về trang có dữ liệu</Button>
             </Box>
           )}
           {page <= data.totalPages && (
-            <Pager label="Phân trang báo cáo" onChange={changePage} page={page} totalPages={data.totalPages} />
+            <Pager label="Phân trang báo cáo" onChange={view.changePage} page={page} totalPages={data.totalPages} />
           )}
         </>
       )}

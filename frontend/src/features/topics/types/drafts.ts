@@ -13,3 +13,10 @@ export interface Draft {
   media: { id: string; path: string; contentType: string }[]
   updatedAtUtc: string
 }
+
+// What the write form shows about the automatic draft next to its buttons.
+export type DraftStatus =
+  | { kind: 'idle' }
+  | { kind: 'saving' }
+  | { kind: 'saved'; at: string }
+  | { kind: 'error' }

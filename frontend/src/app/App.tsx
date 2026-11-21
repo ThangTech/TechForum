@@ -21,7 +21,8 @@ import { SkillCommunityPage } from '../features/members/pages/SkillCommunityPage
 import { CommunitiesPage } from '../features/members/pages/CommunitiesPage'
 import { FollowMembersPage } from '../features/members/pages/FollowMembersPage'
 import { MyReportsPage } from '../features/reports/pages/MyReportsPage'
-import { ForgotPasswordPage, ResetPasswordPage } from '../features/auth/pages/PasswordRecoveryPage'
+import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
 
 const WriteTopicPage = lazy(() => import('../features/topics/pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,

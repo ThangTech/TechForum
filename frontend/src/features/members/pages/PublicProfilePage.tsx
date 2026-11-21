@@ -4,9 +4,7 @@ import Chip from '@mui/material/Chip'
 import MuiLink from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ApiError } from '../../../shared/api/client'
+import { Link } from 'react-router-dom'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
 import { TopicSummaryItem } from '../../topics/components/TopicSummaryItem'
 import { UserAvatar } from '../components/UserAvatar'
@@ -16,12 +14,8 @@ import { Panel } from '../../../shared/components/Panel'
 import { PanelList } from '../../../shared/components/PanelList'
 import { EmptyStateIcon } from '../../../shared/components/EmptyStateIcon'
 import { InlineStats } from '../../../shared/components/InlineStats'
-import { useAuth } from '../../auth/hooks/authState'
-import { openAuthDialog } from '../../auth/store/authDialogStore'
 import { appRoutes } from '../../../app/appRoutes'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { usePublicProfile, useToggleFollow } from '../hooks/profiles'
-import { isInitialLoading } from '../../../shared/query/status'
+import { usePublicProfilePage } from '../hooks/usePublicProfilePage'
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -30,32 +24,8 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 const sectionTitleSx = { color: 'var(--color-heading)', fontSize: '1rem', fontWeight: 700 } as const
 
 export const PublicProfilePage = () => {
-  const { userId = '' } = useParams()
-  const isValidId = userId !== ''
-  const profileQuery = usePublicProfile(userId, isValidId)
-  const followMutation = useToggleFollow(userId)
-  const profile = profileQuery.data ?? null
-  const isLoading = isValidId && isInitialLoading(profileQuery)
-  const requestError = profileQuery.error
-  const loadError = requestError instanceof ApiError && requestError.status === 404
-    ? 'Không tìm thấy hồ sơ thành viên này.'
-    : getErrorMessage(requestError)
-  const error = isValidId ? loadError : 'Đường dẫn hồ sơ không hợp lệ.'
-  const { user } = useAuth()
-  const isFollowBusy = followMutation.isPending
-  const [actionError, setActionError] = useState<string | null>(null)
-  const isOwnProfile = Boolean(profile && user?.id === profile.id)
-
-  const toggleFollow = async () => {
-    if (!profile || isFollowBusy) return
-    if (!user) { openAuthDialog(); return }
-    setActionError(null)
-    try {
-      await followMutation.mutateAsync(profile.isFollowedByViewer)
-    } catch (requestError) {
-      setActionError(requestError instanceof Error ? requestError.message : 'Không thể cập nhật theo dõi.')
-    }
-  }
+  const view = usePublicProfilePage()
+  const { follow, isOwnProfile, profile } = view
 
   return (
     <PageShell>
@@ -63,14 +33,14 @@ export const PublicProfilePage = () => {
 
       <Box sx={{ mt: 3 }}>
         <AsyncStatePanel
-          error={error}
-          isLoading={isLoading}
+          error={view.error}
+          isLoading={view.isLoading}
           loadingText="Đang tải hồ sơ…"
-          onRetry={() => void profileQuery.refetch()}
+          onRetry={view.retry}
         />
       </Box>
 
-      {!isLoading && !error && profile && (
+      {!view.isLoading && !view.error && profile && (
         <Stack spacing={3} sx={{ mt: 3 }}>
           <Panel aria-labelledby="profile-title" component="section" sx={{ p: { xs: 3, sm: 4 } }}>
             <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
@@ -95,7 +65,7 @@ export const PublicProfilePage = () => {
                 </Stack>
               ) : (
                 <Box sx={{ ml: { sm: 'auto' }, width: { xs: '100%', sm: 'auto' } }}>
-                  <Button loading={isFollowBusy} onClick={() => void toggleFollow()} variant={profile.isFollowedByViewer ? 'outlined' : 'contained'}>
+                  <Button loading={follow.isBusy} onClick={() => void follow.toggle()} variant={profile.isFollowedByViewer ? 'outlined' : 'contained'}>
                     {profile.isFollowedByViewer ? 'Đang theo dõi' : 'Theo dõi'}
                   </Button>
                 </Box>
@@ -104,7 +74,7 @@ export const PublicProfilePage = () => {
             {profile.bio && (
               <Typography sx={{ mt: 2.5, maxWidth: 672, color: 'text.primary', lineHeight: '1.5rem', whiteSpace: 'pre-line' }} variant="body2">{profile.bio}</Typography>
             )}
-            {actionError && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{actionError}</Typography>}
+            {follow.error && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{follow.error}</Typography>}
             <InlineStats
               items={[
                 { value: profile.publishedTopicCount, label: 'nội dung' },

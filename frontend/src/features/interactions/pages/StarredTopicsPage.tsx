@@ -1,23 +1,12 @@
 import Typography from '@mui/material/Typography'
-import { useSearchParams } from 'react-router-dom'
 import { PageHeading } from '../../../shared/components/PageHeading'
 import { PageShell } from '../../../shared/components/PageShell'
 import { PersonalTopicList } from '../../topics/components/PersonalTopicList'
-import { useStarredTopics } from '../hooks/stars'
-import { usePageParam } from '../../../shared/hooks/usePageParam'
+import { useStarredTopicsPage } from '../hooks/useStarredTopicsPage'
 
 // The posts that the member gave a star ("Sao hữu ích"), newest star first, to read them again.
 export const StarredTopicsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const page = usePageParam()
-  const starredQuery = useStarredTopics(page, 10)
-
-  const changePage = (nextPage: number) => {
-    const next = new URLSearchParams(searchParams)
-    if (nextPage <= 1) next.delete('page')
-    else next.set('page', String(nextPage))
-    setSearchParams(next)
-  }
+  const { page, starredQuery, changePage } = useStarredTopicsPage()
 
   return (
     <PageShell maxWidth={1240}>

@@ -1,21 +1,10 @@
-import { useSearchParams } from 'react-router-dom'
 import { PageHeading } from '../../../shared/components/PageHeading'
 import { PageShell } from '../../../shared/components/PageShell'
 import { PersonalTopicList } from '../../topics/components/PersonalTopicList'
-import { useSavedTopics } from '../hooks/bookmarks'
-import { usePageParam } from '../../../shared/hooks/usePageParam'
+import { useSavedTopicsPage } from '../hooks/useSavedTopicsPage'
 
 export const SavedTopicsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const page = usePageParam()
-  const savedQuery = useSavedTopics(page, 10)
-
-  const changePage = (nextPage: number) => {
-    const next = new URLSearchParams(searchParams)
-    if (nextPage <= 1) next.delete('page')
-    else next.set('page', String(nextPage))
-    setSearchParams(next)
-  }
+  const { page, savedQuery, changePage } = useSavedTopicsPage()
 
   return (
     <PageShell maxWidth={1240}>

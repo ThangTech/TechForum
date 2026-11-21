@@ -7,12 +7,8 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useEffect, useState } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
-import type { TopicType, QuestionStatus, TopicFeedMode } from '../../topics/types/topics'
-import { ApiError } from '../../../shared/api/client'
-import { useAuth } from '../../auth/hooks/authState'
-import { createAuthUrl } from '../../auth/utils/returnUrl'
+import type { TopicType, TopicFeedMode } from '../../topics/types/topics'
+import { useHomePage } from '../hooks/useHomePage'
 import { TagPanel } from '../components/TagPanel'
 import { TopicFeed } from '../../topics/components/TopicFeed'
 import { BannerSlider } from '../components/BannerSlider'
@@ -22,15 +18,7 @@ import { HomeHero } from '../components/HomeHero'
 import { TechNewsSection } from '../components/TechNewsSection'
 import { HomeTour } from '../components/HomeTour'
 import { QuestionHighlightsPanel } from '../../topics/components/QuestionHighlightsPanel'
-import { useCategories } from '../../catalog/hooks/categories'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { useQuestionHighlights } from '../../topics/hooks/questionHighlights'
-import { describeFeed, feedTabs, getFeedSort, parseFeed, parseRange, topRanges } from '../utils/feedLogic'
-import { isInitialLoading } from '../../../shared/query/status'
-import { useTags } from '../../catalog/hooks/tags'
-import { useTopicFeed } from '../../topics/hooks/topics'
-import { isGuid } from '../../../shared/utils/ids'
-import { usePageParam } from '../../../shared/hooks/usePageParam'
+import { describeFeed, feedTabs, parseRange, topRanges } from '../utils/feedLogic'
 
 interface HomePageProps {
   fixedType?: 'Article' | 'Question'
@@ -42,9 +30,6 @@ interface HomePageProps {
   showHighlights?: boolean
 }
 
-// A category or a tag in the address (?categoryId=, ?tagId=) is a GUID; anything else is ignored.
-const readId = (value: string | null) => (isGuid(value) ? value.toLowerCase() : undefined)
-
 export const HomePage = ({
   fixedType,
   title = 'Cùng học hỏi, chia sẻ và làm chủ công nghệ.',
@@ -53,80 +38,32 @@ export const HomePage = ({
   showTour = false,
   showHighlights = false,
 }: HomePageProps) => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const location = useLocation()
-  const { user, isLoading: isAuthLoading } = useAuth()
-  const feedParam = searchParams.get('feed')
-  const feed: TopicFeedMode = sort ? 'latest' : parseFeed(feedParam)
-  const range = parseRange(searchParams.get('range'))
-  const page = usePageParam()
-  const categoryId = readId(searchParams.get('categoryId'))
-  const tagId = readId(searchParams.get('tagId'))
-  const keyword = searchParams.get('keyword')?.trim() ?? ''
-  const typeParam = searchParams.get('type')
-  const selectedType = fixedType ?? (typeParam === 'Article' || typeParam === 'Question' ? typeParam : undefined)
-  const statusParam = searchParams.get('questionStatus')
-  const questionStatus: QuestionStatus | undefined = selectedType !== 'Article' &&
-    (statusParam === 'unanswered' || statusParam === 'unsolved' || statusParam === 'solved') ? statusParam : undefined
-
-  const areHighlightsShown = showHighlights && feed === 'latest' && page === 1 &&
-    !categoryId && !tagId && !keyword && !questionStatus
-
-  const [areFiltersOpen, setAreFiltersOpen] = useState(() => window.matchMedia('(min-width: 761px)').matches)
-
-  const categoriesQuery = useCategories()
-  const tagsQuery = useTags()
-  const highlightsQuery = useQuestionHighlights()
-  const topicsQuery = useTopicFeed(feed, {
-    page,
-    pageSize: 10,
-    keyword: keyword || undefined,
-    type: selectedType,
+  const {
+    currentPath,
+    feed,
+    range,
     categoryId,
     tagId,
-    sort: getFeedSort(feed, sort),
-    range: feed === 'top' ? range : undefined,
+    keyword,
+    selectedType,
     questionStatus,
-  })
-
-  const categories = categoriesQuery.data ?? []
-  const tags = tagsQuery.data ?? []
-
-  // The "following" feed answers 401 for a guest. That is shown as "log in", not as an error.
-  const followingUnauthorized = feed === 'following' &&
-    topicsQuery.error instanceof ApiError && topicsQuery.error.status === 401
-  const topicError = followingUnauthorized ? null : getErrorMessage(topicsQuery.error)
-
-  // A page number past the last page (for example after a filter) goes back to the last page.
-  const lastPage = topicsQuery.data ? Math.max(1, topicsQuery.data.totalPages) : null
-  const isPageOutOfRange = lastPage !== null && page > lastPage
-  const topics = isPageOutOfRange ? null : topicsQuery.data ?? null
-  // The "following" feed waits for the login session before it can run.
-  const areTopicsLoading = isInitialLoading(topicsQuery) || isPageOutOfRange ||
-    (feed === 'following' && isAuthLoading)
-
-  useEffect(() => {
-    if (lastPage === null || page <= lastPage) return
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current)
-      if (lastPage === 1) next.delete('page')
-      else next.set('page', String(lastPage))
-      return next
-    }, { replace: true })
-  }, [lastPage, page, setSearchParams])
-
-  const updateSearchParams = (updates: Record<string, string | number | undefined>) => {
-    const next = new URLSearchParams(searchParams)
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === undefined || value === '') next.delete(key)
-      else next.set(key, String(value))
-    })
-    setSearchParams(next)
-  }
-
-  const handleFilter = (key: 'categoryId' | 'tagId', value: string) => {
-    updateSearchParams({ [key]: value, page: undefined })
-  }
+    areHighlightsShown,
+    areFiltersOpen,
+    setAreFiltersOpen,
+    categories,
+    tags,
+    tagsPanel,
+    categoriesPanel,
+    highlights,
+    topics,
+    topicError,
+    areTopicsLoading,
+    retryTopics,
+    requiresLogin,
+    loginUrl,
+    updateSearchParams,
+    handleFilter,
+  } = useHomePage({ fixedType, sort, showHighlights })
 
   return (
     <main className="main-area" id="main-content">
@@ -136,12 +73,12 @@ export const HomePage = ({
 
         <div className="content-grid">
           <aside className="browse-filters" aria-label="Lọc nội dung">
-            <ExploreNav currentPath={location.pathname} />
+            <ExploreNav currentPath={currentPath} />
             <details open={areFiltersOpen} onToggle={(event) => setAreFiltersOpen(event.currentTarget.open)}>
               <summary>Lọc theo thẻ</summary>
-              <TagPanel tags={tags} error={getErrorMessage(tagsQuery.error)}
-                isLoading={isInitialLoading(tagsQuery)}
-                onRetry={() => void tagsQuery.refetch()}
+              <TagPanel tags={tags} error={tagsPanel.error}
+                isLoading={tagsPanel.isLoading}
+                onRetry={tagsPanel.retry}
                 selectedId={tagId}
                 onSelect={(id) => updateSearchParams({ tagId: id === tagId ? undefined : id, page: undefined })} />
             </details>
@@ -157,9 +94,9 @@ export const HomePage = ({
             <Box id="topic-list" sx={{ scrollMarginTop: '16px' }} />
             <CategoryChips
               categories={categories}
-              error={getErrorMessage(categoriesQuery.error)}
-              isLoading={isInitialLoading(categoriesQuery)}
-              onRetry={() => void categoriesQuery.refetch()}
+              error={categoriesPanel.error}
+              isLoading={categoriesPanel.isLoading}
+              onRetry={categoriesPanel.retry}
               onSelect={(id) => updateSearchParams({ categoryId: id, page: undefined })}
               selectedId={categoryId}
             />
@@ -280,22 +217,22 @@ export const HomePage = ({
             isLoading={areTopicsLoading}
             onFilter={handleFilter}
             onPageChange={(nextPage) => updateSearchParams({ page: nextPage <= 1 ? undefined : nextPage })}
-            onRetry={() => void topicsQuery.refetch()}
+            onRetry={retryTopics}
             selectedType={selectedType?.toLowerCase() as TopicType | undefined}
             isDiscussion={sort === 'discussion'}
             feed={feed}
-            requiresLogin={feed === 'following' && !isAuthLoading && (!user || followingUnauthorized)}
-            loginUrl={createAuthUrl('/login', `${location.pathname}${location.search}`)}
+            requiresLogin={requiresLogin}
+            loginUrl={loginUrl}
             onShowLatest={() => updateSearchParams({ feed: undefined, page: undefined })}
           />
           </Box>
 
           <aside className="browse-questions" aria-label="Câu hỏi cộng đồng">
             <QuestionHighlightsPanel
-              data={highlightsQuery.data ?? null}
-              error={getErrorMessage(highlightsQuery.error, 'Không thể tải câu hỏi nổi bật.')}
-              isLoading={isInitialLoading(highlightsQuery)}
-              onRetry={() => void highlightsQuery.refetch()}
+              data={highlights.data}
+              error={highlights.error}
+              isLoading={highlights.isLoading}
+              onRetry={highlights.retry}
             />
           </aside>
         </div>

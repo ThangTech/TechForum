@@ -3,15 +3,10 @@ import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import { appRoutes } from '../../../app/appRoutes'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
-import { getErrorMessage } from '../../../shared/query/errorMessage'
-import { isInitialLoading } from '../../../shared/query/status'
-import { useTags } from '../../catalog/hooks/tags'
+import { useCommunitiesPage } from '../hooks/useCommunitiesPage'
 
 export const CommunitiesPage = () => {
-  const tagsQuery = useTags()
-  const tags = tagsQuery.data ?? []
-  const isLoading = isInitialLoading(tagsQuery)
-  const error = getErrorMessage(tagsQuery.error)
+  const { tags, isLoading, error, retry } = useCommunitiesPage()
 
   return (
     <main className="main-area" id="main-content">
@@ -30,7 +25,7 @@ export const CommunitiesPage = () => {
           error={error}
           isLoading={isLoading}
           loadingText="Đang tải cộng đồng…"
-          onRetry={() => void tagsQuery.refetch()}
+          onRetry={retry}
         />
 
         {!isLoading && !error && tags.length === 0 && (
