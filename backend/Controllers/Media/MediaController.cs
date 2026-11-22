@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Extensions;
+using TechForum.Api.Filters;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -21,6 +22,7 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
         StoreAsync(userId => mediaStorageService.StoreImageAsync(userId, file, cancellationToken));
 
     [HttpPost("videos")]
+    [VideoUploadSizeLimit]
     [ProducesResponseType<MediaUploadDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
