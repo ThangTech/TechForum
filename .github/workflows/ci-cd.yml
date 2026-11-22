@@ -1,33 +1,61 @@
-name: Build React and .NET 9
+name: CI/CD
+
+# Khi nào chạy: mỗi lần push lên master/main, và mỗi pull request vào master/main.
 on:
   push:
     branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+# Push mới lên cùng một nhánh thì huỷ lần chạy cũ đang dở, đỡ tốn thời gian chờ.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Mặc định chỉ được đọc mã. Job nào cần thêm quyền (ví dụ đẩy image) sẽ tự xin riêng.
+permissions:
+  contents: read
 
 jobs:
-  build_frontend:
+  frontend:
+    name: Frontend (lint, test, build)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Lấy code từ repo
         uses: actions/checkout@v4
 
-      - name: Cài đặt Node.js 20
+      - name: Cài đặt Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+          # Nhớ thư viện đã tải giữa các lần chạy, lần sau cài nhanh hơn.
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Cài thư viện và Build
-        run: |
-          cd frontend
-          npm install
-          npm run build
+      - name: Cài thư viện đúng phiên bản trong package-lock.json
+        run: npm ci
 
-      - name: Lưu file sau khi build (Artifacts)
+      - name: Kiểm tra quy tắc code (ESLint)
+        run: npm run lint
+
+      - name: Chạy test (Vitest)
+        run: npm test
+
+      - name: Kiểm tra kiểu TypeScript và build (tsc + Vite)
+        run: npm run build
+
+      - name: Lưu bản build (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
           path: frontend/dist/
           retention-days: 1
-  build_backend:
+
+  backend:
+    name: Backend (build, test)
     runs-on: ubuntu-latest
     steps:
       - name: Lấy code từ repo
@@ -38,14 +66,20 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Build và Publish
-        run: |
-          cd backend
-          dotnet restore
-          dotnet build --configuration Release --no-restore
-          dotnet publish -c Release -o out --no-build
+      # Project test tham chiếu tới project API, nên restore/build project test là có cả hai.
+      - name: Tải thư viện (restore)
+        run: dotnet restore backend.Tests/TechForum.Api.Tests.csproj
 
-      - name: Lưu file backend (Artifacts)
+      - name: Build (Release)
+        run: dotnet build backend.Tests/TechForum.Api.Tests.csproj --configuration Release --no-restore
+
+      - name: Chạy test (xUnit)
+        run: dotnet test backend.Tests/TechForum.Api.Tests.csproj --configuration Release --no-build
+
+      - name: Đóng gói API (publish)
+        run: dotnet publish backend/TechForum.Api.csproj --configuration Release --no-build --output backend/out
+
+      - name: Lưu bản đóng gói (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: backend-out
