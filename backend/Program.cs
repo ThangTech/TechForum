@@ -120,6 +120,7 @@ builder.Services
     });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddPasswordRecovery(builder.Configuration);
+builder.Services.AddHostingSettings(builder.Configuration);
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -217,20 +218,26 @@ var app = builder.Build();
 // The framework writes the exception and its stack trace to the log before this answers.
 app.UseExceptionHandler();
 
+// Behind nginx: take the address of the visitor and the scheme from the headers of the proxy, before anything uses them.
+var isBehindProxy = HostingRegistration.IsBehindProxy(app.Configuration);
+if (isBehindProxy)
+{
+    app.UseForwardedHeaders();
+}
+
 app.UseMiddleware<RequestCancellationMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-
-    await using var scope = app.Services.CreateAsyncScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<TechForumDbContext>();
-    await dbContext.Database.MigrateAsync();
-    await DevelopmentDataSeeder.SeedAsync(dbContext);
 }
 
-if (!app.Environment.IsDevelopment())
+// Development always migrates and seeds; the containers ask for it with Database:MigrateOnStartup / SeedDemoData.
+await app.PrepareDatabaseAsync();
+
+// Behind a proxy, HTTPS is the job of the proxy (it holds the certificate), so the API does not redirect.
+if (!app.Environment.IsDevelopment() && !isBehindProxy)
 {
     app.UseHttpsRedirection();
 }

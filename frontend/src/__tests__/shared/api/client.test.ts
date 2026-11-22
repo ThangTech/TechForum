@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiRequest, configureApiAuth } from '../../../shared/api/client'
+import { ApiError, apiRequest, configureApiAuth, getApiBaseUrl } from '../../../shared/api/client'
 
 const jsonResponse = (value: unknown, status = 200) => new Response(
   JSON.stringify(value),
@@ -168,5 +168,20 @@ describe('apiRequest with a login session', () => {
     expect(refreshAccessToken).not.toHaveBeenCalled()
     expect(getHeaders(fetchMock, 0).has('Authorization')).toBe(false)
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('getApiBaseUrl', () => {
+  it('uses the API of the developer machine when nothing is set', () => {
+    expect(getApiBaseUrl(undefined)).toBe('http://localhost:5045')
+    expect(getApiBaseUrl('')).toBe('http://localhost:5045')
+  })
+
+  it('keeps a full address, without the last slash', () => {
+    expect(getApiBaseUrl('https://api.example.com/')).toBe('https://api.example.com')
+  })
+
+  it('gives an empty base for "/", so requests go to the same address as the site (behind nginx)', () => {
+    expect(getApiBaseUrl('/')).toBe('')
   })
 })

@@ -3,7 +3,13 @@ import type { ApiAuthHandlers, ApiRequestInit, ProblemDetails } from '../types/c
 
 const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
 
-export const apiBaseUrl = (configuredBaseUrl || 'http://localhost:5045').replace(/\/$/, '')
+// Where the API is. "http://localhost:5045" while developing (the API runs alone on its own port). "/" when the site
+// and the API are served from the same address, as in the Docker containers where nginx sends /api and /media to the
+// API: the address becomes empty and every request uses a path such as "/api/topics".
+export const getApiBaseUrl = (configured: string | undefined): string =>
+  (configured || 'http://localhost:5045').replace(/\/$/, '')
+
+export const apiBaseUrl = getApiBaseUrl(configuredBaseUrl)
 
 export class ApiError extends Error {
   readonly status: number
