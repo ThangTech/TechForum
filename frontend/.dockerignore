@@ -1,0 +1,9 @@
+# Những thứ không gửi vào lúc build image: thư viện đã cài (image tự cài lại bằng npm ci), bản build cũ,
+# cấu hình riêng của máy và kết quả test.
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.local
+coverage/

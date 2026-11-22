@@ -1,0 +1,12 @@
+# Những thứ không gửi vào lúc build image: kết quả build cũ, dữ liệu cục bộ và cấu hình riêng của máy.
+**/bin/
+**/obj/
+TechForum.Api/
+App_Data/
+*.user
+*.sln
+appsettings.Local.json
+appsettings.*.Local.json
+# Danh sách từ cấm thật chỉ nằm trên máy; container nhận nó qua volume chỉ đọc (xem docker-compose.yml).
+Data/Seed/banned-words.txt
+Data/Seed/banned-words.review.txt
