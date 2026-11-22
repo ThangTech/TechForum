@@ -14,7 +14,6 @@ import { MyTopicsPage } from '../features/topics/pages/MyTopicsPage'
 import { SavedTopicsPage } from '../features/interactions/pages/SavedTopicsPage'
 import { StarredTopicsPage } from '../features/interactions/pages/StarredTopicsPage'
 import { appRoutes } from './appRoutes'
-import { LegacyRouteRedirect } from '../shared/layout/LegacyRouteRedirect'
 import { NotificationsPage } from '../features/notifications/pages/NotificationsPage'
 import { ActivityPage } from '../features/members/pages/ActivityPage'
 import { SkillCommunityPage } from '../features/members/pages/SkillCommunityPage'
@@ -116,14 +115,6 @@ const App = () => {
           <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
           <Route path="communities" element={<CommunitiesPage />} />
           <Route path="skills/:tagId" element={<SkillCommunityPage />} />
-          <Route path="bai-viet" element={<LegacyRouteRedirect to={appRoutes.articles} />} />
-          <Route path="hoi-dap" element={<LegacyRouteRedirect to={appRoutes.questions} />} />
-          <Route path="noi-dung/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.topic(params.id ?? '')} />} />
-          <Route path="thanh-vien/:userId" element={<LegacyRouteRedirect to={(params) => appRoutes.member(params.userId ?? '')} />} />
-          <Route path="viet-bai" element={<LegacyRouteRedirect to={appRoutes.write} />} />
-          <Route path="chinh-sua/:id" element={<LegacyRouteRedirect to={(params) => appRoutes.editTopic(params.id ?? '')} />} />
-          <Route path="noi-dung-cua-toi" element={<LegacyRouteRedirect to={appRoutes.myTopics} />} />
-          <Route path="tai-khoan" element={<LegacyRouteRedirect to={appRoutes.account} />} />
           <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
         </Route>
         <Route
@@ -150,8 +141,6 @@ const App = () => {
         <Route path="register" element={<RegisterPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
-        <Route path="dang-nhap" element={<LegacyRouteRedirect to={appRoutes.login} />} />
-        <Route path="dang-ky" element={<LegacyRouteRedirect to={appRoutes.register} />} />
       </Routes>
       <AuthRequiredDialogHost />
     </BrowserRouter>
