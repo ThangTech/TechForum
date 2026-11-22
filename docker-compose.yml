@@ -20,7 +20,7 @@ services:
       # Dữ liệu SQL Server nằm trong volume, nên còn nguyên khi container bị xoá và tạo lại.
       - db-data:/var/opt/mssql
     ports:
-      # Chỉ mở cho chính máy này (127.0.0.1), để xem DB bằng SSMS/Azure Data Studio: Server=localhost,14333; User=sa.
+      # Chỉ mở cho chính máy này (127.0.0.1), để xem DB bằng SSMS/Azure Data Studio: Server=127.0.0.1,14333; User=sa (dùng 127.0.0.1, "localhost" trên Windows có thể thử IPv6 trước và bị treo).
       - "127.0.0.1:${DB_PORT:-14333}:1433"
     healthcheck:
       # "Khoẻ" khi đăng nhập và chạy được một câu lệnh. API chỉ khởi động sau khi DB khoẻ.
