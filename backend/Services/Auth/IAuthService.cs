@@ -8,6 +8,9 @@ public interface IAuthService
 
     Task<Result<AuthSession>> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
 
+    // Đăng nhập, hoặc tạo tài khoản lần đầu, bằng ID token của Google.
+    Task<Result<AuthSession>> LoginWithGoogleAsync(string credential, CancellationToken cancellationToken);
+
     Task<Result<AuthSession>> RefreshAsync(string? refreshToken, CancellationToken cancellationToken);
 
     Task<CurrentUserDto?> GetCurrentUserAsync(string userId);

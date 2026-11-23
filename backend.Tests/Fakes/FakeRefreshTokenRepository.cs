@@ -49,8 +49,11 @@ public sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
         return Task.CompletedTask;
     }
 
+    public int RevokeAllCount { get; private set; }
+
     public Task RevokeAllForUserAsync(string userId, DateTimeOffset now, CancellationToken cancellationToken)
     {
+        RevokeAllCount++;
         foreach (var token in Tokens.Where(item => item.UserId == userId && item.RevokedAtUtc is null))
         {
             token.RevokedAtUtc = now;

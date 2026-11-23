@@ -25,6 +25,53 @@ public sealed class AccountRepository : IAccountRepository
         return userManager.FindByIdAsync(userId);
     }
 
+    public async Task<IdentityResult> CreateExternalMemberAsync(ApplicationUser user, string provider, string providerKey)
+    {
+        var createResult = await userManager.CreateAsync(user);
+        if (!createResult.Succeeded)
+        {
+            return createResult;
+        }
+
+        var roleResult = await userManager.AddToRoleAsync(user, RoleNames.Member);
+        var loginResult = roleResult.Succeeded
+            ? await userManager.AddLoginAsync(user, new UserLoginInfo(provider, providerKey, provider))
+            : roleResult;
+        if (loginResult.Succeeded)
+        {
+            return loginResult;
+        }
+
+        // Không để lại tài khoản thiếu vai trò hoặc thiếu liên kết.
+        await userManager.DeleteAsync(user);
+        return loginResult;
+    }
+
+    public async Task<ApplicationUser?> FindByLoginAsync(string provider, string providerKey)
+    {
+        return await userManager.FindByLoginAsync(provider, providerKey);
+    }
+
+    public async Task<IdentityResult> AddLoginAsync(ApplicationUser user, string provider, string providerKey)
+    {
+        return await userManager.AddLoginAsync(user, new UserLoginInfo(provider, providerKey, provider));
+    }
+
+    public async Task<IdentityResult> ClaimByVerifiedEmailAsync(ApplicationUser user)
+    {
+        if (await userManager.HasPasswordAsync(user))
+        {
+            var removeResult = await userManager.RemovePasswordAsync(user);
+            if (!removeResult.Succeeded)
+            {
+                return removeResult;
+            }
+        }
+
+        user.EmailConfirmed = true;
+        return await userManager.UpdateAsync(user);
+    }
+
     public async Task<IdentityResult> CreateMemberAsync(
         ApplicationUser user,
         string password)

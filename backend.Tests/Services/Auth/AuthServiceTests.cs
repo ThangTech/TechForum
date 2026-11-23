@@ -442,11 +442,133 @@ public sealed class AuthServiceTests
         return (service, repository, refreshTokens, result.Value!.Tokens);
     }
 
+    [Fact]
+    public async Task LoginWithGoogleAsync_WhenGoogleIsNotSetUp_IsUnavailable()
+    {
+        var service = CreateService(new FakeAccountRepository(), new FakeRefreshTokenRepository(),
+            google: new FakeGoogleValidator { Configured = false });
+
+        var result = await service.LoginWithGoogleAsync("token", CancellationToken.None);
+
+        Assert.Equal(ErrorType.Unavailable, result.Error);
+    }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_WithATokenGoogleDoesNotAccept_IsRefused()
+    {
+        var service = CreateService(new FakeAccountRepository(), new FakeRefreshTokenRepository(),
+            google: new FakeGoogleValidator { Identity = null });
+
+        var result = await service.LoginWithGoogleAsync("forged", CancellationToken.None);
+
+        Assert.Equal(ErrorType.Unauthorized, result.Error);
+    }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_WithAnEmailGoogleDidNotVerify_IsRefused()
+    {
+        var repository = new FakeAccountRepository();
+        var service = CreateService(repository, new FakeRefreshTokenRepository(),
+            google: new FakeGoogleValidator { Identity = new GoogleIdentity("g-1", "new@gmail.com", false, "Người mới") });
+
+        var result = await service.LoginWithGoogleAsync("token", CancellationToken.None);
+
+        Assert.Equal(ErrorType.Unauthorized, result.Error);
+        Assert.Null(repository.CreatedUser);
+    }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_ForANewEmail_CreatesAMemberWithoutPasswordAndSignsIn()
+    {
+        var repository = new FakeAccountRepository();
+        var refreshTokens = new FakeRefreshTokenRepository();
+        var service = CreateService(repository, refreshTokens,
+            google: new FakeGoogleValidator { Identity = new GoogleIdentity("g-1", "new@gmail.com", true, "Người Mới") });
+
+        var result = await service.LoginWithGoogleAsync("token", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("Người Mới", repository.CreatedUser!.DisplayName);
+        Assert.True(repository.CreatedUser.EmailConfirmed);
+        Assert.Null(repository.CreatedUser.PasswordHash);
+        Assert.Same(repository.CreatedUser, repository.Logins[("Google", "g-1")]);
+        Assert.NotEmpty(result.Value!.Tokens.AccessToken);
+        Assert.Single(refreshTokens.Tokens);
+    }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_ForALinkedAccount_SignsInWithoutChangingIt()
+    {
+        var repository = new FakeAccountRepository();
+        var user = CreateUser();
+        user.EmailConfirmed = true;
+        repository.UsersByEmail[user.Email!] = user;
+        repository.Logins[("Google", "g-1")] = user;
+        var service = CreateService(repository, new FakeRefreshTokenRepository(),
+            google: new FakeGoogleValidator { Identity = new GoogleIdentity("g-1", user.Email!, true, "Khác") });
+
+        var result = await service.LoginWithGoogleAsync("token", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(user.Id, result.Value!.User.Id);
+        Assert.Null(repository.CreatedUser);
+        Assert.Empty(repository.Claimed);
+    }
+
+    // Ai đó có thể đã đăng ký trước bằng email này và đặt mật khẩu; chủ email thật đăng nhập Google thì mật khẩu đó bị bỏ.
+    [Fact]
+    public async Task LoginWithGoogleAsync_ForAnUnverifiedAccountWithTheSameEmail_DropsItsPasswordAndSignsOutOldSessions()
+    {
+        var repository = new FakeAccountRepository();
+        var refreshTokens = new FakeRefreshTokenRepository();
+        var user = CreateUser();
+        user.PasswordHash = "set-by-someone";
+        repository.UsersByEmail[user.Email!] = user;
+        var service = CreateService(repository, refreshTokens,
+            google: new FakeGoogleValidator { Identity = new GoogleIdentity("g-1", user.Email!, true, "Chủ email") });
+
+        var result = await service.LoginWithGoogleAsync("token", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Same(user, Assert.Single(repository.Claimed));
+        Assert.Null(user.PasswordHash);
+        Assert.True(user.EmailConfirmed);
+        Assert.Same(user, repository.Logins[("Google", "g-1")]);
+        Assert.Equal(1, refreshTokens.RevokeAllCount);
+    }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_ForALockedAccount_IsLocked()
+    {
+        var repository = new FakeAccountRepository { IsLockedOut = true };
+        var user = CreateUser();
+        repository.UsersByEmail[user.Email!] = user;
+        repository.Logins[("Google", "g-1")] = user;
+        var service = CreateService(repository, new FakeRefreshTokenRepository(),
+            google: new FakeGoogleValidator { Identity = new GoogleIdentity("g-1", user.Email!, true, "Bị khóa") });
+
+        var result = await service.LoginWithGoogleAsync("token", CancellationToken.None);
+
+        Assert.Equal(ErrorType.Locked, result.Error);
+    }
+
+    private sealed class FakeGoogleValidator : IGoogleTokenValidator
+    {
+        public bool Configured { get; init; } = true;
+
+        public GoogleIdentity? Identity { get; init; }
+
+        public bool IsConfigured => Configured;
+
+        public Task<GoogleIdentity?> ValidateAsync(string credential) => Task.FromResult(Identity);
+    }
+
     private static AuthService CreateService(
         FakeAccountRepository repository,
         FakeRefreshTokenRepository refreshTokens,
         TimeProvider? timeProvider = null,
-        ILogger<AuthService>? logger = null)
+        ILogger<AuthService>? logger = null,
+        FakeGoogleValidator? google = null)
     {
         var clock = timeProvider ?? new FixedTimeProvider(CurrentTime);
         var optionsAccessor = Microsoft.Extensions.Options.Options.Create(Options);
@@ -456,7 +578,8 @@ public sealed class AuthServiceTests
             new TokenService(optionsAccessor, clock),
             optionsAccessor,
             logger ?? NullLogger<AuthService>.Instance,
-            clock);
+            clock,
+            google ?? new FakeGoogleValidator());
     }
 
     private static ApplicationUser CreateUser() => new()
@@ -496,6 +619,39 @@ public sealed class AuthServiceTests
         public string? LastNewPassword { get; private set; }
 
         public int UpdateCount { get; private set; }
+
+        public Dictionary<(string Provider, string Key), ApplicationUser> Logins { get; } = [];
+
+        public List<ApplicationUser> Claimed { get; } = [];
+
+        public Task<IdentityResult> CreateExternalMemberAsync(ApplicationUser user, string provider, string providerKey)
+        {
+            user.Id = "google-member";
+            CreatedUser = user;
+            UsersByEmail[user.Email!] = user;
+            Logins[(provider, providerKey)] = user;
+            return Task.FromResult(IdentityResult.Success);
+        }
+
+        public Task<ApplicationUser?> FindByLoginAsync(string provider, string providerKey)
+        {
+            Logins.TryGetValue((provider, providerKey), out var user);
+            return Task.FromResult(user);
+        }
+
+        public Task<IdentityResult> AddLoginAsync(ApplicationUser user, string provider, string providerKey)
+        {
+            Logins[(provider, providerKey)] = user;
+            return Task.FromResult(IdentityResult.Success);
+        }
+
+        public Task<IdentityResult> ClaimByVerifiedEmailAsync(ApplicationUser user)
+        {
+            user.PasswordHash = null;
+            user.EmailConfirmed = true;
+            Claimed.Add(user);
+            return Task.FromResult(IdentityResult.Success);
+        }
 
         public Task<ApplicationUser?> FindByEmailAsync(string email)
         {

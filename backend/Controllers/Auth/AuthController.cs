@@ -41,6 +41,14 @@ public sealed class AuthController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpPost("google")]
+    public async Task<ActionResult<AuthResponseDto>> LoginWithGoogle(GoogleLoginRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.LoginWithGoogleAsync(request.Credential, cancellationToken);
+        return ToSessionResponse(result, StatusCodes.Status200OK);
+    }
+
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponseDto>> Refresh(CancellationToken cancellationToken)
     {

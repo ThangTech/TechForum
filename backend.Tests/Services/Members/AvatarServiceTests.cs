@@ -200,6 +200,10 @@ public sealed class AvatarServiceTests : IDisposable
 
     private sealed class FakeAccounts : IAccountRepository
     {
+        public Task<IdentityResult> CreateExternalMemberAsync(ApplicationUser user, string provider, string providerKey) => throw new NotSupportedException();
+        public Task<ApplicationUser?> FindByLoginAsync(string provider, string providerKey) => throw new NotSupportedException();
+        public Task<IdentityResult> AddLoginAsync(ApplicationUser user, string provider, string providerKey) => throw new NotSupportedException();
+        public Task<IdentityResult> ClaimByVerifiedEmailAsync(ApplicationUser user) => throw new NotSupportedException();
         public ApplicationUser User { get; } = new() { Id = UserId, DisplayName = "Thành viên A", Email = "a@example.test" };
 
         public bool FailToUpdate { get; set; }

@@ -12,6 +12,7 @@ public sealed class AuthService : IAuthService
 {
     private const string ProfileTitle = "Không thể cập nhật hồ sơ";
     private const string NotSignedInTitle = "Bạn cần đăng nhập";
+    private const string GoogleProvider = "Google";
 
     private readonly IAccountRepository accountRepository;
     private readonly IRefreshTokenRepository refreshTokenRepository;
@@ -19,6 +20,7 @@ public sealed class AuthService : IAuthService
     private readonly IOptions<JwtOptions> jwtOptions;
     private readonly ILogger<AuthService> logger;
     private readonly TimeProvider timeProvider;
+    private readonly IGoogleTokenValidator googleTokenValidator;
 
     public AuthService(
         IAccountRepository accountRepository,
@@ -26,7 +28,8 @@ public sealed class AuthService : IAuthService
         ITokenService tokenService,
         IOptions<JwtOptions> jwtOptions,
         ILogger<AuthService> logger,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IGoogleTokenValidator googleTokenValidator)
     {
         this.accountRepository = accountRepository;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -34,6 +37,7 @@ public sealed class AuthService : IAuthService
         this.jwtOptions = jwtOptions;
         this.logger = logger;
         this.timeProvider = timeProvider;
+        this.googleTokenValidator = googleTokenValidator;
     }
 
     public async Task<Result<AuthSession>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
@@ -104,6 +108,115 @@ public sealed class AuthService : IAuthService
             ? TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays)
             : TimeSpan.FromDays(jwtOptions.Value.ShortRefreshTokenDays);
         return await CreateSessionAsync(user, lifetime, cancellationToken);
+    }
+
+    public async Task<Result<AuthSession>> LoginWithGoogleAsync(string credential, CancellationToken cancellationToken)
+    {
+        if (!googleTokenValidator.IsConfigured)
+        {
+            return Result<AuthSession>.Fail(ErrorType.Unavailable, "Chưa bật đăng nhập bằng Google",
+                "Vui lòng đăng nhập bằng email và mật khẩu.");
+        }
+
+        var identity = await googleTokenValidator.ValidateAsync(credential);
+        if (identity is null)
+        {
+            return GoogleLoginFailed("Không xác minh được tài khoản Google. Vui lòng thử lại.");
+        }
+        if (!identity.EmailVerified || string.IsNullOrWhiteSpace(identity.Email))
+        {
+            return GoogleLoginFailed("Email của tài khoản Google này chưa được xác minh.");
+        }
+
+        var user = await FindOrCreateGoogleUserAsync(identity);
+        if (user is null)
+        {
+            return GoogleLoginFailed("Không thể tạo tài khoản từ Google lúc này. Vui lòng thử lại.");
+        }
+        if (await accountRepository.IsLockedOutAsync(user))
+        {
+            return Locked();
+        }
+
+        // Đăng nhập bằng Google luôn được ghi nhớ như khi chọn "Duy trì đăng nhập".
+        return await CreateSessionAsync(user, TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays), cancellationToken);
+    }
+
+    // Đã liên kết thì dùng luôn. Email đã có tài khoản thì liên kết vào tài khoản đó: Google đã xác minh email,
+    // nên người đăng nhập chính là chủ email. Chưa có thì tạo tài khoản mới không mật khẩu.
+    private async Task<ApplicationUser?> FindOrCreateGoogleUserAsync(GoogleIdentity identity)
+    {
+        var linked = await accountRepository.FindByLoginAsync(GoogleProvider, identity.Subject);
+        if (linked is not null)
+        {
+            return linked;
+        }
+
+        var email = identity.Email.Trim();
+        var existing = await accountRepository.FindByEmailAsync(email);
+        if (existing is not null)
+        {
+            return await LinkGoogleAsync(existing, identity);
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            DisplayName = GetDisplayName(identity),
+            CreatedAtUtc = timeProvider.GetUtcNow(),
+            LockoutEnabled = true
+        };
+        var createResult = await accountRepository.CreateExternalMemberAsync(user, GoogleProvider, identity.Subject);
+        if (createResult.Succeeded)
+        {
+            return user;
+        }
+
+        // Hai yêu cầu đăng nhập cùng lúc: yêu cầu kia vừa tạo tài khoản này.
+        return await accountRepository.FindByLoginAsync(GoogleProvider, identity.Subject);
+    }
+
+    // Tài khoản đăng ký bằng mật khẩu chưa xác minh email: có thể người khác đã đăng ký trước bằng email này.
+    // Người đăng nhập Google là chủ email thật, nên mật khẩu cũ bị bỏ và mọi phiên cũ bị đăng xuất;
+    // chủ tài khoản đặt lại mật khẩu bằng "Quên mật khẩu" nếu cần.
+    private async Task<ApplicationUser?> LinkGoogleAsync(ApplicationUser user, GoogleIdentity identity)
+    {
+        if (!user.EmailConfirmed)
+        {
+            var claimResult = await accountRepository.ClaimByVerifiedEmailAsync(user);
+            if (!claimResult.Succeeded)
+            {
+                return null;
+            }
+
+            await refreshTokenRepository.RevokeAllForUserAsync(user.Id, timeProvider.GetUtcNow(), CancellationToken.None);
+        }
+
+        var linkResult = await accountRepository.AddLoginAsync(user, GoogleProvider, identity.Subject);
+        return linkResult.Succeeded ? user : null;
+    }
+
+    // Tên hiển thị phải từ 2 đến 80 ký tự; Google không có tên thì lấy phần trước @ của email.
+    private static string GetDisplayName(GoogleIdentity identity)
+    {
+        var name = identity.Name?.Trim();
+        if (string.IsNullOrEmpty(name) || name.Length < 2)
+        {
+            name = identity.Email.Split('@')[0];
+        }
+        if (name.Length < 2)
+        {
+            name = "Thành viên";
+        }
+
+        return name.Length > 80 ? name[..80] : name;
+    }
+
+    private static Result<AuthSession> GoogleLoginFailed(string message)
+    {
+        return Result<AuthSession>.Fail(ErrorType.Unauthorized, "Đăng nhập Google không thành công", message);
     }
 
     public async Task<Result<AuthSession>> RefreshAsync(string? refreshToken, CancellationToken cancellationToken)
