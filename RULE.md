@@ -90,6 +90,21 @@ backend/Program.cs	Đăng ký DI và middleware, không chứa toàn bộ nghi�
 - Kiểm tra unique constraint bên DB, không chỉ kiểm tra trước trong service.
 - Với nhiều thay đổi phải cùng thành công, dùng khả năng giao dịch của EF Core; không thêm lớp Unit of Work riêng khi DbContext đã đáp ứng.
 - Đảm bảo package EF tương thích với project; không lấy phiên bản trong ví dụ skill làm phiên bản repo.
+7.1. Phong cách code C# / ASP.NET Core (hiện đại vừa đủ, ưu tiên dễ đọc)
+- Áp dụng cho code mới và code đang sửa. Code cũ đổi dần khi chạm tới, không refactor hàng loạt chỉ để khớp mục này (xem mục 4).
+- Nên dùng (gọn và chuẩn):
+  - Constructor truyền thống kết hợp `private readonly` cho Dependency Injection để nhìn rõ class đang dùng những service nào.
+  - `if / else` kèm `return` sớm (early return) và toán tử so sánh thông thường (`<`, `>`, `&&`, `||`) để luồng chạy thẳng từ trên xuống dưới.
+  - `async/await`, `record` cho DTO đơn giản, `file-scoped namespace`, và LINQ cơ bản dễ hiểu.
+  - Một class `Result<T>` dùng chung kèm `.ToActionResult()` để Controller mỏng (mỗi action 3–6 dòng), không lặp lại `switch` map lỗi.
+  - Validation bằng Data Annotations hoặc validator riêng, không viết hàm `Validate()` thủ công trong Controller.
+- Tránh dùng (quá rườm rà hoặc quá rút gọn gây khó đọc):
+  - KHÔNG dùng Primary Constructor cho Controller/Service có DI.
+  - KHÔNG dùng `switch expression` dài nhiều nhánh hay Pattern Matching phức tạp (ví dụ: `is < 1 or > 50`, `is not ("a" or "b")`).
+  - KHÔNG dùng expression-bodied method (`=>`) cho hàm có logic dài hơn 1 dòng.
+  - KHÔNG đẻ nhiều Enum lỗi riêng lẻ cho từng hàm trong Service.
+  - KHÔNG gắn hàng loạt `[ProducesResponseType]` lên đầu mỗi action trừ khi được yêu cầu.
+  - KHÔNG viết comment tiếng Anh dài dòng; chỉ comment ngắn bằng tiếng Việt để giải thích "tại sao" khi có nghiệp vụ đặc biệt.
 8. Nghiệp vụ TechForum và contract FE/BE
 - Khách xem nội dung công khai. Thành viên quản lý nội dung của mình, thảo luận, thích/lưu và báo cáo. Quản trị viên quản lý và kiểm duyệt theo quyền đã chốt.
 - Chủ đề thuộc một chuyên mục; thẻ và chủ đề là nhiều–nhiều; câu trả lời thuộc đúng một chủ đề.
