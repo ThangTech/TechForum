@@ -93,8 +93,8 @@ public sealed partial class DraftService : IDraftService
         }
 
         // A draft of an edited topic can only belong to a topic of the same member.
-        if (request.TopicId is { } topicId &&
-            !await draftRepository.OwnsTopicAsync(userId, topicId, cancellationToken))
+        if (request.TopicId.HasValue &&
+            !await draftRepository.OwnsTopicAsync(userId, request.TopicId.Value, cancellationToken))
         {
             return Result<DraftDto>.Fail(ErrorType.NotFound, "Không tìm thấy nội dung", "Nội dung không tồn tại hoặc không thuộc tài khoản này.");
         }
@@ -123,15 +123,18 @@ public sealed partial class DraftService : IDraftService
         return Result<DraftDto>.Success(Map(draft, media));
     }
 
-    private static Draft NewDraft(string userId, Guid? topicId, string title, string summary, string body) => new()
+    private static Draft NewDraft(string userId, Guid? topicId, string title, string summary, string body)
     {
-        Id = Guid.NewGuid(),
-        UserId = userId,
-        TopicId = topicId,
-        Title = title,
-        Summary = summary,
-        BodyHtml = body
-    };
+        return new()
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TopicId = topicId,
+            Title = title,
+            Summary = summary,
+            BodyHtml = body
+        };
+    }
 
     private void Fill(
         Draft draft,
@@ -147,14 +150,16 @@ public sealed partial class DraftService : IDraftService
         draft.Summary = summary;
         draft.BodyHtml = body;
         draft.Type = type;
-        draft.CategoryId = categoryId is { } id && id != Guid.Empty ? id : null;
+        draft.CategoryId = categoryId == Guid.Empty ? null : categoryId;
         draft.TagIds = tagIds;
         draft.MediaIds = media.Select(item => item.Id).ToList();
         draft.UpdatedAtUtc = timeProvider.GetUtcNow();
     }
 
-    public Task DeleteAsync(string userId, Guid? topicId, CancellationToken cancellationToken) =>
-        draftRepository.DeleteForTargetAsync(userId, topicId, cancellationToken);
+    public Task DeleteAsync(string userId, Guid? topicId, CancellationToken cancellationToken)
+    {
+        return draftRepository.DeleteForTargetAsync(userId, topicId, cancellationToken);
+    }
 
     private async Task<IReadOnlyList<MediaAsset>> GetUsableMediaAsync(
         string userId,
@@ -167,25 +172,30 @@ public sealed partial class DraftService : IDraftService
             return [];
         }
 
-        return topicId is { } id
-            ? await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(mediaIds, userId, id, cancellationToken)
+        return topicId.HasValue
+            ? await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(mediaIds, userId, topicId.Value, cancellationToken)
             : await mediaAssetRepository.GetOwnedUnattachedByIdsAsync(mediaIds, userId, cancellationToken);
     }
 
-    private static DraftDto Map(Draft draft, IReadOnlyList<MediaAsset> media) => new(
-        draft.Id,
-        draft.TopicId,
-        draft.Title,
-        draft.Summary,
-        draft.BodyHtml,
-        draft.Type == TopicType.Question ? "question" : "article",
-        draft.CategoryId,
-        draft.TagIds,
-        media.Select(item => new TopicMediaDto(item.Id, item.PublicUrl, item.ContentType)).ToList(),
-        draft.UpdatedAtUtc);
+    private static DraftDto Map(Draft draft, IReadOnlyList<MediaAsset> media)
+    {
+        return new(
+            draft.Id,
+            draft.TopicId,
+            draft.Title,
+            draft.Summary,
+            draft.BodyHtml,
+            draft.Type == TopicType.Question ? "question" : "article",
+            draft.CategoryId,
+            draft.TagIds,
+            media.Select(item => new TopicMediaDto(item.Id, item.PublicUrl, item.ContentType)).ToList(),
+            draft.UpdatedAtUtc);
+    }
 
-    private static Result<DraftDto> Invalid(string field, string message) =>
-        Result<DraftDto>.Fail(ErrorType.Validation, "Bản nháp chưa hợp lệ", message, field);
+    private static Result<DraftDto> Invalid(string field, string message)
+    {
+        return Result<DraftDto>.Fail(ErrorType.Validation, "Bản nháp chưa hợp lệ", message, field);
+    }
 
     // Text, a picture or a video. The empty tags that the editor leaves (<p><br></p>) do not count.
     private static bool HasContent(string html)

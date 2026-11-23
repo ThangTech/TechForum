@@ -258,13 +258,16 @@ public sealed class AuthService : IAuthService
         string userId,
         string refreshToken,
         DateTimeOffset now,
-        TimeSpan lifetime) => new()
+        TimeSpan lifetime)
     {
-        UserId = userId,
-        TokenHash = tokenService.HashRefreshToken(refreshToken),
-        CreatedAtUtc = now,
-        ExpiresAtUtc = now.Add(lifetime)
-    };
+        return new()
+        {
+            UserId = userId,
+            TokenHash = tokenService.HashRefreshToken(refreshToken),
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.Add(lifetime)
+        };
+    }
 
     private async Task<Result<AuthSession>> BuildSuccessAsync(
         ApplicationUser user,
@@ -339,20 +342,32 @@ public sealed class AuthService : IAuthService
                 group => group.Select(TranslateError).ToArray());
     }
 
-    private static string GetErrorField(IdentityError error) =>
-        error.Code.StartsWith("Password", StringComparison.Ordinal)
+    private static string GetErrorField(IdentityError error)
+    {
+        return error.Code.StartsWith("Password", StringComparison.Ordinal)
             ? "password"
             : "account";
+    }
 
-    private static string TranslateError(IdentityError error) => error.Code switch
+    private static readonly Dictionary<string, string> IdentityMessages = new()
     {
-        "PasswordTooShort" => "Mật khẩu chưa đủ độ dài yêu cầu.",
-        "PasswordRequiresNonAlphanumeric" => "Mật khẩu cần ít nhất một ký tự đặc biệt.",
-        "PasswordRequiresDigit" => "Mật khẩu cần ít nhất một chữ số.",
-        "PasswordRequiresUpper" => "Mật khẩu cần ít nhất một chữ hoa.",
-        "PasswordRequiresLower" => "Mật khẩu cần ít nhất một chữ thường.",
-        "DuplicateEmail" or "DuplicateUserName" => "Email này đã được sử dụng.",
-        "PasswordMismatch" => "Mật khẩu hiện tại không chính xác.",
-        _ => "Không thể cập nhật tài khoản với thông tin đã cung cấp."
+        ["PasswordTooShort"] = "Mật khẩu chưa đủ độ dài yêu cầu.",
+        ["PasswordRequiresNonAlphanumeric"] = "Mật khẩu cần ít nhất một ký tự đặc biệt.",
+        ["PasswordRequiresDigit"] = "Mật khẩu cần ít nhất một chữ số.",
+        ["PasswordRequiresUpper"] = "Mật khẩu cần ít nhất một chữ hoa.",
+        ["PasswordRequiresLower"] = "Mật khẩu cần ít nhất một chữ thường.",
+        ["DuplicateEmail"] = "Email này đã được sử dụng.",
+        ["DuplicateUserName"] = "Email này đã được sử dụng.",
+        ["PasswordMismatch"] = "Mật khẩu hiện tại không chính xác."
     };
+
+    private static string TranslateError(IdentityError error)
+    {
+        if (IdentityMessages.TryGetValue(error.Code, out var message))
+        {
+            return message;
+        }
+
+        return "Không thể cập nhật tài khoản với thông tin đã cung cấp.";
+    }
 }

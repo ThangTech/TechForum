@@ -40,11 +40,13 @@ public sealed class VoteRepository : IVoteRepository
         string userId,
         VoteTargetType targetType,
         Guid targetId,
-        CancellationToken cancellationToken) =>
-        await dbContext.UserVotes.AsNoTracking()
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.UserVotes.AsNoTracking()
             .Where(vote => vote.UserId == userId && vote.TargetType == targetType && vote.TargetId == targetId)
             .Select(vote => vote.Value)
             .SingleOrDefaultAsync(cancellationToken);
+    }
 
     private async Task<VoteOutcome> ApplyOnceAsync(VoteCommand command, CancellationToken cancellationToken)
     {
@@ -124,6 +126,7 @@ public sealed class VoteRepository : IVoteRepository
     private static bool IsRaceFailure(Exception exception)
     {
         var sql = exception as SqlException ?? (exception as DbUpdateException)?.InnerException as SqlException;
-        return sql is { Number: 1205 or 2601 or 2627 };
+        // 1205: bị chọn làm nạn nhân của deadlock; 2601, 2627: trùng khóa.
+        return sql is not null && (sql.Number == 1205 || sql.Number == 2601 || sql.Number == 2627);
     }
 }

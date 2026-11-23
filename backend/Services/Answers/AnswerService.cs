@@ -324,9 +324,9 @@ public sealed partial class AnswerService : IAnswerService
         {
             await answerRepository.AdjustReputationAsync(accepted.AuthorId, ReputationRules.AcceptedAnswer, cancellationToken);
         }
-        if (previousAcceptedId is { } previousId)
+        if (previousAcceptedId.HasValue)
         {
-            var previous = await answerRepository.GetVisibleByIdAsync(topicId, previousId, cancellationToken);
+            var previous = await answerRepository.GetVisibleByIdAsync(topicId, previousAcceptedId.Value, cancellationToken);
             if (previous is not null && previous.AuthorId != topicAuthorId)
             {
                 await answerRepository.AdjustReputationAsync(previous.AuthorId, -ReputationRules.AcceptedAnswer, cancellationToken);
@@ -334,8 +334,10 @@ public sealed partial class AnswerService : IAnswerService
         }
     }
 
-    private static Guid? AcceptedAnswerIdFor(Topic topic) =>
-        topic.Type == TopicType.Question ? topic.AcceptedAnswerId : null;
+    private static Guid? AcceptedAnswerIdFor(Topic topic)
+    {
+        return topic.Type == TopicType.Question ? topic.AcceptedAnswerId : null;
+    }
 
     private async Task<AnswerHelpfulState> GetHelpfulStateAsync(
         Guid answerId,
@@ -350,23 +352,26 @@ public sealed partial class AnswerService : IAnswerService
         Answer answer,
         Guid? acceptedAnswerId,
         TopicAuthorDto? replyingTo = null,
-        AnswerHelpfulState? helpfulState = null) => new(
-        answer.Id,
-        answer.TopicId,
-        answer.ParentAnswerId,
-        replyingTo ?? (answer.ParentAnswer is null
-            ? null
-            : new TopicAuthorDto(answer.ParentAnswer.Author.Id, answer.ParentAnswer.Author.DisplayName)),
-        answer.BodyHtml,
-        new TopicAuthorDto(answer.Author.Id, answer.Author.DisplayName),
-        answer.CreatedAtUtc,
-        answer.UpdatedAtUtc,
-        answer.Id == acceptedAnswerId,
-        helpfulState?.HelpfulCount ?? 0,
-        helpfulState?.IsHelpful ?? false,
-        ReputationRules.ShownScore(helpfulState?.Score ?? answer.Score, ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow())),
-        helpfulState?.MyVote ?? 0,
-        ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow()));
+        AnswerHelpfulState? helpfulState = null)
+    {
+        return new(
+            answer.Id,
+            answer.TopicId,
+            answer.ParentAnswerId,
+            replyingTo ?? (answer.ParentAnswer is null
+                ? null
+                : new TopicAuthorDto(answer.ParentAnswer.Author.Id, answer.ParentAnswer.Author.DisplayName)),
+            answer.BodyHtml,
+            new TopicAuthorDto(answer.Author.Id, answer.Author.DisplayName),
+            answer.CreatedAtUtc,
+            answer.UpdatedAtUtc,
+            answer.Id == acceptedAnswerId,
+            helpfulState?.HelpfulCount ?? 0,
+            helpfulState?.IsHelpful ?? false,
+            ReputationRules.ShownScore(helpfulState?.Score ?? answer.Score, ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow())),
+            helpfulState?.MyVote ?? 0,
+            ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow()));
+    }
 
     private static bool HasMeaningfulContent(string html)
     {

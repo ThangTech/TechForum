@@ -63,8 +63,10 @@ public sealed class AdminAccountRepository : IAdminAccountRepository
 
     public Task<ApplicationUser?> GetByIdAsync(string id) => userManager.FindByIdAsync(id);
 
-    public Task<bool> IsAdministratorAsync(ApplicationUser user) =>
-        userManager.IsInRoleAsync(user, RoleNames.Administrator);
+    public Task<bool> IsAdministratorAsync(ApplicationUser user)
+    {
+        return userManager.IsInRoleAsync(user, RoleNames.Administrator);
+    }
 
     public async Task<IdentityResult> SetLockedAsync(ApplicationUser user, bool isLocked, DateTimeOffset? lockoutEndUtc,
         string? reason, AdminAuditLog auditLog, CancellationToken cancellationToken)

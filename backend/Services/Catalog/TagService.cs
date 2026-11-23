@@ -27,16 +27,21 @@ public sealed class TagService : ITagService
         return tag is null ? null : MapToDto(tag);
     }
 
-    private static TagDto MapToDto(Tag tag) => new(
-        tag.Id,
-        tag.Name,
-        tag.Slug,
-        tag.Description);
+    private static TagDto MapToDto(Tag tag)
+    {
+        return new(
+            tag.Id,
+            tag.Name,
+            tag.Slug,
+            tag.Description);
+    }
 
-    public async Task<IReadOnlyList<AdminTagDto>> GetAdminAsync(CancellationToken cancellationToken) =>
-        (await tagRepository.GetAdminAsync(cancellationToken))
+    public async Task<IReadOnlyList<AdminTagDto>> GetAdminAsync(CancellationToken cancellationToken)
+    {
+        return (await tagRepository.GetAdminAsync(cancellationToken))
             .Select(item => MapAdminDto(item.Tag, item.TopicCount))
             .ToList();
+    }
 
     public async Task<Result<AdminTagDto>> CreateAsync(string administratorId, SaveTagRequest request, CancellationToken cancellationToken)
     {
@@ -141,14 +146,19 @@ public sealed class TagService : ITagService
         return null;
     }
 
-    private static string? NormalizeDescription(string? description) =>
-        string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+    private static string? NormalizeDescription(string? description)
+    {
+        return string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+    }
 
-    private static AdminTagDto MapAdminDto(Tag tag, int topicCount) => new(
-        tag.Id,
-        tag.Name,
-        tag.Slug,
-        tag.Description,
-        tag.IsActive,
-        topicCount);
+    private static AdminTagDto MapAdminDto(Tag tag, int topicCount)
+    {
+        return new(
+            tag.Id,
+            tag.Name,
+            tag.Slug,
+            tag.Description,
+            tag.IsActive,
+            topicCount);
+    }
 }

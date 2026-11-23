@@ -73,8 +73,10 @@ public sealed class TopicEngagementRepository : ITopicEngagementRepository
         return new TopicEngagementDto(updated.ViewCount, updated.ShareCount);
     }
 
-    private Task<Topic?> GetPublicTopicAsync(Guid topicId, CancellationToken cancellationToken) =>
-        dbContext.Topics
+    private Task<Topic?> GetPublicTopicAsync(Guid topicId, CancellationToken cancellationToken)
+    {
+        return dbContext.Topics
             .Where(TopicVisibility.IsPublic)
             .SingleOrDefaultAsync(topic => topic.Id == topicId, cancellationToken);
+    }
 }

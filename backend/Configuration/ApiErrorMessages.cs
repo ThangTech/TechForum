@@ -42,8 +42,10 @@ public static partial class ApiErrorMessages
     }
 
     // The first message of the errors, to show a member one clear sentence.
-    public static string? FirstMessage(IDictionary<string, string[]> errors) =>
-        errors.Values.SelectMany(messages => messages).Select(Localize).FirstOrDefault(message => message is not null);
+    public static string? FirstMessage(IDictionary<string, string[]> errors)
+    {
+        return errors.Values.SelectMany(messages => messages).Select(Localize).FirstOrDefault(message => message is not null);
+    }
 
     // Gives a validation problem a Vietnamese title, Vietnamese messages and a detail with the first message.
     public static void Apply(ValidationProblemDetails problem)

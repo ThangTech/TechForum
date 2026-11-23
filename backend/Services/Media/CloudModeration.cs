@@ -9,8 +9,10 @@ public static class CloudModeration
     // The sentence given to CloudMediaRejectedException for a picture the check refused (see CloudRejection.ToMessage).
     public const string RejectedMessage = "Image rejected by moderation";
 
-    public static bool IsRejected(IEnumerable<Moderation>? results) =>
-        results?.Any(result => result.Status == ModerationStatus.Rejected) == true;
+    public static bool IsRejected(IEnumerable<Moderation>? results)
+    {
+        return results?.Any(result => result.Status == ModerationStatus.Rejected) == true;
+    }
 
     // An error that comes from the add-on and not from the file: the add-on is not registered, or the free units of the
     // month are used up. The picture is then uploaded without the check, so the site keeps working.

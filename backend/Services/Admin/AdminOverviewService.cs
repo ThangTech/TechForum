@@ -93,22 +93,30 @@ public sealed class AdminOverviewService : IAdminOverviewService
             (int)Math.Ceiling(data.TotalItems / (double)pageSize));
     }
 
-    private static DateTimeOffset StartOfVietnamDay(DateOnly date) =>
-        new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), VietnamOffset).ToUniversalTime();
+    private static DateTimeOffset StartOfVietnamDay(DateOnly date)
+    {
+        return new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), VietnamOffset).ToUniversalTime();
+    }
 
-    private static AdminStatisticsDto MapStatistics(AdminStatisticsData data) => new(
-        data.AccountCount, data.PublishedArticleCount, data.PublishedQuestionCount,
-        data.VisibleAnswerCount, data.PendingReportCount);
+    private static AdminStatisticsDto MapStatistics(AdminStatisticsData data)
+    {
+        return new(
+            data.AccountCount, data.PublishedArticleCount, data.PublishedQuestionCount,
+            data.VisibleAnswerCount, data.PendingReportCount);
+    }
 
-    private static AdminAuditLogDto MapAuditLog(AdminAuditLog item) => new(
-        item.Id, new ReportUserDto(item.Administrator.Id, item.Administrator.DisplayName),
-        item.Action, item.TargetType, item.TargetId, item.PreviousValue, item.NewValue, item.Reason, item.CreatedAtUtc);
+    private static AdminAuditLogDto MapAuditLog(AdminAuditLog item)
+    {
+        return new(
+            item.Id, new ReportUserDto(item.Administrator.Id, item.Administrator.DisplayName),
+            item.Action, item.TargetType, item.TargetId, item.PreviousValue, item.NewValue, item.Reason, item.CreatedAtUtc);
+    }
 
     private static AdminPendingReportDto MapPendingReport(ContentReport report)
     {
         var topic = report.Topic ?? report.Answer?.Topic;
         var isPublic = TopicVisibility.IsPublicTopic(topic);
-        if (report.Answer is { IsDeleted: true } or { IsHiddenByModerator: true })
+        if (report.Answer != null && (report.Answer.IsDeleted || report.Answer.IsHiddenByModerator))
         {
             isPublic = false;
         }

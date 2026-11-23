@@ -22,16 +22,18 @@ public sealed class AdminAuditService : IAdminAuditService
         string? previousValue,
         string? newValue,
         string reason,
-        CancellationToken cancellationToken) =>
-        auditRepository.AddAsync(new AdminAuditLog
-        {
-            AdministratorId = administratorId,
-            Action = action,
-            TargetType = targetType,
-            TargetId = targetId,
-            PreviousValue = previousValue,
-            NewValue = newValue,
-            Reason = reason,
-            CreatedAtUtc = timeProvider.GetUtcNow()
-        }, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        return auditRepository.AddAsync(new AdminAuditLog
+            {
+                AdministratorId = administratorId,
+                Action = action,
+                TargetType = targetType,
+                TargetId = targetId,
+                PreviousValue = previousValue,
+                NewValue = newValue,
+                Reason = reason,
+                CreatedAtUtc = timeProvider.GetUtcNow()
+            }, cancellationToken);
+    }
 }

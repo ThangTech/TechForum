@@ -27,8 +27,10 @@ public sealed class ProfilesController : ControllerBase
     // The skills that the signed-in member chose for their own profile.
     [Authorize]
     [HttpGet("me/skills")]
-    public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> GetMySkills(CancellationToken cancellationToken) =>
-        Ok(await skillService.GetAsync(User.GetRequiredUserId(), cancellationToken));
+    public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> GetMySkills(CancellationToken cancellationToken)
+    {
+        return Ok(await skillService.GetAsync(User.GetRequiredUserId(), cancellationToken));
+    }
 
     // Replaces the whole list: what is not in the request is removed. Only tags that already exist can be chosen.
     [Authorize]
@@ -85,8 +87,10 @@ public sealed class ProfilesController : ControllerBase
     [HttpDelete("{userId}/follow")]
     public async Task<ActionResult<FollowStatusDto>> Unfollow(
         string userId,
-        CancellationToken cancellationToken) =>
-        Ok(await followService.UnfollowAsync(User.GetRequiredUserId(), userId, cancellationToken));
+        CancellationToken cancellationToken)
+    {
+        return Ok(await followService.UnfollowAsync(User.GetRequiredUserId(), userId, cancellationToken));
+    }
 
     private async Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetConnections(
         string userId, bool followers, PageQuery query, CancellationToken cancellationToken)

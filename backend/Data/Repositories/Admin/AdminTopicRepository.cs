@@ -33,14 +33,23 @@ public sealed class AdminTopicRepository : IAdminTopicRepository
         {
             topics = topics.Where(topic => topic.CategoryId == query.CategoryId.Value);
         }
-        topics = query.Visibility?.Trim().ToLowerInvariant() switch
+        var visibility = query.Visibility?.Trim().ToLowerInvariant();
+        if (visibility == "visible")
         {
-            "visible" => topics.Where(TopicVisibility.IsPublic),
-            "draft" => topics.Where(topic => topic.Status == TopicStatus.Draft && !topic.IsDeleted),
-            "hidden" => topics.Where(topic => !topic.IsDeleted && topic.IsHiddenByModerator),
-            "deleted" => topics.Where(topic => topic.IsDeleted),
-            _ => topics
-        };
+            topics = topics.Where(TopicVisibility.IsPublic);
+        }
+        else if (visibility == "draft")
+        {
+            topics = topics.Where(topic => topic.Status == TopicStatus.Draft && !topic.IsDeleted);
+        }
+        else if (visibility == "hidden")
+        {
+            topics = topics.Where(topic => !topic.IsDeleted && topic.IsHiddenByModerator);
+        }
+        else if (visibility == "deleted")
+        {
+            topics = topics.Where(topic => topic.IsDeleted);
+        }
 
         var totalItems = await topics.CountAsync(cancellationToken);
         var items = await topics
@@ -54,16 +63,20 @@ public sealed class AdminTopicRepository : IAdminTopicRepository
         return new AdminTopicPage(items, totalItems);
     }
 
-    public Task<Topic?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.Topics
+    public Task<Topic?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.Topics
             .Include(topic => topic.Category)
             .Include(topic => topic.Author)
             .SingleOrDefaultAsync(topic => topic.Id == id, cancellationToken);
+    }
 
-    public Task<Category?> GetActiveCategoryAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.Categories.SingleOrDefaultAsync(
+    public Task<Category?> GetActiveCategoryAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.Categories.SingleOrDefaultAsync(
             category => category.Id == id && category.IsActive,
             cancellationToken);
+    }
 
     public async Task<bool> SaveWithAuditAsync(AdminAuditLog auditLog, Notification? notification, CancellationToken cancellationToken)
     {

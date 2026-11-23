@@ -25,6 +25,8 @@ public sealed class TopicEngagementService : ITopicEngagementService
         return repository.RecordViewAsync(topicId, hash, timeProvider.GetUtcNow(), cancellationToken);
     }
 
-    public Task<TopicEngagementDto?> RecordShareAsync(Guid topicId, CancellationToken cancellationToken) =>
-        repository.RecordShareAsync(topicId, cancellationToken);
+    public Task<TopicEngagementDto?> RecordShareAsync(Guid topicId, CancellationToken cancellationToken)
+    {
+        return repository.RecordShareAsync(topicId, cancellationToken);
+    }
 }

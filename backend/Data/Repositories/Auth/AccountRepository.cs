@@ -15,11 +15,15 @@ public sealed class AccountRepository : IAccountRepository
         this.signInManager = signInManager;
     }
 
-    public Task<ApplicationUser?> FindByEmailAsync(string email) =>
-        userManager.FindByEmailAsync(email);
+    public Task<ApplicationUser?> FindByEmailAsync(string email)
+    {
+        return userManager.FindByEmailAsync(email);
+    }
 
-    public Task<ApplicationUser?> FindByIdAsync(string userId) =>
-        userManager.FindByIdAsync(userId);
+    public Task<ApplicationUser?> FindByIdAsync(string userId)
+    {
+        return userManager.FindByIdAsync(userId);
+    }
 
     public async Task<IdentityResult> CreateMemberAsync(
         ApplicationUser user,
@@ -42,21 +46,31 @@ public sealed class AccountRepository : IAccountRepository
     }
 
     // Checks the password and counts failed attempts, so five wrong passwords lock the account.
-    public Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password) =>
-        signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+    public Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password)
+    {
+        return signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+    }
 
-    public Task<bool> IsLockedOutAsync(ApplicationUser user) =>
-        userManager.IsLockedOutAsync(user);
+    public Task<bool> IsLockedOutAsync(ApplicationUser user)
+    {
+        return userManager.IsLockedOutAsync(user);
+    }
 
-    public async Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user) =>
-        (await userManager.GetRolesAsync(user)).ToList();
+    public async Task<IReadOnlyList<string>> GetRolesAsync(ApplicationUser user)
+    {
+        return (await userManager.GetRolesAsync(user)).ToList();
+    }
 
-    public Task<IdentityResult> UpdateAsync(ApplicationUser user) =>
-        userManager.UpdateAsync(user);
+    public Task<IdentityResult> UpdateAsync(ApplicationUser user)
+    {
+        return userManager.UpdateAsync(user);
+    }
 
     public Task<IdentityResult> ChangePasswordAsync(
         ApplicationUser user,
         string currentPassword,
-        string newPassword) =>
-        userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        string newPassword)
+    {
+        return userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+    }
 }

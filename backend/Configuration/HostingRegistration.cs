@@ -47,8 +47,10 @@ public static class HostingRegistration
         return services;
     }
 
-    public static bool IsBehindProxy(IConfiguration configuration) =>
-        configuration.GetValue<bool>("ReverseProxy:Enabled");
+    public static bool IsBehindProxy(IConfiguration configuration)
+    {
+        return configuration.GetValue<bool>("ReverseProxy:Enabled");
+    }
 
     public static int GetForwardLimit(IConfiguration configuration)
     {

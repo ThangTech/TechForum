@@ -38,7 +38,7 @@ public sealed class ContentReportService : IContentReportService
         CancellationToken cancellationToken)
     {
         var targetType = request.TargetType?.Trim().ToLowerInvariant();
-        if (targetType is not ("topic" or "answer") || request.TargetId == Guid.Empty)
+        if ((targetType != "topic" && targetType != "answer") || request.TargetId == Guid.Empty)
         {
             return Result<ReportReceiptDto>.Fail(ErrorType.Validation, null, "Nội dung cần báo cáo không hợp lệ.", "targetId");
         }
@@ -127,12 +127,16 @@ public sealed class ContentReportService : IContentReportService
         ResolveReportRequest request,
         CancellationToken cancellationToken)
     {
-        var status = request.Decision?.Trim().ToLowerInvariant() switch
+        var decision = request.Decision?.Trim().ToLowerInvariant();
+        ReportStatus? status = null;
+        if (decision == "accepted")
         {
-            "accepted" => ReportStatus.Accepted,
-            "rejected" => ReportStatus.Rejected,
-            _ => (ReportStatus?)null
-        };
+            status = ReportStatus.Accepted;
+        }
+        else if (decision == "rejected")
+        {
+            status = ReportStatus.Rejected;
+        }
         if (!status.HasValue)
         {
             return Result<AdminReportDto>.Fail(ErrorType.Validation, null, "Quyết định phải là accepted hoặc rejected.", "decision");
@@ -265,10 +269,29 @@ public sealed class ContentReportService : IContentReportService
         }, cancellationToken);
     }
 
-    private static (string AuthorId, string Title, string Kind) DescribeTarget(Topic? topic, Answer? answer) =>
-        topic is not null
+    // Câu trả lời công khai khi nó và câu trả lời cha (nếu là phản hồi) đều chưa bị xóa hay ẩn, cùng một chủ đề.
+    private static bool IsAnswerPublic(Answer? answer)
+    {
+        if (answer == null || answer.IsDeleted || answer.IsHiddenByModerator)
+        {
+            return false;
+        }
+        if (answer.ParentAnswerId is null)
+        {
+            return true;
+        }
+
+        var parent = answer.ParentAnswer;
+        return parent != null && parent.ParentAnswerId == null && !parent.IsDeleted && !parent.IsHiddenByModerator &&
+            parent.TopicId == answer.TopicId;
+    }
+
+    private static (string AuthorId, string Title, string Kind) DescribeTarget(Topic? topic, Answer? answer)
+    {
+        return topic is not null
             ? (topic.AuthorId, topic.Title, "Bài viết")
             : (answer!.AuthorId, answer.Topic.Title, "Câu trả lời");
+    }
 
     public async Task<PagedResultDto<MyReportDto>> GetMineAsync(
         string reporterId, string? status, int page, int pageSize, CancellationToken cancellationToken)
@@ -281,11 +304,7 @@ public sealed class ContentReportService : IContentReportService
         {
             var topic = report.Topic ?? report.Answer?.Topic;
             var answer = report.Answer;
-            var isAnswerPublic = report.AnswerId is null ||
-                (answer is { IsDeleted: false, IsHiddenByModerator: false } &&
-                 (answer.ParentAnswerId is null ||
-                    (answer.ParentAnswer is { ParentAnswerId: null, IsDeleted: false, IsHiddenByModerator: false } parent &&
-                     parent.TopicId == answer.TopicId)));
+            var isAnswerPublic = report.AnswerId is null || IsAnswerPublic(answer);
             // Chỉ liên kết lại tài nguyên còn công khai; không lộ bản nháp hoặc nội dung đã bị ẩn.
             var isPublic = TopicVisibility.IsPublicTopic(topic) && isAnswerPublic;
             return new MyReportDto(report.Id, report.TopicId.HasValue ? "topic" : "answer",

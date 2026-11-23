@@ -60,14 +60,18 @@ public sealed class MediaStorageService : IMediaStorageService
     public Task<Result<MediaUploadDto>> StoreImageAsync(
         string uploaderId,
         IFormFile file,
-        CancellationToken cancellationToken) =>
-        StoreAsync(uploaderId, file, "images", CloudResourceType.Image, options.MaxImageBytes, DetectImage, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        return StoreAsync(uploaderId, file, "images", CloudResourceType.Image, options.MaxImageBytes, DetectImage, cancellationToken);
+    }
 
     public Task<Result<MediaUploadDto>> StoreVideoAsync(
         string uploaderId,
         IFormFile file,
-        CancellationToken cancellationToken) =>
-        StoreAsync(uploaderId, file, "videos", CloudResourceType.Video, options.MaxVideoBytes, DetectVideo, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        return StoreAsync(uploaderId, file, "videos", CloudResourceType.Video, options.MaxVideoBytes, DetectVideo, cancellationToken);
+    }
 
     public async Task<Result> DeleteUnusedAsync(
         string uploaderId,
@@ -302,8 +306,10 @@ public sealed class MediaStorageService : IMediaStorageService
         return null;
     }
 
-    private static bool StartsWith(byte[] value, byte[] signature) =>
-        value.AsSpan().StartsWith(signature);
+    private static bool StartsWith(byte[] value, byte[] signature)
+    {
+        return value.AsSpan().StartsWith(signature);
+    }
 
     private sealed record DetectedMedia(string Extension, IReadOnlyList<string> ContentTypes);
 }

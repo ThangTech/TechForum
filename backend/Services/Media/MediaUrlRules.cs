@@ -81,8 +81,10 @@ public sealed class MediaUrlRules
     public bool IsTopicMediaUrl(string url) => topicMediaWhole.IsMatch(url);
 
     // Every picture and video address in the (sanitized) HTML of a topic.
-    public IReadOnlyList<string> FindTopicMediaUrls(string html) =>
-        topicMedia.Matches(html).Select(match => match.Value).ToList();
+    public IReadOnlyList<string> FindTopicMediaUrls(string html)
+    {
+        return topicMedia.Matches(html).Select(match => match.Value).ToList();
+    }
 
     // The address of the first picture of the (already sanitized) body, or null when there is none or when it is
     // too long for the cover column.
@@ -101,7 +103,7 @@ public sealed class MediaUrlRules
     public CloudAsset? TryGetCloudAsset(string? url)
     {
         var match = url is null ? null : cloudAsset?.Match(url);
-        if (match is not { Success: true })
+        if (match == null || !match.Success)
         {
             return null;
         }

@@ -35,9 +35,16 @@ public static class EvasionPattern
     }
 
     // True when the folded word has only the letters a-z and single spaces; other words are only found as written.
-    public static bool CanBeHidden(string foldedWord) =>
-        foldedWord.Count(character => character is >= 'a' and <= 'z') >= 2 &&
-        foldedWord.All(character => character is >= 'a' and <= 'z' or ' ');
+    public static bool CanBeHidden(string foldedWord)
+    {
+        return foldedWord.Count(IsLatinLetter) >= 2 &&
+            foldedWord.All(character => IsLatinLetter(character) || character == ' ');
+    }
+
+    private static bool IsLatinLetter(char character)
+    {
+        return character >= 'a' && character <= 'z';
+    }
 
     public static string Build(string foldedWord)
     {
@@ -98,7 +105,7 @@ public static class EvasionPattern
             var character = (char)code;
             if (!char.IsLetter(character)) continue;
             var folded = Fold(character.ToString());
-            if (folded.Length == 1 && folded[0] is >= 'a' and <= 'z' && folded[0] != character) Add(folded[0], character);
+            if (folded.Length == 1 && IsLatinLetter(folded[0]) && folded[0] != character) Add(folded[0], character);
         }
         return letters.ToDictionary(item => item.Key, item => item.Value.ToString());
     }

@@ -113,10 +113,13 @@ public sealed class TopicsController : ControllerBase
         return this.ToActionResult(result);
     }
 
-    private static ProblemDetails CreateNotFoundProblem() => new()
+    private static ProblemDetails CreateNotFoundProblem()
     {
-        Status = StatusCodes.Status404NotFound,
-        Title = "Không tìm thấy nội dung",
-        Detail = "Nội dung không tồn tại hoặc không thuộc tài khoản này."
-    };
+        return new()
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Không tìm thấy nội dung",
+            Detail = "Nội dung không tồn tại hoặc không thuộc tài khoản này."
+        };
+    }
 }

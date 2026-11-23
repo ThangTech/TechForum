@@ -16,11 +16,15 @@ public sealed class PostingRateLimiter : IPostingRateLimiter, IDisposable
         answers = MemberRateLimit.Create(limits.AnswersPerMinute, TimeSpan.FromMinutes(1));
     }
 
-    public bool TryAcquireTopic(string userId, out TimeSpan retryAfter) =>
-        MemberRateLimit.TryAcquire(topics, userId, TimeSpan.FromSeconds(30), out retryAfter);
+    public bool TryAcquireTopic(string userId, out TimeSpan retryAfter)
+    {
+        return MemberRateLimit.TryAcquire(topics, userId, TimeSpan.FromSeconds(30), out retryAfter);
+    }
 
-    public bool TryAcquireAnswer(string userId, out TimeSpan retryAfter) =>
-        MemberRateLimit.TryAcquire(answers, userId, TimeSpan.FromSeconds(10), out retryAfter);
+    public bool TryAcquireAnswer(string userId, out TimeSpan retryAfter)
+    {
+        return MemberRateLimit.TryAcquire(answers, userId, TimeSpan.FromSeconds(10), out retryAfter);
+    }
 
     public void Dispose()
     {

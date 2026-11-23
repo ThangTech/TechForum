@@ -7,6 +7,14 @@ namespace TechForum.Api.Services;
 
 public sealed class AdminTopicService : IAdminTopicService
 {
+    private static readonly Dictionary<string, string> ActionDescriptions = new()
+    {
+        ["hide"] = "bị ẩn",
+        ["restore"] = "được khôi phục",
+        ["lock"] = "bị khóa thảo luận",
+        ["unlock"] = "được mở thảo luận"
+    };
+
     private static readonly HashSet<string> Actions = new(StringComparer.OrdinalIgnoreCase)
     { "hide", "restore", "lock", "unlock", "pin", "unpin", "move" };
 
@@ -68,7 +76,7 @@ public sealed class AdminTopicService : IAdminTopicService
         {
             return Result<AdminTopicDto>.Fail(ErrorType.NotFound, "Không tìm thấy nội dung", "Không tìm thấy nội dung.");
         }
-        if (topic.IsDeleted && action is not ("lock" or "unlock"))
+        if (topic.IsDeleted && action != "lock" && action != "unlock")
         {
             return Result<AdminTopicDto>.Fail(ErrorType.Conflict, "Không thể kiểm duyệt", "Nội dung đã bị tác giả xóa và không thể thực hiện hành động này.");
         }
@@ -104,14 +112,8 @@ public sealed class AdminTopicService : IAdminTopicService
         }
         var now = timeProvider.GetUtcNow();
         topic.UpdatedAtUtc = now;
-        var actionDescription = action switch
-        {
-            "hide" => "bị ẩn",
-            "restore" => "được khôi phục",
-            "lock" => "bị khóa thảo luận",
-            "unlock" => "được mở thảo luận",
-            _ => null
-        };
+        // Ghim, bỏ ghim và chuyển chuyên mục không cần báo cho tác giả.
+        ActionDescriptions.TryGetValue(action, out var actionDescription);
         Notification? notification = actionDescription is null ? null : new Notification
         {
             UserId = topic.AuthorId,
@@ -140,14 +142,19 @@ public sealed class AdminTopicService : IAdminTopicService
         return Result<AdminTopicDto>.Success(Map(topic));
     }
 
-    private static string Describe(Topic topic) =>
-        $"hidden={topic.IsHiddenByModerator};locked={topic.IsDiscussionLocked};pinned={topic.IsPinned};categoryId={topic.CategoryId};deleted={topic.IsDeleted}";
+    private static string Describe(Topic topic)
+    {
+        return $"hidden={topic.IsHiddenByModerator};locked={topic.IsDiscussionLocked};pinned={topic.IsPinned};categoryId={topic.CategoryId};deleted={topic.IsDeleted}";
+    }
 
-    private static AdminTopicDto Map(Topic topic) => new(
-        topic.Id, topic.Title, topic.Type == TopicType.Article ? "article" : "question",
-        new TopicCategoryDto(topic.Category.Id, topic.Category.Name, topic.Category.Slug),
-        new TopicAuthorDto(topic.Author.Id, topic.Author.DisplayName),
-        topic.Status == TopicStatus.Published ? "published" : "draft",
-        topic.CreatedAtUtc, topic.PublishedAtUtc, topic.IsDeleted, topic.IsHiddenByModerator,
-        topic.IsDiscussionLocked, topic.IsPinned);
+    private static AdminTopicDto Map(Topic topic)
+    {
+        return new(
+            topic.Id, topic.Title, topic.Type == TopicType.Article ? "article" : "question",
+            new TopicCategoryDto(topic.Category.Id, topic.Category.Name, topic.Category.Slug),
+            new TopicAuthorDto(topic.Author.Id, topic.Author.DisplayName),
+            topic.Status == TopicStatus.Published ? "published" : "draft",
+            topic.CreatedAtUtc, topic.PublishedAtUtc, topic.IsDeleted, topic.IsHiddenByModerator,
+            topic.IsDiscussionLocked, topic.IsPinned);
+    }
 }

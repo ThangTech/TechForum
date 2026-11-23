@@ -12,19 +12,21 @@ public static class BannedWordRules
     public static bool TryNormalize(string? raw, out string word)
     {
         word = ProfanityFilterSet.NormalizeWord(raw ?? string.Empty);
-        return word.Length is >= MinLength and <= MaxLength &&
+        return word.Length >= MinLength && word.Length <= MaxLength &&
                word.Any(char.IsLetterOrDigit) &&
                !word.Any(character => character is '<' or '>' || char.IsControl(character));
     }
 
     // The lines of the local list: one word or phrase on a line; a line that starts with # is a note; blank lines and
     // words that are not allowed are skipped; a word that comes twice is kept once.
-    public static IReadOnlyList<string> ParseLines(IEnumerable<string> lines) =>
-        lines
+    public static IReadOnlyList<string> ParseLines(IEnumerable<string> lines)
+    {
+        return lines
             .Select(line => line.Trim())
             .Where(line => line.Length > 0 && !line.StartsWith('#'))
             .Select(line => TryNormalize(line, out var word) ? word : null)
             .OfType<string>()
             .Distinct(StringComparer.Ordinal)
             .ToList();
+    }
 }

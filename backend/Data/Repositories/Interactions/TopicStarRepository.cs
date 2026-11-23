@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Models;
@@ -13,16 +14,20 @@ public sealed class TopicStarRepository : ITopicStarRepository
         this.dbContext = dbContext;
     }
 
-    public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken) =>
-        dbContext.TopicStars.CountAsync(star => star.TopicId == topicId, cancellationToken);
+    public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken)
+    {
+        return dbContext.TopicStars.CountAsync(star => star.TopicId == topicId, cancellationToken);
+    }
 
     public Task<bool> ExistsAsync(
         Guid topicId,
         string userId,
-        CancellationToken cancellationToken) =>
-        dbContext.TopicStars.AnyAsync(
+        CancellationToken cancellationToken)
+    {
+        return dbContext.TopicStars.AnyAsync(
             star => star.TopicId == topicId && star.UserId == userId,
             cancellationToken);
+    }
 
     public async Task AddAsync(
         Guid topicId,
@@ -48,7 +53,7 @@ public sealed class TopicStarRepository : ITopicStarRepository
             await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             dbContext.Entry(star).State = EntityState.Detached;
         }
@@ -81,8 +86,10 @@ public sealed class TopicStarRepository : ITopicStarRepository
     public Task RemoveAsync(
         Guid topicId,
         string userId,
-        CancellationToken cancellationToken) =>
-        dbContext.TopicStars
+        CancellationToken cancellationToken)
+    {
+        return dbContext.TopicStars
             .Where(star => star.TopicId == topicId && star.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);
+    }
 }

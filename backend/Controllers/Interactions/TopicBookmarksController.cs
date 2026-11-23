@@ -40,10 +40,13 @@ public sealed class TopicBookmarksController : ControllerBase
         return result is null ? TopicNotFound() : Ok(result);
     }
 
-    private NotFoundObjectResult TopicNotFound() => NotFound(new ProblemDetails
+    private NotFoundObjectResult TopicNotFound()
     {
-        Status = StatusCodes.Status404NotFound,
-        Title = "Không tìm thấy chủ đề",
-        Detail = "Chủ đề không tồn tại hoặc không còn công khai."
-    });
+        return NotFound(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Không tìm thấy chủ đề",
+            Detail = "Chủ đề không tồn tại hoặc không còn công khai."
+        });
+    }
 }

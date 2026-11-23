@@ -62,29 +62,27 @@ public sealed class PublicProfileService : IPublicProfileService
         return badges;
     }
 
-    private static TopicSummaryDto MapTopic(Topic topic) => new(
-        topic.Id,
-        topic.Title,
-        topic.Slug,
-        topic.Summary,
-        topic.Type switch
-        {
-            TopicType.Article => "article",
-            TopicType.Question => "question",
-            _ => throw new InvalidOperationException($"Unsupported topic type: {topic.Type}")
-        },
-        new TopicCategoryDto(topic.Category.Id, topic.Category.Name, topic.Category.Slug),
-        new TopicAuthorDto(topic.Author.Id, topic.Author.DisplayName),
-        topic.TopicTags
-            .Where(item => item.Tag.IsActive)
-            .OrderBy(item => item.Tag.Name)
-            .ThenBy(item => item.TagId)
-            .Select(item => new TopicTagDto(item.TagId, item.Tag.Name, item.Tag.Slug))
-            .ToList(),
-        topic.PublishedAtUtc!.Value,
-        topic.IsPinned,
-        topic.IsDiscussionLocked,
-        topic.ViewCount,
-        topic.ShareCount,
-        CoverImageUrl: topic.CoverImageUrl);
+    private static TopicSummaryDto MapTopic(Topic topic)
+    {
+        return new(
+            topic.Id,
+            topic.Title,
+            topic.Slug,
+            topic.Summary,
+            topic.Type.ToString().ToLowerInvariant(),
+            new TopicCategoryDto(topic.Category.Id, topic.Category.Name, topic.Category.Slug),
+            new TopicAuthorDto(topic.Author.Id, topic.Author.DisplayName),
+            topic.TopicTags
+                .Where(item => item.Tag.IsActive)
+                .OrderBy(item => item.Tag.Name)
+                .ThenBy(item => item.TagId)
+                .Select(item => new TopicTagDto(item.TagId, item.Tag.Name, item.Tag.Slug))
+                .ToList(),
+            topic.PublishedAtUtc!.Value,
+            topic.IsPinned,
+            topic.IsDiscussionLocked,
+            topic.ViewCount,
+            topic.ShareCount,
+            CoverImageUrl: topic.CoverImageUrl);
+    }
 }

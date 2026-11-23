@@ -19,8 +19,10 @@ public sealed class RefreshTokenCleanupService : IRefreshTokenCleanupService
     // that using it again is noticed as a stolen token (see AuthService.RefreshAsync).
     public static readonly TimeSpan KeepAfterExpiry = TimeSpan.FromDays(30);
 
-    public Task<int> DeleteExpiredAsync(CancellationToken cancellationToken) =>
-        refreshTokenRepository.DeleteExpiredAsync(
+    public Task<int> DeleteExpiredAsync(CancellationToken cancellationToken)
+    {
+        return refreshTokenRepository.DeleteExpiredAsync(
             timeProvider.GetUtcNow() - KeepAfterExpiry,
             cancellationToken);
+    }
 }

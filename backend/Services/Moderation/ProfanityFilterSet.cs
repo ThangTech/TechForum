@@ -72,10 +72,12 @@ public sealed class ProfanityFilterSet
 
     // The form in which a word is saved and compared: no spaces at the ends, one space between words, lower case,
     // and one way of writing accents (the letter with its accent in one character).
-    public static string NormalizeWord(string word) =>
-        string.Join(' ', word.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    public static string NormalizeWord(string word)
+    {
+        return string.Join(' ', word.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             .Normalize(NormalizationForm.FormC)
             .ToLowerInvariant();
+    }
 
     public string Apply(string text, bool isHtml)
     {
@@ -91,10 +93,13 @@ public sealed class ProfanityFilterSet
         return string.Concat(pieces);
     }
 
-    private static Regex CreateRegex(string alternatives) => new(
-        BeforeWord + alternatives + AfterWord,
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        TimeSpan.FromSeconds(1));
+    private static Regex CreateRegex(string alternatives)
+    {
+        return new(
+            BeforeWord + alternatives + AfterWord,
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+            TimeSpan.FromSeconds(1));
+    }
 
     private string MaskText(string text)
     {

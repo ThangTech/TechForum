@@ -115,9 +115,12 @@ public sealed class AvatarService : IAvatarService
         return Result<CurrentUserDto>.Success(await MapUserAsync(user));
     }
 
-    private async Task<CurrentUserDto> MapUserAsync(TechForum.Api.Models.ApplicationUser user) => new(
-        user.Id, user.DisplayName, user.Bio, user.AvatarUrl, user.Email ?? string.Empty,
-        await accountRepository.GetRolesAsync(user));
+    private async Task<CurrentUserDto> MapUserAsync(TechForum.Api.Models.ApplicationUser user)
+    {
+        return new(
+            user.Id, user.DisplayName, user.Bio, user.AvatarUrl, user.Email ?? string.Empty,
+            await accountRepository.GetRolesAsync(user));
+    }
 
     private string GetStorageRoot()
     {

@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Models;
@@ -13,15 +14,19 @@ public sealed class DraftRepository : IDraftRepository
         this.dbContext = dbContext;
     }
 
-    public Task<Draft?> GetForTargetAsync(string userId, Guid? topicId, CancellationToken cancellationToken) =>
-        dbContext.Drafts.SingleOrDefaultAsync(
+    public Task<Draft?> GetForTargetAsync(string userId, Guid? topicId, CancellationToken cancellationToken)
+    {
+        return dbContext.Drafts.SingleOrDefaultAsync(
             draft => draft.UserId == userId && draft.TopicId == topicId,
             cancellationToken);
+    }
 
-    public Task<bool> OwnsTopicAsync(string userId, Guid topicId, CancellationToken cancellationToken) =>
-        dbContext.Topics.AnyAsync(
+    public Task<bool> OwnsTopicAsync(string userId, Guid topicId, CancellationToken cancellationToken)
+    {
+        return dbContext.Topics.AnyAsync(
             topic => topic.Id == topicId && topic.AuthorId == userId && !topic.IsDeleted,
             cancellationToken);
+    }
 
     public async Task<bool> TryAddAsync(Draft draft, CancellationToken cancellationToken)
     {
@@ -32,18 +37,22 @@ public sealed class DraftRepository : IDraftRepository
             return true;
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             dbContext.Entry(draft).State = EntityState.Detached;
             return false;
         }
     }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
-        dbContext.SaveChangesAsync(cancellationToken);
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return dbContext.SaveChangesAsync(cancellationToken);
+    }
 
-    public async Task DeleteForTargetAsync(string userId, Guid? topicId, CancellationToken cancellationToken) =>
+    public async Task DeleteForTargetAsync(string userId, Guid? topicId, CancellationToken cancellationToken)
+    {
         await dbContext.Drafts
             .Where(draft => draft.UserId == userId && draft.TopicId == topicId)
             .ExecuteDeleteAsync(cancellationToken);
+    }
 }

@@ -22,8 +22,10 @@ public static class ReputationRules
     // were none until the time has passed.
     public const int ScoreHiddenHours = 2;
 
-    public static bool IsScoreHidden(DateTimeOffset postedAtUtc, DateTimeOffset nowUtc) =>
-        nowUtc - postedAtUtc < TimeSpan.FromHours(ScoreHiddenHours);
+    public static bool IsScoreHidden(DateTimeOffset postedAtUtc, DateTimeOffset nowUtc)
+    {
+        return nowUtc - postedAtUtc < TimeSpan.FromHours(ScoreHiddenHours);
+    }
 
     // The score as it is shown: 0 while it is hidden, never below 0 otherwise.
     public static int ShownScore(int score, bool isHidden) => isHidden ? 0 : ForDisplay(score);
@@ -37,10 +39,17 @@ public static class ReputationRules
     public static int ForVoter(int value) => value < 0 ? DownvoteCost : 0;
 
     // The points that a vote of this value (+1, -1 or 0 for no vote) gives to the author.
-    public static int ForVote(VoteTargetType targetType, int value) => value switch
+    public static int ForVote(VoteTargetType targetType, int value)
     {
-        > 0 => targetType == VoteTargetType.Answer ? AnswerUpvote : TopicUpvote,
-        < 0 => Downvote,
-        _ => 0
-    };
+        if (value > 0)
+        {
+            return targetType == VoteTargetType.Answer ? AnswerUpvote : TopicUpvote;
+        }
+        if (value < 0)
+        {
+            return Downvote;
+        }
+
+        return 0;
+    }
 }

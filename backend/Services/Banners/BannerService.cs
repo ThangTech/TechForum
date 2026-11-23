@@ -27,13 +27,17 @@ public sealed class BannerService : IBannerService
         this.timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<BannerDto>> GetShownAsync(CancellationToken cancellationToken) =>
-        (await bannerRepository.GetShownAsync(timeProvider.GetUtcNow(), cancellationToken))
+    public async Task<IReadOnlyList<BannerDto>> GetShownAsync(CancellationToken cancellationToken)
+    {
+        return (await bannerRepository.GetShownAsync(timeProvider.GetUtcNow(), cancellationToken))
             .Select(banner => new BannerDto(banner.Id, banner.Title, banner.ImageUrl, banner.LinkUrl))
             .ToList();
+    }
 
-    public async Task<IReadOnlyList<AdminBannerDto>> GetAdminAsync(CancellationToken cancellationToken) =>
-        (await bannerRepository.GetAllAsync(cancellationToken)).Select(MapAdminDto).ToList();
+    public async Task<IReadOnlyList<AdminBannerDto>> GetAdminAsync(CancellationToken cancellationToken)
+    {
+        return (await bannerRepository.GetAllAsync(cancellationToken)).Select(MapAdminDto).ToList();
+    }
 
     public async Task<Result<AdminBannerDto>> CreateAsync(
         string administratorId,
@@ -137,8 +141,10 @@ public sealed class BannerService : IBannerService
         return Result.Success();
     }
 
-    public Task<Result<string>> UploadImageAsync(IFormFile file, CancellationToken cancellationToken) =>
-        imageStorage.SaveAsync(file, cancellationToken);
+    public Task<Result<string>> UploadImageAsync(IFormFile file, CancellationToken cancellationToken)
+    {
+        return imageStorage.SaveAsync(file, cancellationToken);
+    }
 
     // Two banners may point to the same picture, so the file is only removed when no other banner uses it.
     private async Task DeleteImageIfUnusedAsync(string imageUrl, Guid bannerId, CancellationToken cancellationToken)
@@ -168,7 +174,7 @@ public sealed class BannerService : IBannerService
             return Invalid("Liên kết phải là đường dẫn trong trang (bắt đầu bằng /) hoặc địa chỉ http/https.", "linkUrl");
         }
 
-        if (request.DisplayOrder is < 0 or > MaxDisplayOrder)
+        if (request.DisplayOrder < 0 || request.DisplayOrder > MaxDisplayOrder)
         {
             return Invalid($"Thứ tự hiển thị phải từ 0 đến {MaxDisplayOrder}.", "displayOrder");
         }
@@ -204,26 +210,37 @@ public sealed class BannerService : IBannerService
             (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 
-    private static string? NormalizeLink(string? link) =>
-        string.IsNullOrWhiteSpace(link) ? null : link.Trim();
+    private static string? NormalizeLink(string? link)
+    {
+        return string.IsNullOrWhiteSpace(link) ? null : link.Trim();
+    }
 
-    private static string Describe(Banner banner) =>
-        $"title={banner.Title};order={banner.DisplayOrder};active={banner.IsActive}";
+    private static string Describe(Banner banner)
+    {
+        return $"title={banner.Title};order={banner.DisplayOrder};active={banner.IsActive}";
+    }
 
-    private static Result<AdminBannerDto> Invalid(string message, string field) =>
-        Result<AdminBannerDto>.Fail(ErrorType.Validation, null, message, field);
+    private static Result<AdminBannerDto> Invalid(string message, string field)
+    {
+        return Result<AdminBannerDto>.Fail(ErrorType.Validation, null, message, field);
+    }
 
-    private static Result<AdminBannerDto> NotFound() =>
-        Result<AdminBannerDto>.Fail(ErrorType.NotFound, "Không tìm thấy banner", "Không tìm thấy banner.");
+    private static Result<AdminBannerDto> NotFound()
+    {
+        return Result<AdminBannerDto>.Fail(ErrorType.NotFound, "Không tìm thấy banner", "Không tìm thấy banner.");
+    }
 
-    private static AdminBannerDto MapAdminDto(Banner banner) => new(
-        banner.Id,
-        banner.Title,
-        banner.ImageUrl,
-        banner.LinkUrl,
-        banner.DisplayOrder,
-        banner.IsActive,
-        banner.StartsAtUtc,
-        banner.EndsAtUtc,
-        banner.CreatedAtUtc);
+    private static AdminBannerDto MapAdminDto(Banner banner)
+    {
+        return new(
+            banner.Id,
+            banner.Title,
+            banner.ImageUrl,
+            banner.LinkUrl,
+            banner.DisplayOrder,
+            banner.IsActive,
+            banner.StartsAtUtc,
+            banner.EndsAtUtc,
+            banner.CreatedAtUtc);
+    }
 }

@@ -50,7 +50,9 @@ public static class TopicVisibility
             this.replacement = replacement;
         }
 
-        protected override Expression VisitParameter(ParameterExpression node) =>
-            node == parameter ? replacement : base.VisitParameter(node);
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return node == parameter ? replacement : base.VisitParameter(node);
+        }
     }
 }

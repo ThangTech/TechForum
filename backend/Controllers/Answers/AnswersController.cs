@@ -105,10 +105,13 @@ public sealed class AnswersController : ControllerBase
         return this.ToActionResult(result);
     }
 
-    private static ProblemDetails CreateTopicNotFoundProblem() => new()
+    private static ProblemDetails CreateTopicNotFoundProblem()
     {
-        Status = StatusCodes.Status404NotFound,
-        Title = "Không tìm thấy chủ đề",
-        Detail = "Chủ đề không tồn tại hoặc không còn công khai."
-    };
+        return new()
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Không tìm thấy chủ đề",
+            Detail = "Chủ đề không tồn tại hoặc không còn công khai."
+        };
+    }
 }

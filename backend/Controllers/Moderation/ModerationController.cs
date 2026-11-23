@@ -22,6 +22,8 @@ public sealed class ModerationController : ControllerBase
     [HttpPost("check")]
     public async Task<ActionResult<ContentCheckResultDto>> Check(
         [FromBody] CheckContentRequest request,
-        CancellationToken cancellationToken) =>
-        Ok(await contentCheckService.CheckAsync(request, cancellationToken));
+        CancellationToken cancellationToken)
+    {
+        return Ok(await contentCheckService.CheckAsync(request, cancellationToken));
+    }
 }

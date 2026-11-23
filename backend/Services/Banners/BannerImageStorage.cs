@@ -140,11 +140,13 @@ public sealed class BannerImageStorage : IBannerImageStorage
     }
 
     // A picture of the time before Cloudinary.
-    private bool IsLocalImageUrl(string imageUrl) =>
-        imageUrl.StartsWith(localUrlPrefix, StringComparison.Ordinal) &&
-        imageUrl.Length > localUrlPrefix.Length &&
-        imageUrl.IndexOfAny(['/', '\\', '?', '#', '%'], localUrlPrefix.Length) < 0 &&
-        !imageUrl.Contains("..", StringComparison.Ordinal);
+    private bool IsLocalImageUrl(string imageUrl)
+    {
+        return imageUrl.StartsWith(localUrlPrefix, StringComparison.Ordinal) &&
+            imageUrl.Length > localUrlPrefix.Length &&
+            imageUrl.IndexOfAny(['/', '\\', '?', '#', '%'], localUrlPrefix.Length) < 0 &&
+            !imageUrl.Contains("..", StringComparison.Ordinal);
+    }
 
     private void DeleteLocalFile(string imageUrl)
     {

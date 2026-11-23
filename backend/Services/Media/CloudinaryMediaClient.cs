@@ -164,6 +164,8 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
         }
     }
 
-    private Cloudinary GetClient() =>
-        cloudinary ?? throw new CloudMediaException("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret).");
+    private Cloudinary GetClient()
+    {
+        return cloudinary ?? throw new CloudMediaException("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret).");
+    }
 }

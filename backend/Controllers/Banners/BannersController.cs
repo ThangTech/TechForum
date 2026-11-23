@@ -17,6 +17,8 @@ public sealed class BannersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<BannerDto>>> GetShown(CancellationToken cancellationToken) =>
-        Ok(await bannerService.GetShownAsync(cancellationToken));
+    public async Task<ActionResult<IReadOnlyList<BannerDto>>> GetShown(CancellationToken cancellationToken)
+    {
+        return Ok(await bannerService.GetShownAsync(cancellationToken));
+    }
 }

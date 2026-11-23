@@ -106,14 +106,17 @@ public sealed class AdminAccountService : IAdminAccountService
         return Result<AdminAccountDto>.Success(Map(user, isAdministrator));
     }
 
-    private AdminAccountDto Map(ApplicationUser user, bool isAdministrator) => new(
-        user.Id,
-        user.DisplayName,
-        user.Email ?? string.Empty,
-        user.CreatedAtUtc,
-        user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow(),
-        isAdministrator,
-        user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow() ? user.LockReason : null,
-        !user.LockoutEnd.HasValue || user.LockoutEnd <= timeProvider.GetUtcNow() || user.LockoutEnd == DateTimeOffset.MaxValue
-            ? null : user.LockoutEnd);
+    private AdminAccountDto Map(ApplicationUser user, bool isAdministrator)
+    {
+        return new(
+            user.Id,
+            user.DisplayName,
+            user.Email ?? string.Empty,
+            user.CreatedAtUtc,
+            user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow(),
+            isAdministrator,
+            user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow() ? user.LockReason : null,
+            !user.LockoutEnd.HasValue || user.LockoutEnd <= timeProvider.GetUtcNow() || user.LockoutEnd == DateTimeOffset.MaxValue
+                ? null : user.LockoutEnd);
+    }
 }

@@ -29,7 +29,7 @@ builder.Services.AddControllers(options => options.Filters.Add<ValidationProblem
         options.InvalidModelStateResponseFactory = context =>
         {
             var errors = context.ModelState
-                .Where(entry => entry.Value is { Errors.Count: > 0 })
+                .Where(entry => entry.Value != null && entry.Value.Errors.Count > 0)
                 .ToDictionary(
                     entry => entry.Key,
                     entry => entry.Value!.Errors.Select(error => error.ErrorMessage).ToArray());

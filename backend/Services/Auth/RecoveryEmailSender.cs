@@ -18,10 +18,15 @@ public sealed class RecoveryEmailSender : IRecoveryEmailSender
     }
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(settings.Host) &&
-        settings.Port is > 0 and <= 65535 &&
+        settings.Port > 0 && settings.Port <= 65535 &&
         MailboxAddress.TryParse(settings.FromAddress, out _) &&
         (settings.UseTls || environment.IsDevelopment() &&
-            settings.Host is "localhost" or "127.0.0.1" or "::1");
+            IsLocalHost(settings.Host));
+
+    private static bool IsLocalHost(string? host)
+    {
+        return host == "localhost" || host == "127.0.0.1" || host == "::1";
+    }
 
     public async Task SendAsync(string email, string resetUrl, CancellationToken cancellationToken)
     {

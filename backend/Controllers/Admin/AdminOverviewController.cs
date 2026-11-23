@@ -20,8 +20,10 @@ public sealed class AdminOverviewController : ControllerBase
     }
 
     [HttpGet("statistics")]
-    public async Task<ActionResult<AdminStatisticsDto>> GetStatistics(CancellationToken cancellationToken) =>
-        Ok(await overviewService.GetStatisticsAsync(cancellationToken));
+    public async Task<ActionResult<AdminStatisticsDto>> GetStatistics(CancellationToken cancellationToken)
+    {
+        return Ok(await overviewService.GetStatisticsAsync(cancellationToken));
+    }
 
     [HttpGet("dashboard")]
     public async Task<ActionResult<AdminDashboardDto>> GetDashboard([FromQuery] DateOnly? startDate, [FromQuery] DateOnly? endDate, CancellationToken cancellationToken)
@@ -33,6 +35,8 @@ public sealed class AdminOverviewController : ControllerBase
     [HttpGet("audit-logs")]
     public async Task<ActionResult<PagedResultDto<AdminAuditLogDto>>> GetAuditLogs(
         [FromQuery] AdminAuditQuery query,
-        CancellationToken cancellationToken = default) =>
-        Ok(await overviewService.GetAuditPageAsync(query, cancellationToken));
+        CancellationToken cancellationToken = default)
+    {
+        return Ok(await overviewService.GetAuditPageAsync(query, cancellationToken));
+    }
 }

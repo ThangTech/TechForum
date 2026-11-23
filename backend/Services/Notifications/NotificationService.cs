@@ -39,17 +39,19 @@ public sealed class NotificationService : INotificationService
         Guid topicId,
         Guid answerId,
         string topicTitle,
-        CancellationToken cancellationToken) =>
-        notificationRepository.AddIfMissingAsync(new Notification
-        {
-            UserId = recipientId,
-            Type = "accepted-answer",
-            Title = "Câu trả lời được chấp nhận",
-            Message = $"Câu trả lời của bạn trong “{topicTitle}” đã được chấp nhận.",
-            Link = $"/topics/{topicId}#answer-{answerId}",
-            SourceKey = $"accepted-answer:{topicId}:{answerId}",
-            CreatedAtUtc = timeProvider.GetUtcNow()
-        }, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        return notificationRepository.AddIfMissingAsync(new Notification
+            {
+                UserId = recipientId,
+                Type = "accepted-answer",
+                Title = "Câu trả lời được chấp nhận",
+                Message = $"Câu trả lời của bạn trong “{topicTitle}” đã được chấp nhận.",
+                Link = $"/topics/{topicId}#answer-{answerId}",
+                SourceKey = $"accepted-answer:{topicId}:{answerId}",
+                CreatedAtUtc = timeProvider.GetUtcNow()
+            }, cancellationToken);
+    }
 
     public async Task AddNewAnswerAsync(
         string recipientId,
@@ -91,12 +93,15 @@ public sealed class NotificationService : INotificationService
         return true;
     }
 
-    private static NotificationDto Map(Notification notification) => new(
-        notification.Id,
-        notification.Type,
-        notification.Title,
-        notification.Message,
-        notification.Link,
-        notification.CreatedAtUtc,
-        notification.ReadAtUtc);
+    private static NotificationDto Map(Notification notification)
+    {
+        return new(
+            notification.Id,
+            notification.Type,
+            notification.Title,
+            notification.Message,
+            notification.Link,
+            notification.CreatedAtUtc,
+            notification.ReadAtUtc);
+    }
 }

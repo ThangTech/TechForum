@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Enums;
@@ -14,13 +15,17 @@ public sealed class TopicBookmarkRepository : ITopicBookmarkRepository
         this.dbContext = dbContext;
     }
 
-    public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken) =>
-        dbContext.TopicBookmarks.CountAsync(item => item.TopicId == topicId, cancellationToken);
+    public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken)
+    {
+        return dbContext.TopicBookmarks.CountAsync(item => item.TopicId == topicId, cancellationToken);
+    }
 
-    public Task<bool> ExistsAsync(Guid topicId, string userId, CancellationToken cancellationToken) =>
-        dbContext.TopicBookmarks.AnyAsync(
+    public Task<bool> ExistsAsync(Guid topicId, string userId, CancellationToken cancellationToken)
+    {
+        return dbContext.TopicBookmarks.AnyAsync(
             item => item.TopicId == topicId && item.UserId == userId,
             cancellationToken);
+    }
 
     public async Task AddAsync(
         Guid topicId,
@@ -45,16 +50,18 @@ public sealed class TopicBookmarkRepository : ITopicBookmarkRepository
             await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             dbContext.Entry(bookmark).State = EntityState.Detached;
         }
     }
 
-    public Task RemoveAsync(Guid topicId, string userId, CancellationToken cancellationToken) =>
-        dbContext.TopicBookmarks
+    public Task RemoveAsync(Guid topicId, string userId, CancellationToken cancellationToken)
+    {
+        return dbContext.TopicBookmarks
             .Where(item => item.TopicId == topicId && item.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);
+    }
 
     public async Task<BookmarkPage> GetPageAsync(
         string userId,

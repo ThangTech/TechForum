@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using TechForum.Api.Enums;
@@ -14,32 +15,38 @@ public sealed class ContentReportRepository : IContentReportRepository
         this.dbContext = dbContext;
     }
 
-    private IQueryable<ContentReport> DetailedQuery() =>
-        dbContext.ContentReports
+    private IQueryable<ContentReport> DetailedQuery()
+    {
+        return dbContext.ContentReports
             .Include(item => item.Topic).ThenInclude(topic => topic!.Author)
             .Include(item => item.Answer).ThenInclude(answer => answer!.Topic)
             .Include(item => item.Answer).ThenInclude(answer => answer!.Author)
             .Include(item => item.Answer).ThenInclude(answer => answer!.ParentAnswer)
             .Include(item => item.Reporter)
             .Include(item => item.ResolvedBy);
+    }
 
-    public Task<Answer?> GetPublicAnswerAsync(Guid answerId, CancellationToken cancellationToken) =>
-        dbContext.Answers.AsNoTracking().Include(item => item.Topic)
+    public Task<Answer?> GetPublicAnswerAsync(Guid answerId, CancellationToken cancellationToken)
+    {
+        return dbContext.Answers.AsNoTracking().Include(item => item.Topic)
             .Where(AnswerVisibility.IsPublic)
             .WhereTopicIsPublic(item => item.Topic)
             .SingleOrDefaultAsync(item => item.Id == answerId, cancellationToken);
+    }
 
     public Task<bool> PendingExistsAsync(
         string reporterId,
         Guid? topicId,
         Guid? answerId,
-        CancellationToken cancellationToken) =>
-        dbContext.ContentReports.AnyAsync(item =>
+        CancellationToken cancellationToken)
+    {
+        return dbContext.ContentReports.AnyAsync(item =>
             item.ReporterId == reporterId &&
             item.TopicId == topicId &&
             item.AnswerId == answerId &&
             item.Status == ReportStatus.Pending,
             cancellationToken);
+    }
 
     public async Task<bool> AddAsync(ContentReport report, CancellationToken cancellationToken)
     {
@@ -50,7 +57,7 @@ public sealed class ContentReportRepository : IContentReportRepository
             return true;
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             dbContext.Entry(report).State = EntityState.Detached;
             return false;
@@ -58,17 +65,21 @@ public sealed class ContentReportRepository : IContentReportRepository
     }
 
     public Task<int> CountPendingReportersAsync(
-        Guid? topicId, Guid? answerId, DateTimeOffset accountsCreatedBefore, CancellationToken cancellationToken) =>
-        dbContext.ContentReports
+        Guid? topicId, Guid? answerId, DateTimeOffset accountsCreatedBefore, CancellationToken cancellationToken)
+    {
+        return dbContext.ContentReports
             .Where(item => item.TopicId == topicId && item.AnswerId == answerId &&
                 item.Status == ReportStatus.Pending && item.Reporter.CreatedAtUtc <= accountsCreatedBefore)
             .Select(item => item.ReporterId)
             .Distinct()
             .CountAsync(cancellationToken);
+    }
 
-    public Task<bool> HasAcceptedReportAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken) =>
-        dbContext.ContentReports.AnyAsync(item => item.TopicId == topicId && item.AnswerId == answerId &&
+    public Task<bool> HasAcceptedReportAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken)
+    {
+        return dbContext.ContentReports.AnyAsync(item => item.TopicId == topicId && item.AnswerId == answerId &&
             item.Status == ReportStatus.Accepted, cancellationToken);
+    }
 
     public async Task<bool> AutoHideAsync(
         Guid? topicId, Guid? answerId, DateTimeOffset now, Notification notification, CancellationToken cancellationToken)
@@ -160,8 +171,10 @@ public sealed class ContentReportRepository : IContentReportRepository
         return new ContentReportPage(items, totalItems);
     }
 
-    public Task<ContentReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-        DetailedQuery().AsNoTracking().SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+    public Task<ContentReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return DetailedQuery().AsNoTracking().SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+    }
 
     public async Task<ContentReportPage> GetMineAsync(string reporterId, ReportStatus? status,
         int page, int pageSize, CancellationToken cancellationToken)

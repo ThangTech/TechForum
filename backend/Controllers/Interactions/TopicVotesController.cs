@@ -30,6 +30,8 @@ public sealed class TopicVotesController : ControllerBase
     public async Task<ActionResult<VoteDto>> Set(
         Guid topicId,
         [FromBody] SetVoteRequest request,
-        CancellationToken cancellationToken) =>
-        this.ToActionResult(await voteService.SetTopicVoteAsync(topicId, User.GetRequiredUserId(), request.Value, cancellationToken));
+        CancellationToken cancellationToken)
+    {
+        return this.ToActionResult(await voteService.SetTopicVoteAsync(topicId, User.GetRequiredUserId(), request.Value, cancellationToken));
+    }
 }

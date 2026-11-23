@@ -57,8 +57,10 @@ public sealed class TokenService : ITokenService
         return new AccessTokenResult(token, expiresAt);
     }
 
-    public string GenerateRefreshToken() =>
-        WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(RefreshTokenByteCount));
+    public string GenerateRefreshToken()
+    {
+        return WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(RefreshTokenByteCount));
+    }
 
     public string HashRefreshToken(string refreshToken)
     {

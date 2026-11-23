@@ -168,6 +168,8 @@ public sealed class VoteService : IVoteService
     }
 
     // The score of a new post or answer is hidden for the first hours.
-    private bool IsHidden(DateTimeOffset? postedAtUtc) =>
-        postedAtUtc is { } posted && ReputationRules.IsScoreHidden(posted, timeProvider.GetUtcNow());
+    private bool IsHidden(DateTimeOffset? postedAtUtc)
+    {
+        return postedAtUtc.HasValue && ReputationRules.IsScoreHidden(postedAtUtc.Value, timeProvider.GetUtcNow());
+    }
 }

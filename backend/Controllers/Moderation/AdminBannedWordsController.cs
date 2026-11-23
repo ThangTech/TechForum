@@ -21,8 +21,10 @@ public sealed class AdminBannedWordsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<BannedWordDto>>> GetAll(CancellationToken cancellationToken) =>
-        Ok(await bannedWordService.GetAllAsync(cancellationToken));
+    public async Task<ActionResult<IReadOnlyList<BannedWordDto>>> GetAll(CancellationToken cancellationToken)
+    {
+        return Ok(await bannedWordService.GetAllAsync(cancellationToken));
+    }
 
     [HttpPost]
     public async Task<ActionResult<BannedWordDto>> Add([FromBody] SaveBannedWordRequest request, CancellationToken cancellationToken)

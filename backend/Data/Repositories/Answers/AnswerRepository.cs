@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using TechForum.Api.Enums;
@@ -71,14 +72,21 @@ public sealed class AnswerRepository : IAnswerRepository
 
         var totalItems = await answers.CountAsync(cancellationToken);
         var pinnedFirst = answers.OrderByDescending(answer => answer.Id == pinnedId);
-        var orderedAnswers = sort switch
+        IOrderedQueryable<Answer> orderedAnswers;
+        if (sort == "score")
         {
-            "score" => pinnedFirst.ThenByDescending(answer => answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0)
-                .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id),
-            "helpful" => pinnedFirst.ThenByDescending(answer => answer.HelpfulVotes.Count)
-                .ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id),
-            _ => pinnedFirst.ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id)
-        };
+            // Điểm của câu trả lời còn mới bị ẩn, nên chưa được tính khi sắp xếp.
+            orderedAnswers = pinnedFirst.ThenByDescending(answer => answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0);
+        }
+        else if (sort == "helpful")
+        {
+            orderedAnswers = pinnedFirst.ThenByDescending(answer => answer.HelpfulVotes.Count);
+        }
+        else
+        {
+            orderedAnswers = pinnedFirst;
+        }
+        orderedAnswers = orderedAnswers.ThenBy(answer => answer.CreatedAtUtc).ThenBy(answer => answer.Id);
         var items = await orderedAnswers
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -107,15 +115,18 @@ public sealed class AnswerRepository : IAnswerRepository
 
     // Adds (or takes away, when delta is negative) reputation points of a member. It is only used for the bonus of an
     // accepted answer; votes change reputation inside their own transaction (VoteRepository).
-    public async Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken) =>
+    public async Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken)
+    {
         await dbContext.Users.Where(user => user.Id == userId)
             .ExecuteUpdateAsync(set => set.SetProperty(user => user.Reputation, user => user.Reputation + delta), cancellationToken);
+    }
 
     public async Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
         IReadOnlyCollection<Guid> answerIds,
         string? viewerId,
-        CancellationToken cancellationToken) =>
-        await dbContext.Answers.AsNoTracking()
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.Answers.AsNoTracking()
             .Where(answer => answerIds.Contains(answer.Id))
             .Select(answer => new AnswerHelpfulState(
                 answer.Id,
@@ -129,6 +140,7 @@ public sealed class AnswerRepository : IAnswerRepository
                         .Select(vote => vote.Value)
                         .FirstOrDefault()))
             .ToListAsync(cancellationToken);
+    }
 
     public async Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken)
     {
@@ -141,7 +153,7 @@ public sealed class AnswerRepository : IAnswerRepository
             await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             // Hai lần bấm đồng thời vẫn chỉ tạo một lượt bình chọn.
             dbContext.Entry(vote).State = EntityState.Detached;
@@ -155,10 +167,12 @@ public sealed class AnswerRepository : IAnswerRepository
             .ExecuteDeleteAsync(cancellationToken);
     }
 
-    private IQueryable<Answer> PublicAnswers(Guid topicId) =>
-        dbContext.Answers.AsNoTracking()
+    private IQueryable<Answer> PublicAnswers(Guid topicId)
+    {
+        return dbContext.Answers.AsNoTracking()
             .Where(answer => answer.TopicId == topicId)
             .Where(AnswerVisibility.IsPublic);
+    }
 
     public async Task AddAsync(Answer answer, CancellationToken cancellationToken)
     {
@@ -170,21 +184,24 @@ public sealed class AnswerRepository : IAnswerRepository
     public Task<Answer?> GetVisibleByIdAsync(
         Guid topicId,
         Guid answerId,
-        CancellationToken cancellationToken) =>
-        PublicAnswers(topicId)
+        CancellationToken cancellationToken)
+    {
+        return PublicAnswers(topicId)
             .Include(answer => answer.Author)
             .Include(answer => answer.ParentAnswer)
                 .ThenInclude(parent => parent!.Author)
             .SingleOrDefaultAsync(answer =>
                 answer.Id == answerId,
                 cancellationToken);
+    }
 
     public Task<Answer?> GetOwnedByIdAsync(
         Guid topicId,
         Guid answerId,
         string authorId,
-        CancellationToken cancellationToken) =>
-        dbContext.Answers
+        CancellationToken cancellationToken)
+    {
+        return dbContext.Answers
             .Include(answer => answer.Author)
             .Include(answer => answer.Topic)
             .Include(answer => answer.ParentAnswer)
@@ -195,7 +212,10 @@ public sealed class AnswerRepository : IAnswerRepository
                 answer.AuthorId == authorId &&
                 !answer.IsDeleted,
                 cancellationToken);
+    }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
-        dbContext.SaveChangesAsync(cancellationToken);
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

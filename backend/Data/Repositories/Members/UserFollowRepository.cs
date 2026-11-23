@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using TechForum.Api.Models;
@@ -14,8 +15,10 @@ public sealed class UserFollowRepository : IUserFollowRepository
         this.dbContext = dbContext;
     }
 
-    public Task<bool> UserExistsAsync(string userId, CancellationToken cancellationToken) =>
-        dbContext.Users.AsNoTracking().AnyAsync(user => user.Id == userId, cancellationToken);
+    public Task<bool> UserExistsAsync(string userId, CancellationToken cancellationToken)
+    {
+        return dbContext.Users.AsNoTracking().AnyAsync(user => user.Id == userId, cancellationToken);
+    }
 
     public async Task<bool> AddIfMissingAsync(UserFollow follow, CancellationToken cancellationToken)
     {
@@ -29,7 +32,7 @@ public sealed class UserFollowRepository : IUserFollowRepository
             return true;
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             dbContext.Entry(follow).State = EntityState.Detached;
             return false;
@@ -43,8 +46,10 @@ public sealed class UserFollowRepository : IUserFollowRepository
             .ExecuteDeleteAsync(cancellationToken);
     }
 
-    public Task<int> GetFollowerCountAsync(string userId, CancellationToken cancellationToken) =>
-        dbContext.UserFollows.AsNoTracking().CountAsync(follow => follow.FollowingId == userId, cancellationToken);
+    public Task<int> GetFollowerCountAsync(string userId, CancellationToken cancellationToken)
+    {
+        return dbContext.UserFollows.AsNoTracking().CountAsync(follow => follow.FollowingId == userId, cancellationToken);
+    }
 
     public async Task<FollowMemberPage?> GetConnectionsAsync(
         string userId,

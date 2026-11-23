@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Models;
@@ -13,11 +14,15 @@ public sealed class BannedWordRepository : IBannedWordRepository
         this.dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<BannedWord>> GetAllAsync(CancellationToken cancellationToken) =>
-        await dbContext.BannedWords.AsNoTracking().OrderBy(item => item.Word).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<BannedWord>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.BannedWords.AsNoTracking().OrderBy(item => item.Word).ToListAsync(cancellationToken);
+    }
 
-    public Task<bool> AnyAsync(CancellationToken cancellationToken) =>
-        dbContext.BannedWords.AnyAsync(cancellationToken);
+    public Task<bool> AnyAsync(CancellationToken cancellationToken)
+    {
+        return dbContext.BannedWords.AnyAsync(cancellationToken);
+    }
 
     public async Task AddRangeAsync(IReadOnlyList<BannedWord> words, CancellationToken cancellationToken)
     {
@@ -27,15 +32,17 @@ public sealed class BannedWordRepository : IBannedWordRepository
             await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             // Another instance of the API filled the table at the same moment; its words are the same list.
             dbContext.ChangeTracker.Clear();
         }
     }
 
-    public Task<BannedWord?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.BannedWords.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+    public Task<BannedWord?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.BannedWords.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+    }
 
     public async Task<bool> AddAsync(BannedWord word, CancellationToken cancellationToken)
     {
@@ -46,7 +53,7 @@ public sealed class BannedWordRepository : IBannedWordRepository
             return true;
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             dbContext.Entry(word).State = EntityState.Detached;
             return false;

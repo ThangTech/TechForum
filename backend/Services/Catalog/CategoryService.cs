@@ -27,17 +27,22 @@ public sealed class CategoryService : ICategoryService
         return category is null ? null : MapToDto(category);
     }
 
-    private static CategoryDto MapToDto(Category category) => new(
-        category.Id,
-        category.Name,
-        category.Slug,
-        category.Description,
-        category.DisplayOrder);
+    private static CategoryDto MapToDto(Category category)
+    {
+        return new(
+            category.Id,
+            category.Name,
+            category.Slug,
+            category.Description,
+            category.DisplayOrder);
+    }
 
-    public async Task<IReadOnlyList<AdminCategoryDto>> GetAdminAsync(CancellationToken cancellationToken) =>
-        (await categoryRepository.GetAdminAsync(cancellationToken))
+    public async Task<IReadOnlyList<AdminCategoryDto>> GetAdminAsync(CancellationToken cancellationToken)
+    {
+        return (await categoryRepository.GetAdminAsync(cancellationToken))
             .Select(item => MapAdminDto(item.Category, item.TopicCount))
             .ToList();
+    }
 
     public async Task<Result<AdminCategoryDto>> CreateAsync(
         string administratorId,
@@ -156,15 +161,20 @@ public sealed class CategoryService : ICategoryService
         return null;
     }
 
-    private static string? NormalizeDescription(string? description) =>
-        string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+    private static string? NormalizeDescription(string? description)
+    {
+        return string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+    }
 
-    private static AdminCategoryDto MapAdminDto(Category category, int topicCount) => new(
-        category.Id,
-        category.Name,
-        category.Slug,
-        category.Description,
-        category.DisplayOrder,
-        category.IsActive,
-        topicCount);
+    private static AdminCategoryDto MapAdminDto(Category category, int topicCount)
+    {
+        return new(
+            category.Id,
+            category.Name,
+            category.Slug,
+            category.Description,
+            category.DisplayOrder,
+            category.IsActive,
+            topicCount);
+    }
 }

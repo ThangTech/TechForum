@@ -63,7 +63,10 @@ public sealed class RelatedTopicRepository : IRelatedTopicRepository
             .ToListAsync(cancellationToken);
     }
 
-    private IQueryable<Topic> PublicTopics() => dbContext.Topics
-        .AsNoTracking()
-        .Where(TopicVisibility.IsPublic);
+    private IQueryable<Topic> PublicTopics()
+    {
+        return dbContext.Topics
+            .AsNoTracking()
+            .Where(TopicVisibility.IsPublic);
+    }
 }

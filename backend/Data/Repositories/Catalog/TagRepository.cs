@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using TechForum.Api.Models;
@@ -30,8 +31,9 @@ public sealed class TagRepository : ITagRepository
             .SingleOrDefaultAsync(tag => tag.Id == id && tag.IsActive, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<TagAdminData>> GetAdminAsync(CancellationToken cancellationToken) =>
-        await dbContext.Tags
+    public async Task<IReadOnlyList<TagAdminData>> GetAdminAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.Tags
             .AsNoTracking()
             .OrderBy(tag => tag.Name)
             .ThenBy(tag => tag.Id)
@@ -39,17 +41,24 @@ public sealed class TagRepository : ITagRepository
                 tag,
                 dbContext.TopicTags.Count(topicTag => topicTag.TagId == tag.Id)))
             .ToListAsync(cancellationToken);
+    }
 
-    public Task<Tag?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.Tags.SingleOrDefaultAsync(tag => tag.Id == id, cancellationToken);
+    public Task<Tag?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.Tags.SingleOrDefaultAsync(tag => tag.Id == id, cancellationToken);
+    }
 
-    public Task<int> GetTopicCountAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.TopicTags.CountAsync(topicTag => topicTag.TagId == id, cancellationToken);
+    public Task<int> GetTopicCountAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.TopicTags.CountAsync(topicTag => topicTag.TagId == id, cancellationToken);
+    }
 
-    public Task<bool> SlugExistsAsync(string slug, Guid? exceptId, CancellationToken cancellationToken) =>
-        dbContext.Tags.AnyAsync(
+    public Task<bool> SlugExistsAsync(string slug, Guid? exceptId, CancellationToken cancellationToken)
+    {
+        return dbContext.Tags.AnyAsync(
             tag => tag.Slug == slug && (!exceptId.HasValue || tag.Id != exceptId.Value),
             cancellationToken);
+    }
 
     public async Task<bool> AddAsync(Tag tag, CancellationToken cancellationToken)
     {
@@ -57,8 +66,10 @@ public sealed class TagRepository : ITagRepository
         return await TrySaveAsync(tag, cancellationToken);
     }
 
-    public Task<bool> SaveChangesAsync(CancellationToken cancellationToken) =>
-        TrySaveAsync(null, cancellationToken);
+    public Task<bool> SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return TrySaveAsync(null, cancellationToken);
+    }
 
     private async Task<bool> TrySaveAsync(Tag? addedTag, CancellationToken cancellationToken)
     {
@@ -68,7 +79,7 @@ public sealed class TagRepository : ITagRepository
             return true;
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             if (addedTag is not null)
             {

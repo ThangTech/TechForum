@@ -49,10 +49,13 @@ public sealed class TopicStarsController : ControllerBase
         return status is null ? NotFoundProblem() : Ok(status);
     }
 
-    private NotFoundObjectResult NotFoundProblem() => NotFound(new ProblemDetails
+    private NotFoundObjectResult NotFoundProblem()
     {
-        Status = StatusCodes.Status404NotFound,
-        Title = "Không tìm thấy chủ đề",
-        Detail = "Chủ đề không tồn tại hoặc không còn công khai."
-    });
+        return NotFound(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Không tìm thấy chủ đề",
+            Detail = "Chủ đề không tồn tại hoặc không còn công khai."
+        });
+    }
 }

@@ -14,8 +14,10 @@ public sealed class UserSkillService : IUserSkillService
         this.timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<SkillTagDto>> GetAsync(string userId, CancellationToken cancellationToken) =>
-        Map(await repository.GetChosenAsync(userId, cancellationToken));
+    public async Task<IReadOnlyList<SkillTagDto>> GetAsync(string userId, CancellationToken cancellationToken)
+    {
+        return Map(await repository.GetChosenAsync(userId, cancellationToken));
+    }
 
     public async Task<Result<IReadOnlyList<SkillTagDto>>> ReplaceAsync(
         string userId,
@@ -41,6 +43,8 @@ public sealed class UserSkillService : IUserSkillService
         return Result<IReadOnlyList<SkillTagDto>>.Success(await GetAsync(userId, cancellationToken));
     }
 
-    private static IReadOnlyList<SkillTagDto> Map(IReadOnlyList<SkillTagData> tags) =>
-        tags.Select(tag => new SkillTagDto(tag.TagId, tag.Name, tag.Slug)).ToList();
+    private static IReadOnlyList<SkillTagDto> Map(IReadOnlyList<SkillTagData> tags)
+    {
+        return tags.Select(tag => new SkillTagDto(tag.TagId, tag.Name, tag.Slug)).ToList();
+    }
 }

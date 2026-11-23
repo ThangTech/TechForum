@@ -329,8 +329,10 @@ public sealed partial class TopicService : ITopicService
 
         public static TopicValidation Valid(ValidatedTopic values) => new(values, null);
 
-        public static TopicValidation Invalid(string field, string message) =>
-            new(null, Result<OwnTopicDto>.Fail(ErrorType.Validation, InvalidTitle, message, field));
+        public static TopicValidation Invalid(string field, string message)
+        {
+            return new(null, Result<OwnTopicDto>.Fail(ErrorType.Validation, InvalidTitle, message, field));
+        }
     }
 
     // Checks the form of a new topic (editingTopicId is null) or of a topic that is being edited.
@@ -342,13 +344,13 @@ public sealed partial class TopicService : ITopicService
         CancellationToken cancellationToken)
     {
         var title = form.Title?.Trim();
-        if (string.IsNullOrWhiteSpace(title) || title.Length is < 10 or > 200)
+        if (string.IsNullOrWhiteSpace(title) || title.Length < 10 || title.Length > 200)
         {
             return TopicValidation.Invalid("title", "Tiêu đề phải có từ 10 đến 200 ký tự.");
         }
 
         var summary = form.Summary?.Trim();
-        if (string.IsNullOrWhiteSpace(summary) || summary.Length is < 20 or > 500)
+        if (string.IsNullOrWhiteSpace(summary) || summary.Length < 20 || summary.Length > 500)
         {
             return TopicValidation.Invalid("summary", "Tóm tắt phải có từ 20 đến 500 ký tự.");
         }
@@ -395,8 +397,8 @@ public sealed partial class TopicService : ITopicService
 
         // A new topic can only use media that is not attached to anything yet. An edited topic can also keep
         // the media it already has.
-        var mediaAssets = editingTopicId is { } topicId
-            ? await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(mediaIds, authorId, topicId, cancellationToken)
+        var mediaAssets = editingTopicId.HasValue
+            ? await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(mediaIds, authorId, editingTopicId.Value, cancellationToken)
             : await mediaAssetRepository.GetOwnedUnattachedByIdsAsync(mediaIds, authorId, cancellationToken);
         if (mediaAssets.Count != mediaIds.Length)
         {
@@ -421,19 +423,22 @@ public sealed partial class TopicService : ITopicService
     }
 
     // The answer of the create and edit calls: the saved topic plus the category, tags and media that were checked.
-    private static OwnTopicDto MapSavedTopic(Topic topic, ValidatedTopic values) => new(
-        topic.Id,
-        topic.Title,
-        topic.Slug,
-        topic.Summary,
-        topic.BodyHtml,
-        MapType(topic.Type),
-        topic.Status == TopicStatus.Published ? "published" : "draft",
-        new TopicCategoryDto(values.Category.Id, values.Category.Name, values.Category.Slug),
-        values.Tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
-        values.MediaAssets.Select(MapMedia).ToList(),
-        topic.CreatedAtUtc,
-        topic.PublishedAtUtc);
+    private static OwnTopicDto MapSavedTopic(Topic topic, ValidatedTopic values)
+    {
+        return new(
+            topic.Id,
+            topic.Title,
+            topic.Slug,
+            topic.Summary,
+            topic.BodyHtml,
+            MapType(topic.Type),
+            topic.Status == TopicStatus.Published ? "published" : "draft",
+            new TopicCategoryDto(values.Category.Id, values.Category.Name, values.Category.Slug),
+            values.Tags.Select(tag => new TopicTagDto(tag.Id, tag.Name, tag.Slug)).ToList(),
+            values.MediaAssets.Select(MapMedia).ToList(),
+            topic.CreatedAtUtc,
+            topic.PublishedAtUtc);
+    }
 
     // Two requests with the same title can both see the same slug as free. The database accepts only
     // one of them, so the other one picks another slug and saves again. After the first conflict it
@@ -525,96 +530,115 @@ public sealed partial class TopicService : ITopicService
     [GeneratedRegex("<[^>]+>")]
     private static partial Regex HtmlTags();
 
-    private static TopicSummaryDto MapSummary(Topic topic, DateTimeOffset now) => new(
-        topic.Id,
-        topic.Title,
-        topic.Slug,
-        topic.Summary,
-        MapType(topic.Type),
-        MapCategory(topic),
-        MapAuthor(topic),
-        MapTags(topic),
-        topic.PublishedAtUtc!.Value,
-        topic.IsPinned,
-        topic.IsDiscussionLocked,
-        topic.ViewCount,
-        topic.ShareCount,
-        CoverImageUrl: topic.CoverImageUrl,
-        Score: ReputationRules.ShownScore(topic.Score, IsScoreHidden(topic, now)),
-        ScoreHidden: IsScoreHidden(topic, now));
+    private static TopicSummaryDto MapSummary(Topic topic, DateTimeOffset now)
+    {
+        return new(
+            topic.Id,
+            topic.Title,
+            topic.Slug,
+            topic.Summary,
+            MapType(topic.Type),
+            MapCategory(topic),
+            MapAuthor(topic),
+            MapTags(topic),
+            topic.PublishedAtUtc!.Value,
+            topic.IsPinned,
+            topic.IsDiscussionLocked,
+            topic.ViewCount,
+            topic.ShareCount,
+            CoverImageUrl: topic.CoverImageUrl,
+            Score: ReputationRules.ShownScore(topic.Score, IsScoreHidden(topic, now)),
+            ScoreHidden: IsScoreHidden(topic, now));
+    }
 
     // A post is new for the first hours after it was published: its score is hidden.
-    private static bool IsScoreHidden(Topic topic, DateTimeOffset now) =>
-        topic.PublishedAtUtc is { } published && ReputationRules.IsScoreHidden(published, now);
-
-    private static TopicDetailDto MapDetail(Topic topic, DateTimeOffset now) => new(
-        topic.Id,
-        topic.Title,
-        topic.Slug,
-        topic.Summary,
-        topic.BodyHtml,
-        MapType(topic.Type),
-        MapCategory(topic),
-        MapAuthor(topic),
-        MapTags(topic),
-        topic.CreatedAtUtc,
-        topic.PublishedAtUtc!.Value,
-        topic.UpdatedAtUtc,
-        topic.IsPinned,
-        topic.IsDiscussionLocked,
-        topic.ViewCount,
-        topic.ShareCount,
-        ReputationRules.ShownScore(topic.Score, IsScoreHidden(topic, now)),
-        IsScoreHidden(topic, now));
-
-    private static OwnTopicSummaryDto MapOwnedSummary(Topic topic) => new(
-        topic.Id,
-        topic.Title,
-        topic.Summary,
-        MapType(topic.Type),
-        topic.Status == TopicStatus.Published ? "published" : "draft",
-        MapCategory(topic),
-        MapTags(topic),
-        topic.CreatedAtUtc,
-        topic.UpdatedAtUtc,
-        topic.PublishedAtUtc,
-        topic.IsHiddenByModerator,
-        topic.IsDiscussionLocked);
-
-    private static OwnTopicDto MapOwnTopic(Topic topic) => new(
-        topic.Id,
-        topic.Title,
-        topic.Slug,
-        topic.Summary,
-        topic.BodyHtml,
-        MapType(topic.Type),
-        topic.Status == TopicStatus.Published ? "published" : "draft",
-        MapCategory(topic),
-        MapTags(topic),
-        topic.MediaAssets.OrderBy(item => item.CreatedAtUtc).Select(MapMedia).ToList(),
-        topic.CreatedAtUtc,
-        topic.PublishedAtUtc);
-
-    private static TopicMediaDto MapMedia(MediaAsset mediaAsset) =>
-        new(mediaAsset.Id, mediaAsset.PublicUrl, mediaAsset.ContentType);
-
-    private static string MapType(TopicType type) => type switch
+    private static bool IsScoreHidden(Topic topic, DateTimeOffset now)
     {
-        TopicType.Article => "article",
-        TopicType.Question => "question",
-        _ => throw new InvalidOperationException($"Unsupported topic type: {type}")
-    };
+        return topic.PublishedAtUtc.HasValue && ReputationRules.IsScoreHidden(topic.PublishedAtUtc.Value, now);
+    }
 
-    private static TopicCategoryDto MapCategory(Topic topic) =>
-        new(topic.Category.Id, topic.Category.Name, topic.Category.Slug);
+    private static TopicDetailDto MapDetail(Topic topic, DateTimeOffset now)
+    {
+        return new(
+            topic.Id,
+            topic.Title,
+            topic.Slug,
+            topic.Summary,
+            topic.BodyHtml,
+            MapType(topic.Type),
+            MapCategory(topic),
+            MapAuthor(topic),
+            MapTags(topic),
+            topic.CreatedAtUtc,
+            topic.PublishedAtUtc!.Value,
+            topic.UpdatedAtUtc,
+            topic.IsPinned,
+            topic.IsDiscussionLocked,
+            topic.ViewCount,
+            topic.ShareCount,
+            ReputationRules.ShownScore(topic.Score, IsScoreHidden(topic, now)),
+            IsScoreHidden(topic, now));
+    }
 
-    private static TopicAuthorDto MapAuthor(Topic topic) =>
-        new(topic.Author.Id, topic.Author.DisplayName);
+    private static OwnTopicSummaryDto MapOwnedSummary(Topic topic)
+    {
+        return new(
+            topic.Id,
+            topic.Title,
+            topic.Summary,
+            MapType(topic.Type),
+            topic.Status == TopicStatus.Published ? "published" : "draft",
+            MapCategory(topic),
+            MapTags(topic),
+            topic.CreatedAtUtc,
+            topic.UpdatedAtUtc,
+            topic.PublishedAtUtc,
+            topic.IsHiddenByModerator,
+            topic.IsDiscussionLocked);
+    }
 
-    private static IReadOnlyList<TopicTagDto> MapTags(Topic topic) => topic.TopicTags
-        .Where(item => item.Tag.IsActive)
-        .OrderBy(item => item.Tag.Name)
-        .ThenBy(item => item.TagId)
-        .Select(item => new TopicTagDto(item.TagId, item.Tag.Name, item.Tag.Slug))
-        .ToList();
+    private static OwnTopicDto MapOwnTopic(Topic topic)
+    {
+        return new(
+            topic.Id,
+            topic.Title,
+            topic.Slug,
+            topic.Summary,
+            topic.BodyHtml,
+            MapType(topic.Type),
+            topic.Status == TopicStatus.Published ? "published" : "draft",
+            MapCategory(topic),
+            MapTags(topic),
+            topic.MediaAssets.OrderBy(item => item.CreatedAtUtc).Select(MapMedia).ToList(),
+            topic.CreatedAtUtc,
+            topic.PublishedAtUtc);
+    }
+
+    private static TopicMediaDto MapMedia(MediaAsset mediaAsset)
+    {
+        return new(mediaAsset.Id, mediaAsset.PublicUrl, mediaAsset.ContentType);
+    }
+
+    // "article" hoặc "question", như frontend dùng.
+    private static string MapType(TopicType type) => type.ToString().ToLowerInvariant();
+
+    private static TopicCategoryDto MapCategory(Topic topic)
+    {
+        return new(topic.Category.Id, topic.Category.Name, topic.Category.Slug);
+    }
+
+    private static TopicAuthorDto MapAuthor(Topic topic)
+    {
+        return new(topic.Author.Id, topic.Author.DisplayName);
+    }
+
+    private static IReadOnlyList<TopicTagDto> MapTags(Topic topic)
+    {
+        return topic.TopicTags
+            .Where(item => item.Tag.IsActive)
+            .OrderBy(item => item.Tag.Name)
+            .ThenBy(item => item.TagId)
+            .Select(item => new TopicTagDto(item.TagId, item.Tag.Name, item.Tag.Slug))
+            .ToList();
+    }
 }

@@ -135,10 +135,15 @@ public sealed class AdminOverviewRepository : IAdminOverviewRepository
         return new AdminAuditPage(items, totalItems);
     }
 
-    private IQueryable<Topic> PublicTopics() =>
-        dbContext.Topics.AsNoTracking().Where(TopicVisibility.IsPublic);
+    private IQueryable<Topic> PublicTopics()
+    {
+        return dbContext.Topics.AsNoTracking().Where(TopicVisibility.IsPublic);
+    }
 
-    private IQueryable<Answer> PublicAnswers() => dbContext.Answers.AsNoTracking()
-        .Where(AnswerVisibility.IsPublic)
-        .WhereTopicIsPublic(answer => answer.Topic);
+    private IQueryable<Answer> PublicAnswers()
+    {
+        return dbContext.Answers.AsNoTracking()
+            .Where(AnswerVisibility.IsPublic)
+            .WhereTopicIsPublic(answer => answer.Topic);
+    }
 }

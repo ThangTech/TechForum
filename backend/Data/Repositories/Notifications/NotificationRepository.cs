@@ -45,11 +45,15 @@ public sealed class NotificationRepository : INotificationRepository
         return true;
     }
 
-    public Task<Notification?> GetUnreadAsync(Guid id, string userId, CancellationToken cancellationToken) =>
-        dbContext.Notifications.SingleOrDefaultAsync(
+    public Task<Notification?> GetUnreadAsync(Guid id, string userId, CancellationToken cancellationToken)
+    {
+        return dbContext.Notifications.SingleOrDefaultAsync(
             notification => notification.Id == id && notification.UserId == userId && notification.ReadAtUtc == null,
             cancellationToken);
+    }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
-        dbContext.SaveChangesAsync(cancellationToken);
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

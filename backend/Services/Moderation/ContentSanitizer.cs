@@ -28,7 +28,7 @@ public sealed class ContentSanitizer : IContentSanitizer
         sanitizer = new HtmlSanitizer(options);
         sanitizer.FilterUrl += (_, eventArgs) =>
         {
-            if (eventArgs.Tag.LocalName is "img" or "video" or "source" &&
+            if ((eventArgs.Tag.LocalName == "img" || eventArgs.Tag.LocalName == "video" || eventArgs.Tag.LocalName == "source") &&
                 !mediaUrlRules.IsTopicMediaUrl(eventArgs.OriginalUrl))
             {
                 eventArgs.SanitizedUrl = null;

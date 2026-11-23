@@ -23,8 +23,10 @@ public sealed class BannedWordService : IBannedWordService
         this.timeProvider = timeProvider;
     }
 
-    public async Task<IReadOnlyList<BannedWordDto>> GetAllAsync(CancellationToken cancellationToken) =>
-        (await repository.GetAllAsync(cancellationToken)).Select(Map).ToList();
+    public async Task<IReadOnlyList<BannedWordDto>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return (await repository.GetAllAsync(cancellationToken)).Select(Map).ToList();
+    }
 
     public async Task<Result<BannedWordDto>> AddAsync(
         string administratorId,

@@ -18,10 +18,12 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public Task<RefreshToken?> FindByHashAsync(string tokenHash, CancellationToken cancellationToken) =>
-        dbContext.RefreshTokens
+    public Task<RefreshToken?> FindByHashAsync(string tokenHash, CancellationToken cancellationToken)
+    {
+        return dbContext.RefreshTokens
             .AsNoTracking()
             .SingleOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
+    }
 
     public async Task<bool> RotateAsync(
         Guid currentTokenId,
@@ -77,8 +79,10 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
                 cancellationToken);
     }
 
-    public Task<int> DeleteExpiredAsync(DateTimeOffset expiredBefore, CancellationToken cancellationToken) =>
-        dbContext.RefreshTokens
+    public Task<int> DeleteExpiredAsync(DateTimeOffset expiredBefore, CancellationToken cancellationToken)
+    {
+        return dbContext.RefreshTokens
             .Where(token => token.ExpiresAtUtc < expiredBefore)
             .ExecuteDeleteAsync(cancellationToken);
+    }
 }

@@ -16,6 +16,8 @@ public sealed class PublicStatisticsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PublicStatisticsDto>> Get(CancellationToken cancellationToken) =>
-        Ok(await service.GetAsync(cancellationToken));
+    public async Task<ActionResult<PublicStatisticsDto>> Get(CancellationToken cancellationToken)
+    {
+        return Ok(await service.GetAsync(cancellationToken));
+    }
 }

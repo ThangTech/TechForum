@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using TechForum.Api.Models;
@@ -31,8 +32,9 @@ public sealed class CategoryRepository : ICategoryRepository
             .SingleOrDefaultAsync(category => category.Id == id && category.IsActive, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<CategoryAdminData>> GetAdminAsync(CancellationToken cancellationToken) =>
-        await dbContext.Categories
+    public async Task<IReadOnlyList<CategoryAdminData>> GetAdminAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.Categories
             .AsNoTracking()
             .OrderBy(category => category.DisplayOrder)
             .ThenBy(category => category.Name)
@@ -41,17 +43,24 @@ public sealed class CategoryRepository : ICategoryRepository
                 category,
                 dbContext.Topics.Count(topic => topic.CategoryId == category.Id)))
             .ToListAsync(cancellationToken);
+    }
 
-    public Task<Category?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.Categories.SingleOrDefaultAsync(category => category.Id == id, cancellationToken);
+    public Task<Category?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.Categories.SingleOrDefaultAsync(category => category.Id == id, cancellationToken);
+    }
 
-    public Task<int> GetTopicCountAsync(Guid id, CancellationToken cancellationToken) =>
-        dbContext.Topics.CountAsync(topic => topic.CategoryId == id, cancellationToken);
+    public Task<int> GetTopicCountAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.Topics.CountAsync(topic => topic.CategoryId == id, cancellationToken);
+    }
 
-    public Task<bool> SlugExistsAsync(string slug, Guid? exceptId, CancellationToken cancellationToken) =>
-        dbContext.Categories.AnyAsync(
+    public Task<bool> SlugExistsAsync(string slug, Guid? exceptId, CancellationToken cancellationToken)
+    {
+        return dbContext.Categories.AnyAsync(
             category => category.Slug == slug && (!exceptId.HasValue || category.Id != exceptId.Value),
             cancellationToken);
+    }
 
     public async Task<bool> AddAsync(Category category, CancellationToken cancellationToken)
     {
@@ -59,8 +68,10 @@ public sealed class CategoryRepository : ICategoryRepository
         return await TrySaveAsync(category, cancellationToken);
     }
 
-    public Task<bool> SaveChangesAsync(CancellationToken cancellationToken) =>
-        TrySaveAsync(null, cancellationToken);
+    public Task<bool> SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        return TrySaveAsync(null, cancellationToken);
+    }
 
     private async Task<bool> TrySaveAsync(Category? addedCategory, CancellationToken cancellationToken)
     {
@@ -70,7 +81,7 @@ public sealed class CategoryRepository : ICategoryRepository
             return true;
         }
         catch (DbUpdateException exception)
-            when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+            when (SqlErrors.IsDuplicateKey(exception))
         {
             if (addedCategory is not null)
             {

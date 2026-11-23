@@ -40,19 +40,24 @@ public sealed class JwtOptions
         return null;
     }
 
-    public SymmetricSecurityKey CreateSecurityKey() =>
-        new(Encoding.UTF8.GetBytes(SigningKey));
+    public SymmetricSecurityKey CreateSecurityKey()
+    {
+        return new(Encoding.UTF8.GetBytes(SigningKey));
+    }
 
     // Shared by the JwtBearer middleware and the tests so both check tokens the same way.
-    public TokenValidationParameters CreateValidationParameters() => new()
+    public TokenValidationParameters CreateValidationParameters()
     {
-        ValidateIssuer = true,
-        ValidIssuer = Issuer,
-        ValidateAudience = true,
-        ValidAudience = Audience,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = CreateSecurityKey(),
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
-    };
+        return new()
+        {
+            ValidateIssuer = true,
+            ValidIssuer = Issuer,
+            ValidateAudience = true,
+            ValidAudience = Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = CreateSecurityKey(),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    }
 }

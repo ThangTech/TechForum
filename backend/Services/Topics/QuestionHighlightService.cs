@@ -29,6 +29,8 @@ public sealed class QuestionHighlightService : IQuestionHighlightService
             periodDays);
     }
 
-    private static QuestionHighlightDto Map(QuestionHighlightData item) =>
-        new(item.Id, item.Title, item.AnswerCount, item.PublishedAtUtc);
+    private static QuestionHighlightDto Map(QuestionHighlightData item)
+    {
+        return new(item.Id, item.Title, item.AnswerCount, item.PublishedAtUtc);
+    }
 }

@@ -1,3 +1,4 @@
+using TechForum.Api.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Models;
@@ -13,23 +14,27 @@ public sealed class UserSkillRepository : IUserSkillRepository
         this.dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<SkillTagData>> GetChosenAsync(string userId, CancellationToken cancellationToken) =>
-        await dbContext.UserSkills
+    public async Task<IReadOnlyList<SkillTagData>> GetChosenAsync(string userId, CancellationToken cancellationToken)
+    {
+        return await dbContext.UserSkills
             .AsNoTracking()
             .Where(skill => skill.UserId == userId && skill.Tag.IsActive)
             .OrderBy(skill => skill.Tag.Name)
             .ThenBy(skill => skill.TagId)
             .Select(skill => new SkillTagData(skill.TagId, skill.Tag.Name, skill.Tag.Slug))
             .ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyList<Guid>> GetActiveTagIdsAsync(
         IReadOnlyCollection<Guid> tagIds,
-        CancellationToken cancellationToken) =>
-        await dbContext.Tags
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.Tags
             .AsNoTracking()
             .Where(tag => tagIds.Contains(tag.Id) && tag.IsActive)
             .Select(tag => tag.Id)
             .ToListAsync(cancellationToken);
+    }
 
     public async Task ReplaceAsync(
         string userId,
@@ -55,7 +60,7 @@ public sealed class UserSkillRepository : IUserSkillRepository
                 return;
             }
             catch (DbUpdateException exception)
-                when (attempt == 1 && exception.InnerException is SqlException { Number: 2601 or 2627 })
+                when (attempt == 1 && SqlErrors.IsDuplicateKey(exception))
             {
                 dbContext.ChangeTracker.Clear();
             }
