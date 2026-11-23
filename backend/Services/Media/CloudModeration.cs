@@ -13,6 +13,23 @@ public static class CloudModeration
         return results?.Any(result => result.Status == ModerationStatus.Rejected) == true;
     }
 
+    // Các nhãn AI gán cho ảnh, ví dụ "Weapon Violence (Violence) 91%", ghi vào log để biết vì sao ảnh bị chặn
+    // và chỉnh ngưỡng của từng nhóm trong Cloudinary:ImageModeration.
+    public static string DescribeLabels(IEnumerable<Moderation>? results)
+    {
+        var labels = new List<string>();
+        foreach (var result in results ?? [])
+        {
+            foreach (var label in result.Response?.ModerationLabels ?? [])
+            {
+                var parent = string.IsNullOrEmpty(label.ParentName) ? "" : $" ({label.ParentName})";
+                labels.Add($"{label.Name}{parent} {label.Confidence:0}%");
+            }
+        }
+
+        return labels.Count == 0 ? "không có nhãn" : string.Join(", ", labels);
+    }
+
     // Lỗi đến từ add-on chứ không phải từ tệp: chưa đăng ký hoặc hết hạn mức miễn phí của tháng.
     public static bool IsUnavailable(string? errorMessage)
     {

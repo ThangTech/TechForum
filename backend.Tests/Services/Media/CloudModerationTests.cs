@@ -49,4 +49,25 @@ public sealed class CloudModerationTests
     {
         Assert.Contains("không phù hợp", CloudRejection.ToMessage(CloudModeration.RejectedMessage));
     }
+
+    [Fact]
+    public void DescribeLabels_NamesEachLabelWithItsGroupAndScore()
+    {
+        var moderation = new Moderation
+        {
+            Kind = "aws_rek",
+            Status = ModerationStatus.Rejected,
+            Response = new ModerationResponse
+            {
+                ModerationLabels =
+                [
+                    new ModerationLabel { Name = "Weapon Violence", ParentName = "Violence", Confidence = 91.4f },
+                    new ModerationLabel { Name = "Violence", ParentName = "", Confidence = 91.4f }
+                ]
+            }
+        };
+
+        Assert.Equal("Weapon Violence (Violence) 91%, Violence 91%", CloudModeration.DescribeLabels([moderation]));
+        Assert.Equal("không có nhãn", CloudModeration.DescribeLabels(null));
+    }
 }

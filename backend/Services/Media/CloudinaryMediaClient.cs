@@ -66,6 +66,8 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
 
             if (CloudModeration.IsRejected(result.Moderation))
             {
+                logger.LogInformation("Ảnh {PublicId} bị kiểm duyệt từ chối: {Labels}.",
+                    publicId, CloudModeration.DescribeLabels(result.Moderation));
                 // Cloudinary vẫn giữ ảnh bị từ chối làm bản dự phòng và tốn dung lượng, nên xóa ngay.
                 await TryDestroyRejectedAsync(client, publicId);
                 throw new CloudMediaRejectedException(CloudModeration.RejectedMessage);

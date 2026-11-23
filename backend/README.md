@@ -214,6 +214,13 @@ add-on trong Cloudinary Console → Add-ons (gói miễn phí có hạn mức nh
 - Ảnh phải từ 80×80 pixel mới được kiểm tra. Video không được kiểm duyệt bằng AI (kết quả của
   Cloudinary trả về sau qua webhook); video vi phạm được xử lý bằng báo cáo của thành viên.
 - Để trống (mặc định): không kiểm duyệt.
+- Mỗi nhóm có ngưỡng riêng, số càng nhỏ chặn càng chặt (mặc định 0.5). Cấu hình đang dùng:
+  `aws_rek:explicit_nudity:0.3:hate_symbols:0.3:visually_disturbing:0.4:weapons:0.85:revealing_clothes:0.8:alcohol:ignore:tobacco:ignore:gambling:ignore`
+  (khoả thân, biểu tượng thù ghét, ảnh ghê rợn chặt hơn; ảnh chỉ có vũ khí như ảnh game, hở hang nhẹ nới ra; rượu bia,
+  thuốc lá, cờ bạc bỏ qua). Ảnh bị từ chối được ghi vào log kèm nhãn và điểm của AI, ví dụ
+  "Weapon Violence (Violence) 91%", để biết vì sao bị chặn mà chỉnh ngưỡng.
+- AI không đọc chữ trong ảnh và không có nhóm cho biểu tình hay nội dung chính trị; phần đó dựa vào báo cáo của
+  thành viên, tự ẩn khi đủ báo cáo và quản trị viên.
 
 ### Dọn tệp không còn dùng
 
