@@ -65,6 +65,8 @@ services:
       RecoveryEmail__Password: ${SMTP_PASSWORD:-}
       RecoveryEmail__FromAddress: ${SMTP_FROM_ADDRESS:-}
       RecoveryEmail__FrontendUrl: ${PUBLIC_URL:-http://localhost:8088}
+      # Đăng nhập bằng Google: cùng Client ID với nút ở trang web. Để trống thì tắt.
+      GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
     volumes:
       - uploads:/app/App_Data/uploads
       - keys:/app/App_Data/keys
@@ -80,6 +82,7 @@ services:
       args:
         VITE_API_BASE_URL: /
         VITE_FROALA_KEY: ${VITE_FROALA_KEY:-}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     depends_on:
       - api
     ports:

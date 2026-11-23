@@ -4,6 +4,7 @@ import { appRoutes } from '../../../app/appRoutes'
 import background from '../../../assets/background.png'
 import { FormTextField } from '../../../shared/components/FormTextField'
 import { AuthPageLayout } from '../components/AuthPageLayout'
+import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { useRegisterPage } from '../hooks/useRegisterPage'
 import { createAuthUrl } from '../utils/returnUrl'
 
@@ -71,6 +72,7 @@ export const RegisterPage = () => {
           type="password"
         />
         <Button loading={view.isSubmitting} type="submit" variant="contained" fullWidth>Tạo tài khoản</Button>
+        <GoogleSignInButton text="signup_with" onCredential={view.signInWithGoogle} />
 
         <p className="auth-form__switch">
           Đã có tài khoản?{' '}

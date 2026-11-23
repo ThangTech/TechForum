@@ -9,6 +9,7 @@ import { appRoutes } from '../../../app/appRoutes'
 import background from '../../../assets/background.png'
 import { FormTextField } from '../../../shared/components/FormTextField'
 import { AuthPageLayout } from '../components/AuthPageLayout'
+import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { useLoginPage } from '../hooks/useLoginPage'
 import { createAuthUrl } from '../utils/returnUrl'
 
@@ -66,6 +67,7 @@ export const LoginPage = () => {
         />
         <MuiLink component={Link} sx={{ fontSize: '0.875rem', fontWeight: 600 }} to={appRoutes.forgotPassword} underline="always">Quên mật khẩu?</MuiLink>
         <Button loading={view.isSubmitting} type="submit" variant="contained" fullWidth>Đăng nhập</Button>
+        <GoogleSignInButton text="signin_with" onCredential={view.signInWithGoogle} />
 
         <p className="auth-form__switch">
           Chưa có tài khoản?{' '}

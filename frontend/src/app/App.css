@@ -671,6 +671,42 @@
   line-height: 1.6;
 }
 
+.auth-form__google {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-form__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.auth-form__divider::before,
+.auth-form__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  /* Màu viền thường gần trùng nền tối của khung đăng nhập, nên dùng màu chữ phụ cho mờ. */
+  background: currentColor;
+  opacity: 0.35;
+}
+
+.auth-form__google-button {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.auth-form__google-error {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
 .auth-form__switch {
   margin: 0;
   color: var(--color-muted);

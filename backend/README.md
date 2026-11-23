@@ -91,6 +91,27 @@ Development mới cho SMTP không TLS trên loopback để kiểm thử bằng m
 local. Kiểm thử hiện đã đi qua SMTP local; gửi tới hộp thư ngoài cần cấu hình
 nhà cung cấp thật.
 
+## Đăng nhập bằng Google
+
+Không dùng Firebase. Nút "Đăng nhập bằng Google" (Google Identity Services) trả cho trình duyệt một ID token; trang
+gửi nó tới `POST /api/auth/google` `{ "credential": "..." }`. API kiểm tra token bằng `Google.Apis.Auth` (chữ ký, hạn dùng,
+và token phải cấp cho đúng Client ID của TechForum), rồi trả phiên như đăng nhập thường (access token và refresh cookie).
+
+- Tài khoản Google đã liên kết thì đăng nhập; email đã có tài khoản thì liên kết vào tài khoản đó; email mới thì tạo thành
+  viên không mật khẩu. Liên kết lưu ở bảng `AspNetUserLogins` có sẵn của Identity.
+- Tài khoản đăng ký bằng mật khẩu nhưng chưa xác minh email có thể do người khác lập trước bằng email này, nên khi chủ email
+  đăng nhập Google thì mật khẩu cũ bị bỏ và mọi phiên cũ bị đăng xuất; muốn có mật khẩu lại thì dùng "Quên mật khẩu".
+- 401 khi Google không chấp nhận token hoặc email Google chưa xác minh; 423 khi tài khoản bị khóa; 503 khi chưa cấu hình.
+
+Cấu hình (Client ID không phải bí mật, nó nằm trong JavaScript của trang):
+
+1. Google Cloud Console → APIs & Services → OAuth consent screen: tạo màn hình đồng ý (External).
+2. Credentials → Create credentials → OAuth client ID → Web application. Ở "Authorized JavaScript origins" thêm
+   `http://localhost:5173`, `http://localhost` (nút Google trên localhost cần cả địa chỉ không có cổng), `http://localhost:8088`
+   và sau này địa chỉ Vercel.
+3. API: `dotnet user-secrets set "GoogleAuth:ClientId" "<client id>"`; frontend: `VITE_GOOGLE_CLIENT_ID=<client id>` trong
+   `frontend/.env`; Docker: `GOOGLE_CLIENT_ID=<client id>` trong `.env`.
+
 ## Chạy môi trường phát triển
 
 API dùng .NET 9, EF Core và SQL Server. Cấu hình mặc định trong

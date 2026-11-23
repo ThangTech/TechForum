@@ -73,6 +73,14 @@ export const login = (input: LoginInput) => {
   })
 }
 
+// credential: ID token mà nút Google trả về; API tự kiểm tra với Google rồi cấp phiên như đăng nhập thường.
+export const loginWithGoogle = (credential: string) => {
+  return requestSession('/api/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
+  })
+}
+
 export const register = (input: RegisterInput) => {
   return requestSession('/api/auth/register', {
     method: 'POST',

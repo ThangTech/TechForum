@@ -62,6 +62,7 @@ Biến môi trường (**Environment**):
 | `RecoveryEmail__Username`, `RecoveryEmail__Password` | Tài khoản SMTP (Mailjet: API Key và Secret Key) |
 | `RecoveryEmail__FromAddress` | Email người gửi đã xác minh với nhà cung cấp |
 | `RecoveryEmail__FrontendUrl` | Địa chỉ trang trên Vercel, ví dụ `https://techforum.vercel.app` |
+| `GoogleAuth__ClientId` | OAuth Client ID của Google (giống `VITE_GOOGLE_CLIENT_ID`); để trống thì tắt đăng nhập Google |
 
 Danh sách từ cấm thật không nằm trong Git. Thêm nó ở **Secret Files** với tên `banned-words.txt`, rồi đặt
 `BannedWords__SeedFile=/etc/secrets/banned-words.txt`. API chỉ nạp file khi bảng từ cấm còn trống; nếu chuyển dữ liệu
@@ -85,6 +86,7 @@ Tạo project từ repo GitHub, **Root Directory: `frontend`** (Vercel tự nh�
 |---|---|
 | `VITE_API_BASE_URL` | `/` (gọi API cùng địa chỉ với trang; Vercel chuyển sang Render) |
 | `VITE_FROALA_KEY` | Key Froala nếu có |
+| `VITE_GOOGLE_CLIENT_ID` | OAuth Client ID của Google; nhớ thêm địa chỉ Vercel vào "Authorized JavaScript origins" |
 
 `frontend/vercel.json` chuyển `/api` và `/media` sang Render, và trả `index.html` cho các đường dẫn khác để React
 Router xử lý (ví dụ mở thẳng `/topics/...`).

@@ -6,6 +6,7 @@ import { getFieldError } from '../../../shared/api/fieldErrors'
 import type { RegisterFormValues } from '../types/authForms'
 import { getSafeReturnUrl } from '../utils/returnUrl'
 import { useAuth } from './authState'
+import { useGoogleSignIn } from './useGoogleSignIn'
 
 // The register page: the form, the errors of each field sent back by the API, and where to go after.
 export const useRegisterPage = () => {
@@ -15,6 +16,7 @@ export const useRegisterPage = () => {
   const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'))
   const [apiError, setApiError] = useState<ApiError | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
+  const google = useGoogleSignIn(returnUrl)
   const form = useForm<RegisterFormValues>({
     defaultValues: { displayName: '', email: '', password: '', confirmPassword: '' },
   })
@@ -35,7 +37,8 @@ export const useRegisterPage = () => {
     isSignedIn: user !== null,
     returnUrl,
     // The error that belongs to no field (or to the account as a whole).
-    generalError: clientError || getFieldError(apiError, 'account') || apiError?.message,
+    generalError: google.error || clientError || getFieldError(apiError, 'account') || apiError?.message,
+    signInWithGoogle: google.signIn,
     fieldError: (name: keyof RegisterFormValues) => getFieldError(apiError, name),
     control: form.control,
     isSubmitting: form.formState.isSubmitting,

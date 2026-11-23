@@ -2,6 +2,7 @@ import {
   changePassword as changePasswordRequest,
   deleteAvatar as deleteAvatarRequest,
   login as loginRequest,
+  loginWithGoogle as loginWithGoogleRequest,
   logout as logoutRequest,
   register as registerRequest,
   updateAvatar as updateAvatarRequest,
@@ -18,6 +19,12 @@ import { useAuthStore } from '../store/authStore'
 
 export const login = async (input: LoginInput): Promise<CurrentUser> => {
   const session = await loginRequest(input)
+  useAuthStore.getState().setSession(session)
+  return session.user
+}
+
+export const loginWithGoogle = async (credential: string): Promise<CurrentUser> => {
+  const session = await loginWithGoogleRequest(credential)
   useAuthStore.getState().setSession(session)
   return session.user
 }
