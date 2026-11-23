@@ -27,8 +27,8 @@ public sealed class BannerImageStorageTests : IDisposable
         var upload = Assert.Single(cloud.Uploads);
         Assert.Matches("^techforum/banners/[a-f0-9]{32}$", upload.PublicId);
         Assert.Equal(CloudResourceType.Image, upload.Type);
-        Assert.Matches("^https://res\\.cloudinary\\.com/demo-cloud/image/upload/v\\d+/techforum/banners/[a-f0-9]{32}\\.png$", result.ImageUrl);
-        Assert.True(CreateStorage().IsStoredImageUrl(result.ImageUrl!));
+        Assert.Matches("^https://res\\.cloudinary\\.com/demo-cloud/image/upload/v\\d+/techforum/banners/[a-f0-9]{32}\\.png$", result.Value);
+        Assert.True(CreateStorage().IsStoredImageUrl(result.Value!));
     }
 
     [Fact]
@@ -58,8 +58,8 @@ public sealed class BannerImageStorageTests : IDisposable
 
         Assert.False(notConfigured.Succeeded);
         Assert.False(failed.Succeeded);
-        Assert.DoesNotContain("cloudinary", notConfigured.Error, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("cloudinary", failed.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cloudinary", notConfigured.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cloudinary", failed.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(cloud.Uploads);
     }
 
@@ -71,7 +71,7 @@ public sealed class BannerImageStorageTests : IDisposable
         var result = await CreateStorage().SaveAsync(CreateFile(Png, "image/png"), default);
 
         Assert.False(result.Succeeded);
-        Assert.Contains("vượt quá kích thước", result.Error);
+        Assert.Contains("vượt quá kích thước", result.Message);
     }
 
     [Fact]

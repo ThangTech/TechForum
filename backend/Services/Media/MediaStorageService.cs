@@ -1,3 +1,4 @@
+using TechForum.Api.Dtos;
 using Microsoft.Extensions.Options;
 using TechForum.Api.Configuration;
 using TechForum.Api.Data.Repositories;
@@ -56,19 +57,19 @@ public sealed class MediaStorageService : IMediaStorageService
         }
     }
 
-    public Task<MediaUploadResult> StoreImageAsync(
+    public Task<Result<MediaUploadDto>> StoreImageAsync(
         string uploaderId,
         IFormFile file,
         CancellationToken cancellationToken) =>
         StoreAsync(uploaderId, file, "images", CloudResourceType.Image, options.MaxImageBytes, DetectImage, cancellationToken);
 
-    public Task<MediaUploadResult> StoreVideoAsync(
+    public Task<Result<MediaUploadDto>> StoreVideoAsync(
         string uploaderId,
         IFormFile file,
         CancellationToken cancellationToken) =>
         StoreAsync(uploaderId, file, "videos", CloudResourceType.Video, options.MaxVideoBytes, DetectVideo, cancellationToken);
 
-    public async Task<MediaDeleteResult> DeleteUnusedAsync(
+    public async Task<Result> DeleteUnusedAsync(
         string uploaderId,
         Guid id,
         CancellationToken cancellationToken)
@@ -76,11 +77,11 @@ public sealed class MediaStorageService : IMediaStorageService
         var mediaAsset = await repository.GetOwnedAsync(id, uploaderId, cancellationToken);
         if (mediaAsset is null)
         {
-            return MediaDeleteResult.NotFound;
+            return Result.Fail(ErrorType.NotFound, "Không tìm thấy media");
         }
         if (mediaAsset.TopicId.HasValue)
         {
-            return MediaDeleteResult.Attached;
+            return Result.Fail(ErrorType.Conflict, "Media đang được sử dụng", "Không thể xóa media đã gắn với nội dung.");
         }
 
         try
@@ -91,11 +92,11 @@ public sealed class MediaStorageService : IMediaStorageService
         {
             // The record stays, so the file can be deleted later by the member or by the clean up.
             logger.LogWarning(exception, "Không xóa được media {MediaId} trên Cloudinary.", id);
-            return MediaDeleteResult.Unavailable;
+            return Result.Fail(ErrorType.Unavailable, "Chưa xóa được media", "Không thể xóa tệp lúc này. Vui lòng thử lại sau.");
         }
 
         await repository.DeleteAsync(mediaAsset, cancellationToken);
-        return MediaDeleteResult.Deleted;
+        return Result.Success();
     }
 
     public async Task<int> CleanupOrphansAsync(CancellationToken cancellationToken)
@@ -129,7 +130,7 @@ public sealed class MediaStorageService : IMediaStorageService
         return deleted;
     }
 
-    private async Task<MediaUploadResult> StoreAsync(
+    private async Task<Result<MediaUploadDto>> StoreAsync(
         string uploaderId,
         IFormFile file,
         string kind,
@@ -140,7 +141,7 @@ public sealed class MediaStorageService : IMediaStorageService
     {
         if (file.Length <= 0 || file.Length > maxBytes)
         {
-            return MediaUploadResult.Invalid($"Tệp phải có dung lượng từ 1 byte đến {maxBytes / 1024 / 1024} MB.");
+            return Result<MediaUploadDto>.Fail(ErrorType.Validation, "Tệp tải lên không hợp lệ", $"Tệp phải có dung lượng từ 1 byte đến {maxBytes / 1024 / 1024} MB.");
         }
 
         // The real type is read from the first bytes of the file, not from its name or the type that the browser says.
@@ -154,14 +155,14 @@ public sealed class MediaStorageService : IMediaStorageService
 
         if (media is null || !media.ContentTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
         {
-            return MediaUploadResult.Invalid("Loại tệp hoặc nội dung tệp không được hỗ trợ.");
+            return Result<MediaUploadDto>.Fail(ErrorType.Validation, "Tệp tải lên không hợp lệ", "Loại tệp hoặc nội dung tệp không được hỗ trợ.");
         }
 
         if (!cloud.IsConfigured)
         {
             // The member only sees a general sentence; the owner reads the reason in the log.
             logger.LogError("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret) nên không thể tải media lên.");
-            return MediaUploadResult.Unavailable("Chưa thể lưu tệp lúc này. Vui lòng thử lại sau.");
+            return Result<MediaUploadDto>.Fail(ErrorType.Unavailable, "Chưa thể lưu tệp", "Chưa thể lưu tệp lúc này. Vui lòng thử lại sau.");
         }
 
         var id = Guid.NewGuid();
@@ -176,12 +177,12 @@ public sealed class MediaStorageService : IMediaStorageService
         {
             // The connection works and Cloudinary refused the file itself: the member is told why.
             logger.LogInformation("Cloudinary từ chối media: {Reason}", exception.CloudMessage);
-            return MediaUploadResult.Invalid(CloudRejection.ToMessage(exception.CloudMessage));
+            return Result<MediaUploadDto>.Fail(ErrorType.Validation, "Tệp tải lên không hợp lệ", CloudRejection.ToMessage(exception.CloudMessage));
         }
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được media lên Cloudinary.");
-            return MediaUploadResult.Unavailable("Không thể lưu tệp lúc này. Vui lòng thử lại.");
+            return Result<MediaUploadDto>.Fail(ErrorType.Unavailable, "Chưa thể lưu tệp", "Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
 
         // An address that the rules do not know would be removed from the topic by the sanitizer, so it is refused now.
@@ -189,7 +190,7 @@ public sealed class MediaStorageService : IMediaStorageService
         {
             logger.LogWarning("Cloudinary trả về địa chỉ media không đúng quy tắc: {Url}", url);
             await TryDeleteFromCloudAsync(url, cancellationToken);
-            return MediaUploadResult.Unavailable("Không thể lưu tệp lúc này. Vui lòng thử lại.");
+            return Result<MediaUploadDto>.Fail(ErrorType.Unavailable, "Chưa thể lưu tệp", "Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
 
         var mediaAsset = new MediaAsset
@@ -214,7 +215,7 @@ public sealed class MediaStorageService : IMediaStorageService
             throw;
         }
 
-        return MediaUploadResult.Success(id, url);
+        return Result<MediaUploadDto>.Success(new MediaUploadDto(id, url, url));
     }
 
     private async Task DeleteStoredFileAsync(MediaAsset mediaAsset, CancellationToken cancellationToken)

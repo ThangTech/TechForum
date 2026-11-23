@@ -35,7 +35,7 @@ public sealed class BannerService : IBannerService
     public async Task<IReadOnlyList<AdminBannerDto>> GetAdminAsync(CancellationToken cancellationToken) =>
         (await bannerRepository.GetAllAsync(cancellationToken)).Select(MapAdminDto).ToList();
 
-    public async Task<BannerWriteResult> CreateAsync(
+    public async Task<Result<AdminBannerDto>> CreateAsync(
         string administratorId,
         SaveBannerRequest request,
         CancellationToken cancellationToken)
@@ -60,10 +60,10 @@ public sealed class BannerService : IBannerService
         await bannerRepository.AddAsync(banner, cancellationToken);
         await auditService.RecordAsync(administratorId, "banner-created", "Banner", banner.Id.ToString(), null,
             Describe(banner), "Tạo banner.", cancellationToken);
-        return BannerWriteResult.Success(MapAdminDto(banner));
+        return Result<AdminBannerDto>.Success(MapAdminDto(banner));
     }
 
-    public async Task<BannerWriteResult> UpdateAsync(
+    public async Task<Result<AdminBannerDto>> UpdateAsync(
         string administratorId,
         Guid id,
         SaveBannerRequest request,
@@ -97,10 +97,10 @@ public sealed class BannerService : IBannerService
 
         await auditService.RecordAsync(administratorId, "banner-updated", "Banner", banner.Id.ToString(), previous,
             Describe(banner), "Cập nhật banner.", cancellationToken);
-        return BannerWriteResult.Success(MapAdminDto(banner));
+        return Result<AdminBannerDto>.Success(MapAdminDto(banner));
     }
 
-    public async Task<BannerWriteResult> SetActiveAsync(
+    public async Task<Result<AdminBannerDto>> SetActiveAsync(
         string administratorId,
         Guid id,
         bool isActive,
@@ -118,10 +118,10 @@ public sealed class BannerService : IBannerService
         await auditService.RecordAsync(administratorId, isActive ? "banner-activated" : "banner-deactivated", "Banner",
             banner.Id.ToString(), $"active={previous}", $"active={isActive}",
             isActive ? "Bật banner." : "Tắt banner.", cancellationToken);
-        return BannerWriteResult.Success(MapAdminDto(banner));
+        return Result<AdminBannerDto>.Success(MapAdminDto(banner));
     }
 
-    public async Task<BannerWriteResult> DeleteAsync(string administratorId, Guid id, CancellationToken cancellationToken)
+    public async Task<Result> DeleteAsync(string administratorId, Guid id, CancellationToken cancellationToken)
     {
         var banner = await bannerRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (banner is null)
@@ -129,16 +129,15 @@ public sealed class BannerService : IBannerService
             return NotFound();
         }
 
-        var dto = MapAdminDto(banner);
         var previous = Describe(banner);
         await bannerRepository.RemoveAsync(banner, cancellationToken);
         await DeleteImageIfUnusedAsync(banner.ImageUrl, banner.Id, cancellationToken);
         await auditService.RecordAsync(administratorId, "banner-deleted", "Banner", id.ToString(), previous, null,
             "Xóa banner.", cancellationToken);
-        return BannerWriteResult.Success(dto);
+        return Result.Success();
     }
 
-    public Task<BannerImageResult> UploadImageAsync(IFormFile file, CancellationToken cancellationToken) =>
+    public Task<Result<string>> UploadImageAsync(IFormFile file, CancellationToken cancellationToken) =>
         imageStorage.SaveAsync(file, cancellationToken);
 
     // Two banners may point to the same picture, so the file is only removed when no other banner uses it.
@@ -150,7 +149,7 @@ public sealed class BannerService : IBannerService
         }
     }
 
-    private BannerWriteResult? Validate(SaveBannerRequest request)
+    private Result<AdminBannerDto>? Validate(SaveBannerRequest request)
     {
         var title = request.Title?.Trim();
         if (string.IsNullOrWhiteSpace(title) || title.Length > MaxTitleLength)
@@ -211,11 +210,11 @@ public sealed class BannerService : IBannerService
     private static string Describe(Banner banner) =>
         $"title={banner.Title};order={banner.DisplayOrder};active={banner.IsActive}";
 
-    private static BannerWriteResult Invalid(string message, string field) =>
-        BannerWriteResult.Failed(BannerWriteFailure.Validation, message, field);
+    private static Result<AdminBannerDto> Invalid(string message, string field) =>
+        Result<AdminBannerDto>.Fail(ErrorType.Validation, null, message, field);
 
-    private static BannerWriteResult NotFound() =>
-        BannerWriteResult.Failed(BannerWriteFailure.NotFound, "Không tìm thấy banner.");
+    private static Result<AdminBannerDto> NotFound() =>
+        Result<AdminBannerDto>.Fail(ErrorType.NotFound, "Không tìm thấy banner", "Không tìm thấy banner.");
 
     private static AdminBannerDto MapAdminDto(Banner banner) => new(
         banner.Id,

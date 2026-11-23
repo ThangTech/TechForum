@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Constants;
 using TechForum.Api.Dtos;
+using TechForum.Api.Extensions;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -23,22 +24,10 @@ public sealed class AdminOverviewController : ControllerBase
         Ok(await overviewService.GetStatisticsAsync(cancellationToken));
 
     [HttpGet("dashboard")]
-    public async Task<ActionResult<AdminDashboardDto>> GetDashboard(
-        [FromQuery] DateOnly? startDate,
-        [FromQuery] DateOnly? endDate,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AdminDashboardDto>> GetDashboard([FromQuery] DateOnly? startDate, [FromQuery] DateOnly? endDate, CancellationToken cancellationToken)
     {
         var result = await overviewService.GetDashboardAsync(startDate, endDate, cancellationToken);
-        if (result.Dashboard is null)
-        {
-            return BadRequest(new ValidationProblemDetails(result.Errors.ToDictionary())
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Khoảng thời gian thống kê chưa hợp lệ"
-            });
-        }
-
-        return Ok(result.Dashboard);
+        return this.ToActionResult(result);
     }
 
     [HttpGet("audit-logs")]

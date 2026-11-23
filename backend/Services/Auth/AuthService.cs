@@ -10,6 +10,9 @@ namespace TechForum.Api.Services;
 
 public sealed class AuthService : IAuthService
 {
+    private const string ProfileTitle = "Không thể cập nhật hồ sơ";
+    private const string NotSignedInTitle = "Bạn cần đăng nhập";
+
     private readonly IAccountRepository accountRepository;
     private readonly IRefreshTokenRepository refreshTokenRepository;
     private readonly ITokenService tokenService;
@@ -33,12 +36,12 @@ public sealed class AuthService : IAuthService
         this.timeProvider = timeProvider;
     }
 
-    public async Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
+    public async Task<Result<AuthSession>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim();
         if (await accountRepository.FindByEmailAsync(email) is not null)
         {
-            return AuthResult.Failed(AuthFailureKind.DuplicateEmail);
+            return DuplicateEmail();
         }
 
         var user = new ApplicationUser
@@ -53,9 +56,12 @@ public sealed class AuthService : IAuthService
         var createResult = await accountRepository.CreateMemberAsync(user, request.Password);
         if (!createResult.Succeeded)
         {
-            return AuthResult.Failed(
-                GetFailureKind(createResult.Errors),
-                MapIdentityErrors(createResult.Errors));
+            if (IsDuplicateEmail(createResult.Errors))
+            {
+                return DuplicateEmail();
+            }
+
+            return Result<AuthSession>.Invalid("Thông tin đăng ký chưa hợp lệ", MapIdentityErrors(createResult.Errors));
         }
 
         // A new member is signed in right after registering, with the short refresh token lifetime.
@@ -63,12 +69,12 @@ public sealed class AuthService : IAuthService
         return await CreateSessionAsync(user, shortLifetime, cancellationToken);
     }
 
-    public async Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<Result<AuthSession>> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         var user = await accountRepository.FindByEmailAsync(request.Email.Trim());
         if (user is null)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+            return LoginFailed();
         }
 
         // Khóa quản trị hết hạn không được mang lý do cũ sang lần khóa do nhập sai mật khẩu.
@@ -78,7 +84,7 @@ public sealed class AuthService : IAuthService
             user.LockReason = null;
             if (!(await accountRepository.UpdateAsync(user)).Succeeded)
             {
-                return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+                return LoginFailed();
             }
         }
 
@@ -86,12 +92,12 @@ public sealed class AuthService : IAuthService
 
         if (signInResult.IsLockedOut)
         {
-            return AuthResult.Failed(AuthFailureKind.LockedOut);
+            return Locked();
         }
 
         if (!signInResult.Succeeded)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+            return LoginFailed();
         }
 
         var lifetime = request.RememberMe
@@ -100,11 +106,11 @@ public sealed class AuthService : IAuthService
         return await CreateSessionAsync(user, lifetime, cancellationToken);
     }
 
-    public async Task<AuthResult> RefreshAsync(string? refreshToken, CancellationToken cancellationToken)
+    public async Task<Result<AuthSession>> RefreshAsync(string? refreshToken, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+            return SessionExpired();
         }
 
         var now = timeProvider.GetUtcNow();
@@ -113,7 +119,7 @@ public sealed class AuthService : IAuthService
             cancellationToken);
         if (storedToken is null)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+            return SessionExpired();
         }
 
         if (storedToken.RevokedAtUtc is not null)
@@ -124,24 +130,24 @@ public sealed class AuthService : IAuthService
                 "Phát hiện refresh token đã thu hồi bị dùng lại; thu hồi mọi phiên của tài khoản {UserId}.",
                 storedToken.UserId);
             await refreshTokenRepository.RevokeAllForUserAsync(storedToken.UserId, now, cancellationToken);
-            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+            return SessionExpired();
         }
 
         if (storedToken.ExpiresAtUtc <= now)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+            return SessionExpired();
         }
 
         var user = await accountRepository.FindByIdAsync(storedToken.UserId);
         if (user is null)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+            return SessionExpired();
         }
 
         if (await accountRepository.IsLockedOutAsync(user))
         {
             await refreshTokenRepository.RevokeAllForUserAsync(user.Id, now, cancellationToken);
-            return AuthResult.Failed(AuthFailureKind.LockedOut);
+            return Locked();
         }
 
         // The new token keeps the same lifetime as the one it replaces.
@@ -155,7 +161,7 @@ public sealed class AuthService : IAuthService
             cancellationToken);
         if (!wasRotated)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidRefreshToken);
+            return SessionExpired();
         }
 
         return await BuildSuccessAsync(user, newRefreshToken, replacement.ExpiresAtUtc);
@@ -167,25 +173,20 @@ public sealed class AuthService : IAuthService
         return user is null ? null : await MapUserAsync(user);
     }
 
-    public async Task<AuthResult> UpdateProfileAsync(
+    public async Task<Result<CurrentUserDto>> UpdateProfileAsync(
         string userId,
         UpdateProfileRequest request)
     {
         var displayName = request.DisplayName.Trim();
         if (displayName.Length < 2)
         {
-            return AuthResult.Failed(
-                AuthFailureKind.Validation,
-                new Dictionary<string, string[]>
-                {
-                    ["displayName"] = ["Tên hiển thị phải từ 2 đến 80 ký tự."]
-                });
+            return Result<CurrentUserDto>.Fail(ErrorType.Validation, ProfileTitle, "Tên hiển thị phải từ 2 đến 80 ký tự.", "displayName");
         }
 
         var user = await accountRepository.FindByIdAsync(userId);
         if (user is null)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+            return Result<CurrentUserDto>.Fail(ErrorType.Unauthorized, NotSignedInTitle);
         }
 
         user.DisplayName = displayName;
@@ -193,15 +194,13 @@ public sealed class AuthService : IAuthService
         var updateResult = await accountRepository.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return AuthResult.Failed(
-                AuthFailureKind.Validation,
-                MapIdentityErrors(updateResult.Errors));
+            return Result<CurrentUserDto>.Invalid(ProfileTitle, MapIdentityErrors(updateResult.Errors));
         }
 
-        return AuthResult.Success(await MapUserAsync(user));
+        return Result<CurrentUserDto>.Success(await MapUserAsync(user));
     }
 
-    public async Task<AuthResult> ChangePasswordAsync(
+    public async Task<Result<CurrentUserDto>> ChangePasswordAsync(
         string userId,
         ChangePasswordRequest request,
         CancellationToken cancellationToken)
@@ -209,7 +208,7 @@ public sealed class AuthService : IAuthService
         var user = await accountRepository.FindByIdAsync(userId);
         if (user is null)
         {
-            return AuthResult.Failed(AuthFailureKind.InvalidCredentials);
+            return Result<CurrentUserDto>.Fail(ErrorType.Unauthorized, NotSignedInTitle);
         }
 
         var changeResult = await accountRepository.ChangePasswordAsync(
@@ -218,9 +217,7 @@ public sealed class AuthService : IAuthService
             request.NewPassword);
         if (!changeResult.Succeeded)
         {
-            return AuthResult.Failed(
-                AuthFailureKind.Validation,
-                MapPasswordChangeErrors(changeResult.Errors));
+            return Result<CurrentUserDto>.Invalid("Không thể đổi mật khẩu", MapPasswordChangeErrors(changeResult.Errors));
         }
 
         // The security stamp changed, so access tokens stop working.
@@ -229,7 +226,7 @@ public sealed class AuthService : IAuthService
             user.Id,
             timeProvider.GetUtcNow(),
             cancellationToken);
-        return AuthResult.Success(await MapUserAsync(user));
+        return Result<CurrentUserDto>.Success(await MapUserAsync(user));
     }
 
     public async Task LogoutAsync(string? refreshToken, CancellationToken cancellationToken)
@@ -245,7 +242,7 @@ public sealed class AuthService : IAuthService
             cancellationToken);
     }
 
-    private async Task<AuthResult> CreateSessionAsync(
+    private async Task<Result<AuthSession>> CreateSessionAsync(
         ApplicationUser user,
         TimeSpan refreshTokenLifetime,
         CancellationToken cancellationToken)
@@ -269,7 +266,7 @@ public sealed class AuthService : IAuthService
         ExpiresAtUtc = now.Add(lifetime)
     };
 
-    private async Task<AuthResult> BuildSuccessAsync(
+    private async Task<Result<AuthSession>> BuildSuccessAsync(
         ApplicationUser user,
         string refreshToken,
         DateTimeOffset refreshTokenExpiresAtUtc)
@@ -281,7 +278,7 @@ public sealed class AuthService : IAuthService
             accessToken.ExpiresAtUtc,
             refreshToken,
             refreshTokenExpiresAtUtc);
-        return AuthResult.Success(await MapUserAsync(user), tokens);
+        return Result<AuthSession>.Success(new AuthSession(await MapUserAsync(user), tokens));
     }
 
     private async Task<CurrentUserDto> MapUserAsync(ApplicationUser user)
@@ -297,12 +294,29 @@ public sealed class AuthService : IAuthService
             ReputationRules.ForDisplay(user.Reputation));
     }
 
-    private static AuthFailureKind GetFailureKind(IEnumerable<IdentityError> errors)
+    private static bool IsDuplicateEmail(IEnumerable<IdentityError> errors)
     {
-        return errors.Any(error =>
-            error.Code is "DuplicateEmail" or "DuplicateUserName")
-            ? AuthFailureKind.DuplicateEmail
-            : AuthFailureKind.Validation;
+        return errors.Any(error => error.Code == "DuplicateEmail" || error.Code == "DuplicateUserName");
+    }
+
+    private static Result<AuthSession> DuplicateEmail()
+    {
+        return Result<AuthSession>.Fail(ErrorType.Conflict, "Email đã được sử dụng", "Vui lòng đăng nhập hoặc dùng một email khác.");
+    }
+
+    private static Result<AuthSession> LoginFailed()
+    {
+        return Result<AuthSession>.Fail(ErrorType.Unauthorized, "Đăng nhập không thành công", "Email hoặc mật khẩu không chính xác.");
+    }
+
+    private static Result<AuthSession> SessionExpired()
+    {
+        return Result<AuthSession>.Fail(ErrorType.Unauthorized, "Phiên đăng nhập đã hết hạn", "Vui lòng đăng nhập lại.");
+    }
+
+    private static Result<AuthSession> Locked()
+    {
+        return Result<AuthSession>.Fail(ErrorType.Locked, "Tài khoản đang bị khóa", "Vui lòng liên hệ quản trị viên để được hỗ trợ.");
     }
 
     private static IReadOnlyDictionary<string, string[]> MapIdentityErrors(

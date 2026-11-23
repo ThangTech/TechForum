@@ -61,7 +61,7 @@ public sealed class AdminTopicService : IAdminTopicService
             (int)Math.Ceiling(page.TotalItems / (double)query.PageSize));
     }
 
-    public async Task<AdminTopicWriteResult> ModerateAsync(
+    public async Task<Result<AdminTopicDto>> ModerateAsync(
         Guid topicId,
         string administratorId,
         ModerateTopicRequest request,
@@ -70,21 +70,21 @@ public sealed class AdminTopicService : IAdminTopicService
         var action = request.Action?.Trim().ToLowerInvariant();
         if (action is null || !Actions.Contains(action))
         {
-            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Hành động kiểm duyệt không hợp lệ.", "action");
+            return Result<AdminTopicDto>.Fail(ErrorType.Validation, null, "Hành động kiểm duyệt không hợp lệ.", "action");
         }
         var reason = request.Reason?.Trim();
         if (string.IsNullOrWhiteSpace(reason) || reason.Length > 1000)
         {
-            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Lý do phải có từ 1 đến 1.000 ký tự.", "reason");
+            return Result<AdminTopicDto>.Fail(ErrorType.Validation, null, "Lý do phải có từ 1 đến 1.000 ký tự.", "reason");
         }
         var topic = await topicRepository.GetTrackedByIdAsync(topicId, cancellationToken);
         if (topic is null)
         {
-            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.NotFound, "Không tìm thấy nội dung.");
+            return Result<AdminTopicDto>.Fail(ErrorType.NotFound, "Không tìm thấy nội dung", "Không tìm thấy nội dung.");
         }
         if (topic.IsDeleted && action is not ("lock" or "unlock"))
         {
-            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Conflict, "Nội dung đã bị tác giả xóa và không thể thực hiện hành động này.");
+            return Result<AdminTopicDto>.Fail(ErrorType.Conflict, "Không thể kiểm duyệt", "Nội dung đã bị tác giả xóa và không thể thực hiện hành động này.");
         }
 
         var previousValue = Describe(topic);
@@ -100,12 +100,12 @@ public sealed class AdminTopicService : IAdminTopicService
             case "move":
                 if (!request.CategoryId.HasValue)
                 {
-                    return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Vui lòng chọn chuyên mục đích.", "categoryId");
+                    return Result<AdminTopicDto>.Fail(ErrorType.Validation, null, "Vui lòng chọn chuyên mục đích.", "categoryId");
                 }
                 var category = await topicRepository.GetActiveCategoryAsync(request.CategoryId.Value, cancellationToken);
                 if (category is null)
                 {
-                    return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Validation, "Chuyên mục đích không tồn tại hoặc đã ngừng sử dụng.", "categoryId");
+                    return Result<AdminTopicDto>.Fail(ErrorType.Validation, null, "Chuyên mục đích không tồn tại hoặc đã ngừng sử dụng.", "categoryId");
                 }
                 topic.CategoryId = category.Id;
                 topic.Category = category;
@@ -114,7 +114,7 @@ public sealed class AdminTopicService : IAdminTopicService
 
         if (previousValue == Describe(topic))
         {
-            return AdminTopicWriteResult.Success(Map(topic));
+            return Result<AdminTopicDto>.Success(Map(topic));
         }
         var now = timeProvider.GetUtcNow();
         topic.UpdatedAtUtc = now;
@@ -149,10 +149,9 @@ public sealed class AdminTopicService : IAdminTopicService
         }, notification, cancellationToken);
         if (!saved)
         {
-            return AdminTopicWriteResult.Failed(AdminTopicWriteFailure.Conflict,
-                "Nội dung vừa được cập nhật bởi người khác. Vui lòng tải lại trước khi kiểm duyệt.");
+            return Result<AdminTopicDto>.Fail(ErrorType.Conflict, "Không thể kiểm duyệt", "Nội dung vừa được cập nhật bởi người khác. Vui lòng tải lại trước khi kiểm duyệt.");
         }
-        return AdminTopicWriteResult.Success(Map(topic));
+        return Result<AdminTopicDto>.Success(Map(topic));
     }
 
     private static string Describe(Topic topic) =>

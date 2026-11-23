@@ -48,11 +48,16 @@ public sealed class BannerImageStorage : IBannerImageStorage
         localUrlPrefix = $"/{options.RequestPath.Trim('/')}/{FolderName}/";
     }
 
-    public async Task<BannerImageResult> SaveAsync(IFormFile file, CancellationToken cancellationToken)
+    private static Result<string> InvalidImage(string message)
+    {
+        return Result<string>.Fail(ErrorType.Validation, "Ảnh banner không hợp lệ", message, "file");
+    }
+
+    public async Task<Result<string>> SaveAsync(IFormFile file, CancellationToken cancellationToken)
     {
         if (file.Length <= 0 || file.Length > options.MaxImageBytes)
         {
-            return BannerImageResult.Invalid($"Ảnh banner phải có dung lượng từ 1 byte đến {options.MaxImageBytes / 1024 / 1024} MB.");
+            return InvalidImage($"Ảnh banner phải có dung lượng từ 1 byte đến {options.MaxImageBytes / 1024 / 1024} MB.");
         }
 
         string? extension;
@@ -65,13 +70,13 @@ public sealed class BannerImageStorage : IBannerImageStorage
 
         if (extension is null)
         {
-            return BannerImageResult.Invalid("Ảnh banner chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
+            return InvalidImage("Ảnh banner chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
         }
 
         if (!cloud.IsConfigured)
         {
             logger.LogError("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret) nên không thể tải ảnh banner lên.");
-            return BannerImageResult.Invalid("Chưa thể lưu ảnh lúc này. Vui lòng thử lại sau.");
+            return InvalidImage("Chưa thể lưu ảnh lúc này. Vui lòng thử lại sau.");
         }
 
         var id = Guid.NewGuid();
@@ -82,23 +87,23 @@ public sealed class BannerImageStorage : IBannerImageStorage
                 content, $"{id:N}{extension}", CloudResourceType.Image, rules.CreatePublicId(FolderName, id), cancellationToken);
             if (rules.IsCloudBannerUrl(url))
             {
-                return BannerImageResult.Success(url);
+                return Result<string>.Success(url);
             }
 
             logger.LogWarning("Cloudinary trả về địa chỉ banner không đúng quy tắc: {Url}", url);
             await TryDeleteFromCloudAsync(url, cancellationToken);
-            return BannerImageResult.Invalid("Không thể lưu tệp lúc này. Vui lòng thử lại.");
+            return InvalidImage("Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
         catch (CloudMediaRejectedException exception)
         {
             // The connection works and Cloudinary refused the file itself: the member is told why.
             logger.LogInformation("Cloudinary từ chối ảnh banner: {Reason}", exception.CloudMessage);
-            return BannerImageResult.Invalid(CloudRejection.ToMessage(exception.CloudMessage));
+            return InvalidImage(CloudRejection.ToMessage(exception.CloudMessage));
         }
         catch (CloudMediaException exception)
         {
             logger.LogWarning(exception, "Không tải được ảnh banner lên Cloudinary.");
-            return BannerImageResult.Invalid("Không thể lưu tệp lúc này. Vui lòng thử lại.");
+            return InvalidImage("Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
     }
 

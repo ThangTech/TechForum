@@ -44,8 +44,8 @@ public sealed class AuthServiceTests
         Assert.Equal("Thành viên A", repository.CreatedUser.DisplayName);
         Assert.Equal("member.a@techforum.local", repository.CreatedUser.Email);
         Assert.Equal(CurrentTime, repository.CreatedUser.CreatedAtUtc);
-        Assert.Equal([RoleNames.Member], result.User!.Roles);
-        Assert.NotNull(result.Tokens);
+        Assert.Equal([RoleNames.Member], result.Value!.User.Roles);
+        Assert.NotNull(result.Value!.Tokens);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class AuthServiceTests
         }, CancellationToken.None);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(AuthFailureKind.DuplicateEmail, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.Null(repository.CreatedUser);
     }
 
@@ -88,8 +88,8 @@ public sealed class AuthServiceTests
         }, CancellationToken.None);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(AuthFailureKind.Validation, result.Failure);
-        Assert.Equal("Mật khẩu cần ít nhất một chữ số.", result.Errors["password"][0]);
+        Assert.Equal(ErrorType.Validation, result.Error);
+        Assert.Equal("Mật khẩu cần ít nhất một chữ số.", result.Errors!["password"][0]);
     }
 
     [Fact]
@@ -106,11 +106,11 @@ public sealed class AuthServiceTests
             CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.NotNull(result.Tokens);
-        Assert.NotEmpty(result.Tokens.AccessToken);
-        Assert.Equal(CurrentTime.AddMinutes(15), result.Tokens.AccessTokenExpiresAtUtc);
+        Assert.NotNull(result.Value!.Tokens);
+        Assert.NotEmpty(result.Value!.Tokens.AccessToken);
+        Assert.Equal(CurrentTime.AddMinutes(15), result.Value!.Tokens.AccessTokenExpiresAtUtc);
         var stored = Assert.Single(refreshTokens.Tokens);
-        Assert.NotEqual(result.Tokens.RefreshToken, stored.TokenHash);
+        Assert.NotEqual(result.Value!.Tokens.RefreshToken, stored.TokenHash);
         Assert.Equal(user.Id, stored.UserId);
     }
 
@@ -128,7 +128,7 @@ public sealed class AuthServiceTests
             new LoginRequest { Email = user.Email!, Password = "TechForum!2026", RememberMe = rememberMe },
             CancellationToken.None);
 
-        Assert.Equal(CurrentTime.AddDays(expectedDays), result.Tokens!.RefreshTokenExpiresAtUtc);
+        Assert.Equal(CurrentTime.AddDays(expectedDays), result.Value!.Tokens.RefreshTokenExpiresAtUtc);
     }
 
     [Fact]
@@ -144,8 +144,8 @@ public sealed class AuthServiceTests
             new LoginRequest { Email = user.Email!, Password = "SaiMatKhau!1" },
             CancellationToken.None);
 
-        Assert.Equal(AuthFailureKind.InvalidCredentials, result.Failure);
-        Assert.Null(result.Tokens);
+        Assert.Equal(ErrorType.Unauthorized, result.Error);
+        Assert.Null(result.Value);
         Assert.Empty(refreshTokens.Tokens);
     }
 
@@ -165,7 +165,7 @@ public sealed class AuthServiceTests
             CancellationToken.None);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(AuthFailureKind.LockedOut, result.Failure);
+        Assert.Equal(ErrorType.Locked, result.Error);
     }
 
     [Fact]
@@ -176,8 +176,8 @@ public sealed class AuthServiceTests
         var result = await service.RefreshAsync(firstTokens.RefreshToken, CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.NotEqual(firstTokens.RefreshToken, result.Tokens!.RefreshToken);
-        Assert.Equal(CurrentTime.AddDays(7), result.Tokens.RefreshTokenExpiresAtUtc);
+        Assert.NotEqual(firstTokens.RefreshToken, result.Value!.Tokens.RefreshToken);
+        Assert.Equal(CurrentTime.AddDays(7), result.Value!.Tokens.RefreshTokenExpiresAtUtc);
         Assert.Equal(2, refreshTokens.Tokens.Count);
         var oldToken = refreshTokens.Tokens[0];
         var newToken = refreshTokens.Tokens[1];
@@ -195,10 +195,10 @@ public sealed class AuthServiceTests
 
         var replay = await service.RefreshAsync(firstTokens.RefreshToken, CancellationToken.None);
 
-        Assert.Equal(AuthFailureKind.InvalidRefreshToken, replay.Failure);
+        Assert.Equal(ErrorType.Unauthorized, replay.Error);
         Assert.All(refreshTokens.Tokens, token => Assert.NotNull(token.RevokedAtUtc));
-        var stolenCopyResult = await service.RefreshAsync(rotated.Tokens!.RefreshToken, CancellationToken.None);
-        Assert.Equal(AuthFailureKind.InvalidRefreshToken, stolenCopyResult.Failure);
+        var stolenCopyResult = await service.RefreshAsync(rotated.Value!.Tokens.RefreshToken, CancellationToken.None);
+        Assert.Equal(ErrorType.Unauthorized, stolenCopyResult.Error);
     }
 
     [Fact]
@@ -213,13 +213,13 @@ public sealed class AuthServiceTests
         var login = await service.LoginAsync(
             new LoginRequest { Email = user.Email!, Password = "TechForum!2026", RememberMe = true },
             CancellationToken.None);
-        await service.RefreshAsync(login.Tokens!.RefreshToken, CancellationToken.None);
+        await service.RefreshAsync(login.Value!.Tokens.RefreshToken, CancellationToken.None);
 
-        await service.RefreshAsync(login.Tokens.RefreshToken, CancellationToken.None);
+        await service.RefreshAsync(login.Value!.Tokens.RefreshToken, CancellationToken.None);
 
         var warning = Assert.Single(logger.Entries, entry => entry.Level == LogLevel.Warning);
         Assert.Contains(user.Id, warning.Message);
-        Assert.DoesNotContain(login.Tokens.RefreshToken, warning.Message);
+        Assert.DoesNotContain(login.Value!.Tokens.RefreshToken, warning.Message);
     }
 
     [Fact]
@@ -234,7 +234,7 @@ public sealed class AuthServiceTests
             new LoginRequest { Email = user.Email!, Password = "TechForum!2026" },
             CancellationToken.None);
 
-        await service.RefreshAsync(login.Tokens!.RefreshToken, CancellationToken.None);
+        await service.RefreshAsync(login.Value!.Tokens.RefreshToken, CancellationToken.None);
 
         Assert.Empty(logger.Entries);
     }
@@ -247,8 +247,8 @@ public sealed class AuthServiceTests
         var unknown = await service.RefreshAsync("not-a-real-token", CancellationToken.None);
         var missing = await service.RefreshAsync(null, CancellationToken.None);
 
-        Assert.Equal(AuthFailureKind.InvalidRefreshToken, unknown.Failure);
-        Assert.Equal(AuthFailureKind.InvalidRefreshToken, missing.Failure);
+        Assert.Equal(ErrorType.Unauthorized, unknown.Error);
+        Assert.Equal(ErrorType.Unauthorized, missing.Error);
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public sealed class AuthServiceTests
 
         var result = await laterService.RefreshAsync(firstTokens.RefreshToken, CancellationToken.None);
 
-        Assert.Equal(AuthFailureKind.InvalidRefreshToken, result.Failure);
+        Assert.Equal(ErrorType.Unauthorized, result.Error);
     }
 
     [Fact]
@@ -273,7 +273,7 @@ public sealed class AuthServiceTests
 
         var result = await service.RefreshAsync(firstTokens.RefreshToken, CancellationToken.None);
 
-        Assert.Equal(AuthFailureKind.LockedOut, result.Failure);
+        Assert.Equal(ErrorType.Locked, result.Error);
         Assert.All(refreshTokens.Tokens, token => Assert.NotNull(token.RevokedAtUtc));
     }
 
@@ -285,7 +285,7 @@ public sealed class AuthServiceTests
 
         var result = await service.RefreshAsync(firstTokens.RefreshToken, CancellationToken.None);
 
-        Assert.Equal(AuthFailureKind.InvalidRefreshToken, result.Failure);
+        Assert.Equal(ErrorType.Unauthorized, result.Error);
         Assert.Single(refreshTokens.Tokens);
     }
 
@@ -330,9 +330,8 @@ public sealed class AuthServiceTests
 
         Assert.True(result.Succeeded);
         Assert.Equal("Thành viên đã cập nhật", user.DisplayName);
-        Assert.Equal("Thành viên đã cập nhật", result.User!.DisplayName);
-        Assert.Equal("Chia sẻ kiến thức React và .NET.", result.User.Bio);
-        Assert.Null(result.Tokens);
+        Assert.Equal("Thành viên đã cập nhật", result.Value!.DisplayName);
+        Assert.Equal("Chia sẻ kiến thức React và .NET.", result.Value.Bio);
     }
 
     [Fact]
@@ -347,7 +346,7 @@ public sealed class AuthServiceTests
         });
 
         Assert.False(result.Succeeded);
-        Assert.Equal("Tên hiển thị phải từ 2 đến 80 ký tự.", result.Errors["displayName"][0]);
+        Assert.Equal("Tên hiển thị phải từ 2 đến 80 ký tự.", result.Message);
         Assert.Equal(0, repository.UpdateCount);
     }
 
@@ -377,7 +376,7 @@ public sealed class AuthServiceTests
         }, CancellationToken.None);
 
         Assert.False(result.Succeeded);
-        Assert.Equal("Mật khẩu hiện tại không chính xác.", result.Errors["currentPassword"][0]);
+        Assert.Equal("Mật khẩu hiện tại không chính xác.", result.Errors!["currentPassword"][0]);
         Assert.All(refreshTokens.Tokens, token => Assert.Null(token.RevokedAtUtc));
     }
 
@@ -403,7 +402,6 @@ public sealed class AuthServiceTests
         }, CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.Null(result.Tokens);
         Assert.Equal(2, refreshTokens.Tokens.Count);
         Assert.All(refreshTokens.Tokens, token => Assert.NotNull(token.RevokedAtUtc));
         Assert.Equal("TechForum!2026", repository.LastCurrentPassword);
@@ -441,7 +439,7 @@ public sealed class AuthServiceTests
         var result = await service.LoginAsync(
             new LoginRequest { Email = user.Email!, Password = "TechForum!2026", RememberMe = rememberMe },
             CancellationToken.None);
-        return (service, repository, refreshTokens, result.Tokens!);
+        return (service, repository, refreshTokens, result.Value!.Tokens);
     }
 
     private static AuthService CreateService(

@@ -19,7 +19,7 @@ public sealed class BannerServiceTests
 
         var result = await context.Service.CreateAsync("admin", Request(), default);
 
-        Assert.Equal(BannerWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         var banner = Assert.Single(context.Banners.Items);
         Assert.Equal("Khuyến mãi mùa thu", banner.Title);
         Assert.True(banner.IsActive);
@@ -36,7 +36,7 @@ public sealed class BannerServiceTests
 
         var result = await context.Service.CreateAsync("admin", Request(title: title), default);
 
-        Assert.Equal(BannerWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal("title", result.Field);
         Assert.Empty(context.Banners.Items);
     }
@@ -49,7 +49,7 @@ public sealed class BannerServiceTests
     {
         var result = await new Context().Service.CreateAsync("admin", Request(imageUrl: imageUrl), default);
 
-        Assert.Equal(BannerWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal("imageUrl", result.Field);
     }
 
@@ -62,7 +62,7 @@ public sealed class BannerServiceTests
     {
         var result = await new Context().Service.CreateAsync("admin", Request(link: link), default);
 
-        Assert.Equal(BannerWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal("linkUrl", result.Field);
     }
 
@@ -75,7 +75,7 @@ public sealed class BannerServiceTests
     {
         var result = await new Context().Service.CreateAsync("admin", Request(link: link), default);
 
-        Assert.Equal(BannerWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public sealed class BannerServiceTests
 
         var result = await new Context().Service.CreateAsync("admin", request, default);
 
-        Assert.Equal(BannerWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal("endsAtUtc", result.Field);
     }
 
@@ -98,7 +98,7 @@ public sealed class BannerServiceTests
         var result = await context.Service.UpdateAsync(
             "admin", TestIds.Id(1), Request(title: "Tiêu đề mới", imageUrl: "/media/banners/new.png"), default);
 
-        Assert.Equal(BannerWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Equal("Tiêu đề mới", context.Banners.Items[0].Title);
         Assert.Equal(ImageUrl, Assert.Single(context.Images.Deleted));
         Assert.Equal("banner-updated", Assert.Single(context.Audit.Actions));
@@ -144,7 +144,7 @@ public sealed class BannerServiceTests
     {
         var result = await new Context().Service.UpdateAsync("admin", TestIds.Id(99), Request(), default);
 
-        Assert.Equal(BannerWriteFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public sealed class BannerServiceTests
 
         var result = await context.Service.DeleteAsync("admin", TestIds.Id(1), default);
 
-        Assert.Equal(BannerWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Empty(context.Banners.Items);
         Assert.Equal(ImageUrl, Assert.Single(context.Images.Deleted));
         Assert.Equal("banner-deleted", Assert.Single(context.Audit.Actions));
@@ -180,7 +180,7 @@ public sealed class BannerServiceTests
     {
         var result = await new Context().Service.DeleteAsync("admin", TestIds.Id(99), default);
 
-        Assert.Equal(BannerWriteFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
     }
 
     [Fact]
@@ -267,8 +267,8 @@ public sealed class BannerServiceTests
     {
         public List<string> Deleted { get; } = [];
 
-        public Task<BannerImageResult> SaveAsync(IFormFile file, CancellationToken cancellationToken) =>
-            Task.FromResult(BannerImageResult.Success(ImageUrl));
+        public Task<Result<string>> SaveAsync(IFormFile file, CancellationToken cancellationToken) =>
+            Task.FromResult(Result<string>.Success(ImageUrl));
 
         public bool IsStoredImageUrl(string imageUrl) => imageUrl.StartsWith("/media/banners/", StringComparison.Ordinal);
 

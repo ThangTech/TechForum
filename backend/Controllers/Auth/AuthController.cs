@@ -27,82 +27,32 @@ public sealed class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponseDto>> Register(
-        RegisterRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AuthResponseDto>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.RegisterAsync(request, cancellationToken);
-        if (result.Succeeded)
-        {
-            return StatusCode(StatusCodes.Status201Created, CreateAuthResponse(result));
-        }
-
-        if (result.Failure == AuthFailureKind.DuplicateEmail)
-        {
-            return Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Email đã được sử dụng",
-                Detail = "Vui lòng đăng nhập hoặc dùng một email khác."
-            });
-        }
-
-        return BadRequest(new ValidationProblemDetails(
-            result.Errors.ToDictionary(error => error.Key, error => error.Value))
-        {
-            Status = StatusCodes.Status400BadRequest,
-            Title = "Thông tin đăng ký chưa hợp lệ"
-        });
+        return ToSessionResponse(result, StatusCodes.Status201Created);
     }
 
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponseDto>> Login(
-        LoginRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AuthResponseDto>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.LoginAsync(request, cancellationToken);
-        if (result.Succeeded)
-        {
-            return Ok(CreateAuthResponse(result));
-        }
-
-        if (result.Failure == AuthFailureKind.LockedOut)
-        {
-            return CreateLockedResponse();
-        }
-
-        return Unauthorized(new ProblemDetails
-        {
-            Status = StatusCodes.Status401Unauthorized,
-            Title = "Đăng nhập không thành công",
-            Detail = "Email hoặc mật khẩu không chính xác."
-        });
+        return ToSessionResponse(result, StatusCodes.Status200OK);
     }
 
     [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponseDto>> Refresh(CancellationToken cancellationToken)
     {
-        var refreshToken = Request.Cookies[RefreshTokenCookieName];
-        var result = await authService.RefreshAsync(refreshToken, cancellationToken);
-        if (result.Succeeded)
+        var result = await authService.RefreshAsync(Request.Cookies[RefreshTokenCookieName], cancellationToken);
+        if (!result.Succeeded)
         {
-            return Ok(CreateAuthResponse(result));
+            // Cookie cũ không còn dùng được nữa.
+            DeleteRefreshTokenCookie();
         }
 
-        DeleteRefreshTokenCookie();
-        if (result.Failure == AuthFailureKind.LockedOut)
-        {
-            return CreateLockedResponse();
-        }
-
-        return Unauthorized(new ProblemDetails
-        {
-            Status = StatusCodes.Status401Unauthorized,
-            Title = "Phiên đăng nhập đã hết hạn",
-            Detail = "Vui lòng đăng nhập lại."
-        });
+        return ToSessionResponse(result, StatusCodes.Status200OK);
     }
 
     [Authorize]
@@ -124,23 +74,21 @@ public sealed class AuthController : ControllerBase
     public async Task<ActionResult<CurrentUserDto>> UpdateProfile(UpdateProfileRequest request)
     {
         var result = await authService.UpdateProfileAsync(User.GetRequiredUserId(), request);
-        return ToAccountUpdateResponse(result, "Không thể cập nhật hồ sơ");
+        return this.ToActionResult(result);
     }
 
     [Authorize]
     [HttpPut("password")]
-    public async Task<ActionResult<CurrentUserDto>> ChangePassword(
-        ChangePasswordRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<CurrentUserDto>> ChangePassword(ChangePasswordRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.ChangePasswordAsync(User.GetRequiredUserId(), request, cancellationToken);
         if (result.Succeeded)
         {
-            // Every refresh token was revoked, so the browser cookie is no longer useful.
+            // Mọi refresh token đã bị thu hồi nên cookie trong trình duyệt không còn tác dụng.
             DeleteRefreshTokenCookie();
         }
 
-        return ToAccountUpdateResponse(result, "Không thể đổi mật khẩu");
+        return this.ToActionResult(result);
     }
 
     [Authorize]
@@ -149,13 +97,7 @@ public sealed class AuthController : ControllerBase
     public async Task<ActionResult<CurrentUserDto>> UpdateAvatar(IFormFile file, CancellationToken cancellationToken)
     {
         var result = await avatarService.UpdateAsync(User.GetRequiredUserId(), file, cancellationToken);
-        return result.Succeeded
-            ? Ok(result.User)
-            : BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]> { ["file"] = [result.Error!] })
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Avatar chưa hợp lệ"
-            });
+        return this.ToActionResult(result);
     }
 
     [Authorize]
@@ -163,7 +105,7 @@ public sealed class AuthController : ControllerBase
     public async Task<ActionResult<CurrentUserDto>> DeleteAvatar(CancellationToken cancellationToken)
     {
         var result = await avatarService.DeleteAsync(User.GetRequiredUserId(), cancellationToken);
-        return result.Succeeded ? Ok(result.User) : Unauthorized();
+        return this.ToActionResult(result);
     }
 
     // Anonymous on purpose: the access token may already be expired when the user logs out.
@@ -177,24 +119,27 @@ public sealed class AuthController : ControllerBase
         return NoContent();
     }
 
-    // Sets the refresh token cookie and returns the part of the result the browser may keep in memory.
-    private AuthResponseDto CreateAuthResponse(AuthResult result)
+    // Đặt cookie refresh token và trả phần trình duyệt được giữ trong bộ nhớ.
+    private ActionResult<AuthResponseDto> ToSessionResponse(Result<AuthSession> result, int successStatus)
     {
-        var tokens = result.Tokens!;
-        Response.Cookies.Append(RefreshTokenCookieName, tokens.RefreshToken, new CookieOptions
+        if (!result.Succeeded)
+        {
+            return this.ToActionResult(Result<AuthResponseDto>.From(result));
+        }
+
+        var session = result.Value!;
+        Response.Cookies.Append(RefreshTokenCookieName, session.Tokens.RefreshToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = RefreshTokenCookiePath,
-            Expires = tokens.RefreshTokenExpiresAtUtc,
+            Expires = session.Tokens.RefreshTokenExpiresAtUtc,
             IsEssential = true
         });
 
-        return new AuthResponseDto(
-            result.User!,
-            tokens.AccessToken,
-            tokens.AccessTokenExpiresAtUtc);
+        var response = new AuthResponseDto(session.User, session.Tokens.AccessToken, session.Tokens.AccessTokenExpiresAtUtc);
+        return StatusCode(successStatus, response);
     }
 
     private void DeleteRefreshTokenCookie()
@@ -202,35 +147,6 @@ public sealed class AuthController : ControllerBase
         Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions
         {
             Path = RefreshTokenCookiePath
-        });
-    }
-
-    private ObjectResult CreateLockedResponse() => StatusCode(StatusCodes.Status423Locked, new ProblemDetails
-    {
-        Status = StatusCodes.Status423Locked,
-        Title = "Tài khoản đang bị khóa",
-        Detail = "Vui lòng liên hệ quản trị viên để được hỗ trợ."
-    });
-
-    private ActionResult<CurrentUserDto> ToAccountUpdateResponse(
-        AuthResult result,
-        string title)
-    {
-        if (result.Succeeded)
-        {
-            return Ok(result.User);
-        }
-
-        if (result.Failure == AuthFailureKind.InvalidCredentials)
-        {
-            return Unauthorized();
-        }
-
-        return BadRequest(new ValidationProblemDetails(
-            result.Errors.ToDictionary(error => error.Key, error => error.Value))
-        {
-            Status = StatusCodes.Status400BadRequest,
-            Title = title
         });
     }
 }

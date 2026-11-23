@@ -18,7 +18,7 @@ public sealed class AdminAccountServiceTests
     {
         var repository = new FakeRepository();
         var result = await Service(repository).SetLockedAsync("member", "admin", new(true, reason), default);
-        Assert.Equal(AdminAccountWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal("reason", result.Field);
         Assert.Equal(0, repository.SaveCount);
     }
@@ -28,20 +28,20 @@ public sealed class AdminAccountServiceTests
     {
         var repository = new FakeRepository();
         var result = await Service(repository).SetLockedAsync("member", "admin", new(true, "Vi phạm", Now), default);
-        Assert.Equal(AdminAccountWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal("lockoutEndUtc", result.Field);
         Assert.Equal(0, repository.SaveCount);
     }
 
     [Theory]
-    [InlineData("member", "member", false, AdminAccountWriteFailure.SelfLock)]
-    [InlineData("member", "admin", true, AdminAccountWriteFailure.AdministratorProtected)]
+    [InlineData("member", "member", false, ErrorType.Conflict)]
+    [InlineData("member", "admin", true, ErrorType.Conflict)]
     public async Task Lock_ProtectsOwnAndAdministratorAccount(string target, string actor, bool admin,
-        AdminAccountWriteFailure expected)
+        ErrorType expected)
     {
         var repository = new FakeRepository { IsAdministrator = admin };
         var result = await Service(repository).SetLockedAsync(target, actor, new(true, "Vi phạm"), default);
-        Assert.Equal(expected, result.Failure);
+        Assert.Equal(expected, result.Error);
         Assert.Equal(0, repository.SaveCount);
     }
 
@@ -51,11 +51,11 @@ public sealed class AdminAccountServiceTests
         var repository = new FakeRepository();
         var expiry = Now.AddDays(7);
         var result = await Service(repository).SetLockedAsync("member", "admin", new(true, "  Spam lặp lại  ", expiry), default);
-        Assert.Equal(AdminAccountWriteFailure.None, result.Failure);
-        Assert.NotNull(result.Account);
-        Assert.True(result.Account.IsLocked);
-        Assert.Equal(expiry, result.Account.LockoutEndUtc);
-        Assert.Equal("Spam lặp lại", result.Account.LockReason);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Value);
+        Assert.True(result.Value.IsLocked);
+        Assert.Equal(expiry, result.Value.LockoutEndUtc);
+        Assert.Equal("Spam lặp lại", result.Value.LockReason);
         Assert.NotNull(repository.Audit);
         Assert.Equal("Spam lặp lại", repository.Audit.Reason);
         Assert.Equal("admin", repository.Audit.AdministratorId);
@@ -69,10 +69,10 @@ public sealed class AdminAccountServiceTests
         repository.User.LockReason = "Lý do cũ";
         repository.User.LockoutEnd = DateTimeOffset.MaxValue;
         var result = await Service(repository).SetLockedAsync("member", "admin", new(false), default);
-        Assert.NotNull(result.Account);
-        Assert.False(result.Account.IsLocked);
-        Assert.Null(result.Account.LockReason);
-        Assert.Null(result.Account.LockoutEndUtc);
+        Assert.NotNull(result.Value);
+        Assert.False(result.Value.IsLocked);
+        Assert.Null(result.Value.LockReason);
+        Assert.Null(result.Value.LockoutEndUtc);
         Assert.Equal("account-unlocked", repository.Audit?.Action);
     }
 

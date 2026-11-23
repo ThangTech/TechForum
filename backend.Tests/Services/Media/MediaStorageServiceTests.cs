@@ -37,8 +37,8 @@ public sealed class MediaStorageServiceTests : IDisposable
         Assert.Equal(CloudResourceType.Image, upload.Type);
         // The name of the file that the member sent is not used anywhere.
         Assert.DoesNotContain("unsafe", upload.FileName);
-        Assert.Matches("^https://res\\.cloudinary\\.com/demo-cloud/image/upload/v\\d+/techforum/images/[a-f0-9]{32}\\.png$", result.Media!.Link);
-        Assert.Equal(result.Media.Link, result.Media.Path);
+        Assert.Matches("^https://res\\.cloudinary\\.com/demo-cloud/image/upload/v\\d+/techforum/images/[a-f0-9]{32}\\.png$", result.Value!.Link);
+        Assert.Equal(result.Value.Link, result.Value.Path);
         Assert.False(Directory.Exists(testRoot), "nothing is written to the disk any more");
     }
 
@@ -48,9 +48,9 @@ public sealed class MediaStorageServiceTests : IDisposable
         var result = await CreateService().StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
         var asset = Assert.Single(repository.Items);
-        Assert.Equal(result.Media!.Id, asset.Id);
+        Assert.Equal(result.Value!.Id, asset.Id);
         Assert.Equal(UserId, asset.UploaderId);
-        Assert.Equal(result.Media.Link, asset.PublicUrl);
+        Assert.Equal(result.Value.Link, asset.PublicUrl);
         Assert.Equal(cloud.Uploads[0].PublicId, asset.RelativePath);
         Assert.Equal("image/png", asset.ContentType);
         Assert.Equal(Png.Length, asset.Length);
@@ -65,7 +65,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         var upload = Assert.Single(cloud.Uploads);
         Assert.Equal(CloudResourceType.Video, upload.Type);
         Assert.Matches("^techforum/videos/[a-f0-9]{32}$", upload.PublicId);
-        Assert.Matches("/video/upload/v\\d+/techforum/videos/[a-f0-9]{32}\\.mp4$", result.Media!.Link);
+        Assert.Matches("/video/upload/v\\d+/techforum/videos/[a-f0-9]{32}\\.mp4$", result.Value!.Link);
     }
 
     [Theory]
@@ -78,7 +78,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         var result = await CreateService().StoreImageAsync(UserId, file, default);
 
         Assert.False(result.Succeeded);
-        Assert.False(result.IsUnavailable);
+        Assert.False((result.Error == ErrorType.Unavailable));
         Assert.Empty(cloud.Uploads);
         Assert.Empty(repository.Items);
     }
@@ -103,8 +103,8 @@ public sealed class MediaStorageServiceTests : IDisposable
 
         var result = await CreateService().StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
-        Assert.True(result.IsUnavailable);
-        Assert.DoesNotContain("cloudinary", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.True((result.Error == ErrorType.Unavailable));
+        Assert.DoesNotContain("cloudinary", result.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Empty(repository.Items);
     }
 
@@ -115,7 +115,7 @@ public sealed class MediaStorageServiceTests : IDisposable
 
         var result = await CreateService().StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
-        Assert.True(result.IsUnavailable);
+        Assert.True((result.Error == ErrorType.Unavailable));
         Assert.Empty(repository.Items);
     }
 
@@ -128,8 +128,8 @@ public sealed class MediaStorageServiceTests : IDisposable
 
         Assert.False(result.Succeeded);
         // A refused file is a 400 for the member to fix, not a 503 to try again later.
-        Assert.False(result.IsUnavailable);
-        Assert.Contains("vượt quá kích thước", result.Error);
+        Assert.False((result.Error == ErrorType.Unavailable));
+        Assert.Contains("vượt quá kích thước", result.Message);
         Assert.Empty(repository.Items);
     }
 
@@ -140,8 +140,8 @@ public sealed class MediaStorageServiceTests : IDisposable
 
         var result = await CreateService().StoreVideoAsync(UserId, CreateFile(Mp4, "clip.mp4", "video/mp4"), default);
 
-        Assert.False(result.IsUnavailable);
-        Assert.Contains("Không đọc được tệp", result.Error);
+        Assert.False((result.Error == ErrorType.Unavailable));
+        Assert.Contains("Không đọc được tệp", result.Message);
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public sealed class MediaStorageServiceTests : IDisposable
 
         var result = await CreateService().StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
-        Assert.True(result.IsUnavailable);
+        Assert.True((result.Error == ErrorType.Unavailable));
         Assert.Empty(repository.Items);
     }
 
@@ -175,9 +175,9 @@ public sealed class MediaStorageServiceTests : IDisposable
         var service = CreateService();
         var upload = await service.StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
-        var result = await service.DeleteUnusedAsync(UserId, upload.Media!.Id, default);
+        var result = await service.DeleteUnusedAsync(UserId, upload.Value!.Id, default);
 
-        Assert.Equal(MediaDeleteResult.Deleted, result);
+        Assert.True(result.Succeeded);
         Assert.Empty(repository.Items);
         Assert.Equal(new CloudAsset(CloudResourceType.Image, cloud.Uploads[0].PublicId), Assert.Single(cloud.Deleted));
     }
@@ -188,9 +188,9 @@ public sealed class MediaStorageServiceTests : IDisposable
         var service = CreateService();
         var upload = await service.StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
-        var result = await service.DeleteUnusedAsync("member-b", upload.Media!.Id, default);
+        var result = await service.DeleteUnusedAsync("member-b", upload.Value!.Id, default);
 
-        Assert.Equal(MediaDeleteResult.NotFound, result);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Single(repository.Items);
         Assert.Empty(cloud.Deleted);
     }
@@ -202,9 +202,9 @@ public sealed class MediaStorageServiceTests : IDisposable
         var upload = await service.StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
         repository.Items[0].TopicId = TestIds.Id(10);
 
-        var result = await service.DeleteUnusedAsync(UserId, upload.Media!.Id, default);
+        var result = await service.DeleteUnusedAsync(UserId, upload.Value!.Id, default);
 
-        Assert.Equal(MediaDeleteResult.Attached, result);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.Single(repository.Items);
         Assert.Empty(cloud.Deleted);
     }
@@ -216,9 +216,9 @@ public sealed class MediaStorageServiceTests : IDisposable
         var upload = await service.StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
         cloud.Fails = true;
 
-        var result = await service.DeleteUnusedAsync(UserId, upload.Media!.Id, default);
+        var result = await service.DeleteUnusedAsync(UserId, upload.Value!.Id, default);
 
-        Assert.Equal(MediaDeleteResult.Unavailable, result);
+        Assert.Equal(ErrorType.Unavailable, result.Error);
         Assert.Single(repository.Items);
     }
 
@@ -239,7 +239,7 @@ public sealed class MediaStorageServiceTests : IDisposable
 
         var result = await CreateService().DeleteUnusedAsync(UserId, legacy.Id, default);
 
-        Assert.Equal(MediaDeleteResult.Deleted, result);
+        Assert.True(result.Succeeded);
         Assert.False(File.Exists(path));
         Assert.Empty(cloud.Deleted);
     }
@@ -264,10 +264,10 @@ public sealed class MediaStorageServiceTests : IDisposable
         var count = await service.CleanupOrphansAsync(default);
 
         Assert.Equal(2, count);
-        Assert.Equal([second.Media!.Id], repository.Items.Select(item => item.Id));
+        Assert.Equal([second.Value!.Id], repository.Items.Select(item => item.Id));
         Assert.Contains(cloud.Deleted, item => item.PublicId == cloud.Uploads[0].PublicId);
         Assert.Contains(cloud.Deleted, item => item.PublicId == cloud.Uploads[2].PublicId);
-        Assert.NotEqual(first.Media!.Id, third.Media!.Id);
+        Assert.NotEqual(first.Value!.Id, third.Value!.Id);
     }
 
     [Fact]

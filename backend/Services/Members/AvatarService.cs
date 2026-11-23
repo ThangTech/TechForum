@@ -38,7 +38,12 @@ public sealed class AvatarService : IAvatarService
         options = optionsAccessor.Value;
     }
 
-    public async Task<AvatarUpdateResult> UpdateAsync(
+    private static Result<CurrentUserDto> InvalidAvatar(string message)
+    {
+        return Result<CurrentUserDto>.Fail(ErrorType.Validation, "Avatar chưa hợp lệ", message, "file");
+    }
+
+    public async Task<Result<CurrentUserDto>> UpdateAsync(
         string userId,
         IFormFile file,
         CancellationToken cancellationToken)
@@ -46,11 +51,11 @@ public sealed class AvatarService : IAvatarService
         var user = await accountRepository.FindByIdAsync(userId);
         if (user is null)
         {
-            return AvatarUpdateResult.Invalid("Phiên đăng nhập không còn hợp lệ.");
+            return Result<CurrentUserDto>.Fail(ErrorType.Unauthorized, "Bạn cần đăng nhập", "Phiên đăng nhập không còn hợp lệ.");
         }
         if (file.Length <= 0 || file.Length > options.MaxAvatarBytes)
         {
-            return AvatarUpdateResult.Invalid("Avatar phải có dung lượng từ 1 byte đến 2 MB.");
+            return InvalidAvatar("Avatar phải có dung lượng từ 1 byte đến 2 MB.");
         }
 
         string? extension;
@@ -63,19 +68,19 @@ public sealed class AvatarService : IAvatarService
 
         if (extension is null)
         {
-            return AvatarUpdateResult.Invalid("Avatar chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
+            return InvalidAvatar("Avatar chỉ hỗ trợ tệp PNG, JPEG hoặc WebP hợp lệ.");
         }
 
         if (!cloud.IsConfigured)
         {
             logger.LogError("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret) nên không thể đổi avatar.");
-            return AvatarUpdateResult.Invalid("Chưa thể đổi avatar lúc này. Vui lòng thử lại sau.");
+            return InvalidAvatar("Chưa thể đổi avatar lúc này. Vui lòng thử lại sau.");
         }
 
         var (newAvatarUrl, uploadError) = await UploadAsync(file, extension, cancellationToken);
         if (newAvatarUrl is null)
         {
-            return AvatarUpdateResult.Invalid(uploadError!);
+            return InvalidAvatar(uploadError!);
         }
 
         var oldAvatarUrl = user.AvatarUrl;
@@ -85,29 +90,29 @@ public sealed class AvatarService : IAvatarService
         {
             // The new file has no owner now, so it is not left in the account.
             await DeleteFromCloudAsync(newAvatarUrl, cancellationToken);
-            return AvatarUpdateResult.Invalid("Không thể cập nhật avatar lúc này.");
+            return InvalidAvatar("Không thể cập nhật avatar lúc này.");
         }
 
         await DeleteOldAvatarAsync(oldAvatarUrl, cancellationToken);
-        return AvatarUpdateResult.Success(await MapUserAsync(user));
+        return Result<CurrentUserDto>.Success(await MapUserAsync(user));
     }
 
-    public async Task<AvatarUpdateResult> DeleteAsync(string userId, CancellationToken cancellationToken)
+    public async Task<Result<CurrentUserDto>> DeleteAsync(string userId, CancellationToken cancellationToken)
     {
         var user = await accountRepository.FindByIdAsync(userId);
         if (user is null)
         {
-            return AvatarUpdateResult.Invalid("Phiên đăng nhập không còn hợp lệ.");
+            return Result<CurrentUserDto>.Fail(ErrorType.Unauthorized, "Bạn cần đăng nhập", "Phiên đăng nhập không còn hợp lệ.");
         }
         var oldAvatarUrl = user.AvatarUrl;
         user.AvatarUrl = null;
         var updateResult = await accountRepository.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return AvatarUpdateResult.Invalid("Không thể xóa avatar lúc này.");
+            return Result<CurrentUserDto>.Fail(ErrorType.Unavailable, "Chưa xóa được avatar", "Không thể xóa avatar lúc này.");
         }
         await DeleteOldAvatarAsync(oldAvatarUrl, cancellationToken);
-        return AvatarUpdateResult.Success(await MapUserAsync(user));
+        return Result<CurrentUserDto>.Success(await MapUserAsync(user));
     }
 
     private async Task<CurrentUserDto> MapUserAsync(TechForum.Api.Models.ApplicationUser user) => new(

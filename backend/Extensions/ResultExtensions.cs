@@ -31,10 +31,9 @@ public static class ResultExtensions
     {
         if (result.Error == ErrorType.Validation)
         {
-            var errors = new Dictionary<string, string[]>
-            {
-                [result.Field ?? string.Empty] = [result.Message ?? "Dữ liệu chưa hợp lệ."]
-            };
+            var errors = result.Errors is not null
+                ? new Dictionary<string, string[]>(result.Errors)
+                : new Dictionary<string, string[]> { [result.Field ?? string.Empty] = [result.Message ?? "Dữ liệu chưa hợp lệ."] };
             // Tiêu đề để trống thì ValidationProblemMessageFilter điền tiêu đề tiếng Việt chung.
             return controller.BadRequest(new ValidationProblemDetails(errors) { Status = StatusCodes.Status400BadRequest, Title = result.Title });
         }
@@ -66,6 +65,8 @@ public static class ResultExtensions
                 return StatusCodes.Status429TooManyRequests;
             case ErrorType.Unavailable:
                 return StatusCodes.Status503ServiceUnavailable;
+            case ErrorType.ServerError:
+                return StatusCodes.Status500InternalServerError;
             default:
                 return StatusCodes.Status400BadRequest;
         }

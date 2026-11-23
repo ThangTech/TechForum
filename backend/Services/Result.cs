@@ -10,15 +10,18 @@ public enum ErrorType
     Conflict,
     Locked,
     TooManyRequests,
-    Unavailable
+    Unavailable,
+    ServerError
 }
 
 // Kết quả của một thao tác: thành công, hoặc lỗi kèm tiêu đề và lời giải thích cho người dùng.
 public class Result
 {
-    protected Result(ErrorType? error, string? title, string? message, string? field, int retryAfterSeconds)
+    protected Result(ErrorType? error, string? title, string? message, string? field, int retryAfterSeconds,
+        IReadOnlyDictionary<string, string[]>? errors = null)
     {
         Error = error;
+        Errors = errors;
         Title = title;
         Message = message;
         Field = field;
@@ -30,6 +33,8 @@ public class Result
     public string? Message { get; }
     public string? Field { get; }
     public int RetryAfterSeconds { get; }
+    // Lỗi của nhiều trường cùng lúc (khi có thì dùng thay cho Field và Message).
+    public IReadOnlyDictionary<string, string[]>? Errors { get; }
 
     public bool Succeeded => Error is null;
 
@@ -53,12 +58,18 @@ public class Result
     {
         return new Result(ErrorType.TooManyRequests, title, message, null, retryAfterSeconds);
     }
+
+    public static Result Invalid(string title, IReadOnlyDictionary<string, string[]> errors)
+    {
+        return new Result(ErrorType.Validation, title, null, null, 0, errors);
+    }
 }
 
 public sealed class Result<T> : Result
 {
-    private Result(T? value, ErrorType? error, string? title, string? message, string? field, int retryAfterSeconds)
-        : base(error, title, message, field, retryAfterSeconds)
+    private Result(T? value, ErrorType? error, string? title, string? message, string? field, int retryAfterSeconds,
+        IReadOnlyDictionary<string, string[]>? errors = null)
+        : base(error, title, message, field, retryAfterSeconds, errors)
     {
         Value = value;
     }
@@ -85,9 +96,14 @@ public sealed class Result<T> : Result
         return new Result<T>(default, ErrorType.TooManyRequests, title, message, null, retryAfterSeconds);
     }
 
+    public static new Result<T> Invalid(string title, IReadOnlyDictionary<string, string[]> errors)
+    {
+        return new Result<T>(default, ErrorType.Validation, title, null, null, 0, errors);
+    }
+
     // Chuyển lỗi của một bước trước sang kết quả có kiểu khác.
     public static Result<T> From(Result failure)
     {
-        return new Result<T>(default, failure.Error, failure.Title, failure.Message, failure.Field, failure.RetryAfterSeconds);
+        return new Result<T>(default, failure.Error, failure.Title, failure.Message, failure.Field, failure.RetryAfterSeconds, failure.Errors);
     }
 }

@@ -33,7 +33,7 @@ public sealed class AvatarServiceTests : IDisposable
         var upload = Assert.Single(cloud.Uploads);
         Assert.Matches("^techforum/avatars/[a-f0-9]{32}$", upload.PublicId);
         Assert.Matches("^https://res\\.cloudinary\\.com/demo-cloud/image/upload/v\\d+/techforum/avatars/[a-f0-9]{32}\\.png$", accounts.User.AvatarUrl);
-        Assert.Equal(accounts.User.AvatarUrl, result.User!.AvatarUrl);
+        Assert.Equal(accounts.User.AvatarUrl, result.Value!.AvatarUrl);
     }
 
     [Fact]
@@ -102,8 +102,8 @@ public sealed class AvatarServiceTests : IDisposable
 
         Assert.False(notConfigured.Succeeded);
         Assert.False(failed.Succeeded);
-        Assert.DoesNotContain("cloudinary", notConfigured.Error, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("cloudinary", failed.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cloudinary", notConfigured.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cloudinary", failed.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(OldCloudAvatar, accounts.User.AvatarUrl);
     }
 
@@ -116,7 +116,7 @@ public sealed class AvatarServiceTests : IDisposable
         var result = await CreateService().UpdateAsync(UserId, CreateFile(Png, "image/png"), default);
 
         Assert.False(result.Succeeded);
-        Assert.Contains("Không đọc được tệp", result.Error);
+        Assert.Contains("Không đọc được tệp", result.Message);
         Assert.Equal(OldCloudAvatar, accounts.User.AvatarUrl);
         Assert.Empty(cloud.Deleted);
     }

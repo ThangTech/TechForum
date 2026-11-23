@@ -48,24 +48,9 @@ public sealed class AdminAccountsController : ControllerBase
     }
 
     [HttpPut("{userId}/lock")]
-    public async Task<ActionResult<AdminAccountDto>> SetLocked(
-        string userId,
-        [FromBody] SetAccountLockRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AdminAccountDto>> SetLocked(string userId, [FromBody] SetAccountLockRequest request, CancellationToken cancellationToken)
     {
-        var administratorId = User.GetRequiredUserId();
-        var result = await accountService.SetLockedAsync(userId, administratorId, request, cancellationToken);
-        return result.Failure switch
-        {
-            AdminAccountWriteFailure.None => Ok(result.Account),
-            AdminAccountWriteFailure.Validation => BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                [result.Field ?? "account"] = [result.Message ?? "Thông tin khóa tài khoản chưa hợp lệ."]
-            })),
-            AdminAccountWriteFailure.NotFound => NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy tài khoản", Detail = result.Message }),
-            AdminAccountWriteFailure.SelfLock or AdminAccountWriteFailure.AdministratorProtected => Conflict(new ProblemDetails { Status = 409, Title = "Không thể khóa tài khoản", Detail = result.Message }),
-            AdminAccountWriteFailure.UpdateFailed => StatusCode(500, new ProblemDetails { Status = 500, Title = "Không thể cập nhật tài khoản", Detail = result.Message }),
-            _ => throw new InvalidOperationException("Trạng thái cập nhật tài khoản không được hỗ trợ.")
-        };
+        var result = await accountService.SetLockedAsync(userId, User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result);
     }
 }

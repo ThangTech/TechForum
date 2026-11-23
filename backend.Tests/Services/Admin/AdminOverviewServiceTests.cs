@@ -18,7 +18,7 @@ public sealed class AdminOverviewServiceTests
         var repository = new FakeRepository();
         var result = await CreateService(repository).GetDashboardAsync(null, null, CancellationToken.None);
 
-        var dashboard = Assert.IsType<AdminDashboardDto>(result.Dashboard);
+        var dashboard = Assert.IsType<AdminDashboardDto>(result.Value);
         Assert.Equal(new DateOnly(2026, 9, 22), dashboard.StartDate);
         Assert.Equal(new DateOnly(2026, 10, 21), dashboard.EndDate);
         Assert.Equal("Asia/Ho_Chi_Minh", dashboard.TimeZone);
@@ -44,7 +44,7 @@ public sealed class AdminOverviewServiceTests
         var result = await CreateService(repository).GetDashboardAsync(
             new(2026, 10, 1), new(2026, 10, 3), CancellationToken.None);
 
-        var dashboard = Assert.IsType<AdminDashboardDto>(result.Dashboard);
+        var dashboard = Assert.IsType<AdminDashboardDto>(result.Value);
         Assert.Equal(new AdminPeriodDto(2, 3, 1, 4), dashboard.Period);
         Assert.Equal(new AdminActivityPointDto(new(2026, 10, 2), 0, 0, 0, 0), dashboard.ActivitySeries[1]);
         Assert.Equal(4, Assert.Single(dashboard.Categories).TopicCount);
@@ -63,8 +63,8 @@ public sealed class AdminOverviewServiceTests
         var result = await CreateService(repository).GetDashboardAsync(
             DateOnly.Parse(start), DateOnly.Parse(end), CancellationToken.None);
 
-        Assert.Null(result.Dashboard);
-        Assert.NotEmpty(result.Errors);
+        Assert.Null(result.Value);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal(0, repository.DashboardReads);
     }
 
@@ -75,7 +75,7 @@ public sealed class AdminOverviewServiceTests
         var result = await CreateService(repository).GetDashboardAsync(
             new(2028, 1, 1), new(2028, 12, 31), CancellationToken.None);
 
-        Assert.Equal(366, Assert.IsType<AdminDashboardDto>(result.Dashboard).ActivitySeries.Count);
+        Assert.Equal(366, Assert.IsType<AdminDashboardDto>(result.Value).ActivitySeries.Count);
     }
 
     [Theory]
@@ -96,7 +96,7 @@ public sealed class AdminOverviewServiceTests
 
         var result = await CreateService(repository).GetDashboardAsync(null, null, CancellationToken.None);
 
-        var report = Assert.Single(result.Dashboard!.PendingReports.Oldest);
+        var report = Assert.Single(result.Value!.PendingReports.Oldest);
         Assert.Equal("Nội dung không còn công khai", report.TargetTitle);
         Assert.DoesNotContain("Bản nháp bí mật", report.TargetTitle);
     }
@@ -121,7 +121,7 @@ public sealed class AdminOverviewServiceTests
 
         var result = await CreateService(repository).GetDashboardAsync(null, null, CancellationToken.None);
 
-        var item = Assert.Single(result.Dashboard!.PendingReports.Oldest);
+        var item = Assert.Single(result.Value!.PendingReports.Oldest);
         Assert.Equal("answer", item.TargetType);
         Assert.Equal(TestIds.Id(9), item.TargetId);
         Assert.Equal("Nội dung không còn công khai", item.TargetTitle);

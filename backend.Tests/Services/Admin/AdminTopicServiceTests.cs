@@ -18,8 +18,8 @@ public sealed class AdminTopicServiceTests
         var first = await service.ModerateAsync(TestIds.Id(1), "admin", new("hide", null, "Quảng cáo lặp lại"), default);
         var second = await service.ModerateAsync(TestIds.Id(1), "admin", new("hide", null, "Quảng cáo lặp lại"), default);
 
-        Assert.Equal(AdminTopicWriteFailure.None, first.Failure);
-        Assert.Equal(AdminTopicWriteFailure.None, second.Failure);
+        Assert.True(first.Succeeded);
+        Assert.True(second.Succeeded);
         Assert.Equal(1, repository.SaveCount);
         var notification = Assert.Single(repository.Notifications);
         Assert.Equal("author", notification.UserId);
@@ -33,7 +33,7 @@ public sealed class AdminTopicServiceTests
         var repository = new FakeTopics { CanSave = false };
         var result = await new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System)
             .ModerateAsync(TestIds.Id(1), "admin", new("lock", null, "Tạm dừng thảo luận"), default);
-        Assert.Equal(AdminTopicWriteFailure.Conflict, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.Empty(repository.Notifications);
     }
 
@@ -43,7 +43,7 @@ public sealed class AdminTopicServiceTests
         var repository = new FakeTopics();
         var result = await new AdminTopicService(repository, TestMediaRules.CreateSanitizer(), TimeProvider.System)
             .ModerateAsync(TestIds.Id(1), "admin", new("hide", null, "  "), default);
-        Assert.Equal(AdminTopicWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal(0, repository.SaveCount);
     }
 

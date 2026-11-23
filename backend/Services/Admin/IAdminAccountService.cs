@@ -11,7 +11,7 @@ public interface IAdminAccountService
         int page,
         int pageSize,
         CancellationToken cancellationToken);
-    Task<AdminAccountWriteResult> SetLockedAsync(
+    Task<Result<AdminAccountDto>> SetLockedAsync(
         string targetUserId,
         string administratorId,
         SetAccountLockRequest request,

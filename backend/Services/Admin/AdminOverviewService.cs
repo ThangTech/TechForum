@@ -24,7 +24,7 @@ public sealed class AdminOverviewService : IAdminOverviewService
         return MapStatistics(data);
     }
 
-    public async Task<AdminDashboardResult> GetDashboardAsync(
+    public async Task<Result<AdminDashboardDto>> GetDashboardAsync(
         DateOnly? startDate,
         DateOnly? endDate,
         CancellationToken cancellationToken)
@@ -34,15 +34,15 @@ public sealed class AdminOverviewService : IAdminOverviewService
         var start = startDate ?? DateOnly.FromDayNumber(Math.Max(0, end.DayNumber - 29));
         if (start == DateOnly.MinValue || end == DateOnly.MaxValue)
         {
-            return AdminDashboardResult.ValidationError("startDate", "Khoảng ngày nằm ngoài giới hạn hỗ trợ.");
+            return Result<AdminDashboardDto>.Fail(ErrorType.Validation, "Khoảng thời gian thống kê chưa hợp lệ", "Khoảng ngày nằm ngoài giới hạn hỗ trợ.", "startDate");
         }
         if (start > end)
         {
-            return AdminDashboardResult.ValidationError("startDate", "Ngày bắt đầu không được sau ngày kết thúc.");
+            return Result<AdminDashboardDto>.Fail(ErrorType.Validation, "Khoảng thời gian thống kê chưa hợp lệ", "Ngày bắt đầu không được sau ngày kết thúc.", "startDate");
         }
         if (end.DayNumber - start.DayNumber + 1 > 366)
         {
-            return AdminDashboardResult.ValidationError("endDate", "Chỉ thống kê tối đa 366 ngày trong một lần.");
+            return Result<AdminDashboardDto>.Fail(ErrorType.Validation, "Khoảng thời gian thống kê chưa hợp lệ", "Chỉ thống kê tối đa 366 ngày trong một lần.", "endDate");
         }
 
         var data = await repository.GetDashboardAsync(
@@ -62,7 +62,7 @@ public sealed class AdminOverviewService : IAdminOverviewService
             activity.Sum(point => point.NewMemberCount), activity.Sum(point => point.ArticleCount),
             activity.Sum(point => point.QuestionCount), activity.Sum(point => point.AnswerCount));
         var questions = data.Questions;
-        return AdminDashboardResult.Success(new AdminDashboardDto(
+        return Result<AdminDashboardDto>.Success(new AdminDashboardDto(
             start, end, "Asia/Ho_Chi_Minh", MapStatistics(data.Totals), period, activity,
             data.Categories.Select(category => new AdminCategoryActivityDto(
                 category.CategoryId, category.CategoryName, category.ArticleCount, category.QuestionCount,

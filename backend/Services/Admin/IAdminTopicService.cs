@@ -6,7 +6,7 @@ public interface IAdminTopicService
 {
     Task<PagedResultDto<AdminTopicDto>?> GetPageAsync(AdminTopicQuery query, CancellationToken cancellationToken);
     Task<AdminTopicDetailDto?> GetByIdAsync(Guid topicId, CancellationToken cancellationToken);
-    Task<AdminTopicWriteResult> ModerateAsync(
+    Task<Result<AdminTopicDto>> ModerateAsync(
         Guid topicId,
         string administratorId,
         ModerateTopicRequest request,
