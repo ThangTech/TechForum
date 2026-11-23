@@ -5,8 +5,7 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
 
-// Checks a text before it is posted. It is not marked with [ProfanityFilter]: that attribute would clean the request
-// first and the answer would never show a change.
+// Không gắn [ProfanityFilter]: thuộc tính đó sẽ làm sạch yêu cầu trước, và câu trả lời không bao giờ thấy thay đổi.
 [ApiController]
 [Authorize]
 [Route("api/moderation")]

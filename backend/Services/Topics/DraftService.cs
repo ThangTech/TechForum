@@ -73,7 +73,7 @@ public sealed partial class DraftService : IDraftService
             return Invalid("bodyHtml", $"Nội dung không được vượt quá {MaxBodyLength:N0} ký tự.");
         }
 
-        // The same cleaning as a topic, so a draft never holds HTML that a topic could not hold.
+        // Làm sạch giống bài viết để bản nháp không bao giờ chứa HTML mà bài viết không được chứa.
         var body = contentSanitizer.Sanitize(rawBody).Trim();
         if (title.Length == 0 && summary.Length == 0 && !HasContent(body))
         {
@@ -92,15 +92,15 @@ public sealed partial class DraftService : IDraftService
             return Invalid("mediaIds", $"Chỉ được dùng tối đa {MaxMediaCount} media hợp lệ trong một nội dung.");
         }
 
-        // A draft of an edited topic can only belong to a topic of the same member.
+        // Bản nháp của bài đang sửa chỉ thuộc về bài của chính thành viên đó.
         if (request.TopicId.HasValue &&
             !await draftRepository.OwnsTopicAsync(userId, request.TopicId.Value, cancellationToken))
         {
             return Result<DraftDto>.Fail(ErrorType.NotFound, "Không tìm thấy nội dung", "Nội dung không tồn tại hoặc không thuộc tài khoản này.");
         }
 
-        // Only the files of this member that are free (or already in this topic) are kept; the others are left out
-        // without an error, because a draft must be saved even when one file was removed in the meantime.
+        // Chỉ giữ tệp của thành viên còn trống (hoặc đã ở trong bài này); tệp khác bị bỏ qua không báo lỗi,
+        // vì bản nháp vẫn phải lưu được dù một tệp vừa bị xóa.
         var media = await GetUsableMediaAsync(userId, request.TopicId, requestedMediaIds, cancellationToken);
 
         var existing = await draftRepository.GetForTargetAsync(userId, request.TopicId, cancellationToken);
@@ -109,7 +109,7 @@ public sealed partial class DraftService : IDraftService
 
         if (existing is null && !await draftRepository.TryAddAsync(draft, cancellationToken))
         {
-            // Another request created the first draft of this target a moment ago: replace that one.
+            // Yêu cầu khác vừa tạo bản nháp đầu tiên của đích này: thay bản đó.
             draft = await draftRepository.GetForTargetAsync(userId, request.TopicId, cancellationToken)
                 ?? throw new InvalidOperationException("The draft that blocked the insert was not found.");
             Fill(draft, title, summary, body, type, request.CategoryId, tagIds, media);
@@ -197,7 +197,7 @@ public sealed partial class DraftService : IDraftService
         return Result<DraftDto>.Fail(ErrorType.Validation, "Bản nháp chưa hợp lệ", message, field);
     }
 
-    // Text, a picture or a video. The empty tags that the editor leaves (<p><br></p>) do not count.
+    // Thẻ trống mà trình soạn thảo để lại (<p><br></p>) không tính là nội dung.
     private static bool HasContent(string html)
     {
         var text = WebUtility.HtmlDecode(HtmlTags().Replace(html, string.Empty)).Trim();

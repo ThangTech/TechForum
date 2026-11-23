@@ -2,8 +2,7 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-// It uses the same filter that cleans a post or an answer when it is saved, so what the member is warned about is
-// exactly what will be changed.
+// Dùng đúng bộ lọc làm sạch bài khi lưu, nên điều được cảnh báo chính là điều sẽ bị thay.
 public sealed class ContentCheckService : IContentCheckService
 {
     private readonly IProfanityFilter profanityFilter;
@@ -21,7 +20,6 @@ public sealed class ContentCheckService : IContentCheckService
         return new ContentCheckResultDto(title is not null || summary is not null || body is not null, title, summary, body);
     }
 
-    // The cleaned text, or null when the text is empty or the filter changes nothing.
     private async Task<string?> CleanIfChangedAsync(string? text, bool isHtml, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(text)) return null;

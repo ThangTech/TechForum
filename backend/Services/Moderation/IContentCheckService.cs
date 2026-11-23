@@ -2,7 +2,7 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-// Tells a member, while they write, which words the filter would replace by "***". Nothing is saved.
+// Cho thành viên biết, ngay khi đang viết, từ nào sẽ bị thay bằng "***". Không lưu gì.
 public interface IContentCheckService
 {
     Task<ContentCheckResultDto> CheckAsync(CheckContentRequest request, CancellationToken cancellationToken);

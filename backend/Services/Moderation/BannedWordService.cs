@@ -46,7 +46,7 @@ public sealed class BannedWordService : IBannedWordService
 
         await auditService.RecordAsync(administratorId, "banned-word-added", "BannedWord", word.Id.ToString(),
             null, $"word={word.Word}", "Thêm từ cấm.", cancellationToken);
-        // The next post is already filtered with the new list.
+        // Bài đăng tiếp theo được lọc bằng danh sách mới ngay.
         await profanityFilter.WarmUpAsync(cancellationToken);
         return Result<BannedWordDto>.Success(Map(word));
     }

@@ -44,9 +44,9 @@ public sealed class PostingRateLimiterTests
         using var limiter = Create(topicIntervalSeconds: 30, answersPerMinute: 1);
 
         Assert.True(limiter.TryAcquireTopic("member", out _));
-        // Another member is not slowed down by the first one.
+        // Người khác không bị chậm lại vì người thứ nhất.
         Assert.True(limiter.TryAcquireTopic("other", out _));
-        // A topic does not use up the answers.
+        // Đăng bài không làm hết lượt trả lời.
         Assert.True(limiter.TryAcquireAnswer("member", out _));
     }
 

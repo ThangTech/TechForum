@@ -15,10 +15,9 @@ public sealed record AnswerDto(
     bool IsAccepted,
     int HelpfulCount = 0,
     bool IsHelpful = false,
-    // The vote score of the answer and the vote of the member who asks (1, -1 or 0).
     int Score = 0,
     int MyVote = 0,
-    // True while the answer is new: the score is hidden (0) for the first hours.
+    // Điểm của câu trả lời mới bị ẩn (bằng 0) trong vài giờ đầu.
     bool ScoreHidden = false);
 
 public sealed record AnswerHelpfulDto(int HelpfulCount, bool IsHelpful);

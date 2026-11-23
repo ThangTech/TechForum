@@ -16,9 +16,8 @@ public sealed class VoteRepository : IVoteRepository
         this.dbContext = dbContext;
     }
 
-    // Two requests of the same member can arrive at the same moment. In a serializable transaction the second one
-    // waits or is chosen as the victim of a deadlock (1205) or meets the primary key (2601, 2627); it then reads the
-    // vote again and finds what the first one wrote, so a few tries are enough.
+    // Hai yêu cầu của cùng một người có thể tới cùng lúc. Trong giao dịch serializable, yêu cầu sau phải chờ, bị chọn làm
+    // nạn nhân deadlock (1205) hoặc gặp khóa chính (2601, 2627); khi thử lại nó đọc được phiếu yêu cầu trước đã ghi.
     private const int MaxAttempts = 4;
 
     public async Task<VoteOutcome> ApplyAsync(VoteCommand command, CancellationToken cancellationToken)
@@ -64,7 +63,7 @@ public sealed class VoteRepository : IVoteRepository
 
             if (scoreChange != 0)
             {
-                // 1. the vote
+                // 1. Phiếu bình chọn.
                 if (command.NewValue == 0)
                 {
                     dbContext.UserVotes.Remove(existing!);
@@ -87,7 +86,7 @@ public sealed class VoteRepository : IVoteRepository
                 }
                 await dbContext.SaveChangesAsync(cancellationToken);
 
-                // 2. the score of the post or answer (added in the database, so two voters never overwrite each other)
+                // 2. Điểm của bài hoặc câu trả lời, cộng ngay trong DB để hai người bình chọn không ghi đè nhau.
                 var changed = command.TargetType == VoteTargetType.Topic
                     ? await dbContext.Topics.Where(topic => topic.Id == command.TargetId)
                         .ExecuteUpdateAsync(set => set.SetProperty(topic => topic.Score, topic => topic.Score + scoreChange), cancellationToken)
@@ -95,7 +94,7 @@ public sealed class VoteRepository : IVoteRepository
                         .ExecuteUpdateAsync(set => set.SetProperty(answer => answer.Score, answer => answer.Score + scoreChange), cancellationToken);
                 if (changed != 1) throw new InvalidOperationException("Không tìm thấy nội dung được bình chọn.");
 
-                // 3. the reputation of its author: what the new vote gives minus what the old vote gave
+                // 3. Danh tiếng của tác giả: điểm của phiếu mới trừ điểm của phiếu cũ.
                 var points = ReputationRules.ForVote(command.TargetType, command.NewValue) - ReputationRules.ForVote(command.TargetType, previous);
                 if (points != 0)
                 {
@@ -104,8 +103,7 @@ public sealed class VoteRepository : IVoteRepository
                     if (users != 1) throw new InvalidOperationException("Không tìm thấy tác giả của nội dung được bình chọn.");
                 }
 
-                // 4. the cost of a downvote for the member who votes: paid when the vote becomes a downvote, given back when it
-                // stops being one (taken back, or changed to an upvote)
+                // 4. Người bình chọn mất điểm khi phiếu thành chưa tốt, và được trả lại khi rút phiếu hoặc đổi thành tốt.
                 var cost = ReputationRules.ForVoter(command.NewValue) - ReputationRules.ForVoter(previous);
                 if (cost != 0)
                 {

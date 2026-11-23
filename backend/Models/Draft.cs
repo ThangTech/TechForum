@@ -2,10 +2,8 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Models;
 
-// What a member has typed in the "write" form and not saved as a topic yet. It is saved by itself while
-// the member writes, so a lost connection or a reload does not lose the text.
-// A member has one draft for a new topic (TopicId is null) and one draft for each topic they are editing.
-// The fields are not checked as strictly as a topic, because a draft is allowed to be unfinished.
+// Tự lưu trong lúc viết để mất mạng hay tải lại trang không mất bài. Mỗi thành viên có một bản nháp cho bài mới
+// (TopicId null) và một bản cho mỗi bài đang sửa. Không kiểm tra chặt như bài viết vì bản nháp được phép chưa xong.
 public sealed class Draft
 {
     public Guid Id { get; set; }
@@ -19,7 +17,7 @@ public sealed class Draft
     public TopicType Type { get; set; }
     public Guid? CategoryId { get; set; }
     public List<Guid> TagIds { get; set; } = [];
-    // The pictures and videos of the body. The cleanup of unused uploads keeps them while the draft exists.
+    // Việc dọn tệp không dùng giữ lại các tệp này khi bản nháp còn tồn tại.
     public List<Guid> MediaIds { get; set; } = [];
     public DateTimeOffset UpdatedAtUtc { get; set; }
 }

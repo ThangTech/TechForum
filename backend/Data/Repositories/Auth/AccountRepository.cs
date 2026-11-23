@@ -45,7 +45,7 @@ public sealed class AccountRepository : IAccountRepository
         return roleResult;
     }
 
-    // Checks the password and counts failed attempts, so five wrong passwords lock the account.
+    // Đếm số lần sai, nên năm lần sai mật khẩu sẽ khóa tài khoản.
     public Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password)
     {
         return signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);

@@ -5,9 +5,8 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Filters;
 
-// Kestrel takes a request of at most about 30 MB, but a video can be up to Media:MaxVideoBytes (50 MB). Put on the action
-// that receives a video: before the file is read, it raises the limit of this request only to the size of a video plus
-// 1 MB for the rest of the form (the same margin as the multipart limit in Program.cs). Other requests keep 30 MB.
+// Kestrel chỉ nhận yêu cầu khoảng 30 MB, nhưng video được tới Media:MaxVideoBytes (50 MB).
+// Chỉ nâng giới hạn cho yêu cầu tải video (cộng 1 MB cho phần còn lại của form); yêu cầu khác giữ 30 MB.
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class VideoUploadSizeLimitAttribute : Attribute, IResourceFilter
 {
@@ -16,7 +15,7 @@ public sealed class VideoUploadSizeLimitAttribute : Attribute, IResourceFilter
     public void OnResourceExecuting(ResourceExecutingContext context)
     {
         var feature = context.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
-        // The feature is missing in tests without a server, and read-only once the body has been read.
+        // Test không có server thì không có feature này; khi body đã được đọc thì không đổi giới hạn được nữa.
         if (feature is null || feature.IsReadOnly) return;
 
         var options = context.HttpContext.RequestServices.GetRequiredService<IOptions<MediaOptions>>().Value;

@@ -20,8 +20,7 @@ public sealed class AuthController : ControllerBase
         this.avatarService = avatarService;
     }
 
-    // The refresh token lives in an HttpOnly cookie, so JavaScript cannot read it.
-    // The cookie is only sent to /api/auth, where refresh and logout are handled.
+    // Refresh token nằm trong cookie HttpOnly nên JavaScript không đọc được; cookie chỉ gửi tới /api/auth.
     private const string RefreshTokenCookieName = "TechForum.Refresh";
     private const string RefreshTokenCookiePath = "/api/auth";
 
@@ -108,7 +107,7 @@ public sealed class AuthController : ControllerBase
         return this.ToActionResult(result);
     }
 
-    // Anonymous on purpose: the access token may already be expired when the user logs out.
+    // Cho phép ẩn danh vì access token có thể đã hết hạn lúc người dùng đăng xuất.
     [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)

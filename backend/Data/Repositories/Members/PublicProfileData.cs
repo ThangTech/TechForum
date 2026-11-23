@@ -13,5 +13,5 @@ public sealed record PublicProfileData(
     IReadOnlyList<ProfileSkillData> Skills,
     IReadOnlyList<Topic> RecentTopics);
 
-// IsChosen: the member picked this skill themself; otherwise it was found from the tags of their public content.
+// IsChosen: thành viên tự chọn; nếu không thì kỹ năng được suy ra từ thẻ trong nội dung công khai của họ.
 public sealed record ProfileSkillData(Guid TagId, string Name, string Slug, int TopicCount, bool IsChosen = false);

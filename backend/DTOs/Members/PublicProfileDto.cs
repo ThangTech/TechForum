@@ -15,7 +15,6 @@ public sealed record PublicProfileDto(
     IReadOnlyList<ProfileSkillDto> Skills,
     IReadOnlyList<ProfileBadgeDto> Badges,
     IReadOnlyList<TopicSummaryDto> RecentTopics,
-    // The reputation points of the member (see ReputationRules).
     int Reputation = 0);
 
 public sealed record ProfileSkillDto(Guid TagId, string Name, string Slug, int TopicCount, bool IsChosen);

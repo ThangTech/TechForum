@@ -1,11 +1,7 @@
 namespace TechForum.Api.Services;
 
-// Turns the sentence that Cloudinary gives when it refuses a file into a sentence for the member. The text of Cloudinary
-// is in English and talks about its own limits, so the common cases are named. The member never sees the name of the
-// storage service or its own sentence (the owner of the site does not want the place of the files to be shown); the
-// original sentence is written to the log by the caller.
-// The sentences were seen on a real account: "File size too large. Got ... Maximum is ..." for a file over the limit
-// of the plan, and "Failed to ping image" for a file that is not a picture.
+// Câu từ chối của Cloudinary là tiếng Anh và nói về giới hạn của nó, nên các trường hợp hay gặp được đặt tên.
+// Thành viên không thấy tên dịch vụ lưu trữ; câu gốc được nơi gọi ghi vào log.
 public static class CloudRejection
 {
     public static string ToMessage(string cloudMessage)

@@ -8,9 +8,8 @@ public interface IRefreshTokenRepository
 
     Task<RefreshToken?> FindByHashAsync(string tokenHash, CancellationToken cancellationToken);
 
-    // Revokes the current token and saves the new one in a single transaction.
-    // Returns false when the current token was already used, revoked or expired,
-    // for example when two requests try to refresh with the same token.
+    // Thu hồi token cũ và lưu token mới trong một giao dịch. Trả false khi token cũ đã dùng, bị thu hồi
+    // hoặc hết hạn, ví dụ hai yêu cầu cùng làm mới bằng một token.
     Task<bool> RotateAsync(
         Guid currentTokenId,
         RefreshToken replacement,
@@ -21,6 +20,5 @@ public interface IRefreshTokenRepository
 
     Task RevokeAllForUserAsync(string userId, DateTimeOffset now, CancellationToken cancellationToken);
 
-    // Deletes the tokens whose expiry time is before `expiredBefore`. Returns the number of rows deleted.
     Task<int> DeleteExpiredAsync(DateTimeOffset expiredBefore, CancellationToken cancellationToken);
 }

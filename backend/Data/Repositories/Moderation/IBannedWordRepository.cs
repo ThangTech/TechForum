@@ -8,12 +8,12 @@ public interface IBannedWordRepository
 
     Task<bool> AnyAsync(CancellationToken cancellationToken);
 
-    // Adds many words at once (the first list). A word that is already there is not an error.
+    // Từ đã có thì không tính là lỗi.
     Task AddRangeAsync(IReadOnlyList<BannedWord> words, CancellationToken cancellationToken);
 
     Task<BannedWord?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
-    // False when the word is already in the list (also when another request added it a moment before).
+    // False khi từ đã có (kể cả khi yêu cầu khác vừa thêm).
     Task<bool> AddAsync(BannedWord word, CancellationToken cancellationToken);
 
     Task RemoveAsync(BannedWord word, CancellationToken cancellationToken);

@@ -6,9 +6,8 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-// Checks a picture or a video that a member uploads (size, real type, owner) and keeps it in the Cloudinary account.
-// The database keeps only the address that Cloudinary gives back. Files that were stored on the disk before the move
-// to Cloudinary are still found and deleted from the disk.
+// Kiểm tra ảnh hoặc video thành viên tải lên (kích thước, loại thật, chủ sở hữu) rồi lưu lên Cloudinary;
+// DB chỉ giữ địa chỉ. Tệp cũ lưu trên đĩa trước khi chuyển sang Cloudinary vẫn được nhận và xóa trên đĩa.
 public sealed class MediaStorageService : IMediaStorageService
 {
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
@@ -21,7 +20,6 @@ public sealed class MediaStorageService : IMediaStorageService
     private static readonly byte[] WebMSignature = [0x1A, 0x45, 0xDF, 0xA3];
 
     private readonly MediaOptions options;
-    // The folder of the old files on the disk.
     private readonly string storageRoot;
     private readonly IMediaAssetRepository repository;
     private readonly ICloudMediaClient cloud;
@@ -94,7 +92,7 @@ public sealed class MediaStorageService : IMediaStorageService
         }
         catch (CloudMediaException exception)
         {
-            // The record stays, so the file can be deleted later by the member or by the clean up.
+            // Giữ bản ghi để thành viên hoặc việc dọn tự động xóa tệp sau.
             logger.LogWarning(exception, "Không xóa được media {MediaId} trên Cloudinary.", id);
             return Result.Fail(ErrorType.Unavailable, "Chưa xóa được media", "Không thể xóa tệp lúc này. Vui lòng thử lại sau.");
         }
@@ -122,7 +120,7 @@ public sealed class MediaStorageService : IMediaStorageService
             }
             catch (CloudMediaException exception)
             {
-                // One file that cannot be deleted now must not stop the others; it is tried again at the next run.
+                // Một tệp chưa xóa được không làm dừng các tệp khác; lần chạy sau sẽ thử lại.
                 logger.LogWarning(exception, "Không dọn được media {MediaId} trên Cloudinary.", orphan.Id);
                 continue;
             }
@@ -148,7 +146,7 @@ public sealed class MediaStorageService : IMediaStorageService
             return Result<MediaUploadDto>.Fail(ErrorType.Validation, "Tệp tải lên không hợp lệ", $"Tệp phải có dung lượng từ 1 byte đến {maxBytes / 1024 / 1024} MB.");
         }
 
-        // The real type is read from the first bytes of the file, not from its name or the type that the browser says.
+        // Loại thật đọc từ các byte đầu của tệp, không tin tên tệp hay loại trình duyệt báo.
         DetectedMedia? media;
         await using (var input = file.OpenReadStream())
         {
@@ -164,7 +162,7 @@ public sealed class MediaStorageService : IMediaStorageService
 
         if (!cloud.IsConfigured)
         {
-            // The member only sees a general sentence; the owner reads the reason in the log.
+            // Thành viên chỉ thấy câu chung chung; chủ site đọc lý do trong log.
             logger.LogError("Chưa cấu hình Cloudinary (CloudName, ApiKey, ApiSecret) nên không thể tải media lên.");
             return Result<MediaUploadDto>.Fail(ErrorType.Unavailable, "Chưa thể lưu tệp", "Chưa thể lưu tệp lúc này. Vui lòng thử lại sau.");
         }
@@ -179,7 +177,7 @@ public sealed class MediaStorageService : IMediaStorageService
         }
         catch (CloudMediaRejectedException exception)
         {
-            // The connection works and Cloudinary refused the file itself: the member is told why.
+            // Kết nối vẫn tốt, Cloudinary từ chối chính tệp này: báo lý do cho thành viên.
             logger.LogInformation("Cloudinary từ chối media: {Reason}", exception.CloudMessage);
             return Result<MediaUploadDto>.Fail(ErrorType.Validation, "Tệp tải lên không hợp lệ", CloudRejection.ToMessage(exception.CloudMessage));
         }
@@ -189,7 +187,7 @@ public sealed class MediaStorageService : IMediaStorageService
             return Result<MediaUploadDto>.Fail(ErrorType.Unavailable, "Chưa thể lưu tệp", "Không thể lưu tệp lúc này. Vui lòng thử lại.");
         }
 
-        // An address that the rules do not know would be removed from the topic by the sanitizer, so it is refused now.
+        // Địa chỉ không khớp quy tắc sẽ bị bộ làm sạch HTML gỡ khỏi bài, nên từ chối ngay từ đây.
         if (!rules.IsTopicMediaUrl(url))
         {
             logger.LogWarning("Cloudinary trả về địa chỉ media không đúng quy tắc: {Url}", url);
@@ -201,7 +199,7 @@ public sealed class MediaStorageService : IMediaStorageService
         {
             Id = id,
             UploaderId = uploaderId,
-            // For a file of Cloudinary this is its id there; for an old file it is the path on the disk.
+            // Tệp Cloudinary thì là id trên Cloudinary; tệp cũ thì là đường dẫn trên đĩa.
             RelativePath = publicId,
             PublicUrl = url,
             ContentType = media.ContentTypes[0],
@@ -234,7 +232,7 @@ public sealed class MediaStorageService : IMediaStorageService
         DeleteStoredFile(mediaAsset.RelativePath);
     }
 
-    // Used when a file was uploaded but the record could not be saved: the file is not left behind without an owner.
+    // Tệp đã tải lên nhưng không lưu được bản ghi: xóa đi để không còn tệp không chủ.
     private async Task TryDeleteFromCloudAsync(string url, CancellationToken cancellationToken)
     {
         var cloudAsset = rules.TryGetCloudAsset(url);
@@ -253,7 +251,6 @@ public sealed class MediaStorageService : IMediaStorageService
         }
     }
 
-    // A file of the time before Cloudinary.
     private void DeleteStoredFile(string relativePath)
     {
         if (Path.IsPathRooted(relativePath))

@@ -2,11 +2,10 @@ using CloudinaryDotNet.Actions;
 
 namespace TechForum.Api.Services;
 
-// The automatic check of pictures by the Amazon Rekognition AI Moderation add-on of Cloudinary (Cloudinary:ImageModeration).
-// Cloudinary answers "approved" or "rejected" in the answer of the upload itself, so the member knows at once.
+// Kiểm duyệt ảnh bằng add-on Amazon Rekognition AI Moderation (Cloudinary:ImageModeration).
+// Kết quả có ngay trong câu trả lời của lần tải lên nên thành viên biết luôn.
 public static class CloudModeration
 {
-    // The sentence given to CloudMediaRejectedException for a picture the check refused (see CloudRejection.ToMessage).
     public const string RejectedMessage = "Image rejected by moderation";
 
     public static bool IsRejected(IEnumerable<Moderation>? results)
@@ -14,8 +13,7 @@ public static class CloudModeration
         return results?.Any(result => result.Status == ModerationStatus.Rejected) == true;
     }
 
-    // An error that comes from the add-on and not from the file: the add-on is not registered, or the free units of the
-    // month are used up. The picture is then uploaded without the check, so the site keeps working.
+    // Lỗi đến từ add-on chứ không phải từ tệp: chưa đăng ký hoặc hết hạn mức miễn phí của tháng.
     public static bool IsUnavailable(string? errorMessage)
     {
         var text = errorMessage?.ToLowerInvariant() ?? string.Empty;

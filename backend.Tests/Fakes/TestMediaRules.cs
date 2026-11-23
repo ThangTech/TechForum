@@ -4,8 +4,7 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Tests.Fakes;
 
-// The address rules of the tests: the Cloudinary account "demo-cloud" with the folder "techforum", and the old
-// local addresses under /media. Pass an empty cloud name to get a site that has no Cloudinary account.
+// Tài khoản Cloudinary "demo-cloud", thư mục "techforum", và địa chỉ cũ dưới /media. Cloud name rỗng là site không có Cloudinary.
 public static class TestMediaRules
 {
     public const string CloudName = "demo-cloud";

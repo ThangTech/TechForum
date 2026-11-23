@@ -48,7 +48,7 @@ public sealed class PublicProfileServiceTests
         Assert.Equal(3, result.Badges.Count);
         Assert.True(result.IsFollowedByViewer);
         Assert.Equal(2, result.Skills.Count);
-        // A skill the member chose is marked; one found from their content is not.
+        // Kỹ năng tự chọn được đánh dấu; kỹ năng suy ra từ nội dung thì không.
         Assert.True(result.Skills[0].IsChosen);
         Assert.False(result.Skills[1].IsChosen);
         Assert.Single(result.RecentTopics);

@@ -34,7 +34,7 @@ public sealed class ClaimsPrincipalExtensionsTests
     [Fact]
     public void GetUserIdOrNull_IgnoresOtherClaimsAndIdsSentByTheClient()
     {
-        // A "sub" or custom claim must not be taken for the account id.
+        // Claim "sub" hay claim tự đặt không được coi là id tài khoản.
         var user = CreateUser(new Claim("userId", "attacker"), new Claim("sub", "someone-else"));
 
         Assert.Null(user.GetUserIdOrNull());

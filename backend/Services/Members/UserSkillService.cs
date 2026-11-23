@@ -24,7 +24,7 @@ public sealed class UserSkillService : IUserSkillService
         IReadOnlyCollection<Guid> tagIds,
         CancellationToken cancellationToken)
     {
-        // The same tag sent twice counts once.
+        // Một thẻ gửi hai lần chỉ tính một.
         var wanted = tagIds.Distinct().ToList();
         if (wanted.Count > IUserSkillService.MaxSkills)
         {

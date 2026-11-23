@@ -3,15 +3,13 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Tests.Fakes;
 
-// In-memory stand-in for the draft table, shared by the draft and topic tests.
 public sealed class FakeDraftRepository : IDraftRepository
 {
     public List<Draft> Drafts { get; } = [];
 
-    // The topics that count as written by a member: (member id, topic id).
+    // (id thành viên, id bài) mà thành viên đó là tác giả.
     public HashSet<(string UserId, Guid TopicId)> OwnedTopics { get; } = [];
 
-    // Every call of DeleteForTargetAsync, in order, so a test can see which draft was removed.
     public List<(string UserId, Guid? TopicId)> DeletedTargets { get; } = [];
 
     public int SaveCount { get; private set; }
@@ -22,8 +20,7 @@ public sealed class FakeDraftRepository : IDraftRepository
     public Task<bool> OwnsTopicAsync(string userId, Guid topicId, CancellationToken cancellationToken) =>
         Task.FromResult(OwnedTopics.Contains((userId, topicId)));
 
-    // Set to a draft to act like another request that created the first draft of the same target a moment before:
-    // the draft is added to the list and the insert of the caller is refused.
+    // Giả lập yêu cầu khác vừa tạo bản nháp đầu tiên của cùng đích: bản nháp được thêm vào và lệnh thêm của nơi gọi bị từ chối.
     public Draft? DraftCreatedByAnotherRequest { get; set; }
 
     public Task<bool> TryAddAsync(Draft draft, CancellationToken cancellationToken)

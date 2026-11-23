@@ -5,9 +5,8 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Filters;
 
-// Put on a controller. Before an action runs, it looks at the body of the request and replaces the banned words by "***"
-// in every text marked with [FilterProfanity], so the clean text is what the action validates and saves.
-// A request without marked texts, or without a body, passes untouched.
+// Thay từ cấm bằng "***" trong các trường có [FilterProfanity] trước khi action chạy,
+// để thứ được kiểm tra và lưu là văn bản đã sạch.
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class ProfanityFilterAttribute : ActionFilterAttribute
 {
@@ -26,7 +25,7 @@ public sealed class ProfanityFilterAttribute : ActionFilterAttribute
             {
                 if (marked.Property.GetValue(argument) is not string text) continue;
                 var cleaned = await profanityFilter.FilterAsync(text, marked.IsHtml, cancellationToken);
-                // A request is a record with init-only properties; reflection can still set them.
+                // Request là record có thuộc tính init; reflection vẫn gán được.
                 if (!string.Equals(cleaned, text, StringComparison.Ordinal)) marked.Property.SetValue(argument, cleaned);
             }
         }
@@ -36,7 +35,7 @@ public sealed class ProfanityFilterAttribute : ActionFilterAttribute
 
     private static IReadOnlyList<MarkedText> GetMarkedTexts(Type type)
     {
-        // Ids, numbers and text such as a route value are not bodies: only classes that carry marked properties count.
+        // Id, số hay chuỗi trên route không phải body: chỉ xét class có thuộc tính được đánh dấu.
         if (type.IsPrimitive || type.IsEnum || type == typeof(string)) return [];
 
         return MarkedTexts.GetOrAdd(type, static requestType => requestType

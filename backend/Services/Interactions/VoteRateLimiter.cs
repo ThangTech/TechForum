@@ -4,7 +4,7 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Services;
 
-// Two limits for each member: a short one against a burst and a long one against a day of voting.
+// Giới hạn ngắn chống bình chọn dồn dập, giới hạn dài cho cả ngày.
 public sealed class VoteRateLimiter : IVoteRateLimiter, IDisposable
 {
     private readonly PartitionedRateLimiter<string> perMinute;
@@ -19,8 +19,8 @@ public sealed class VoteRateLimiter : IVoteRateLimiter, IDisposable
 
     public bool TryAcquire(string userId, out TimeSpan retryAfter)
     {
-        // The short limit is asked first. A burst of refused votes then only uses places of the short limit, which come
-        // back in a minute; if the long limit were asked first, one burst would use up the votes of the whole day.
+        // Hỏi giới hạn ngắn trước: một đợt bị từ chối chỉ tốn chỗ của giới hạn phút (mở lại sau một phút);
+        // hỏi giới hạn ngày trước thì một đợt sẽ dùng hết lượt của cả ngày.
         return MemberRateLimit.TryAcquire(perMinute, userId, TimeSpan.FromSeconds(10), out retryAfter) &&
             MemberRateLimit.TryAcquire(perDay, userId, TimeSpan.FromHours(1), out retryAfter);
     }

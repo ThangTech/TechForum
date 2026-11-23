@@ -52,7 +52,7 @@ public sealed class AnswerServiceTests
     }
 
     [Theory]
-    // minutes since the answer was written, real score, shown score, hidden
+    // số phút từ lúc viết, điểm thật, điểm hiển thị, có bị ẩn không
     [InlineData(20, 7, 0, true)]
     [InlineData(300, 7, 7, false)]
     [InlineData(300, -3, 0, false)]
@@ -534,7 +534,6 @@ public sealed class AnswerServiceTests
             Task.FromResult<IReadOnlyList<AnswerHelpfulState>>(answerIds.Select(answerId => new AnswerHelpfulState(
                 answerId, Votes.Count(vote => vote.AnswerId == answerId),
                 viewerId != null && Votes.Contains((answerId, viewerId)),
-                // Like the real repository: the vote score of the answer.
                 items.TryGetValue(answerId, out var answer) ? answer.Score : 0)).ToList());
         public Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken)
         {

@@ -20,7 +20,7 @@ public sealed class VoteRateLimiterTests
         Assert.True(limiter.TryAcquire("member", out _));
         Assert.False(limiter.TryAcquire("member", out var retryAfter));
 
-        // The wait is the real time until the window starts again, not a guess.
+        // Thời gian chờ là thời gian thật tới lúc cửa sổ mở lại, không phải ước đoán.
         Assert.True(retryAfter > TimeSpan.FromSeconds(50) && retryAfter <= TimeSpan.FromMinutes(1), retryAfter.ToString());
     }
 
@@ -33,7 +33,7 @@ public sealed class VoteRateLimiterTests
         Assert.True(limiter.TryAcquire("member", out _));
         Assert.False(limiter.TryAcquire("member", out var retryAfter));
 
-        // The wait is about the day, not about the minute.
+        // Thời gian chờ tính theo ngày chứ không theo phút.
         Assert.True(retryAfter > TimeSpan.FromHours(23) && retryAfter <= TimeSpan.FromDays(1), retryAfter.ToString());
     }
 
@@ -56,8 +56,8 @@ public sealed class VoteRateLimiterTests
         Assert.True(limiter.TryAcquire("member", out _));
         Assert.True(limiter.TryAcquire("member", out _));
 
-        // A burst is refused by the short limit, so the member is told to wait about a minute, not a day. (The day
-        // limit is only asked after the minute accepts, so a burst does not use up the votes of the day.)
+        // Giới hạn phút chặn đợt dồn dập nên chỉ phải chờ khoảng một phút, không phải một ngày;
+        // giới hạn ngày chỉ được hỏi sau khi giới hạn phút cho qua.
         for (var attempt = 0; attempt < 20; attempt++)
         {
             Assert.False(limiter.TryAcquire("member", out var retryAfter));

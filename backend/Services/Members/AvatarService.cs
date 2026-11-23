@@ -5,9 +5,8 @@ using TechForum.Api.Dtos.Auth;
 
 namespace TechForum.Api.Services;
 
-// The avatar of a member is kept in the Cloudinary account (folder "avatars"). The user record keeps the address.
-// An avatar of the time before Cloudinary (/media/avatars/...) is still shown and is deleted from the disk when it
-// is replaced.
+// Avatar nằm trên Cloudinary (thư mục "avatars"). Avatar cũ trên đĩa (/media/avatars/...) vẫn hiện
+// và bị xóa trên đĩa khi được thay.
 public sealed class AvatarService : IAvatarService
 {
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
@@ -88,7 +87,7 @@ public sealed class AvatarService : IAvatarService
         var updateResult = await accountRepository.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            // The new file has no owner now, so it is not left in the account.
+            // Tệp mới giờ không có chủ nên không để lại trên Cloudinary.
             await DeleteFromCloudAsync(newAvatarUrl, cancellationToken);
             return InvalidAvatar("Không thể cập nhật avatar lúc này.");
         }
@@ -154,7 +153,6 @@ public sealed class AvatarService : IAvatarService
         return null;
     }
 
-    // The address of the new avatar, or the sentence for the member when Cloudinary did not take the file.
     private async Task<(string? Url, string? Error)> UploadAsync(
         IFormFile file, string extension, CancellationToken cancellationToken)
     {
@@ -175,7 +173,7 @@ public sealed class AvatarService : IAvatarService
         }
         catch (CloudMediaRejectedException exception)
         {
-            // The connection works and Cloudinary refused the file itself: the member is told why.
+            // Kết nối vẫn tốt, Cloudinary từ chối chính tệp này: báo lý do cho thành viên.
             logger.LogInformation("Cloudinary từ chối avatar: {Reason}", exception.CloudMessage);
             return (null, CloudRejection.ToMessage(exception.CloudMessage));
         }
@@ -186,7 +184,7 @@ public sealed class AvatarService : IAvatarService
         }
     }
 
-    // The old avatar is not needed any more. A failure here is only logged: the new avatar is already saved.
+    // Lỗi ở đây chỉ ghi log: avatar mới đã lưu xong.
     private async Task DeleteOldAvatarAsync(string? avatarUrl, CancellationToken cancellationToken)
     {
         if (avatarUrl is null)
@@ -221,7 +219,6 @@ public sealed class AvatarService : IAvatarService
         }
     }
 
-    // An avatar of the time before Cloudinary.
     private void DeleteOldLocalAvatar(string avatarUrl, string storageRoot)
     {
         var prefix = $"/{options.RequestPath.Trim('/')}/avatars/";

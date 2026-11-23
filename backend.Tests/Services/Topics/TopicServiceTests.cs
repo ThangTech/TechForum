@@ -44,7 +44,7 @@ public sealed class TopicServiceTests
     }
 
     [Theory]
-    // minutes since it was published, real score, shown score, hidden
+    // số phút từ lúc xuất bản, điểm thật, điểm hiển thị, có bị ẩn không
     [InlineData(30, 9, 0, true)]
     [InlineData(119, 9, 0, true)]
     [InlineData(121, 9, 9, false)]
@@ -868,7 +868,7 @@ public sealed class TopicServiceTests
         public Task<bool> HasPublicAnswersAsync(Guid topicId, CancellationToken cancellationToken) =>
             Task.FromResult(HasPublicAnswers);
 
-        // How many times in a row the database says "this slug is taken", and the slugs that were tried.
+        // Số lần liên tiếp DB báo slug đã có người dùng, và các slug đã thử.
         public int SlugConflicts { get; init; }
         public List<string> TriedSlugs { get; } = [];
         public HashSet<string> TakenSlugs { get; } = [];
@@ -878,7 +878,7 @@ public sealed class TopicServiceTests
             TriedSlugs.Add(topic.Slug);
             if (TriedSlugs.Count <= SlugConflicts)
             {
-                // The other request saved this slug a moment ago.
+                // Yêu cầu kia vừa lưu slug này.
                 TakenSlugs.Add(topic.Slug);
                 return Task.FromResult(false);
             }

@@ -75,7 +75,7 @@ public sealed class UserSkillServiceTests
         Assert.Equal([TestIds.Id(2)], repository.Saved["member-b"]);
     }
 
-    // Tags 1 and 2 are active, tag 3 is turned off.
+    // Thẻ 1 và 2 đang dùng, thẻ 3 đã tắt.
     private sealed class FakeRepository : IUserSkillRepository
     {
         private static readonly Dictionary<Guid, (string Name, string Slug, bool IsActive)> Tags = new()

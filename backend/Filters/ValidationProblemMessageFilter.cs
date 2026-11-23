@@ -4,8 +4,7 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Filters;
 
-// Runs for every answer of a controller. When the answer is a validation problem (a controller made it with
-// `new ValidationProblemDetails(...)`), it gets a Vietnamese title and detail, so the page never shows
+// Lỗi validation nào cũng nhận tiêu đề và mô tả tiếng Việt, để trang không bao giờ hiện
 // "One or more validation errors occurred.".
 public sealed class ValidationProblemMessageFilter : IAlwaysRunResultFilter
 {

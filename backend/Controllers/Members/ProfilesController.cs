@@ -24,7 +24,6 @@ public sealed class ProfilesController : ControllerBase
         this.skillService = skillService;
     }
 
-    // The skills that the signed-in member chose for their own profile.
     [Authorize]
     [HttpGet("me/skills")]
     public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> GetMySkills(CancellationToken cancellationToken)
@@ -32,7 +31,7 @@ public sealed class ProfilesController : ControllerBase
         return Ok(await skillService.GetAsync(User.GetRequiredUserId(), cancellationToken));
     }
 
-    // Replaces the whole list: what is not in the request is removed. Only tags that already exist can be chosen.
+    // Thay cả danh sách: kỹ năng không có trong yêu cầu sẽ bị bỏ.
     [Authorize]
     [HttpPut("me/skills")]
     public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> SaveMySkills(SaveSkillsRequest request, CancellationToken cancellationToken)

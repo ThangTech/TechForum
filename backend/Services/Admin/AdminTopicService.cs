@@ -84,7 +84,7 @@ public sealed class AdminTopicService : IAdminTopicService
         var previousValue = Describe(topic);
         switch (action)
         {
-            // A decision of a moderator: the content is no longer "hidden by the reports" (see Topic.AutoHiddenAtUtc).
+            // Đây là quyết định của quản trị viên nên không còn là "tự ẩn vì báo cáo".
             case "hide": topic.IsHiddenByModerator = true; topic.AutoHiddenAtUtc = null; break;
             case "restore": topic.IsHiddenByModerator = false; topic.AutoHiddenAtUtc = null; break;
             case "lock": topic.IsDiscussionLocked = true; break;

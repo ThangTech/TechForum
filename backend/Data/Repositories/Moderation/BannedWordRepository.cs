@@ -34,7 +34,7 @@ public sealed class BannedWordRepository : IBannedWordRepository
         catch (DbUpdateException exception)
             when (SqlErrors.IsDuplicateKey(exception))
         {
-            // Another instance of the API filled the table at the same moment; its words are the same list.
+            // Một instance khác của API vừa nạp bảng cùng lúc; danh sách của nó giống hệt.
             dbContext.ChangeTracker.Clear();
         }
     }

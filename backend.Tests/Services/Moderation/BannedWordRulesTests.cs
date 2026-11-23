@@ -96,7 +96,7 @@ public sealed class BannedWordSeederTests
         await seeder.SeedIfEmptyAsync(["foobar", "bazqux"], default);
         repository.Items.RemoveAll(item => item.Word == "foobar");
 
-        // The next start of the application reads the file again.
+        // Lần khởi động sau đọc lại file.
         await seeder.SeedIfEmptyAsync(["foobar", "bazqux"], default);
 
         Assert.Equal("bazqux", Assert.Single(repository.Items).Word);

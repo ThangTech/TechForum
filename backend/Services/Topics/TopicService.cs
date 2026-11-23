@@ -130,7 +130,7 @@ public sealed partial class TopicService : ITopicService
             return validation.Error;
         }
 
-        // Only publishing is counted, when the topic is valid: saving a draft is not.
+        // Chỉ tính khi xuất bản và bài đã hợp lệ; lưu bản nháp thì không tính.
         if (request.Publish && !postingRateLimiter.TryAcquireTopic(authorId, out var retryAfter))
         {
             return PostingTooFast(retryAfter, "đăng bài tiếp");
@@ -162,7 +162,7 @@ public sealed partial class TopicService : ITopicService
                 "Không thể tạo đường dẫn riêng cho tiêu đề này lúc này. Vui lòng thử lại.", "title");
         }
 
-        // The topic is saved, so the automatic draft of the new topic is not needed any more.
+        // Bài đã lưu nên không cần bản nháp tự động của bài mới nữa.
         await draftRepository.DeleteForTargetAsync(authorId, null, cancellationToken);
         return Result<OwnTopicDto>.Success(MapSavedTopic(topic, values));
     }
@@ -179,8 +179,8 @@ public sealed partial class TopicService : ITopicService
             return Result<OwnTopicDto>.Fail(ErrorType.NotFound, NotFoundTitle, NotFoundMessage);
         }
 
-        // Going back to draft hides the whole topic, including the answers of other members.
-        // A topic with public answers cannot be deleted by its author, so it cannot be hidden this way either.
+        // Chuyển về bản nháp sẽ ẩn cả bài lẫn câu trả lời của người khác. Bài có câu trả lời công khai thì tác giả
+        // không xóa được, nên cũng không được ẩn theo cách này.
         var wouldBecomeDraft = topic.Status == TopicStatus.Published && !request.Publish;
         if (wouldBecomeDraft && await topicRepository.HasPublicAnswersAsync(topic.Id, cancellationToken))
         {
@@ -203,7 +203,7 @@ public sealed partial class TopicService : ITopicService
             return validation.Error;
         }
 
-        // A draft that is published now counts like a new topic.
+        // Xuất bản một bản nháp cũng tính như đăng bài mới.
         if (request.Publish && topic.Status != TopicStatus.Published &&
             !postingRateLimiter.TryAcquireTopic(authorId, out var retryAfter))
         {
@@ -270,9 +270,8 @@ public sealed partial class TopicService : ITopicService
 
         topic.IsDeleted = true;
         topic.UpdatedAtUtc = timeProvider.GetUtcNow();
-        // A deleted topic cannot come back, so its pictures and videos no longer belong to anything. Without a topic
-        // they become orphans, and the cleanup in the background (MediaCleanupBackgroundService) deletes the files on
-        // Cloudinary at its next run.
+        // Bài đã xóa không khôi phục được, nên ảnh và video của nó thành tệp mồ côi;
+        // MediaCleanupBackgroundService sẽ xóa chúng trên Cloudinary ở lần chạy tiếp theo.
         topic.MediaAssets.Clear();
         await topicRepository.SaveChangesAsync(cancellationToken);
         await draftRepository.DeleteForTargetAsync(authorId, id, cancellationToken);
@@ -285,7 +284,6 @@ public sealed partial class TopicService : ITopicService
         return Result<OwnTopicDto>.TooManyRequests("Bạn đăng bài quá nhanh", $"Vui lòng chờ {MemberRateLimit.FormatWait(seconds)} rồi {action}.", seconds);
     }
 
-    // The fields of the "write a topic" form. Creating and editing send the same fields.
     private sealed record TopicForm(
         string? Title,
         string? Summary,
@@ -295,8 +293,6 @@ public sealed partial class TopicService : ITopicService
         IReadOnlyList<Guid>? TagIds,
         IReadOnlyList<Guid>? MediaIds);
 
-    // The form after every check passed: text trimmed, HTML cleaned, and the category, tags and
-    // media loaded from the database.
     private sealed record ValidatedTopic(
         string Title,
         string Summary,
@@ -335,8 +331,7 @@ public sealed partial class TopicService : ITopicService
         }
     }
 
-    // Checks the form of a new topic (editingTopicId is null) or of a topic that is being edited.
-    // The checks run in a fixed order and the first problem is reported.
+    // Các bước kiểm tra chạy theo thứ tự cố định và báo lỗi đầu tiên gặp.
     private async Task<TopicValidation> ValidateFormAsync(
         TopicForm form,
         string authorId,
@@ -395,8 +390,7 @@ public sealed partial class TopicService : ITopicService
             return TopicValidation.Invalid("mediaIds", "Chỉ được dùng tối đa 20 media hợp lệ trong một nội dung.");
         }
 
-        // A new topic can only use media that is not attached to anything yet. An edited topic can also keep
-        // the media it already has.
+        // Bài mới chỉ dùng được tệp chưa gắn vào đâu; bài đang sửa thì được giữ cả tệp nó đã có.
         var mediaAssets = editingTopicId.HasValue
             ? await mediaAssetRepository.GetOwnedAvailableForTopicByIdsAsync(mediaIds, authorId, editingTopicId.Value, cancellationToken)
             : await mediaAssetRepository.GetOwnedUnattachedByIdsAsync(mediaIds, authorId, cancellationToken);
@@ -422,7 +416,6 @@ public sealed partial class TopicService : ITopicService
             title, summary, type, sanitizedBody, category, tags, tagIds, mediaIds, mediaAssets));
     }
 
-    // The answer of the create and edit calls: the saved topic plus the category, tags and media that were checked.
     private static OwnTopicDto MapSavedTopic(Topic topic, ValidatedTopic values)
     {
         return new(
@@ -440,10 +433,9 @@ public sealed partial class TopicService : ITopicService
             topic.PublishedAtUtc);
     }
 
-    // Two requests with the same title can both see the same slug as free. The database accepts only
-    // one of them, so the other one picks another slug and saves again. After the first conflict it
-    // takes the next free number (a nice slug). If many requests collide in a row they would all pick the
-    // same next number again, so after the second conflict it adds a short random part instead.
+    // Hai yêu cầu cùng tiêu đề có thể cùng thấy một slug còn trống; DB chỉ nhận một, yêu cầu kia chọn slug khác
+    // rồi lưu lại. Lần trùng đầu lấy số kế tiếp; nếu vẫn trùng thì thêm một đoạn ngẫu nhiên, vì nhiều yêu cầu dồn
+    // dập sẽ lại cùng chọn một số.
     private async Task<bool> TryAddWithUniqueSlugAsync(
         Topic topic,
         string title,
@@ -551,7 +543,6 @@ public sealed partial class TopicService : ITopicService
             ScoreHidden: IsScoreHidden(topic, now));
     }
 
-    // A post is new for the first hours after it was published: its score is hidden.
     private static bool IsScoreHidden(Topic topic, DateTimeOffset now)
     {
         return topic.PublishedAtUtc.HasValue && ReputationRules.IsScoreHidden(topic.PublishedAtUtc.Value, now);

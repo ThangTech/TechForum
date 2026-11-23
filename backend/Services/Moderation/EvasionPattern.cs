@@ -12,7 +12,7 @@ namespace TechForum.Api.Services;
 // a class that also takes the accented letters, the look-alike signs and repeats.
 public static class EvasionPattern
 {
-    // Look-alike signs. A letter may be written with them instead.
+    // Các ký hiệu trông giống chữ cái, có thể được dùng thay chữ.
     private static readonly Dictionary<char, string> LookAlikes = new()
     {
         ['a'] = "@4", ['b'] = "8", ['e'] = "3", ['g'] = "9", ['i'] = "1!|", ['l'] = "1|", ['o'] = "0", ['s'] = "5$", ['t'] = "7+",
@@ -34,7 +34,7 @@ public static class EvasionPattern
         return builder.ToString();
     }
 
-    // True when the folded word has only the letters a-z and single spaces; other words are only found as written.
+    // Chỉ từ gồm chữ a-z và khoảng trắng mới bị tìm dạng viết lách; các từ khác chỉ tìm đúng như đã viết.
     public static bool CanBeHidden(string foldedWord)
     {
         return foldedWord.Count(IsLatinLetter) >= 2 &&
@@ -80,7 +80,7 @@ public static class EvasionPattern
         if (LookAlikes.TryGetValue(letter, out var signs)) members.Append(signs);
         members.Append('*');
 
-        // Letters stay as they are; a sign is written with a backslash so it cannot change the meaning of the class.
+        // Ký hiệu được thêm dấu gạch ngược để không làm đổi nghĩa của lớp ký tự.
         var escaped = new StringBuilder("[");
         foreach (var member in members.ToString())
         {
@@ -99,7 +99,7 @@ public static class EvasionPattern
             if (!list.ToString().Contains(accented)) list.Append(accented);
         }
 
-        // Latin-1 Supplement, Latin Extended-A and B, and Latin Extended Additional (all Vietnamese letters are there).
+        // Các khối Latin mở rộng, trong đó có mọi chữ cái tiếng Việt.
         for (var code = 0x00C0; code <= 0x1EF9; code++)
         {
             var character = (char)code;

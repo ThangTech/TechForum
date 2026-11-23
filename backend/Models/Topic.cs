@@ -9,7 +9,7 @@ public sealed class Topic
     public required string Slug { get; set; }
     public required string Summary { get; set; }
     public required string BodyHtml { get; set; }
-    // Address of the first picture of the body (for example /media/images/abc.png), used as the cover in lists.
+    // Ảnh đầu tiên trong nội dung, dùng làm ảnh bìa ở danh sách.
     public string? CoverImageUrl { get; set; }
     public TopicType Type { get; set; }
     public TopicStatus Status { get; set; }
@@ -22,14 +22,13 @@ public sealed class Topic
     public DateTimeOffset? PublishedAtUtc { get; set; }
     public bool IsDeleted { get; set; }
     public bool IsHiddenByModerator { get; set; }
-    // Set when the content was hidden by itself because enough members reported it (not by a moderator). A moderator
-    // who rejects the reports shows it again; a moderator decision (hide, restore, accept a report) clears it.
+    // Có giá trị khi tự ẩn vì nhiều báo cáo. Từ chối hết báo cáo thì hiện lại; quyết định của quản trị viên thì xóa giá trị này.
     public DateTimeOffset? AutoHiddenAtUtc { get; set; }
     public bool IsDiscussionLocked { get; set; }
     public bool IsPinned { get; set; }
     public int ViewCount { get; set; }
     public int ShareCount { get; set; }
-    // The sum of the votes (+1 and -1) of the members. Kept in step with the table of votes in one transaction.
+    // Tổng phiếu, cập nhật cùng một giao dịch với bảng phiếu.
     public int Score { get; set; }
     public Guid? AcceptedAnswerId { get; set; }
     public Answer? AcceptedAnswer { get; set; }

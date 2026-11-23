@@ -73,7 +73,7 @@ public sealed class VoteService : IVoteService
         var refused = CheckValueAndSpeed(userId, value);
         if (refused is not null) return refused;
 
-        // The answer must be one that everyone can read, in a post that everyone can read.
+        // Câu trả lời phải công khai và nằm trong bài công khai.
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
         if (topic is null) return NotFound();
         var answer = await answerRepository.GetVisibleByIdAsync(topicId, answerId, cancellationToken);
@@ -95,8 +95,7 @@ public sealed class VoteService : IVoteService
         return Result<VoteDto>.Fail(ErrorType.Conflict, "Bạn không thể bình chọn nội dung của chính mình");
     }
 
-    // The checks that do not need the database: the value, and how fast the member votes. A request that is refused for
-    // its value does not use a place of the limit.
+    // Kiểm tra không cần DB trước. Yêu cầu bị từ chối vì giá trị sai thì không tốn lượt của giới hạn.
     private Result<VoteDto>? CheckValueAndSpeed(string userId, int value)
     {
         if (value < -1 || value > 1)
@@ -116,8 +115,7 @@ public sealed class VoteService : IVoteService
         return null;
     }
 
-    // A new account cannot give a vote, and a downvote needs more: an account of at least DownvoteMinAccountAgeDays or a member
-    // with at least DownvoteMinReputation points. Taking a vote back (value 0) is always allowed.
+    // Tài khoản mới không bình chọn được; phiếu chưa tốt cần tài khoản đủ ngày hoặc đủ danh tiếng. Rút phiếu (0) luôn được.
     private async Task<Result<VoteDto>?> CheckAccountAgeAsync(string userId, int value, CancellationToken cancellationToken)
     {
         if (value == 0) return null;
@@ -138,7 +136,7 @@ public sealed class VoteService : IVoteService
         if (value < 0)
         {
             var downvoteAge = TimeSpan.FromDays(limits.DownvoteMinAccountAgeDays);
-            // The real reputation counts (the one shown is never below 0, the real one can be).
+            // Dùng danh tiếng thật (số hiển thị không bao giờ âm, số thật thì có thể).
             if (age < downvoteAge && user.Reputation < limits.DownvoteMinReputation)
             {
                 var daysLeft = (int)Math.Ceiling((downvoteAge - age).TotalDays);
@@ -167,7 +165,6 @@ public sealed class VoteService : IVoteService
         return Result<VoteDto>.Success(new VoteDto(ReputationRules.ShownScore(outcome.Score, isHidden), outcome.NewValue, isHidden));
     }
 
-    // The score of a new post or answer is hidden for the first hours.
     private bool IsHidden(DateTimeOffset? postedAtUtc)
     {
         return postedAtUtc.HasValue && ReputationRules.IsScoreHidden(postedAtUtc.Value, timeProvider.GetUtcNow());

@@ -1,6 +1,6 @@
 namespace TechForum.Api.Enums;
 
-// What a vote is for. The numbers are saved in the database, so they must not change.
+// Số được lưu trong DB nên không được đổi.
 public enum VoteTargetType
 {
     Topic = 1,

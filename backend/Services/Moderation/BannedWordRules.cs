@@ -1,6 +1,6 @@
 namespace TechForum.Api.Services;
 
-// What a banned word may look like. The admin page and the first list (the local file) follow the same rules.
+// Trang quản trị và danh sách đầu tiên (file trên máy) dùng chung quy tắc này.
 public static class BannedWordRules
 {
     public const int MinLength = 2;
@@ -8,7 +8,6 @@ public static class BannedWordRules
 
     public const string InvalidMessage = "Từ cấm phải có từ 2 đến 60 ký tự, có chữ hoặc số và không chứa dấu < hoặc >.";
 
-    // Gives the word in the form it is saved in (see ProfanityFilterSet.NormalizeWord), or false when it is not allowed.
     public static bool TryNormalize(string? raw, out string word)
     {
         word = ProfanityFilterSet.NormalizeWord(raw ?? string.Empty);
@@ -17,8 +16,7 @@ public static class BannedWordRules
                !word.Any(character => character is '<' or '>' || char.IsControl(character));
     }
 
-    // The lines of the local list: one word or phrase on a line; a line that starts with # is a note; blank lines and
-    // words that are not allowed are skipped; a word that comes twice is kept once.
+    // Mỗi dòng một từ hoặc cụm từ; dòng bắt đầu bằng # là ghi chú; bỏ dòng trống, từ không hợp lệ và từ trùng.
     public static IReadOnlyList<string> ParseLines(IEnumerable<string> lines)
     {
         return lines

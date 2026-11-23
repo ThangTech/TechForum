@@ -7,7 +7,7 @@ using Xunit;
 // on this computer and checks it against the same rules.
 namespace TechForum.Api.Tests.Services;
 
-// The words that a writer hides on purpose, and the normal words that must not be taken for them.
+// Các từ người viết cố tình che giấu, và những từ bình thường không được nhầm với chúng.
 public sealed class ProfanityEvasionTests
 {
     private static ProfanityFilterSet CreateSet(params string[] words) => new(words);
@@ -175,7 +175,7 @@ public sealed class ProfanityEvasionTests
     {
         var set = CreateSet("bar", "nat");
 
-        // "&#97;" is the letter "a" and "&#39;" holds digits; an entity must stay as it is and never join a word.
+        // "&#97;" là chữ "a", "&#39;" chứa chữ số; thực thể phải giữ nguyên và không bao giờ ghép vào một từ.
         Assert.Equal("don&#39;t &amp; it&#8217;s b&#97;r n&#97;t", set.Apply("don&#39;t &amp; it&#8217;s b&#97;r n&#97;t", true));
     }
 
@@ -214,9 +214,8 @@ public sealed class ProfanityEvasionTests
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"took {watch.Elapsed}");
     }
 
-    // The real list is only on the computer of the owner (backend/Data/Seed/banned-words.txt, not in Git). When it is
-    // there, every word of it must be found as it is, and when its letters are separated by dots; normal sentences must
-    // pass. Without the file the test has nothing to check.
+    // Danh sách thật chỉ có trên máy (backend/Data/Seed/banned-words.txt, không có trong Git). Khi có file, mọi từ phải bị
+    // tìm thấy cả khi viết bình thường lẫn khi tách chữ bằng dấu chấm; câu bình thường phải qua. Không có file thì không kiểm tra gì.
     [Fact]
     public void Apply_WithTheLocalList_FindsEveryWordAndLeavesNormalSentencesAlone()
     {

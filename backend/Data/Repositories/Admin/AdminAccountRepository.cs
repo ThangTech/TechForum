@@ -90,7 +90,7 @@ public sealed class AdminAccountRepository : IAdminAccountRepository
         }
         else
         {
-            // A locked account must not get new access tokens from an old refresh token.
+            // Tài khoản bị khóa không được lấy access token mới bằng refresh token cũ.
             await dbContext.RefreshTokens
                 .Where(token => token.UserId == user.Id && token.RevokedAtUtc == null)
                 .ExecuteUpdateAsync(

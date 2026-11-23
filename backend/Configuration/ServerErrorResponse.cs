@@ -9,9 +9,8 @@ public static class ServerErrorResponse
     public const string Detail =
         "Vui lòng thử lại sau. Nếu lỗi lặp lại, hãy gửi mã theo dõi (traceId) cho quản trị viên.";
 
-    // Every unexpected error answers with the same JSON shape (RFC 9457 problem details), instead of an
-    // empty page. The trace id is the same "Request id" that appears in the server log for this error.
-    // Only 500 answers are changed; validation, 401, 403 and 404 answers keep their own texts.
+    // Mọi lỗi bất ngờ trả cùng một dạng JSON (problem details) kèm trace id trùng với "Request id" trong log.
+    // Chỉ đổi lỗi 500; lỗi 400, 401, 403, 404 giữ nội dung riêng.
     public static void Customize(ProblemDetailsContext context)
     {
         var problem = context.ProblemDetails;
@@ -24,8 +23,7 @@ public static class ServerErrorResponse
         problem.Detail = Detail;
         problem.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
 
-        // While developing, show the real message. In other environments it can contain
-        // connection strings, file paths or SQL, so it stays in the log only.
+        // Chỉ hiện lỗi thật khi phát triển; ở môi trường khác nó có thể chứa chuỗi kết nối, đường dẫn hay SQL.
         var environment = context.HttpContext.RequestServices.GetRequiredService<IHostEnvironment>();
         if (environment.IsDevelopment() && context.Exception is not null)
         {

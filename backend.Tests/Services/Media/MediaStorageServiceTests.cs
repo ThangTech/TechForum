@@ -24,7 +24,7 @@ public sealed class MediaStorageServiceTests : IDisposable
     private readonly FakeMediaAssetRepository repository = new();
     private readonly FakeCloudMediaClient cloud = new();
 
-    // ---- uploading
+    // ---- tải lên
 
     [Fact]
     public async Task StoreImageAsync_WithValidPng_SendsItToCloudinaryUnderAGeneratedId()
@@ -35,7 +35,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         var upload = Assert.Single(cloud.Uploads);
         Assert.Matches("^techforum/images/[a-f0-9]{32}$", upload.PublicId);
         Assert.Equal(CloudResourceType.Image, upload.Type);
-        // The name of the file that the member sent is not used anywhere.
+        // Tên tệp thành viên gửi lên không được dùng ở đâu cả.
         Assert.DoesNotContain("unsafe", upload.FileName);
         Assert.Matches("^https://res\\.cloudinary\\.com/demo-cloud/image/upload/v\\d+/techforum/images/[a-f0-9]{32}\\.png$", result.Value!.Link);
         Assert.Equal(result.Value.Link, result.Value.Path);
@@ -127,7 +127,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         var result = await CreateService().StoreImageAsync(UserId, CreateFile(Png, "a.png", "image/png"), default);
 
         Assert.False(result.Succeeded);
-        // A refused file is a 400 for the member to fix, not a 503 to try again later.
+        // Tệp bị từ chối là lỗi 400 để thành viên sửa, không phải 503 để thử lại sau.
         Assert.False((result.Error == ErrorType.Unavailable));
         Assert.Contains("vượt quá kích thước", result.Message);
         Assert.Empty(repository.Items);
@@ -167,7 +167,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         Assert.Equal(cloud.Uploads[0].PublicId, deleted.PublicId);
     }
 
-    // ---- deleting a file that is not used
+    // ---- xóa tệp chưa dùng
 
     [Fact]
     public async Task DeleteUnusedAsync_WithOwnedOrphan_RemovesTheFileFromCloudinaryAndTheRecord()
@@ -244,7 +244,7 @@ public sealed class MediaStorageServiceTests : IDisposable
         Assert.Empty(cloud.Deleted);
     }
 
-    // ---- the clean up of files that nobody uses
+    // ---- dọn tệp không ai dùng
 
     [Fact]
     public async Task CleanupOrphansAsync_DeletesOldOrphansOfBothKindsAndKeepsTheRestOfTheBatchWhenOneFails()
@@ -258,7 +258,7 @@ public sealed class MediaStorageServiceTests : IDisposable
             item.CreatedAtUtc = DateTimeOffset.UtcNow.AddHours(-48);
         }
 
-        // The second file cannot be deleted now.
+        // Tệp thứ hai chưa xóa được lúc này.
         cloud.UndeletableIds.Add(cloud.Uploads[1].PublicId);
 
         var count = await service.CleanupOrphansAsync(default);
@@ -336,7 +336,7 @@ public sealed class MediaStorageServiceTests : IDisposable
     {
         public List<MediaAsset> Items { get; } = [];
 
-        // Set to act like the database refusing the record.
+        // Giả lập DB từ chối bản ghi.
         public bool FailToAdd { get; set; }
 
         public Task AddAsync(MediaAsset mediaAsset, CancellationToken cancellationToken)

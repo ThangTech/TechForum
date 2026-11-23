@@ -4,7 +4,6 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
 
-// The banners the home page shows right now. Everybody can read them.
 [ApiController]
 [Route("api/banners")]
 public sealed class BannersController : ControllerBase

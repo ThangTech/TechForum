@@ -25,7 +25,7 @@ public sealed class ProfanityFilterSet
 {
     public const string Mask = "***";
 
-    // The odd pieces of a split are the tags and the entities ("&nbsp;"), which are kept as they are.
+    // Các phần lẻ khi tách là thẻ và thực thể ("&nbsp;"), được giữ nguyên.
     private static readonly Regex HtmlTagOrEntity =
         new(@"(<[^>]*>|&#?[A-Za-z0-9]+;)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
@@ -36,7 +36,7 @@ public sealed class ProfanityFilterSet
 
     private readonly Regex? exactPattern;
     private readonly Regex? hiddenPattern;
-    // For the groups of hiddenPattern, in order: the word without accents.
+    // Theo thứ tự các nhóm của hiddenPattern: từ không dấu.
     private readonly IReadOnlyList<string> hiddenWords = [];
 
     public ProfanityFilterSet(IEnumerable<string> words)
@@ -51,7 +51,7 @@ public sealed class ProfanityFilterSet
         WordCount = normalized.Count;
         if (normalized.Count == 0) return;
 
-        // Regex.Escape writes a space as "\ ": a space inside a phrase also accepts several spaces or a line break.
+        // Regex.Escape viết khoảng trắng thành "\ ": khoảng trắng trong cụm từ nhận cả nhiều khoảng trắng hoặc xuống dòng.
         var alternatives = string.Join("|", normalized.Select(word => Regex.Escape(word).Replace("\\ ", "\\s+", StringComparison.Ordinal)));
         exactPattern = CreateRegex(alternatives);
 
@@ -64,14 +64,14 @@ public sealed class ProfanityFilterSet
         if (folded.Count == 0) return;
 
         hiddenWords = folded;
-        // One named group for each word tells the replacement which word was found.
+        // Mỗi từ có một nhóm có tên, để biết đã tìm thấy từ nào khi thay.
         hiddenPattern = CreateRegex(string.Join("|", folded.Select((word, index) => $"(?<w{index}>{EvasionPattern.Build(word)})")));
     }
 
     public int WordCount { get; }
 
-    // The form in which a word is saved and compared: no spaces at the ends, one space between words, lower case,
-    // and one way of writing accents (the letter with its accent in one character).
+    // Dạng lưu và so sánh: bỏ khoảng trắng hai đầu, một khoảng trắng giữa các từ, chữ thường,
+    // và dấu viết liền với chữ (một ký tự).
     public static string NormalizeWord(string word)
     {
         return string.Join(' ', word.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -84,7 +84,6 @@ public sealed class ProfanityFilterSet
         if (exactPattern is null || text.Length == 0) return text;
         if (!isHtml) return MaskText(text);
 
-        // Splitting with a group keeps the tags and entities: the odd pieces are those, the even pieces are text.
         var pieces = HtmlTagOrEntity.Split(text);
         for (var index = 0; index < pieces.Length; index += 2)
         {
@@ -104,14 +103,14 @@ public sealed class ProfanityFilterSet
     private string MaskText(string text)
     {
         if (text.Length == 0) return text;
-        // A text typed with separate accent marks would not match the words, which are saved in one-character form.
+        // Văn bản gõ dấu tách rời sẽ không khớp với từ đã lưu ở dạng dấu liền, nên chuẩn hóa trước.
         var composed = text.IsNormalized(NormalizationForm.FormC) ? text : text.Normalize(NormalizationForm.FormC);
 
         var masked = ReplaceSafely(exactPattern!, composed, match => Mask);
         return hiddenPattern is null ? masked : ReplaceSafely(hiddenPattern, masked, ReplaceHiddenWord);
     }
 
-    // A text that takes too long to scan is left as it is: it is better to let one text pass than to stop a post.
+    // Văn bản quét quá lâu thì để nguyên: thà bỏ lọt một văn bản còn hơn làm hỏng việc đăng bài.
     private static string ReplaceSafely(Regex pattern, string text, MatchEvaluator evaluator)
     {
         try
@@ -129,7 +128,7 @@ public sealed class ProfanityFilterSet
         var word = FindWord(match);
         var written = match.Value;
 
-        // Stars and signs alone are not a word: "***" (the mask itself) or "a * b" must stay as they are.
+        // Chỉ có sao và ký hiệu thì không phải một từ: "***" (chính chuỗi che) hay "a * b" phải giữ nguyên.
         if (written.Count(char.IsLetterOrDigit) < 2) return written;
 
         // Only letters (and the spaces of a phrase), so nothing is hidden by a sign: the word may be a normal word
@@ -139,7 +138,7 @@ public sealed class ProfanityFilterSet
         {
             // The same letters, only the accents are missing or different ("dip nay" for "dịp này").
             if (Spaces.Replace(EvasionPattern.Fold(written), " ") == word) return written;
-            // A word of two letters is too short to tell a repeat from a normal word.
+            // Từ hai chữ cái quá ngắn để phân biệt lặp chữ với từ bình thường.
             if (word.Count(character => character != ' ') <= 2) return written;
         }
         return Mask;

@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 
 namespace TechForum.Api.Tests.Fakes;
 
-// Keeps the log lines in memory so a test can check what was logged.
 public sealed class CapturingLogger<T> : ILogger<T>
 {
     public List<(LogLevel Level, string Message)> Entries { get; } = [];

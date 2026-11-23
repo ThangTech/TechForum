@@ -72,8 +72,8 @@ public sealed class PublicProfileRepository : IPublicProfileRepository
 
     private const int MaxSkills = 12;
 
-    // The skills the member chose come first (in alphabetical order). The rest of the places are filled with the tags
-    // that appear most often in their public content, so a member who chose nothing still has skills as before.
+    // Kỹ năng tự chọn đứng trước; chỗ còn lại lấy các thẻ xuất hiện nhiều nhất trong nội dung công khai,
+    // nên người chưa chọn gì vẫn có kỹ năng như trước.
     private async Task<IReadOnlyList<ProfileSkillData>> GetSkillsAsync(
         string userId,
         IQueryable<Topic> topics,

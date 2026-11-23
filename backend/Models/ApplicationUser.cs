@@ -16,6 +16,5 @@ public sealed class ApplicationUser : IdentityUser
 
     public DateTimeOffset CreatedAtUtc { get; set; }
 
-    // Points that the author earns when others vote for their posts and answers (see ReputationRules).
     public int Reputation { get; set; }
 }

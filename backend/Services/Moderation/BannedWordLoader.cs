@@ -2,7 +2,7 @@ using TechForum.Api.Data.Repositories;
 
 namespace TechForum.Api.Services;
 
-// The cache lives as long as the application, but the repository needs a scope (it uses the DbContext).
+// Cache sống cùng ứng dụng nhưng repository cần một scope (vì dùng DbContext).
 public sealed class BannedWordLoader : IBannedWordLoader
 {
     private readonly IServiceScopeFactory scopeFactory;

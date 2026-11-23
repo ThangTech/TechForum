@@ -2,7 +2,7 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Tests.Fakes;
 
-// Behaves as if the member has just used up the posting limits: refuses everything with the given wait.
+// Giả lập thành viên vừa dùng hết lượt đăng bài: từ chối mọi yêu cầu với thời gian chờ đã cho.
 public sealed class RefusingPostingRateLimiter(TimeSpan wait) : IPostingRateLimiter
 {
     public int Calls { get; private set; }

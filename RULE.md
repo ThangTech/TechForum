@@ -91,7 +91,7 @@ backend/Program.cs	Đăng ký DI và middleware, không chứa toàn bộ nghi�
 - Với nhiều thay đổi phải cùng thành công, dùng khả năng giao dịch của EF Core; không thêm lớp Unit of Work riêng khi DbContext đã đáp ứng.
 - Đảm bảo package EF tương thích với project; không lấy phiên bản trong ví dụ skill làm phiên bản repo.
 7.1. Phong cách code C# / ASP.NET Core (hiện đại vừa đủ, ưu tiên dễ đọc)
-- Áp dụng cho code mới và code đang sửa. Code cũ đổi dần khi chạm tới, không refactor hàng loạt chỉ để khớp mục này (xem mục 4).
+- Toàn bộ backend đã theo mục này; code mới giữ đúng như vậy. Kết quả dùng chung nằm ở backend/Services/Result.cs (Result, Result<T>, ErrorType), đổi sang HTTP bằng this.ToActionResult(...) trong backend/Extensions/ResultExtensions.cs; tham số phân trang dùng PageQuery (backend/DTOs/PageQuery.cs).
 - Nên dùng (gọn và chuẩn):
   - Constructor truyền thống kết hợp `private readonly` cho Dependency Injection để nhìn rõ class đang dùng những service nào.
   - `if / else` kèm `return` sớm (early return) và toán tử so sánh thông thường (`<`, `>`, `&&`, `||`) để luồng chạy thẳng từ trên xuống dưới.

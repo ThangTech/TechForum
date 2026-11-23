@@ -1,6 +1,6 @@
 namespace TechForum.Api.Dtos;
 
-// The same fields as the "write a topic" form. Every field may be empty, because a draft can be unfinished.
+// Mọi trường đều có thể để trống vì bản nháp được phép chưa xong.
 public sealed record SaveDraftRequest(
     Guid? TopicId,
     string? Title,

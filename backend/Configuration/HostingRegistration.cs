@@ -5,18 +5,13 @@ using TechForum.Api.Data;
 
 namespace TechForum.Api.Configuration;
 
-// The settings that change with the place where the API runs (the machine of a developer, or the Docker containers).
-// They come from configuration, so the same build runs everywhere:
-// - Database:MigrateOnStartup and Database:SeedDemoData: bring the database up to date and add the demo data when the
-//   API starts. Development always does both.
-// - DataProtection:KeysPath: the folder of the keys of ASP.NET Core Data Protection (they sign the links of the password
-//   reset emails). In a container it must be a volume, or the links stop working each time the container is made again.
-// - ReverseProxy:Enabled: the API sits behind a proxy (nginx) that writes the address of the visitor in the header
-//   X-Forwarded-For. Without it every visitor would have the address of the proxy, and they would all share one limit
-//   of password reset emails.
-// - ReverseProxy:ForwardLimit: how many proxies stand in front of the API (1 by default: nginx). On Render behind Vercel
-//   there are two (Vercel, then the proxy of Render), and each one adds an address to X-Forwarded-For. The API takes
-//   the address that many steps from the end, which is the address of the visitor.
+// Các cấu hình thay đổi theo nơi chạy API (máy lập trình, Docker, Render), để cùng một bản build chạy được mọi nơi:
+// - Database:MigrateOnStartup, Database:SeedDemoData: cập nhật DB và thêm dữ liệu mẫu khi khởi động.
+// - DataProtection:KeysPath: thư mục khóa ký link đặt lại mật khẩu; trong container phải là volume,
+//   nếu không link hết hiệu lực mỗi lần tạo lại container.
+// - ReverseProxy:Enabled: đọc IP thật của người dùng từ X-Forwarded-For, nếu không mọi người dùng chung
+//   một giới hạn gửi email khôi phục.
+// - ReverseProxy:ForwardLimit: số proxy đứng trước API (Docker: 1 là nginx; Render sau Vercel: 2).
 public static class HostingRegistration
 {
     public static IServiceCollection AddHostingSettings(this IServiceCollection services, IConfiguration configuration)
@@ -31,14 +26,13 @@ public static class HostingRegistration
 
         if (IsBehindProxy(configuration))
         {
-            // Read here, not inside the lambda, so a wrong value stops the API when it starts.
+            // Đọc ở đây chứ không trong lambda, để giá trị sai làm API dừng ngay khi khởi động.
             var forwardLimit = GetForwardLimit(configuration);
             services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 options.ForwardLimit = forwardLimit;
-                // The address of the proxy is not known in advance (another container, or the proxy of Render), so the
-                // headers it writes are trusted. In Docker only nginx can reach the API, because its port is not opened.
+                // Không biết trước địa chỉ của proxy nên tin header nó ghi. Trong Docker chỉ nginx gọi được API vì cổng API không mở ra ngoài.
                 options.KnownNetworks.Clear();
                 options.KnownProxies.Clear();
             });
@@ -63,7 +57,6 @@ public static class HostingRegistration
         return limit;
     }
 
-    // Brings the database up to date and adds the demo data (categories, tags and a few posts) when it is asked for.
     public static async Task PrepareDatabaseAsync(this WebApplication app)
     {
         var isDevelopment = app.Environment.IsDevelopment();

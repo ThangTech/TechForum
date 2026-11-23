@@ -6,7 +6,6 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
 
-// The upvotes and downvotes of a post. The sum is its score; the author earns reputation (see ReputationRules).
 [ApiController]
 [Route("api/topics/{topicId:guid}/vote")]
 public sealed class TopicVotesController : ControllerBase

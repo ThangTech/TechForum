@@ -252,13 +252,13 @@ public sealed class VoteServiceTests
     }
 
     [Theory]
-    // previous vote, new vote, change of the reputation of the voter
-    [InlineData(0, -1, -1)]  // a new downvote costs 1
-    [InlineData(-1, 0, 1)]   // taking it back gives the 1 back
-    [InlineData(-1, 1, 1)]   // changing it to an upvote gives the 1 back
-    [InlineData(1, -1, -1)]  // changing an upvote to a downvote costs 1
-    [InlineData(1, 0, 0)]    // an upvote never cost anything
-    [InlineData(-1, -1, 0)]  // the same vote again changes nothing
+    // phiếu cũ, phiếu mới, thay đổi danh tiếng của người bình chọn
+    [InlineData(0, -1, -1)]  // phiếu chưa tốt mới tốn 1 điểm
+    [InlineData(-1, 0, 1)]   // rút phiếu thì được trả lại 1
+    [InlineData(-1, 1, 1)]   // đổi thành phiếu tốt thì được trả lại 1
+    [InlineData(1, -1, -1)]  // đổi phiếu tốt thành chưa tốt tốn 1
+    [InlineData(1, 0, 0)]    // phiếu tốt không tốn gì
+    [InlineData(-1, -1, 0)]  // gửi lại cùng phiếu không đổi gì
     public void ReputationRules_TheCostOfADownvoteIsPaidAndGivenBackExactly(int previous, int next, int expectedChange)
     {
         Assert.Equal(expectedChange, ReputationRules.ForVoter(next) - ReputationRules.ForVoter(previous));
@@ -454,7 +454,7 @@ public sealed class VoteServiceTests
     [Fact]
     public void ReputationRules_ChangingAVoteCancelsTheOldPointsAndGivesTheNewOnes()
     {
-        // An upvote that becomes a downvote of an answer: -10 (the old vote is taken back) and -2 (the new one).
+        // Phiếu tốt đổi thành chưa tốt cho câu trả lời: -10 (rút phiếu cũ) và -2 (phiếu mới).
         var change = ReputationRules.ForVote(VoteTargetType.Answer, -1) - ReputationRules.ForVote(VoteTargetType.Answer, 1);
 
         Assert.Equal(-12, change);
@@ -479,7 +479,7 @@ public sealed class VoteServiceTests
         }
     }
 
-    // Every account is old enough (30 days) unless a test gives it another time.
+    // Mọi tài khoản đều đủ tuổi (30 ngày) trừ khi test đặt thời gian khác.
     private sealed class FakeAccounts : IAccountRepository
     {
         public Dictionary<string, DateTimeOffset> CreatedAt { get; } = [];
@@ -536,7 +536,6 @@ public sealed class VoteServiceTests
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
-    // Only the lookup that the vote service uses; the rest of the interface is not needed here.
     private sealed class FakeAnswers(Answer[] answers) : IAnswerRepository
     {
         public Task<Answer?> GetVisibleByIdAsync(Guid topicId, Guid answerId, CancellationToken cancellationToken) =>

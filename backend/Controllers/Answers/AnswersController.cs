@@ -21,7 +21,6 @@ public sealed class AnswersController : ControllerBase
         this.voteService = voteService;
     }
 
-    // Upvote (1), downvote (-1) or take the vote back (0). The score and the reputation of the author change with it.
     [Authorize]
     [HttpPut("{answerId:guid}/vote")]
     public async Task<ActionResult<VoteDto>> SetVote(Guid topicId, Guid answerId, [FromBody] SetVoteRequest request, CancellationToken cancellationToken)

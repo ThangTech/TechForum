@@ -3,7 +3,6 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Tests.Fakes;
 
-// In-memory stand-in for the table of banned words.
 public sealed class FakeBannedWordRepository : IBannedWordRepository
 {
     private int nextId = 1;

@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TechForum.Api.Dtos;
 
-// The text that a member is writing. Any of the three may be left out. The limits are a little above the real limits of a
-// post and an answer: this request only asks "would the filter change this?" and must not be a way to send huge texts.
+// Giới hạn cao hơn một chút so với bài viết thật: yêu cầu này chỉ hỏi "bộ lọc có đổi gì không",
+// không được thành cách gửi văn bản rất lớn.
 public sealed class CheckContentRequest
 {
     [StringLength(300, ErrorMessage = "Tiêu đề quá dài.")]
@@ -16,8 +16,7 @@ public sealed class CheckContentRequest
     public string? BodyHtml { get; init; }
 }
 
-// What the filter would do to the text. A cleaned text is only given when it differs from what was sent, so the answer
-// stays small; null means "no change".
+// Chỉ trả văn bản đã làm sạch khi nó khác bản gửi lên, để câu trả lời nhỏ; null là không thay đổi.
 public sealed record ContentCheckResultDto(
     bool HasProfanity,
     string? Title,

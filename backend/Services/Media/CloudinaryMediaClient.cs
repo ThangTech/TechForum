@@ -5,8 +5,7 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Services;
 
-// Uploads and deletes files in the Cloudinary account with the CloudinaryDotNet library. The request is made by the
-// server with the API secret, which never goes to the browser.
+// Yêu cầu tới Cloudinary do server gửi bằng API secret, khóa này không bao giờ tới trình duyệt.
 public sealed class CloudinaryMediaClient : ICloudMediaClient
 {
     private readonly Cloudinary? cloudinary;
@@ -41,7 +40,7 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
 
         try
         {
-            // The id is a new random name, so nothing is overwritten, and the name of the uploaded file is not used.
+            // Id là tên ngẫu nhiên mới nên không ghi đè tệp nào, và không dùng tên tệp người dùng gửi lên.
             UploadResult result;
             if (resourceType == CloudResourceType.Video)
             {
@@ -54,8 +53,7 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
                 result = await UploadImageAsync(client, content, fileName, publicId, cancellationToken);
             }
 
-            // 400 is the answer for a file that Cloudinary does not accept. Other answers (wrong keys, too many requests, a
-            // server error) are not the fault of the file.
+            // 400 là Cloudinary không nhận tệp; các lỗi khác (sai khóa, quá nhiều yêu cầu, lỗi server) không phải lỗi của tệp.
             if (result.Error is not null && result.StatusCode == System.Net.HttpStatusCode.BadRequest)
             {
                 throw new CloudMediaRejectedException(result.Error.Message);
@@ -68,7 +66,7 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
 
             if (CloudModeration.IsRejected(result.Moderation))
             {
-                // A refused picture is kept by Cloudinary as a backup and uses space, so it is deleted at once.
+                // Cloudinary vẫn giữ ảnh bị từ chối làm bản dự phòng và tốn dung lượng, nên xóa ngay.
                 await TryDestroyRejectedAsync(client, publicId);
                 throw new CloudMediaRejectedException(CloudModeration.RejectedMessage);
             }
@@ -85,9 +83,8 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
         }
     }
 
-    // With Cloudinary:ImageModeration set, the picture is checked while it is uploaded. When the add-on cannot check it
-    // (not registered, or no free units left this month), the picture is uploaded again without the check, so members
-    // can still post; the warning in the log says why.
+    // Khi add-on không kiểm duyệt được (chưa đăng ký, hết hạn mức tháng) thì tải lại không kiểm duyệt,
+    // để thành viên vẫn đăng bài được; log ghi lý do.
     private async Task<UploadResult> UploadImageAsync(
         Cloudinary client, Stream content, string fileName, string publicId, CancellationToken cancellationToken)
     {
@@ -106,8 +103,7 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
             return await client.UploadAsync(Create(content, null), cancellationToken);
         }
 
-        // The library closes the stream after an upload, so the picture (at most a few MB) is kept in memory to be sent
-        // a second time if needed.
+        // Thư viện đóng stream sau khi tải lên, nên giữ ảnh (vài MB) trong bộ nhớ để gửi lần hai khi cần.
         using var buffer = new MemoryStream();
         await content.CopyToAsync(buffer, cancellationToken);
         var bytes = buffer.ToArray();
@@ -144,11 +140,11 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
             var result = await client.DestroyAsync(new DeletionParams(asset.PublicId)
             {
                 ResourceType = asset.ResourceType == CloudResourceType.Video ? ResourceType.Video : ResourceType.Image,
-                // The copies that Cloudinary keeps for fast delivery are removed too.
+                // Xóa cả các bản sao Cloudinary giữ để phân phối nhanh.
                 Invalidate = true
             });
 
-            // "not found" means that it was removed before, which is what the caller wants.
+            // "not found" nghĩa là tệp đã bị xóa trước đó, đúng như nơi gọi muốn.
             if (result.Error is not null)
             {
                 throw new CloudMediaException($"Cloudinary không xóa được tệp: {result.Error.Message}.");

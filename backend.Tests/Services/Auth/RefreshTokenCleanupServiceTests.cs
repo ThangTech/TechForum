@@ -50,7 +50,7 @@ public sealed class RefreshTokenCleanupServiceTests
     [Fact]
     public async Task DeleteExpiredAsync_KeepsRevokedTokensThatHaveNotExpired()
     {
-        // A revoked token must stay until it expires, so reusing it is still noticed as theft.
+        // Token đã thu hồi phải còn tới khi hết hạn, để lần dùng lại vẫn bị phát hiện là đánh cắp.
         var repository = new FakeRefreshTokenRepository();
         var revoked = CreateToken("revoked", Now + TimeSpan.FromDays(2));
         revoked.RevokedAtUtc = Now - TimeSpan.FromDays(40);

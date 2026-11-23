@@ -6,7 +6,7 @@ public interface ITokenService
 {
     AccessTokenResult CreateAccessToken(ApplicationUser user, IReadOnlyList<string> roles);
 
-    // Returns a new random refresh token value. Only its hash is saved in the database.
+    // DB chỉ lưu mã băm của giá trị này.
     string GenerateRefreshToken();
 
     string HashRefreshToken(string refreshToken);

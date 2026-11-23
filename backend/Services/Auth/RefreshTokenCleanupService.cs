@@ -13,10 +13,8 @@ public sealed class RefreshTokenCleanupService : IRefreshTokenCleanupService
         this.timeProvider = timeProvider;
     }
 
-    // An expired token is already useless, but it is kept for a while so recent sign-ins can
-    // still be looked up when something goes wrong.
-    // A revoked token that has not expired yet is never deleted: it must stay in the table so
-    // that using it again is noticed as a stolen token (see AuthService.RefreshAsync).
+    // Token hết hạn được giữ thêm một thời gian để tra cứu khi có sự cố. Token đã thu hồi mà chưa hết hạn thì không xóa:
+    // phải còn trong bảng để lần dùng lại bị phát hiện là token bị đánh cắp (xem AuthService.RefreshAsync).
     public static readonly TimeSpan KeepAfterExpiry = TimeSpan.FromDays(30);
 
     public Task<int> DeleteExpiredAsync(CancellationToken cancellationToken)

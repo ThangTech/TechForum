@@ -10,21 +10,15 @@ public enum CloudResourceType
     Video
 }
 
-// A file in the Cloudinary account, found from its address: what kind it is and the id that Cloudinary uses to
-// delete it (the folder and the name, without the extension).
+// Tệp trên Cloudinary nhận ra từ địa chỉ: loại tệp và id Cloudinary dùng để xóa (thư mục và tên, không có đuôi).
 public sealed record CloudAsset(CloudResourceType ResourceType, string PublicId);
 
-// The one place that says which addresses of pictures and videos belong to this site. The sanitizer, the topic
-// service and the cleanup all ask it, so a picture of another site (or of another Cloudinary account) is
-// recognised in the same way everywhere.
-//
-// Two kinds of address belong to the site:
-// - the files that the site uploads to Cloudinary: https://res.cloudinary.com/{cloud}/image/upload/v123/{folder}/images/{id}.png
-// - the files that were stored on the disk before the move to Cloudinary: /media/images/{id}.png. They stay readable so
-//   that the old topics keep their pictures.
+// Nơi duy nhất quy định địa chỉ ảnh và video nào thuộc site này, để bộ làm sạch HTML, TopicService và việc dọn tệp
+// nhận ra giống nhau. Có hai loại: tệp trên Cloudinary của site, và tệp cũ trên đĩa (/media/images/...) để bài cũ
+// vẫn còn ảnh.
 public sealed class MediaUrlRules
 {
-    // The address of the cover picture is kept in a column of this length.
+    // Bằng độ dài cột lưu ảnh bìa.
     public const int MaxCoverLength = 300;
 
     private const string Id = "[a-f0-9]{32}";
@@ -55,7 +49,6 @@ public sealed class MediaUrlRules
             imageAddress += $"|{prefix}/image/upload/(?:v\\d+/)?{folder}/images/{Id}\\.(?:png|jpg|gif|webp)";
             videoAddress += $"|{prefix}/video/upload/(?:v\\d+/)?{folder}/videos/{Id}\\.(?:mp4|webm)";
 
-            // The groups give what Cloudinary needs to delete the file.
             cloudAsset = new Regex(
                 $"^{prefix}/(?<type>image|video)/upload/(?:v\\d+/)?(?<id>{folder}/(?:images|videos|avatars|banners)/{Id})\\.[a-z0-9]+$",
                 RegexOptions.CultureInvariant);
@@ -67,27 +60,23 @@ public sealed class MediaUrlRules
                 RegexOptions.CultureInvariant);
         }
 
-        // The sanitizer writes an attribute with double quotes, so a picture is found by its src="...".
+        // Bộ làm sạch luôn viết thuộc tính bằng dấu nháy kép, nên tìm theo src="...".
         topicMedia = new Regex($"(?:{imageAddress})|(?:{videoAddress})", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         topicMediaWhole = new Regex($"^(?:(?:{imageAddress})|(?:{videoAddress}))$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         firstImage = new Regex($"<img\\b[^>]*?\\bsrc=\"({imageAddress})\"", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
-    // The id for a new file in the Cloudinary account: the folder of the site, the kind of file
-    // (images, videos, avatars or banners) and a random name. Cloudinary adds the extension to the address.
+    // Thư mục của site, loại tệp (images, videos, avatars, banners) và tên ngẫu nhiên; Cloudinary tự thêm đuôi.
     public string CreatePublicId(string kind, Guid id) => $"{cloudFolder}/{kind}/{id:N}";
 
-    // A picture or a video that may appear in the content of a topic.
     public bool IsTopicMediaUrl(string url) => topicMediaWhole.IsMatch(url);
 
-    // Every picture and video address in the (sanitized) HTML of a topic.
     public IReadOnlyList<string> FindTopicMediaUrls(string html)
     {
         return topicMedia.Matches(html).Select(match => match.Value).ToList();
     }
 
-    // The address of the first picture of the (already sanitized) body, or null when there is none or when it is
-    // too long for the cover column.
+    // Null khi không có ảnh hoặc địa chỉ dài hơn cột ảnh bìa.
     public string? FindFirstImageUrl(string html)
     {
         var match = firstImage.Match(html);
@@ -98,8 +87,7 @@ public sealed class MediaUrlRules
 
     public bool IsCloudBannerUrl(string url) => cloudBanner?.IsMatch(url) == true;
 
-    // The file in the Cloudinary account that this address points to. Null for an address of the disk or of another
-    // site, so nothing outside this site's folder can be deleted by mistake.
+    // Null với địa chỉ trên đĩa hoặc của site khác, để không bao giờ xóa nhầm tệp ngoài thư mục của site.
     public CloudAsset? TryGetCloudAsset(string? url)
     {
         var match = url is null ? null : cloudAsset?.Match(url);

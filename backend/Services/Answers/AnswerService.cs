@@ -162,7 +162,7 @@ public sealed partial class AnswerService : IAnswerService
             }
         }
 
-        // Counted only now, when the answer is valid and about to be saved.
+        // Chỉ đếm khi câu trả lời đã hợp lệ và sắp được lưu.
         if (!postingRateLimiter.TryAcquireAnswer(authorId, out var retryAfter))
         {
             var seconds = MemberRateLimit.ToSeconds(retryAfter);
@@ -301,7 +301,7 @@ public sealed partial class AnswerService : IAnswerService
             answer.Topic.AcceptedAnswerId = null;
         }
         await answerRepository.SaveChangesAsync(cancellationToken);
-        // The bonus of an accepted answer goes with it.
+        // Xóa câu trả lời được chấp nhận thì tác giả mất điểm thưởng.
         if (wasAccepted && answer.AuthorId != answer.Topic.AuthorId)
         {
             await answerRepository.AdjustReputationAsync(answer.AuthorId, -ReputationRules.AcceptedAnswer, cancellationToken);
@@ -309,8 +309,8 @@ public sealed partial class AnswerService : IAnswerService
         return Result.Success();
     }
 
-    // The author of the answer that was chosen earns the bonus; the author of the answer that was chosen before loses it.
-    // Nobody earns anything from choosing their own answer.
+    // Tác giả câu trả lời mới được chọn nhận thưởng, tác giả câu được chọn trước đó mất thưởng.
+    // Tự chọn câu trả lời của mình thì không ai được điểm.
     private async Task MoveAcceptedBonusAsync(
         Guid topicId,
         Guid? previousAcceptedId,

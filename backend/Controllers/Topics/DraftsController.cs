@@ -6,7 +6,6 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
 
-// The automatic drafts of the signed-in member. The member id comes from the token, never from the request.
 [ApiController]
 [Authorize]
 [Route("api/drafts")]
@@ -19,7 +18,7 @@ public sealed class DraftsController : ControllerBase
         this.draftService = draftService;
     }
 
-    // The draft for a new topic (no topicId) or for the topic that is being edited. 204 when there is none.
+    // Bản nháp của bài mới (không có topicId) hoặc của bài đang sửa; 204 khi chưa có.
     [HttpGet]
     public async Task<ActionResult<DraftDto>> Get([FromQuery] Guid? topicId, CancellationToken cancellationToken)
     {
@@ -27,7 +26,6 @@ public sealed class DraftsController : ControllerBase
         return draft is null ? NoContent() : Ok(draft);
     }
 
-    // Saves the draft: it is created the first time and replaced after that.
     [HttpPost]
     public async Task<ActionResult<DraftDto>> Save([FromBody] SaveDraftRequest request, CancellationToken cancellationToken)
     {

@@ -2,12 +2,11 @@ using System.Threading.RateLimiting;
 
 namespace TechForum.Api.Services;
 
-// The pieces shared by the limits that count what each member does (votes, new topics, new answers). The counts are kept
-// in memory and start again when the application restarts; this is enough to stop a script, which is the purpose.
+// Dùng chung cho giới hạn bình chọn, đăng bài và trả lời. Bộ đếm nằm trong bộ nhớ và bắt đầu lại khi khởi động lại;
+// như vậy đủ để chặn script, đó là mục đích.
 public static class MemberRateLimit
 {
-    // A fixed window tells exactly how long until it starts again (the sliding window does not), so the member is told
-    // the true time to wait.
+    // Cửa sổ cố định biết chính xác lúc nào mở lại (cửa sổ trượt thì không), nên báo đúng thời gian phải chờ.
     public static PartitionedRateLimiter<string> Create(int limit, TimeSpan window)
     {
         return PartitionedRateLimiter.Create<string, string>(userId => RateLimitPartition.GetFixedWindowLimiter(
@@ -20,7 +19,6 @@ public static class MemberRateLimit
             }));
     }
 
-    // True when the member may act now (the action is counted). Otherwise false and retryAfter says how long to wait.
     public static bool TryAcquire(PartitionedRateLimiter<string> limiter, string userId, TimeSpan fallback, out TimeSpan retryAfter)
     {
         using var lease = limiter.AttemptAcquire(userId);
@@ -30,7 +28,7 @@ public static class MemberRateLimit
         return lease.IsAcquired;
     }
 
-    // Whole seconds, at least 1, for the Retry-After header and the message.
+    // Số giây nguyên, ít nhất 1, cho header Retry-After và câu thông báo.
     public static int ToSeconds(TimeSpan retryAfter) => Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
 
     // "30 giây", "5 phút", "2 giờ": a wait is told in the unit that a person can use.

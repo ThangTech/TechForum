@@ -1,7 +1,6 @@
 namespace TechForum.Api.Models;
 
-// A word or short phrase that is not allowed in posts and answers. It is stored in lower case; the filter ignores
-// the case of the text but not its accents (so "các" is not mistaken for a word without accents).
+// Lưu chữ thường. Bộ lọc bỏ qua hoa thường nhưng giữ dấu, để "các" không bị nhầm với từ không dấu.
 public sealed class BannedWord
 {
     public Guid Id { get; set; }

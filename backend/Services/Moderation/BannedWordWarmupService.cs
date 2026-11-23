@@ -1,8 +1,7 @@
 namespace TechForum.Api.Services;
 
-// When the application starts: first it fills an empty table of banned words from the local list file (the file is not
-// in Git, see .gitignore), then it reads the table into the cache, so the first post does not wait for it.
-// Neither step can stop the application from starting: a problem is written to the log.
+// Khi khởi động: nạp bảng từ cấm còn trống từ file trên máy (file không có trong Git), rồi đọc bảng vào cache
+// để bài đăng đầu tiên không phải chờ. Lỗi ở bước nào cũng chỉ ghi log, không làm ứng dụng dừng.
 public sealed class BannedWordWarmupService : IHostedService
 {
     private readonly IServiceScopeFactory scopeFactory;
@@ -37,7 +36,7 @@ public sealed class BannedWordWarmupService : IHostedService
     {
         try
         {
-            // The path can be changed with BannedWords:SeedFile, for example on a server.
+            // Đổi đường dẫn bằng BannedWords:SeedFile, ví dụ khi chạy trên server.
             var path = configuration["BannedWords:SeedFile"]
                 ?? Path.Combine(environment.ContentRootPath, "Data", "Seed", "banned-words.txt");
             if (!File.Exists(path))

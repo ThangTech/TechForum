@@ -1,6 +1,6 @@
 namespace TechForum.Api.Services;
 
-// Runs once at start-up and then every day, so the RefreshTokens table does not grow forever.
+// Chạy khi khởi động rồi mỗi ngày một lần, để bảng RefreshTokens không lớn mãi.
 public sealed class RefreshTokenCleanupBackgroundService : BackgroundService
 {
     private readonly IServiceScopeFactory scopeFactory;

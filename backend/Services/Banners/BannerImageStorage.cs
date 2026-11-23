@@ -3,8 +3,7 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Services;
 
-// The picture of a banner is kept in the Cloudinary account (folder "banners"). The banner record keeps the address.
-// A picture of the time before Cloudinary (/media/banners/...) is still accepted and is deleted from the disk.
+// Ảnh banner nằm trên Cloudinary (thư mục "banners"). Ảnh cũ lưu trên đĩa (/media/banners/...) vẫn được nhận và xóa trên đĩa.
 public sealed class BannerImageStorage : IBannerImageStorage
 {
     private const string FolderName = "banners";
@@ -17,7 +16,6 @@ public sealed class BannerImageStorage : IBannerImageStorage
     private readonly ICloudMediaClient cloud;
     private readonly MediaUrlRules rules;
     private readonly ILogger<BannerImageStorage> logger;
-    // The folder and the address of the old files on the disk.
     private readonly string bannerRoot;
     private readonly string localUrlPrefix;
 
@@ -96,7 +94,7 @@ public sealed class BannerImageStorage : IBannerImageStorage
         }
         catch (CloudMediaRejectedException exception)
         {
-            // The connection works and Cloudinary refused the file itself: the member is told why.
+            // Kết nối vẫn tốt, Cloudinary từ chối chính tệp này: báo lý do cho người dùng.
             logger.LogInformation("Cloudinary từ chối ảnh banner: {Reason}", exception.CloudMessage);
             return InvalidImage(CloudRejection.ToMessage(exception.CloudMessage));
         }
@@ -120,7 +118,7 @@ public sealed class BannerImageStorage : IBannerImageStorage
         DeleteLocalFile(imageUrl);
     }
 
-    // A failure is only logged: the banner is already changed, and a file that stays behind does no harm.
+    // Lỗi chỉ ghi log: banner đã đổi xong, tệp còn sót lại không gây hại.
     private async Task TryDeleteFromCloudAsync(string url, CancellationToken cancellationToken)
     {
         var asset = rules.TryGetCloudAsset(url);
@@ -139,7 +137,6 @@ public sealed class BannerImageStorage : IBannerImageStorage
         }
     }
 
-    // A picture of the time before Cloudinary.
     private bool IsLocalImageUrl(string imageUrl)
     {
         return imageUrl.StartsWith(localUrlPrefix, StringComparison.Ordinal) &&

@@ -26,7 +26,7 @@ public sealed record TopicSummaryDto(
     int ShareCount,
     TopicDiscussionDto? Discussion = null,
     string? CoverImageUrl = null,
-    // The vote score (0 while it is hidden for a new post).
+    // Bằng 0 khi điểm của bài mới còn bị ẩn.
     int Score = 0,
     bool ScoreHidden = false);
 
@@ -47,7 +47,7 @@ public sealed record TopicDetailDto(
     bool IsDiscussionLocked,
     int ViewCount,
     int ShareCount,
-    // The vote score of the post (0 while it is hidden for a new post).
+    // Bằng 0 khi điểm của bài mới còn bị ẩn.
     int Score = 0,
     bool ScoreHidden = false);
 

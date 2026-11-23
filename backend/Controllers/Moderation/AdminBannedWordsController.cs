@@ -7,7 +7,6 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
 
-// The list of words that are replaced by "***" in posts and answers. Only administrators can read or change it.
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin/banned-words")]

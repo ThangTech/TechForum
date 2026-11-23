@@ -54,7 +54,7 @@ public sealed record AdminReportDto(
     Guid TopicId,
     ReportUserDto TargetAuthor,
     bool IsTargetHidden,
-    // Hidden by itself because many members reported it; rejecting the reports shows it again.
+    // Tự ẩn vì nhiều báo cáo; từ chối hết các báo cáo thì hiện lại.
     bool IsTargetAutoHidden,
     bool IsTargetDeleted,
     string? ParentAnswerBodyHtml);

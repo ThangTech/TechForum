@@ -1,6 +1,6 @@
 namespace TechForum.Api.Models;
 
-// One row per refresh token. Only the SHA-256 hash is stored, never the token itself.
+// Chỉ lưu mã băm SHA-256, không bao giờ lưu token.
 public sealed class RefreshToken
 {
     public Guid Id { get; set; }
@@ -15,9 +15,8 @@ public sealed class RefreshToken
 
     public DateTimeOffset ExpiresAtUtc { get; set; }
 
-    // Null means the token is still usable.
     public DateTimeOffset? RevokedAtUtc { get; set; }
 
-    // Set when the token was rotated, so a reused old token can be detected.
+    // Có giá trị khi token đã được xoay vòng, để phát hiện token cũ bị dùng lại.
     public string? ReplacedByTokenHash { get; set; }
 }

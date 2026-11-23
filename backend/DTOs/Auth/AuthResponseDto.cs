@@ -1,6 +1,6 @@
 namespace TechForum.Api.Dtos.Auth;
 
-// The refresh token is not part of this response. It is sent in an HttpOnly cookie.
+// Refresh token không nằm ở đây mà gửi trong cookie HttpOnly.
 public sealed record AuthResponseDto(
     CurrentUserDto User,
     string AccessToken,

@@ -16,7 +16,7 @@ public sealed class MediaUrlRulesTests
 
     private readonly MediaUrlRules rules = TestMediaRules.Create();
 
-    // ---- which addresses may be used in a topic
+    // ---- địa chỉ nào được dùng trong bài
 
     [Fact]
     public void IsTopicMediaUrl_AcceptsTheFilesOfThisSite()
@@ -24,7 +24,7 @@ public sealed class MediaUrlRulesTests
         Assert.True(rules.IsTopicMediaUrl(CloudImage));
         Assert.True(rules.IsTopicMediaUrl(CloudImageNoVersion));
         Assert.True(rules.IsTopicMediaUrl(CloudVideo));
-        // The files that were stored on the disk before the move keep working.
+        // Tệp cũ lưu trên đĩa vẫn dùng được.
         Assert.True(rules.IsTopicMediaUrl(LocalImage));
         Assert.True(rules.IsTopicMediaUrl(LocalVideo));
     }
@@ -64,7 +64,7 @@ public sealed class MediaUrlRulesTests
         Assert.Equal([CloudImage, CloudVideo, LocalImage], rules.FindTopicMediaUrls(html));
     }
 
-    // ---- the cover picture of a topic
+    // ---- ảnh bìa của bài
 
     [Fact]
     public void FindFirstImageUrl_ReturnsTheFirstPicture()
@@ -103,7 +103,7 @@ public sealed class MediaUrlRulesTests
     [Fact]
     public void FindFirstImageUrl_ReturnsNullForAnAddressThatIsTooLongToStore()
     {
-        // A long folder name makes an address that matches the rules but does not fit in the cover column.
+        // Tên thư mục dài tạo địa chỉ khớp quy tắc nhưng không vừa cột ảnh bìa.
         var longRules = TestMediaRules.Create(folder: new string('f', MediaUrlRules.MaxCoverLength));
         var url = $"https://res.cloudinary.com/demo-cloud/image/upload/v1/{new string('f', MediaUrlRules.MaxCoverLength)}/images/{Id1}.png";
 
@@ -111,7 +111,7 @@ public sealed class MediaUrlRulesTests
         Assert.Null(longRules.FindFirstImageUrl($"<img src=\"{url}\">"));
     }
 
-    // ---- avatars and banners
+    // ---- avatar và banner
 
     [Fact]
     public void IsCloudAvatarUrl_AndIsCloudBannerUrl_AcceptOnlyTheirOwnFolder()
@@ -126,7 +126,7 @@ public sealed class MediaUrlRulesTests
         Assert.False(rules.IsCloudBannerUrl(CloudImage));
     }
 
-    // ---- finding the file to delete
+    // ---- tìm tệp cần xóa
 
     [Fact]
     public void TryGetCloudAsset_GivesTheIdAndKindThatCloudinaryNeedsToDelete()

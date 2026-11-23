@@ -4,7 +4,6 @@ namespace TechForum.Api.Services;
 
 public interface IUserSkillService
 {
-    // A member may have at most this many skills of their own choice.
     const int MaxSkills = 12;
 
     Task<IReadOnlyList<SkillTagDto>> GetAsync(string userId, CancellationToken cancellationToken);

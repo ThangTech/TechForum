@@ -4,14 +4,12 @@ namespace TechForum.Api.Data.Repositories;
 
 public interface IBannerRepository
 {
-    // Active banners whose time window contains `now`, in display order.
     Task<IReadOnlyList<Banner>> GetShownAsync(DateTimeOffset now, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Banner>> GetAllAsync(CancellationToken cancellationToken);
 
     Task<Banner?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken);
 
-    // True when another banner (not `exceptId`) uses the same picture address.
     Task<bool> ImageUrlInUseAsync(string imageUrl, Guid exceptId, CancellationToken cancellationToken);
 
     Task AddAsync(Banner banner, CancellationToken cancellationToken);

@@ -2,27 +2,25 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Tests.Fakes;
 
-// Stands in for the Cloudinary account in the tests: nothing goes over the network. An upload gives back an address
-// built like the one of Cloudinary, so the rules of the site can be checked on it.
+// Thay cho Cloudinary trong test, không đi qua mạng. Địa chỉ trả về có dạng giống Cloudinary để kiểm tra được quy tắc của site.
 public sealed class FakeCloudMediaClient : ICloudMediaClient
 {
     public bool IsConfigured { get; set; } = true;
 
-    // Every upload that was made: (id in the account, kind, name of the file).
+    // (id trên Cloudinary, loại, tên tệp) của mỗi lần tải lên.
     public List<(string PublicId, CloudResourceType Type, string FileName)> Uploads { get; } = [];
 
     public List<CloudAsset> Deleted { get; } = [];
 
-    // Set to act like Cloudinary being unreachable (upload and delete fail).
+    // Giả lập Cloudinary không kết nối được.
     public bool Fails { get; set; }
 
-    // Set to a sentence of Cloudinary to act like it refusing the file itself (the connection works).
+    // Giả lập Cloudinary từ chối chính tệp (kết nối vẫn tốt).
     public string? RejectWith { get; set; }
 
-    // Set to a text to give that address back instead of a correct one.
+    // Trả địa chỉ này thay cho địa chỉ đúng.
     public string? AddressToReturn { get; set; }
 
-    // Ids of the files that cannot be deleted (the others can).
     public HashSet<string> UndeletableIds { get; } = [];
 
     public Task<string> UploadAsync(
@@ -42,7 +40,7 @@ public sealed class FakeCloudMediaClient : ICloudMediaClient
             throw new CloudMediaRejectedException(RejectWith);
         }
 
-        // The bytes are read, like the real client does when it sends the file.
+        // Đọc hết các byte như client thật làm khi gửi tệp.
         using var buffer = new MemoryStream();
         content.CopyTo(buffer);
 

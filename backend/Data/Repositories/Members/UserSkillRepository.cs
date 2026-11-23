@@ -42,8 +42,8 @@ public sealed class UserSkillRepository : IUserSkillRepository
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        // Two requests of the same member can arrive together and both add the same tag; the second one hits the
-        // primary key. It then reads the rows again and finds the tag already there, so a second try is enough.
+        // Hai yêu cầu cùng lúc có thể cùng thêm một thẻ; yêu cầu sau gặp khóa chính, đọc lại thì thấy thẻ đã có,
+        // nên thử thêm một lần là đủ.
         for (var attempt = 1; ; attempt++)
         {
             var existing = await dbContext.UserSkills

@@ -203,8 +203,8 @@ public sealed class ContentReportService : IContentReportService
         return Result<AdminReportDto>.Success(MapAdminReport(updated));
     }
 
-    // When enough different members (with accounts old enough) have a waiting report on the same content, the content
-    // hides itself until a moderator looks at the reports, and its author is told.
+    // Đủ số người khác nhau (tài khoản đủ tuổi) có báo cáo đang chờ thì nội dung tự ẩn tới khi quản trị viên xem,
+    // và tác giả được báo.
     private async Task HideWhenReportedByManyAsync(Topic? topic, Answer? answer, CancellationToken cancellationToken)
     {
         var limits = reportLimits.Value;
@@ -230,8 +230,8 @@ public sealed class ContentReportService : IContentReportService
         }, cancellationToken);
     }
 
-    // A moderator who accepts a report keeps the content hidden as a decision of their own. When a moderator rejects the
-    // last waiting report, the content that hid itself is shown again (unless another report about it was accepted).
+    // Chấp nhận báo cáo thì nội dung tiếp tục ẩn theo quyết định của quản trị viên. Từ chối báo cáo cuối cùng đang chờ
+    // thì nội dung tự ẩn được hiện lại (trừ khi đã có báo cáo khác được chấp nhận).
     private async Task AfterResolveAsync(ContentReport report, ReportStatus status, CancellationToken cancellationToken)
     {
         var target = (Hidden: report.Topic?.AutoHiddenAtUtc ?? report.Answer?.AutoHiddenAtUtc, report.TopicId, report.AnswerId);
@@ -247,7 +247,7 @@ public sealed class ContentReportService : IContentReportService
         }
 
         var now = timeProvider.GetUtcNow();
-        // Every waiting report counts here, also those of new accounts: a moderator has not looked at them yet.
+        // Ở đây tính mọi báo cáo đang chờ, kể cả của tài khoản mới, vì quản trị viên chưa xem tới.
         var stillWaiting = await reportRepository.CountPendingReportersAsync(
             target.TopicId, target.AnswerId, DateTimeOffset.MaxValue, cancellationToken);
         if (stillWaiting > 0 ||

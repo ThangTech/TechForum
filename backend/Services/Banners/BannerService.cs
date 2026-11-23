@@ -146,7 +146,7 @@ public sealed class BannerService : IBannerService
         return imageStorage.SaveAsync(file, cancellationToken);
     }
 
-    // Two banners may point to the same picture, so the file is only removed when no other banner uses it.
+    // Hai banner có thể dùng chung một ảnh, nên chỉ xóa tệp khi không banner nào khác dùng.
     private async Task DeleteImageIfUnusedAsync(string imageUrl, Guid bannerId, CancellationToken cancellationToken)
     {
         if (!await bannerRepository.ImageUrlInUseAsync(imageUrl, bannerId, cancellationToken))
@@ -202,7 +202,7 @@ public sealed class BannerService : IBannerService
 
         if (value.StartsWith('/'))
         {
-            // "//host" would send the visitor to another site, so only one leading slash is allowed.
+            // "//host" sẽ đưa người xem sang site khác, nên chỉ cho phép một dấu gạch chéo ở đầu.
             return !value.StartsWith("//", StringComparison.Ordinal) && !value.Contains('\\');
         }
 

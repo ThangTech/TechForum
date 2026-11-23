@@ -27,11 +27,10 @@ public sealed class AnswerRepository : IAnswerRepository
         CancellationToken cancellationToken)
     {
         var answers = PublicAnswers(topicId);
-        // An answer that is new has its score hidden, so in the order by score it counts as 0 (the order must not tell it).
+        // Điểm của câu trả lời mới bị ẩn, nên khi sắp theo điểm nó tính là 0 (thứ tự không được làm lộ điểm).
         var hiddenSince = timeProvider.GetUtcNow().AddHours(-ReputationRules.ScoreHiddenHours);
 
-        // The answer that the author of a question chose is shown first in every order. an empty id means there is none (an
-        // answer id is never empty), so the comparisons below simply never match.
+        // Câu trả lời được chấp nhận luôn đứng đầu. Guid rỗng nghĩa là chưa có, nên phép so sánh không bao giờ khớp.
         var pinnedId = await GetPinnedAnswerIdAsync(topicId, answers, cancellationToken);
         var hasPinned = pinnedId != Guid.Empty;
         var unpinned = answers.Where(answer => answer.Id != pinnedId);
@@ -98,8 +97,7 @@ public sealed class AnswerRepository : IAnswerRepository
         return new AnswerPage(items, totalItems, page);
     }
 
-    // The accepted answer of a question, when it can be seen by everyone; an empty id when there is none. An article has no accepted
-    // answer, and an answer that was deleted or hidden is not in the list, so it cannot be pinned.
+    // Bài viết (article) không có câu trả lời được chấp nhận; câu trả lời đã xóa hoặc bị ẩn thì không được ghim.
     private async Task<Guid> GetPinnedAnswerIdAsync(
         Guid topicId,
         IQueryable<Answer> visibleAnswers,
@@ -113,8 +111,7 @@ public sealed class AnswerRepository : IAnswerRepository
         return await visibleAnswers.AnyAsync(answer => answer.Id == acceptedId.Value, cancellationToken) ? acceptedId.Value : Guid.Empty;
     }
 
-    // Adds (or takes away, when delta is negative) reputation points of a member. It is only used for the bonus of an
-    // accepted answer; votes change reputation inside their own transaction (VoteRepository).
+    // Chỉ dùng cho điểm thưởng của câu trả lời được chấp nhận; phiếu bình chọn đổi danh tiếng trong giao dịch riêng (VoteRepository).
     public async Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken)
     {
         await dbContext.Users.Where(user => user.Id == userId)

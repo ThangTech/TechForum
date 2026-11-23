@@ -61,7 +61,7 @@ public sealed class MediaAssetRepository : IMediaAssetRepository
         CancellationToken cancellationToken)
     {
         return await dbContext.MediaAssets
-            // A picture that a draft still uses is not an orphan: the member may come back to the draft later.
+            // Ảnh bản nháp còn dùng thì không phải tệp mồ côi: thành viên có thể quay lại bản nháp.
             .Where(item => item.TopicId == null && item.CreatedAtUtc < threshold &&
                 !dbContext.Drafts.Any(draft => draft.MediaIds.Contains(item.Id)))
             .OrderBy(item => item.CreatedAtUtc)

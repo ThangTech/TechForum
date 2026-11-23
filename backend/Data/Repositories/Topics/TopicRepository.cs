@@ -99,9 +99,8 @@ public sealed class TopicRepository : ITopicRepository
         }
         else if (string.Equals(query.Sort, "hot", StringComparison.OrdinalIgnoreCase))
         {
-            // "Hot": the votes of a post divided by its age, so a post with many votes in a short time is on top and then
-            // goes down as it gets older (the formula of Hacker News: score / (hours + 2) ^ 1.5). A new post has its score
-            // hidden, so it counts as 0 for the first hours. Posts without votes follow, the newest first.
+            // "Hot": điểm chia cho tuổi của bài (công thức của Hacker News: score / (giờ + 2) ^ 1.5), nên bài nhiều phiếu trong
+            // thời gian ngắn lên đầu rồi tụt dần. Điểm của bài mới bị ẩn nên tính là 0; bài chưa có phiếu xếp sau, mới nhất trước.
             var now = timeProvider.GetUtcNow();
             var hiddenSince = now.AddHours(-ReputationRules.ScoreHiddenHours);
             orderedTopics = topics
@@ -112,8 +111,7 @@ public sealed class TopicRepository : ITopicRepository
         }
         else if (string.Equals(query.Sort, "top", StringComparison.OrdinalIgnoreCase))
         {
-            // "Top": the highest score, of the posts of the chosen time (today, this week, this month or all). The score of
-            // a new post is hidden, so it counts as 0 for the first hours.
+            // "Top": điểm cao nhất trong khoảng thời gian đã chọn; điểm của bài mới bị ẩn nên tính là 0.
             var now = timeProvider.GetUtcNow();
             var hiddenSince = now.AddHours(-ReputationRules.ScoreHiddenHours);
             var since = GetTopSince(query.Range, now);
@@ -175,7 +173,6 @@ public sealed class TopicRepository : ITopicRepository
         return new TopicPage(items, totalItems, discussions);
     }
 
-    // The oldest time of a post in "Top": a day, a week or a month back; null (every time) for anything else.
     public static DateTimeOffset? GetTopSince(string? range, DateTimeOffset now)
     {
         var value = range?.ToLowerInvariant();
@@ -316,7 +313,7 @@ public sealed class TopicRepository : ITopicRepository
         }
     }
 
-    // 2601 and 2627 are SQL Server's "duplicate key" errors. Only the slug index is expected here.
+    // Chỉ chỉ mục slug được phép trùng ở đây.
     private static bool IsSlugConflict(DbUpdateException exception)
     {
         return SqlErrors.IsDuplicateKey(exception) && exception.InnerException is SqlException sqlException &&

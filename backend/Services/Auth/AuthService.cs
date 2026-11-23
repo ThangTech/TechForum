@@ -64,7 +64,7 @@ public sealed class AuthService : IAuthService
             return Result<AuthSession>.Invalid("Thông tin đăng ký chưa hợp lệ", MapIdentityErrors(createResult.Errors));
         }
 
-        // A new member is signed in right after registering, with the short refresh token lifetime.
+        // Thành viên mới được đăng nhập ngay sau khi đăng ký, với thời hạn refresh token ngắn.
         var shortLifetime = TimeSpan.FromDays(jwtOptions.Value.ShortRefreshTokenDays);
         return await CreateSessionAsync(user, shortLifetime, cancellationToken);
     }
@@ -124,8 +124,7 @@ public sealed class AuthService : IAuthService
 
         if (storedToken.RevokedAtUtc is not null)
         {
-            // An old token is being used again, so it may have been copied.
-            // Sign the user out on every device and write it to the log, because it may be an attack.
+            // Token cũ bị dùng lại nghĩa là có thể đã bị sao chép: đăng xuất mọi thiết bị và ghi log vì có thể là tấn công.
             logger.LogWarning(
                 "Phát hiện refresh token đã thu hồi bị dùng lại; thu hồi mọi phiên của tài khoản {UserId}.",
                 storedToken.UserId);
@@ -150,7 +149,7 @@ public sealed class AuthService : IAuthService
             return Locked();
         }
 
-        // The new token keeps the same lifetime as the one it replaces.
+        // Token mới giữ nguyên thời hạn của token mà nó thay thế.
         var lifetime = storedToken.ExpiresAtUtc - storedToken.CreatedAtUtc;
         var newRefreshToken = tokenService.GenerateRefreshToken();
         var replacement = CreateRefreshTokenRecord(user.Id, newRefreshToken, now, lifetime);
@@ -220,8 +219,7 @@ public sealed class AuthService : IAuthService
             return Result<CurrentUserDto>.Invalid("Không thể đổi mật khẩu", MapPasswordChangeErrors(changeResult.Errors));
         }
 
-        // The security stamp changed, so access tokens stop working.
-        // Revoking the refresh tokens signs the user out on every device.
+        // Security stamp đã đổi nên access token cũ hết hiệu lực; thu hồi refresh token để đăng xuất mọi thiết bị.
         await refreshTokenRepository.RevokeAllForUserAsync(
             user.Id,
             timeProvider.GetUtcNow(),

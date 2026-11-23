@@ -23,7 +23,7 @@ public sealed class ProfanityFilterSetTests
     {
         var set = CreateSet("cat", "bazqux");
 
-        // "category", "concat", "scatter" and "bobcat" contain the letters but are not the banned word.
+        // "category", "concat", "scatter", "bobcat" có chứa các chữ đó nhưng không phải từ cấm.
         Assert.Equal("category concat scatter bobcat", set.Apply("category concat scatter bobcat", false));
         Assert.Equal("you *** and *** are *** ", set.Apply("you cat and bazqux are cat ", false));
     }
@@ -41,7 +41,7 @@ public sealed class ProfanityFilterSetTests
     {
         var set = CreateSet("cặp", "dịp");
 
-        // "dip" has no accent and "các" is another word: only the exact accented words are replaced.
+        // "dip" không dấu và "các" là từ khác: chỉ thay đúng từ có dấu.
         Assert.Equal("các bạn *** dip ***", set.Apply("các bạn cặp dip dịp", false));
     }
 
@@ -51,7 +51,7 @@ public sealed class ProfanityFilterSetTests
         var set = CreateSet("dịp");
 
         Assert.Equal("***", set.Apply("DỊP", false));
-        // The same word typed as letters plus separate accent marks (some keyboards and pasted texts do this).
+        // Cùng từ đó nhưng gõ chữ và dấu tách rời (một số bàn phím và văn bản dán vào làm vậy).
         Assert.Equal("***", set.Apply("dịp".Normalize(NormalizationForm.FormD), false));
     }
 

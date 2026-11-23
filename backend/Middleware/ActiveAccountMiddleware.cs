@@ -5,8 +5,7 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Middleware;
 
-// Runs after JWT validation. A valid token is still rejected when the account was locked
-// or its security stamp changed (for example after a password change).
+// Token hợp lệ vẫn bị từ chối khi tài khoản đã bị khóa hoặc security stamp đã đổi (ví dụ sau khi đổi mật khẩu).
 public sealed class ActiveAccountMiddleware
 {
     private readonly RequestDelegate next;

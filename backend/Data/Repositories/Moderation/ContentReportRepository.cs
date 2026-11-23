@@ -85,7 +85,7 @@ public sealed class ContentReportRepository : IContentReportRepository
         Guid? topicId, Guid? answerId, DateTimeOffset now, Notification notification, CancellationToken cancellationToken)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        // One UPDATE with the condition in it, so two reports that arrive together hide the content only once.
+        // Điều kiện nằm trong câu UPDATE, nên hai báo cáo tới cùng lúc chỉ ẩn nội dung một lần.
         var affected = topicId.HasValue
             ? await dbContext.Topics
                 .Where(topic => topic.Id == topicId && !topic.IsHiddenByModerator && !topic.IsDeleted)

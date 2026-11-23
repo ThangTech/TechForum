@@ -2,9 +2,8 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace TechForum.Api.Services;
 
-// Keeps the banned words in IMemoryCache, so a post or an answer does not cost a query to the database.
-// The list is read when the application starts (BannedWordWarmupService), after every change of an admin, and again
-// when the cache entry runs out, so another instance of the API that changed the list is noticed within minutes.
+// Giữ từ cấm trong IMemoryCache để mỗi bài đăng không tốn một truy vấn. Danh sách được đọc lại khi khởi động,
+// sau mỗi lần quản trị viên sửa, và khi cache hết hạn, nên thay đổi từ instance API khác cũng có hiệu lực sau vài phút.
 public sealed class ProfanityFilter : IProfanityFilter
 {
     public const string CacheKey = "banned-words:filter-set";
@@ -21,8 +20,7 @@ public sealed class ProfanityFilter : IProfanityFilter
         this.logger = logger;
     }
 
-    // When the database cannot be read, the filter lets the text pass and tries again soon, instead of asking for
-    // every request.
+    // Không đọc được DB thì cho văn bản qua và thử lại sau ít phút, thay vì hỏi DB ở mọi yêu cầu.
     private static readonly TimeSpan FailureLifetime = TimeSpan.FromMinutes(1);
 
     public async Task<string> FilterAsync(string text, bool isHtml, CancellationToken cancellationToken)

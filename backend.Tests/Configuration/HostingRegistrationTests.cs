@@ -35,7 +35,7 @@ public sealed class HostingRegistrationTests
         Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddHostingSettings(configuration));
     }
 
-    // Behind nginx (Docker) there is one proxy: the header holds only the address of the visitor.
+    // Sau nginx (Docker) chỉ có một proxy: header chỉ chứa IP của người dùng.
     [Fact]
     public async Task ForwardedHeaders_WithOneProxy_TakeTheAddressOfTheVisitor()
     {
@@ -45,7 +45,7 @@ public sealed class HostingRegistrationTests
         Assert.True(context.Request.IsHttps);
     }
 
-    // On Render behind Vercel: Vercel writes the visitor, then the proxy of Render adds the address of Vercel.
+    // Render sau Vercel: Vercel ghi IP người dùng, rồi proxy của Render thêm IP của Vercel.
     [Fact]
     public async Task ForwardedHeaders_WithTwoProxies_SkipTheAddressOfVercel()
     {
@@ -55,7 +55,7 @@ public sealed class HostingRegistrationTests
         Assert.True(context.Request.IsHttps);
     }
 
-    // With the default limit the same chain gives the address of Vercel, shared by every visitor.
+    // Với giới hạn mặc định, chuỗi này cho ra IP của Vercel, dùng chung cho mọi người dùng.
     [Fact]
     public async Task ForwardedHeaders_WithTwoProxiesAndLimitOne_GiveTheAddressOfVercel()
     {

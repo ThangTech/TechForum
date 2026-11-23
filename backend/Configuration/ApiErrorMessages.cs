@@ -3,13 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TechForum.Api.Configuration;
 
-// The texts of the errors that ASP.NET writes by itself (a wrong request body, a missing field, a plain 404). They are in
-// English by default; a member must always read Vietnamese, so they are changed here.
+// Các lỗi do ASP.NET tự viết (body sai, thiếu trường, 404 trống) mặc định là tiếng Anh;
+// thành viên luôn phải đọc được tiếng Việt nên chúng được đổi ở đây.
 public static partial class ApiErrorMessages
 {
     public const string ValidationTitle = "Dữ liệu chưa hợp lệ";
 
-    // The title that ASP.NET gives to every validation error when nobody sets another one.
     public const string DefaultValidationTitle = "One or more validation errors occurred.";
 
     public const string GenericDetail = "Vui lòng kiểm tra lại các thông tin đã nhập.";
@@ -17,7 +16,7 @@ public static partial class ApiErrorMessages
     private const string RequiredMessage = "Vui lòng nhập đủ các thông tin bắt buộc.";
     private const string InvalidValueMessage = "Dữ liệu gửi lên chưa hợp lệ. Vui lòng kiểm tra lại.";
 
-    // The titles of the answers without a body (a plain 404, 401, 403...), by status code.
+    // Tiêu đề cho các câu trả lời không có nội dung (404, 401, 403 trống), theo mã trạng thái.
     public static readonly IReadOnlyDictionary<int, string> ClientErrorTitles = new Dictionary<int, string>
     {
         [400] = "Yêu cầu không hợp lệ",
@@ -32,8 +31,7 @@ public static partial class ApiErrorMessages
         [429] = "Bạn gửi quá nhiều yêu cầu"
     };
 
-    // A message that is already Vietnamese (it has a letter that is not plain ASCII) stays as it is. A message of the
-    // framework ("The Title field is required.", "The JSON value could not be converted...") is replaced by a Vietnamese one.
+    // Câu đã là tiếng Việt (có chữ ngoài ASCII) giữ nguyên; câu tiếng Anh của framework được thay bằng tiếng Việt.
     public static string? Localize(string? message)
     {
         if (string.IsNullOrWhiteSpace(message)) return null;
@@ -41,13 +39,11 @@ public static partial class ApiErrorMessages
         return RequiredFieldPattern().IsMatch(message) ? RequiredMessage : InvalidValueMessage;
     }
 
-    // The first message of the errors, to show a member one clear sentence.
     public static string? FirstMessage(IDictionary<string, string[]> errors)
     {
         return errors.Values.SelectMany(messages => messages).Select(Localize).FirstOrDefault(message => message is not null);
     }
 
-    // Gives a validation problem a Vietnamese title, Vietnamese messages and a detail with the first message.
     public static void Apply(ValidationProblemDetails problem)
     {
         if (string.IsNullOrWhiteSpace(problem.Title) || problem.Title == DefaultValidationTitle)

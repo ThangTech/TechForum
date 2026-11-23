@@ -7,6 +7,6 @@ public interface ITopicStarRepository
     Task AddAsync(Guid topicId, string userId, DateTimeOffset createdAtUtc, CancellationToken cancellationToken);
     Task RemoveAsync(Guid topicId, string userId, CancellationToken cancellationToken);
 
-    // The topics the member gave a star, the newest star first; only topics everyone can still read.
+    // Chỉ các bài mọi người còn đọc được, sao mới nhất trước.
     Task<StarPage> GetPageAsync(string userId, int page, int pageSize, CancellationToken cancellationToken);
 }

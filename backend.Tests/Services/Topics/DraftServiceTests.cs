@@ -80,7 +80,7 @@ public sealed class DraftServiceTests
     [Fact]
     public async Task SaveAsync_AcceptsAnUnfinishedForm()
     {
-        // A topic needs a title of 10 characters, a summary of 20 and a category. A draft needs none of them.
+        // Bài viết cần tiêu đề 10 ký tự, tóm tắt 20 ký tự và chuyên mục; bản nháp thì không cần.
         var result = await CreateService().SaveAsync(Member, Request(title: "Ngắn"), default);
 
         Assert.True(result.Succeeded);
@@ -213,7 +213,7 @@ public sealed class DraftServiceTests
         IReadOnlyList<Guid>? mediaIds = null) =>
         new(topicId, title, summary, body, type, null, tagIds, mediaIds);
 
-    // Knows only the files that were given to it, all of them owned by the member and not used yet.
+    // Chỉ biết các tệp được truyền vào, đều thuộc thành viên và chưa dùng.
     private sealed class FakeMediaRepository(params MediaAsset[] assets) : IMediaAssetRepository
     {
         public Task AddAsync(MediaAsset mediaAsset, CancellationToken cancellationToken) => Task.CompletedTask;

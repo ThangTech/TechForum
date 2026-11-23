@@ -4,8 +4,7 @@ using Xunit;
 
 namespace TechForum.Api.Tests.Data;
 
-// The rule is an expression that EF Core turns into SQL. These tests run the same expression in
-// memory, so every case of the rule is checked without a database.
+// Quy tắc là biểu thức EF Core dịch sang SQL; ở đây chạy chính biểu thức đó trong bộ nhớ, không cần DB.
 public sealed class AnswerVisibilityTests
 {
     private static readonly Func<Answer, bool> IsPublic = AnswerVisibility.IsPublic.Compile();

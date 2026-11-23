@@ -198,7 +198,6 @@ public sealed class AvatarServiceTests : IDisposable
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
-    // Only the members that the avatar service uses.
     private sealed class FakeAccounts : IAccountRepository
     {
         public ApplicationUser User { get; } = new() { Id = UserId, DisplayName = "Thành viên A", Email = "a@example.test" };

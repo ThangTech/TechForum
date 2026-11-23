@@ -82,7 +82,7 @@ public sealed class BannerImageStorageTests : IDisposable
         var result = await CreateStorage().SaveAsync(CreateFile(Png, "image/png"), default);
 
         Assert.False(result.Succeeded);
-        // The address is not one of this site, so it cannot be deleted by id either: nothing else is touched.
+        // Địa chỉ không thuộc site nên không xóa theo id được; không đụng tới gì khác.
         Assert.Empty(cloud.Deleted);
     }
 
@@ -132,7 +132,7 @@ public sealed class BannerImageStorageTests : IDisposable
         await storage.DeleteAsync($"https://res.cloudinary.com/other-cloud/image/upload/v5/techforum/banners/{Id}.png", default);
         Assert.Empty(cloud.Deleted);
 
-        // The banner is already changed; a file that cannot be deleted now is only logged.
+        // Banner đã đổi xong; tệp chưa xóa được chỉ ghi log.
         cloud.Fails = true;
         await storage.DeleteAsync($"https://res.cloudinary.com/demo-cloud/image/upload/v5/techforum/banners/{Id}.png", default);
     }

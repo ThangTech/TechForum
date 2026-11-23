@@ -8,15 +8,14 @@ public interface IContentReportRepository
     Task<Answer?> GetPublicAnswerAsync(Guid answerId, CancellationToken cancellationToken);
     Task<bool> PendingExistsAsync(string reporterId, Guid? topicId, Guid? answerId, CancellationToken cancellationToken);
     Task<bool> AddAsync(ContentReport report, CancellationToken cancellationToken);
-    // The number of different members with a waiting report on the content, counting only accounts made before the date.
+    // Số người khác nhau có báo cáo đang chờ, chỉ tính tài khoản tạo trước mốc thời gian.
     Task<int> CountPendingReportersAsync(Guid? topicId, Guid? answerId, DateTimeOffset accountsCreatedBefore, CancellationToken cancellationToken);
     Task<bool> HasAcceptedReportAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken);
-    // Hides the content that is still shown and saves the notification for its author, together. False when it was
-    // already hidden or deleted.
+    // Ẩn nội dung đang hiện và lưu thông báo cho tác giả cùng lúc; false khi đã bị ẩn hoặc đã xóa.
     Task<bool> AutoHideAsync(Guid? topicId, Guid? answerId, DateTimeOffset now, Notification notification, CancellationToken cancellationToken);
-    // Shows again the content that hid itself, with the notification for its author. False when it is not auto-hidden.
+    // Hiện lại nội dung đã tự ẩn và lưu thông báo cho tác giả; false khi nó không ở trạng thái tự ẩn.
     Task<bool> ShowAutoHiddenAsync(Guid? topicId, Guid? answerId, Notification notification, CancellationToken cancellationToken);
-    // A moderator decided (accepted a report): the content stays hidden, but it is no longer "hidden by the reports".
+    // Quản trị viên chấp nhận báo cáo: nội dung vẫn ẩn, nhưng không còn là "tự ẩn vì báo cáo".
     Task KeepHiddenByModeratorAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken);
     Task<ContentReportPage> GetPageAsync(
         ReportStatus? status,

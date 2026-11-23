@@ -45,7 +45,7 @@ public sealed class ProfanityFilterTests
         await filter.FilterAsync("x", false, default);
         loader.Words = ["foobar", "bazqux"];
 
-        // Still the old list while the cache is valid.
+        // Vẫn là danh sách cũ khi cache còn hạn.
         Assert.Equal("bazqux", await filter.FilterAsync("bazqux", false, default));
 
         filter.Invalidate();

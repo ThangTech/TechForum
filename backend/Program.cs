@@ -25,7 +25,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 builder.Services.AddControllers(options => options.Filters.Add<ValidationProblemMessageFilter>())
     .ConfigureApiBehaviorOptions(options =>
     {
-        // A request that does not pass the validation of its body (before the action runs) answers in Vietnamese.
+        // Yêu cầu có body không hợp lệ (trước khi vào action) cũng trả lời bằng tiếng Việt.
         options.InvalidModelStateResponseFactory = context =>
         {
             var errors = context.ModelState
@@ -43,13 +43,11 @@ builder.Services.AddControllers(options => options.Filters.Add<ValidationProblem
             return new BadRequestObjectResult(problem) { ContentTypes = { "application/problem+json" } };
         };
 
-        // The title of an answer without a body (a plain 404, 401...) is Vietnamese too.
         foreach (var (status, title) in ApiErrorMessages.ClientErrorTitles)
         {
             if (options.ClientErrorMapping.TryGetValue(status, out var mapping)) mapping.Title = title;
         }
     });
-// Unexpected errors answer with problem details JSON and a trace id (see ServerErrorResponse).
 builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = ServerErrorResponse.Customize);
 builder.Services.AddOpenApi();
@@ -168,7 +166,7 @@ builder.Services.AddScoped<IUserFollowRepository, UserFollowRepository>();
 builder.Services.AddScoped<IUserFollowService, UserFollowService>();
 builder.Services.AddScoped<IUserSkillRepository, UserSkillRepository>();
 builder.Services.AddScoped<IUserSkillService, UserSkillService>();
-// Banned words: read from SQL Server into IMemoryCache when the application starts; [ProfanityFilter] uses the cache.
+// Từ cấm được nạp từ SQL Server vào IMemoryCache khi khởi động; [ProfanityFilter] đọc từ cache.
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IBannedWordRepository, BannedWordRepository>();
 builder.Services.AddScoped<IBannedWordService, BannedWordService>();
@@ -217,11 +215,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// First in the pipeline, so it also catches errors thrown by the middleware below.
-// The framework writes the exception and its stack trace to the log before this answers.
+// Đặt đầu tiên để bắt cả lỗi của các middleware phía sau.
 app.UseExceptionHandler();
 
-// Behind nginx: take the address of the visitor and the scheme from the headers of the proxy, before anything uses them.
+// Sau proxy: lấy IP và giao thức thật từ header trước khi bất cứ thứ gì dùng tới.
 var isBehindProxy = HostingRegistration.IsBehindProxy(app.Configuration);
 if (isBehindProxy)
 {
@@ -230,16 +227,15 @@ if (isBehindProxy)
 
 app.UseMiddleware<RequestCancellationMiddleware>();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-// Development always migrates and seeds; the containers ask for it with Database:MigrateOnStartup / SeedDemoData.
+// Môi trường phát triển luôn migrate và seed; container bật bằng Database:MigrateOnStartup / SeedDemoData.
 await app.PrepareDatabaseAsync();
 
-// Behind a proxy, HTTPS is the job of the proxy (it holds the certificate), so the API does not redirect.
+// Sau proxy thì HTTPS là việc của proxy (nó giữ chứng chỉ), nên API không chuyển hướng.
 if (!app.Environment.IsDevelopment() && !isBehindProxy)
 {
     app.UseHttpsRedirection();

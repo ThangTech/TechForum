@@ -111,9 +111,7 @@ public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>
         draft.Property(item => item.Summary).HasMaxLength(500).IsRequired();
         draft.Property(item => item.BodyHtml).IsRequired();
         draft.Property(item => item.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
-        // One draft for each member and target: a new topic (TopicId is null) or a topic that is edited.
-        // The index has no filter, so the NULL of a new topic also counts as one value and a member cannot
-        // have two drafts of a new topic.
+        // Chỉ mục không có bộ lọc nên NULL của bài mới cũng tính là một giá trị: mỗi người chỉ có một bản nháp cho bài mới.
         draft.HasIndex(item => new { item.UserId, item.TopicId }).IsUnique().HasFilter(null);
         draft.HasOne(item => item.User)
             .WithMany()
@@ -318,7 +316,7 @@ public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>
 
         var userVote = modelBuilder.Entity<UserVote>();
         userVote.ToTable("UserVotes", table => table.HasCheckConstraint("CK_UserVotes_Value", "[Value] IN (-1, 1)"));
-        // One vote of a member for one post or answer: the same vote cannot be saved twice.
+        // Một phiếu cho mỗi bài hoặc câu trả lời, không lưu trùng được.
         userVote.HasKey(item => new { item.UserId, item.TargetType, item.TargetId });
         userVote.Property(item => item.UserId).HasMaxLength(450).IsRequired();
         userVote.HasIndex(item => new { item.TargetType, item.TargetId });
@@ -328,7 +326,7 @@ public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>
         bannedWord.ToTable("BannedWords");
         bannedWord.HasKey(item => item.Id);
         bannedWord.Property(item => item.Word).HasMaxLength(60).IsRequired();
-        // SQL Server compares text without the case, so "Foo" and "foo" are one word.
+        // SQL Server so sánh không phân biệt hoa thường, nên "Foo" và "foo" là một từ.
         bannedWord.HasIndex(item => item.Word).IsUnique();
 
         var refreshToken = modelBuilder.Entity<RefreshToken>();

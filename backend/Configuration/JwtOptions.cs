@@ -7,7 +7,7 @@ public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
 
-    // The signing key must be set by environment variable or user secrets in real deployments.
+    // Khóa ký phải đặt bằng biến môi trường hoặc user-secrets khi chạy thật.
     public const int MinimumSigningKeyLength = 32;
 
     public string Issuer { get; init; } = "TechForum.Api";
@@ -18,10 +18,10 @@ public sealed class JwtOptions
 
     public int AccessTokenMinutes { get; init; } = 15;
 
-    // Used when the user ticks "remember me" at login.
+    // Dùng khi người dùng chọn "ghi nhớ đăng nhập".
     public int RefreshTokenDays { get; init; } = 7;
 
-    // Used when the user does not tick "remember me".
+    // Dùng khi người dùng không chọn "ghi nhớ đăng nhập".
     public int ShortRefreshTokenDays { get; init; } = 1;
 
     public string? GetConfigurationError()
@@ -45,7 +45,7 @@ public sealed class JwtOptions
         return new(Encoding.UTF8.GetBytes(SigningKey));
     }
 
-    // Shared by the JwtBearer middleware and the tests so both check tokens the same way.
+    // Dùng chung cho JwtBearer và test, để hai nơi kiểm tra token giống hệt nhau.
     public TokenValidationParameters CreateValidationParameters()
     {
         return new()

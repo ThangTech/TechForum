@@ -33,7 +33,7 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        // One UPDATE decides the winner when two requests use the same token at the same time.
+        // Một câu UPDATE quyết định yêu cầu nào thắng khi hai yêu cầu dùng cùng token một lúc.
         var revokedCount = await dbContext.RefreshTokens
             .Where(token =>
                 token.Id == currentTokenId &&
