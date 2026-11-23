@@ -463,6 +463,25 @@ public sealed class TopicServiceTests
     }
 
     [Fact]
+    public async Task SoftDeleteAsync_LetsGoOfTheMediaSoTheCleanupDeletesTheFiles()
+    {
+        var topic = CreateTopic();
+        topic.MediaAssets.Add(new MediaAsset
+        {
+            Id = TestIds.Id(70), UploaderId = topic.AuthorId, RelativePath = "techforum/images/a", PublicUrl = "https://res.cloudinary.com/demo/image/upload/a.png",
+            ContentType = "image/png", TopicId = topic.Id
+        });
+        var repository = new FakeTopicRepository { OwnedTopic = topic };
+
+        var result = await CreateService(repository).SoftDeleteAsync(topic.Id, topic.AuthorId, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.True(topic.IsDeleted);
+        Assert.Empty(topic.MediaAssets);
+        Assert.True(repository.SavedChanges);
+    }
+
+    [Fact]
     public async Task SoftDeleteAsync_WithDifferentOwner_DoesNotDeleteTopic()
     {
         var repository = new FakeTopicRepository { OwnedTopic = CreateTopic() };

@@ -248,6 +248,10 @@ public sealed partial class TopicService(
 
         topic.IsDeleted = true;
         topic.UpdatedAtUtc = timeProvider.GetUtcNow();
+        // A deleted topic cannot come back, so its pictures and videos no longer belong to anything. Without a topic
+        // they become orphans, and the cleanup in the background (MediaCleanupBackgroundService) deletes the files on
+        // Cloudinary at its next run.
+        topic.MediaAssets.Clear();
         await topicRepository.SaveChangesAsync(cancellationToken);
         await draftRepository.DeleteForTargetAsync(authorId, id, cancellationToken);
         return SoftDeleteTopicResult.Success();
