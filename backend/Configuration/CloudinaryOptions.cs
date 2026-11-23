@@ -15,6 +15,10 @@ public sealed class CloudinaryOptions
     // (for example "techforum" and "techforum-dev").
     public string Folder { get; init; } = "techforum";
 
+    // The automatic check of pictures when they are uploaded, for example "aws_rek" (Amazon Rekognition AI Moderation).
+    // The add-on must be registered in the Cloudinary console first. Empty: pictures are not checked.
+    public string ImageModeration { get; init; } = string.Empty;
+
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(CloudName) &&
         !string.IsNullOrWhiteSpace(ApiKey) &&

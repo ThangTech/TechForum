@@ -201,6 +201,27 @@ Hoặc biến môi trường `Cloudinary__CloudName`, `Cloudinary__ApiKey`, `Clo
 cho môi trường khác (ví dụ `techforum-dev`). Khi chưa cấu hình, API vẫn chạy và hiển thị
 nội dung cũ, nhưng các endpoint tải tệp lên trả **503** kèm lời giải thích.
 
+### Kiểm duyệt ảnh bằng AI (tuỳ chọn)
+
+Đặt `Cloudinary:ImageModeration` = `aws_rek` để Cloudinary kiểm tra mọi ảnh (ảnh bài viết, avatar,
+banner) bằng add-on **Amazon Rekognition AI Moderation** ngay lúc tải lên. Trước đó phải đăng ký
+add-on trong Cloudinary Console → Add-ons (gói miễn phí có hạn mức nhỏ mỗi tháng).
+
+- Ảnh bị từ chối (khỏa thân, bạo lực, ma túy...) bị xóa ngay trên Cloudinary (Cloudinary vẫn giữ
+  bản dự phòng nếu không xóa) và API trả **400** "Ảnh có nội dung không phù hợp...".
+- Khi add-on không kiểm tra được (chưa đăng ký, hết hạn mức tháng), ảnh vẫn được tải lên không
+  kiểm duyệt và log ghi cảnh báo, để thành viên vẫn đăng bài được.
+- Ảnh phải từ 80×80 pixel mới được kiểm tra. Video không được kiểm duyệt bằng AI (kết quả của
+  Cloudinary trả về sau qua webhook); video vi phạm được xử lý bằng báo cáo của thành viên.
+- Để trống (mặc định): không kiểm duyệt.
+
+### Dọn tệp không còn dùng
+
+`MediaCleanupBackgroundService` chạy mỗi `Media:CleanupIntervalMinutes` phút và xóa trên Cloudinary
+(`DestroyAsync`) các tệp không thuộc bài nào quá `Media:OrphanRetentionHours` giờ: ảnh tải lên rồi
+bỏ, ảnh bị gỡ khỏi bài khi sửa, và ảnh của bài mà tác giả đã xóa. Bài bị quản trị viên ẩn giữ
+nguyên tệp vì còn khôi phục được.
+
 ### Endpoint
 
 - `POST /api/media/images`: multipart field `file`, hỗ trợ PNG/JPEG/GIF/WebP, tối đa 5 MB.

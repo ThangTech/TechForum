@@ -10,10 +10,14 @@ namespace TechForum.Api.Services;
 public sealed class CloudinaryMediaClient : ICloudMediaClient
 {
     private readonly Cloudinary? cloudinary;
+    private readonly string imageModeration;
+    private readonly ILogger<CloudinaryMediaClient> logger;
 
-    public CloudinaryMediaClient(IOptions<CloudinaryOptions> optionsAccessor)
+    public CloudinaryMediaClient(IOptions<CloudinaryOptions> optionsAccessor, ILogger<CloudinaryMediaClient> logger)
     {
         var options = optionsAccessor.Value;
+        imageModeration = options.ImageModeration.Trim();
+        this.logger = logger;
         if (options.IsConfigured)
         {
             cloudinary = new Cloudinary(new Account(options.CloudName, options.ApiKey, options.ApiSecret))
@@ -47,9 +51,7 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
             }
             else
             {
-                result = await client.UploadAsync(
-                    new ImageUploadParams { File = file, PublicId = publicId, Overwrite = false, UseFilename = false, UniqueFilename = false },
-                    cancellationToken);
+                result = await UploadImageAsync(client, content, fileName, publicId, cancellationToken);
             }
 
             // 400 is the answer for a file that Cloudinary does not accept. Other answers (wrong keys, too many requests, a
@@ -64,6 +66,13 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
                 throw new CloudMediaException($"Cloudinary không nhận được tệp: {result.Error?.Message ?? "không có địa chỉ trả về"}.");
             }
 
+            if (CloudModeration.IsRejected(result.Moderation))
+            {
+                // A refused picture is kept by Cloudinary as a backup and uses space, so it is deleted at once.
+                await TryDestroyRejectedAsync(client, publicId);
+                throw new CloudMediaRejectedException(CloudModeration.RejectedMessage);
+            }
+
             return result.SecureUrl.AbsoluteUri;
         }
         catch (CloudMediaException)
@@ -73,6 +82,56 @@ public sealed class CloudinaryMediaClient : ICloudMediaClient
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             throw new CloudMediaException("Không thể kết nối tới Cloudinary.", exception);
+        }
+    }
+
+    // With Cloudinary:ImageModeration set, the picture is checked while it is uploaded. When the add-on cannot check it
+    // (not registered, or no free units left this month), the picture is uploaded again without the check, so members
+    // can still post; the warning in the log says why.
+    private async Task<UploadResult> UploadImageAsync(
+        Cloudinary client, Stream content, string fileName, string publicId, CancellationToken cancellationToken)
+    {
+        ImageUploadParams Create(Stream file, string? moderation) => new()
+        {
+            File = new FileDescription(fileName, file),
+            PublicId = publicId,
+            Overwrite = false,
+            UseFilename = false,
+            UniqueFilename = false,
+            Moderation = moderation
+        };
+
+        if (string.IsNullOrEmpty(imageModeration))
+        {
+            return await client.UploadAsync(Create(content, null), cancellationToken);
+        }
+
+        // The library closes the stream after an upload, so the picture (at most a few MB) is kept in memory to be sent
+        // a second time if needed.
+        using var buffer = new MemoryStream();
+        await content.CopyToAsync(buffer, cancellationToken);
+        var bytes = buffer.ToArray();
+
+        var result = await client.UploadAsync(Create(new MemoryStream(bytes), imageModeration), cancellationToken);
+        if (result.Error is null || !CloudModeration.IsUnavailable(result.Error.Message))
+        {
+            return result;
+        }
+
+        logger.LogWarning("Không kiểm duyệt được ảnh bằng {Moderation}: {Error}. Ảnh được tải lên không kiểm duyệt.",
+            imageModeration, result.Error.Message);
+        return await client.UploadAsync(Create(new MemoryStream(bytes), null), cancellationToken);
+    }
+
+    private async Task TryDestroyRejectedAsync(Cloudinary client, string publicId)
+    {
+        try
+        {
+            await client.DestroyAsync(new DeletionParams(publicId) { ResourceType = ResourceType.Image, Invalidate = true });
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Không xóa được ảnh bị từ chối {PublicId} trên Cloudinary.", publicId);
         }
     }
 

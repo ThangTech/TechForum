@@ -56,6 +56,7 @@ Biến môi trường (**Environment**):
 | `ReverseProxy__ForwardLimit` | `2` (Vercel và proxy của Render: xem giải thích bên dưới) |
 | `Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command` | `Warning` |
 | `Cloudinary__CloudName`, `Cloudinary__ApiKey`, `Cloudinary__ApiSecret` | Như trong `.env` |
+| `Cloudinary__ImageModeration` | `aws_rek` nếu đã đăng ký add-on kiểm duyệt ảnh, để trống nếu chưa |
 | `RecoveryEmail__Host` | Máy chủ SMTP, ví dụ `in-v3.mailjet.com` |
 | `RecoveryEmail__Port` | `2525` (Render miễn phí chặn 25, 465 và 587) |
 | `RecoveryEmail__Username`, `RecoveryEmail__Password` | Tài khoản SMTP (Mailjet: API Key và Secret Key) |

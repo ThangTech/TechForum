@@ -10,6 +10,11 @@ public static class CloudRejection
 {
     public static string ToMessage(string cloudMessage)
     {
+        if (cloudMessage == CloudModeration.RejectedMessage)
+        {
+            return "Ảnh có nội dung không phù hợp (khỏa thân, bạo lực, ma túy...) nên không được tải lên.";
+        }
+
         var text = cloudMessage.ToLowerInvariant();
 
         if (text.Contains("megapixel") || text.Contains("dimension") || text.Contains("resolution"))
