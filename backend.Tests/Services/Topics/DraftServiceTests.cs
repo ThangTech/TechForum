@@ -18,12 +18,12 @@ public sealed class DraftServiceTests
 
         var result = await CreateService(drafts).SaveAsync(Member, Request(title: "Tiêu đề viết dở"), default);
 
-        Assert.Equal(DraftWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         var draft = Assert.Single(drafts.Drafts);
         Assert.Equal(Member, draft.UserId);
         Assert.Null(draft.TopicId);
         Assert.Equal("Tiêu đề viết dở", draft.Title);
-        Assert.Equal(draft.Id, result.Draft!.Id);
+        Assert.Equal(draft.Id, result.Value!.Id);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public sealed class DraftServiceTests
         var second = await service.SaveAsync(Member, Request(title: "Bản sửa", summary: "Tóm tắt mới"), default);
 
         var draft = Assert.Single(drafts.Drafts);
-        Assert.Equal(first.Draft!.Id, second.Draft!.Id);
+        Assert.Equal(first.Value!.Id, second.Value!.Id);
         Assert.Equal("Bản sửa", draft.Title);
         Assert.Equal("Tóm tắt mới", draft.Summary);
         Assert.Equal(1, drafts.SaveCount);
@@ -70,10 +70,10 @@ public sealed class DraftServiceTests
 
         var result = await CreateService(drafts).SaveAsync(Member, Request(title: "Bản của yêu cầu này"), default);
 
-        Assert.Equal(DraftWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         var draft = Assert.Single(drafts.Drafts);
         Assert.Equal("Bản của yêu cầu này", draft.Title);
-        Assert.Equal(draft.Id, result.Draft!.Id);
+        Assert.Equal(draft.Id, result.Value!.Id);
         Assert.Equal(1, drafts.SaveCount);
     }
 
@@ -83,7 +83,7 @@ public sealed class DraftServiceTests
         // A topic needs a title of 10 characters, a summary of 20 and a category. A draft needs none of them.
         var result = await CreateService().SaveAsync(Member, Request(title: "Ngắn"), default);
 
-        Assert.Equal(DraftWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
     }
 
     [Theory]
@@ -96,7 +96,7 @@ public sealed class DraftServiceTests
 
         var result = await CreateService(drafts).SaveAsync(Member, new SaveDraftRequest(null, title, summary, body, null, null, null, null), default);
 
-        Assert.Equal(DraftWriteFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Empty(drafts.Drafts);
     }
 
@@ -105,7 +105,7 @@ public sealed class DraftServiceTests
     {
         var result = await CreateService().SaveAsync(Member, Request(body: "<p><img src=\"/media/images/a.png\"></p>"), default);
 
-        Assert.Equal(DraftWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public sealed class DraftServiceTests
 
         var result = await CreateService(drafts).SaveAsync(Member, Request(title: "Sửa bài người khác", topicId: TestIds.Id(9)), default);
 
-        Assert.Equal(DraftWriteFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Empty(drafts.Drafts);
     }
 
@@ -169,9 +169,9 @@ public sealed class DraftServiceTests
 
         var result = await CreateService(drafts, media).SaveAsync(Member, Request(title: "Có ảnh", mediaIds: [usable.Id, strangerFileId]), default);
 
-        Assert.Equal(DraftWriteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Equal([usable.Id], Assert.Single(drafts.Drafts).MediaIds);
-        Assert.Equal("/media/images/a.png", Assert.Single(result.Draft!.Media).Path);
+        Assert.Equal("/media/images/a.png", Assert.Single(result.Value!.Media).Path);
     }
 
     [Fact]

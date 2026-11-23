@@ -73,7 +73,7 @@ public sealed partial class AnswerService : IAnswerService
             totalPages);
     }
 
-    public async Task<AnswerHelpfulResult> SetHelpfulAsync(
+    public async Task<Result<AnswerHelpfulDto>> SetHelpfulAsync(
         Guid topicId,
         Guid answerId,
         string userId,
@@ -83,17 +83,17 @@ public sealed partial class AnswerService : IAnswerService
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
         if (topic is null)
         {
-            return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.NotFound);
+            return Result<AnswerHelpfulDto>.Fail(ErrorType.NotFound, "Không tìm thấy câu trả lời", "Chủ đề hoặc câu trả lời không tồn tại hoặc không còn công khai.");
         }
 
         var answer = await answerRepository.GetVisibleByIdAsync(topicId, answerId, cancellationToken);
         if (answer is null)
         {
-            return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.NotFound);
+            return Result<AnswerHelpfulDto>.Fail(ErrorType.NotFound, "Không tìm thấy câu trả lời", "Chủ đề hoặc câu trả lời không tồn tại hoặc không còn công khai.");
         }
         if (isHelpful && answer.AuthorId == userId)
         {
-            return AnswerHelpfulResult.Failed(AnswerHelpfulFailure.OwnAnswer);
+            return Result<AnswerHelpfulDto>.Fail(ErrorType.Conflict, "Không thể tự bình chọn", "Bạn không thể đánh dấu hữu ích cho câu trả lời của chính mình.");
         }
 
         if (isHelpful)
@@ -111,10 +111,10 @@ public sealed partial class AnswerService : IAnswerService
         }
 
         var state = await GetHelpfulStateAsync(answer.Id, userId, cancellationToken);
-        return AnswerHelpfulResult.Success(new AnswerHelpfulDto(state.HelpfulCount, state.IsHelpful));
+        return Result<AnswerHelpfulDto>.Success(new AnswerHelpfulDto(state.HelpfulCount, state.IsHelpful));
     }
 
-    public async Task<CreateAnswerResult> CreateAsync(
+    public async Task<Result<AnswerDto>> CreateAsync(
         Guid topicId,
         string authorId,
         CreateAnswerRequest request,
@@ -123,32 +123,24 @@ public sealed partial class AnswerService : IAnswerService
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
         if (topic is null)
         {
-            return CreateAnswerResult.Failed(
-                CreateAnswerFailure.TopicNotFound,
-                "Chủ đề không tồn tại hoặc không còn công khai.");
+            return Result<AnswerDto>.Fail(ErrorType.NotFound, "Không tìm thấy chủ đề", "Chủ đề không tồn tại hoặc không còn công khai.");
         }
 
         if (topic.IsDiscussionLocked)
         {
-            return CreateAnswerResult.Failed(
-                CreateAnswerFailure.DiscussionLocked,
-                "Chủ đề đã khóa thảo luận.");
+            return Result<AnswerDto>.Fail(ErrorType.Conflict, "Thảo luận đã bị khóa", "Chủ đề đã khóa thảo luận.");
         }
 
         if (request.BodyHtml is null || request.BodyHtml.Length > 20_000)
         {
-            return CreateAnswerResult.Failed(
-                CreateAnswerFailure.Validation,
-                "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.",
+            return Result<AnswerDto>.Fail(ErrorType.Validation, "Câu trả lời gửi lên chưa hợp lệ", "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.",
                 "bodyHtml");
         }
 
         var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
         if (!HasMeaningfulContent(sanitizedBody))
         {
-            return CreateAnswerResult.Failed(
-                CreateAnswerFailure.Validation,
-                "Câu trả lời phải có nội dung văn bản hợp lệ.",
+            return Result<AnswerDto>.Fail(ErrorType.Validation, "Câu trả lời gửi lên chưa hợp lệ", "Câu trả lời phải có nội dung văn bản hợp lệ.",
                 "bodyHtml");
         }
 
@@ -159,9 +151,7 @@ public sealed partial class AnswerService : IAnswerService
                 topicId, request.ParentAnswerId.Value, cancellationToken);
             if (parentAnswer is null)
             {
-                return CreateAnswerResult.Failed(
-                    CreateAnswerFailure.Validation,
-                    "Phản hồi bạn đang trả lời không còn tồn tại.",
+                return Result<AnswerDto>.Fail(ErrorType.Validation, "Câu trả lời gửi lên chưa hợp lệ", "Phản hồi bạn đang trả lời không còn tồn tại.",
                     "parentAnswerId");
             }
 
@@ -175,7 +165,9 @@ public sealed partial class AnswerService : IAnswerService
         // Counted only now, when the answer is valid and about to be saved.
         if (!postingRateLimiter.TryAcquireAnswer(authorId, out var retryAfter))
         {
-            return CreateAnswerResult.Limited(MemberRateLimit.ToSeconds(retryAfter));
+            var seconds = MemberRateLimit.ToSeconds(retryAfter);
+            return Result<AnswerDto>.TooManyRequests(
+                "Bạn trả lời quá nhanh", $"Vui lòng chờ {MemberRateLimit.FormatWait(seconds)} rồi gửi câu trả lời tiếp.", seconds);
         }
 
         var answer = new Answer
@@ -202,10 +194,10 @@ public sealed partial class AnswerService : IAnswerService
         var replyingTo = parentAnswer is null
             ? null
             : new TopicAuthorDto(parentAnswer.Author.Id, parentAnswer.Author.DisplayName);
-        return CreateAnswerResult.Success(MapAnswer(answer, AcceptedAnswerIdFor(topic), replyingTo));
+        return Result<AnswerDto>.Success(MapAnswer(answer, AcceptedAnswerIdFor(topic), replyingTo));
     }
 
-    public async Task<AcceptAnswerResult> AcceptAsync(
+    public async Task<Result<AnswerDto>> AcceptAsync(
         Guid topicId,
         Guid answerId,
         string authorId,
@@ -217,12 +209,12 @@ public sealed partial class AnswerService : IAnswerService
             topic.PublishedAtUtc is null ||
             topic.IsHiddenByModerator)
         {
-            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
+            return Result<AnswerDto>.Fail(ErrorType.NotFound, "Không thể chọn câu trả lời", "Chủ đề hoặc câu trả lời không tồn tại, không công khai hoặc không thuộc quyền quản lý của bạn.");
         }
 
         if (topic.Type != TopicType.Question)
         {
-            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotQuestion);
+            return Result<AnswerDto>.Fail(ErrorType.Conflict, "Chỉ câu hỏi mới có câu trả lời được chấp nhận");
         }
 
         var answer = await answerRepository.GetVisibleByIdAsync(
@@ -231,12 +223,12 @@ public sealed partial class AnswerService : IAnswerService
             cancellationToken);
         if (answer is null)
         {
-            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
+            return Result<AnswerDto>.Fail(ErrorType.NotFound, "Không thể chọn câu trả lời", "Chủ đề hoặc câu trả lời không tồn tại, không công khai hoặc không thuộc quyền quản lý của bạn.");
         }
 
         if (answer.ParentAnswerId is not null)
         {
-            return AcceptAnswerResult.Failed(AcceptAnswerFailure.NotFound);
+            return Result<AnswerDto>.Fail(ErrorType.NotFound, "Không thể chọn câu trả lời", "Chủ đề hoặc câu trả lời không tồn tại, không công khai hoặc không thuộc quyền quản lý của bạn.");
         }
 
         var previousAcceptedId = topic.AcceptedAnswerId;
@@ -254,10 +246,10 @@ public sealed partial class AnswerService : IAnswerService
         await MoveAcceptedBonusAsync(topicId, previousAcceptedId, answer, authorId, cancellationToken);
 
         var helpfulState = await GetHelpfulStateAsync(answer.Id, authorId, cancellationToken);
-        return AcceptAnswerResult.Success(MapAnswer(answer, answer.Id, helpfulState: helpfulState));
+        return Result<AnswerDto>.Success(MapAnswer(answer, answer.Id, helpfulState: helpfulState));
     }
 
-    public async Task<UpdateAnswerResult> UpdateAsync(
+    public async Task<Result<AnswerDto>> UpdateAsync(
         Guid topicId,
         Guid answerId,
         string authorId,
@@ -268,28 +260,28 @@ public sealed partial class AnswerService : IAnswerService
             topicId, answerId, authorId, cancellationToken);
         if (answer is null)
         {
-            return UpdateAnswerResult.Failed(UpdateAnswerFailure.NotFound, "Không tìm thấy câu trả lời thuộc tài khoản của bạn.");
+            return Result<AnswerDto>.Fail(ErrorType.NotFound, "Không tìm thấy câu trả lời", "Không tìm thấy câu trả lời thuộc tài khoản của bạn.");
         }
 
         if (request.BodyHtml is null || request.BodyHtml.Length > 20_000)
         {
-            return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.", "bodyHtml");
+            return Result<AnswerDto>.Fail(ErrorType.Validation, null, "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.", "bodyHtml");
         }
         var sanitizedBody = contentSanitizer.Sanitize(request.BodyHtml).Trim();
         if (!HasMeaningfulContent(sanitizedBody))
         {
-            return UpdateAnswerResult.Failed(UpdateAnswerFailure.Validation, "Câu trả lời phải có nội dung văn bản hợp lệ.", "bodyHtml");
+            return Result<AnswerDto>.Fail(ErrorType.Validation, null, "Câu trả lời phải có nội dung văn bản hợp lệ.", "bodyHtml");
         }
 
         answer.BodyHtml = sanitizedBody;
         answer.UpdatedAtUtc = timeProvider.GetUtcNow();
         await answerRepository.SaveChangesAsync(cancellationToken);
         var helpfulState = await GetHelpfulStateAsync(answer.Id, authorId, cancellationToken);
-        return UpdateAnswerResult.Success(MapAnswer(
+        return Result<AnswerDto>.Success(MapAnswer(
             answer, AcceptedAnswerIdFor(answer.Topic), helpfulState: helpfulState));
     }
 
-    public async Task<bool> DeleteAsync(
+    public async Task<Result> DeleteAsync(
         Guid topicId,
         Guid answerId,
         string authorId,
@@ -299,7 +291,7 @@ public sealed partial class AnswerService : IAnswerService
             topicId, answerId, authorId, cancellationToken);
         if (answer is null)
         {
-            return false;
+            return Result.Fail(ErrorType.NotFound, "Không tìm thấy câu trả lời", "Câu trả lời không tồn tại hoặc không thuộc tài khoản của bạn.");
         }
         answer.IsDeleted = true;
         answer.UpdatedAtUtc = timeProvider.GetUtcNow();
@@ -314,7 +306,7 @@ public sealed partial class AnswerService : IAnswerService
         {
             await answerRepository.AdjustReputationAsync(answer.AuthorId, -ReputationRules.AcceptedAnswer, cancellationToken);
         }
-        return true;
+        return Result.Success();
     }
 
     // The author of the answer that was chosen earns the bonus; the author of the answer that was chosen before loses it.

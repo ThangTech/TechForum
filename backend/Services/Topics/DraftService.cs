@@ -44,7 +44,7 @@ public sealed partial class DraftService : IDraftService
         return Map(draft, media);
     }
 
-    public async Task<DraftWriteResult> SaveAsync(
+    public async Task<Result<DraftDto>> SaveAsync(
         string userId,
         SaveDraftRequest request,
         CancellationToken cancellationToken)
@@ -96,7 +96,7 @@ public sealed partial class DraftService : IDraftService
         if (request.TopicId is { } topicId &&
             !await draftRepository.OwnsTopicAsync(userId, topicId, cancellationToken))
         {
-            return DraftWriteResult.Failed(DraftWriteFailure.NotFound, "Nội dung không tồn tại hoặc không thuộc tài khoản này.");
+            return Result<DraftDto>.Fail(ErrorType.NotFound, "Không tìm thấy nội dung", "Nội dung không tồn tại hoặc không thuộc tài khoản này.");
         }
 
         // Only the files of this member that are free (or already in this topic) are kept; the others are left out
@@ -120,7 +120,7 @@ public sealed partial class DraftService : IDraftService
             await draftRepository.SaveChangesAsync(cancellationToken);
         }
 
-        return DraftWriteResult.Success(Map(draft, media));
+        return Result<DraftDto>.Success(Map(draft, media));
     }
 
     private static Draft NewDraft(string userId, Guid? topicId, string title, string summary, string body) => new()
@@ -184,8 +184,8 @@ public sealed partial class DraftService : IDraftService
         media.Select(item => new TopicMediaDto(item.Id, item.PublicUrl, item.ContentType)).ToList(),
         draft.UpdatedAtUtc);
 
-    private static DraftWriteResult Invalid(string field, string message) =>
-        DraftWriteResult.Failed(DraftWriteFailure.Validation, message, field);
+    private static Result<DraftDto> Invalid(string field, string message) =>
+        Result<DraftDto>.Fail(ErrorType.Validation, "Bản nháp chưa hợp lệ", message, field);
 
     // Text, a picture or a video. The empty tags that the editor leaves (<p><br></p>) do not count.
     private static bool HasContent(string html)

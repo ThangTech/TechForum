@@ -39,7 +39,7 @@ public sealed class CategoryService : ICategoryService
             .Select(item => MapAdminDto(item.Category, item.TopicCount))
             .ToList();
 
-    public async Task<CategoryWriteResult> CreateAsync(
+    public async Task<Result<AdminCategoryDto>> CreateAsync(
         string administratorId,
         SaveCategoryRequest request,
         CancellationToken cancellationToken)
@@ -53,7 +53,7 @@ public sealed class CategoryService : ICategoryService
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await categoryRepository.SlugExistsAsync(slug, null, cancellationToken))
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
 
         var category = new Category
@@ -66,14 +66,14 @@ public sealed class CategoryService : ICategoryService
         };
         if (!await categoryRepository.AddAsync(category, cancellationToken))
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "category-created", "Category", category.Id.ToString(), null,
             $"name={category.Name};slug={category.Slug};active=true", "Tạo chuyên mục.", cancellationToken);
-        return CategoryWriteResult.Success(MapAdminDto(category, 0));
+        return Result<AdminCategoryDto>.Success(MapAdminDto(category, 0));
     }
 
-    public async Task<CategoryWriteResult> UpdateAsync(
+    public async Task<Result<AdminCategoryDto>> UpdateAsync(
         string administratorId,
         Guid id,
         SaveCategoryRequest request,
@@ -87,13 +87,13 @@ public sealed class CategoryService : ICategoryService
         var category = await categoryRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (category is null)
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.NotFound, "Không tìm thấy chuyên mục.");
+            return Result<AdminCategoryDto>.Fail(ErrorType.NotFound, "Không tìm thấy chuyên mục", "Không tìm thấy chuyên mục.");
         }
 
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await categoryRepository.SlugExistsAsync(slug, id, cancellationToken))
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
         var previous = $"name={category.Name};slug={category.Slug};order={category.DisplayOrder}";
         category.Name = request.Name!.Trim();
@@ -102,16 +102,16 @@ public sealed class CategoryService : ICategoryService
         category.DisplayOrder = request.DisplayOrder;
         if (!await categoryRepository.SaveChangesAsync(cancellationToken))
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.DuplicateSlug, "Đường dẫn chuyên mục đã được sử dụng.", "slug");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn chuyên mục đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "category-updated", "Category", category.Id.ToString(), previous,
             $"name={category.Name};slug={category.Slug};order={category.DisplayOrder}", "Cập nhật chuyên mục.", cancellationToken);
-        return CategoryWriteResult.Success(MapAdminDto(
+        return Result<AdminCategoryDto>.Success(MapAdminDto(
             category,
             await categoryRepository.GetTopicCountAsync(id, cancellationToken)));
     }
 
-    public async Task<CategoryWriteResult> SetActiveAsync(
+    public async Task<Result<AdminCategoryDto>> SetActiveAsync(
         string administratorId,
         Guid id,
         bool isActive,
@@ -120,7 +120,7 @@ public sealed class CategoryService : ICategoryService
         var category = await categoryRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (category is null)
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.NotFound, "Không tìm thấy chuyên mục.");
+            return Result<AdminCategoryDto>.Fail(ErrorType.NotFound, "Không tìm thấy chuyên mục", "Không tìm thấy chuyên mục.");
         }
         var previous = category.IsActive;
         category.IsActive = isActive;
@@ -128,30 +128,30 @@ public sealed class CategoryService : ICategoryService
         await auditService.RecordAsync(administratorId, isActive ? "category-activated" : "category-deactivated", "Category",
             category.Id.ToString(), $"active={previous}", $"active={isActive}",
             isActive ? "Kích hoạt chuyên mục." : "Ngừng sử dụng chuyên mục.", cancellationToken);
-        return CategoryWriteResult.Success(MapAdminDto(
+        return Result<AdminCategoryDto>.Success(MapAdminDto(
             category,
             await categoryRepository.GetTopicCountAsync(id, cancellationToken)));
     }
 
-    private static CategoryWriteResult? Validate(SaveCategoryRequest request)
+    private static Result<AdminCategoryDto>? Validate(SaveCategoryRequest request)
     {
         var name = request.Name?.Trim();
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Tên chuyên mục phải có từ 1 đến 100 ký tự.", "name");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Validation, null, "Tên chuyên mục phải có từ 1 đến 100 ký tự.", "name");
         }
         var slug = request.Slug?.Trim();
         if (string.IsNullOrWhiteSpace(slug) || slug.Length > 100 ||
             slug.StartsWith('-') || slug.EndsWith('-') || slug.Contains("--", StringComparison.Ordinal) ||
             slug.Any(character => !((character >= 'a' && character <= 'z') || char.IsDigit(character) || character == '-')))
-            return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Đường dẫn chỉ gồm chữ thường, số và dấu gạch ngang.", "slug");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Validation, null, "Đường dẫn chỉ gồm chữ thường, số và dấu gạch ngang.", "slug");
         if (request.Description?.Trim().Length > 500)
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Mô tả không được vượt quá 500 ký tự.", "description");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Validation, null, "Mô tả không được vượt quá 500 ký tự.", "description");
         }
         if (request.DisplayOrder < 0 || request.DisplayOrder > 10_000)
         {
-            return CategoryWriteResult.Failed(CategoryWriteFailure.Validation, "Thứ tự hiển thị phải từ 0 đến 10.000.", "displayOrder");
+            return Result<AdminCategoryDto>.Fail(ErrorType.Validation, null, "Thứ tự hiển thị phải từ 0 đến 10.000.", "displayOrder");
         }
         return null;
     }

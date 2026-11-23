@@ -29,27 +29,10 @@ public sealed class DraftsController : ControllerBase
 
     // Saves the draft: it is created the first time and replaced after that.
     [HttpPost]
-    public async Task<ActionResult<DraftDto>> Save(
-        [FromBody] SaveDraftRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<DraftDto>> Save([FromBody] SaveDraftRequest request, CancellationToken cancellationToken)
     {
         var result = await draftService.SaveAsync(User.GetRequiredUserId(), request, cancellationToken);
-        return result.Failure switch
-        {
-            DraftWriteFailure.None => Ok(result.Draft),
-            DraftWriteFailure.NotFound => NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "Không tìm thấy nội dung",
-                Detail = result.Message
-            }),
-            _ => BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]> { [result.Field ?? "draft"] = [result.Message ?? "Bản nháp chưa hợp lệ."] })
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Bản nháp chưa hợp lệ"
-            })
-        };
+        return this.ToActionResult(result);
     }
 
     [HttpDelete]

@@ -118,7 +118,7 @@ public sealed class AnswerServiceTests
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
-        Assert.Equal(AcceptAnswerFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Equal(("member-a", ReputationRules.AcceptedAnswer), Assert.Single(repository.ReputationChanges));
     }
 
@@ -176,7 +176,7 @@ public sealed class AnswerServiceTests
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), "another-member", CancellationToken.None);
 
-        Assert.Equal(AcceptAnswerFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Equal(TestIds.Id(9), topic.AcceptedAnswerId);
     }
 
@@ -191,7 +191,7 @@ public sealed class AnswerServiceTests
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
-        Assert.Equal(AcceptAnswerFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Equal(TestIds.Id(10), topic.AcceptedAnswerId);
     }
 
@@ -209,7 +209,7 @@ public sealed class AnswerServiceTests
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
-        Assert.Equal(AcceptAnswerFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Null(topic.AcceptedAnswerId);
     }
 
@@ -225,7 +225,7 @@ public sealed class AnswerServiceTests
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(11), topic.AuthorId, CancellationToken.None);
 
-        Assert.Equal(AcceptAnswerFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Null(topic.AcceptedAnswerId);
     }
 
@@ -243,7 +243,7 @@ public sealed class AnswerServiceTests
         var result = await service.CreateAsync(
             TestIds.Id(1), "member", new CreateAnswerRequest("<p>Câu trả lời</p>", null), CancellationToken.None);
 
-        Assert.Equal(CreateAnswerFailure.RateLimited, result.Failure);
+        Assert.Equal(ErrorType.TooManyRequests, result.Error);
         Assert.Equal(42, result.RetryAfterSeconds);
         Assert.Null(answerRepository.Added);
     }
@@ -262,7 +262,7 @@ public sealed class AnswerServiceTests
         var result = await service.CreateAsync(
             TestIds.Id(1), "member", new CreateAnswerRequest("   ", null), CancellationToken.None);
 
-        Assert.Equal(CreateAnswerFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Equal(0, limiter.Calls);
     }
 
@@ -288,9 +288,9 @@ public sealed class AnswerServiceTests
             new CreateAnswerRequest("<p>Phản hồi</p>", child.Id),
             CancellationToken.None);
 
-        Assert.Equal(CreateAnswerFailure.None, result.Failure);
-        Assert.Equal(root.Id, result.Answer?.ParentAnswerId);
-        Assert.Equal("member-root", result.Answer?.ReplyingTo?.Id);
+        Assert.True(result.Succeeded);
+        Assert.Equal(root.Id, result.Value?.ParentAnswerId);
+        Assert.Equal("member-root", result.Value?.ReplyingTo?.Id);
         Assert.Equal("member-root", notificationService.RecipientId);
     }
 
@@ -347,11 +347,11 @@ public sealed class AnswerServiceTests
         var removed = await service.SetHelpfulAsync(TestIds.Id(1), TestIds.Id(12), "voter", false, CancellationToken.None);
         var repeatedRemoval = await service.SetHelpfulAsync(TestIds.Id(1), TestIds.Id(12), "voter", false, CancellationToken.None);
 
-        Assert.Equal(new AnswerHelpfulDto(1, true), first.Status);
-        Assert.Equal(first.Status, repeated.Status);
-        Assert.Equal(new AnswerHelpfulDto(2, true), another.Status);
-        Assert.Equal(new AnswerHelpfulDto(1, false), removed.Status);
-        Assert.Equal(removed.Status, repeatedRemoval.Status);
+        Assert.Equal(new AnswerHelpfulDto(1, true), first.Value);
+        Assert.Equal(first.Value, repeated.Value);
+        Assert.Equal(new AnswerHelpfulDto(2, true), another.Value);
+        Assert.Equal(new AnswerHelpfulDto(1, false), removed.Value);
+        Assert.Equal(removed.Value, repeatedRemoval.Value);
         Assert.Single(repository.Votes);
         Assert.Null(topic.AcceptedAnswerId);
     }
@@ -364,7 +364,7 @@ public sealed class AnswerServiceTests
         var result = await CreateService(repository).SetHelpfulAsync(
             TestIds.Id(1), TestIds.Id(12), "answer-author", true, CancellationToken.None);
 
-        Assert.Equal(AnswerHelpfulFailure.OwnAnswer, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.Empty(repository.Votes);
         Assert.Equal(0, repository.HelpfulMutations);
     }
@@ -384,7 +384,7 @@ public sealed class AnswerServiceTests
         var result = await CreateService(repository, topic).SetHelpfulAsync(
             TestIds.Id(1), TestIds.Id(12), "voter", true, CancellationToken.None);
 
-        Assert.Equal(AnswerHelpfulFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Equal(0, repository.HelpfulMutations);
         Assert.Equal(0, repository.VisibleCallCount);
     }
@@ -402,7 +402,7 @@ public sealed class AnswerServiceTests
         var result = await CreateService(repository).SetHelpfulAsync(
             TestIds.Id(1), TestIds.Id(12), "voter", true, CancellationToken.None);
 
-        Assert.Equal(AnswerHelpfulFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Equal(0, repository.HelpfulMutations);
     }
 
@@ -416,9 +416,9 @@ public sealed class AnswerServiceTests
         var result = await CreateService(repository, topic).AcceptAsync(
             TestIds.Id(1), TestIds.Id(12), topic.AuthorId, CancellationToken.None);
 
-        Assert.True(result.Answer!.IsAccepted);
-        Assert.True(result.Answer.IsHelpful);
-        Assert.Equal(1, result.Answer.HelpfulCount);
+        Assert.True(result.Value!.IsAccepted);
+        Assert.True(result.Value.IsHelpful);
+        Assert.Equal(1, result.Value.HelpfulCount);
     }
 
     [Fact]
@@ -433,10 +433,10 @@ public sealed class AnswerServiceTests
         var result = await CreateService(repository, topic).UpdateAsync(
             TestIds.Id(1), TestIds.Id(12), "answer-author", new CreateAnswerRequest("<p>Đã sửa</p>"), CancellationToken.None);
 
-        Assert.Equal(UpdateAnswerFailure.None, result.Failure);
-        Assert.Equal(1, result.Answer!.HelpfulCount);
-        Assert.False(result.Answer.IsHelpful);
-        Assert.Equal("<p>Đã sửa</p>", result.Answer.BodyHtml);
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Value!.HelpfulCount);
+        Assert.False(result.Value.IsHelpful);
+        Assert.Equal("<p>Đã sửa</p>", result.Value.BodyHtml);
     }
 
     private static AnswerService CreateService(FakeAnswerRepository repository, Topic? topic = null) =>

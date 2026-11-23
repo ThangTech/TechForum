@@ -224,12 +224,12 @@ public sealed class TopicServiceTests
         var result = await service.CreateAsync("member-a", request, CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.NotNull(result.Topic);
-        Assert.Equal(TestIds.Id(99), result.Topic.Id);
-        Assert.Equal("published", result.Topic.Status);
-        Assert.Equal("bat-dau-typescript-an-toan", result.Topic.Slug);
-        Assert.DoesNotContain("onclick", result.Topic.BodyHtml, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("<script", result.Topic.BodyHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(result.Value);
+        Assert.Equal(TestIds.Id(99), result.Value.Id);
+        Assert.Equal("published", result.Value.Status);
+        Assert.Equal("bat-dau-typescript-an-toan", result.Value.Slug);
+        Assert.DoesNotContain("onclick", result.Value.BodyHtml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("<script", result.Value.BodyHtml, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("member-a", repository.AddedTopic?.AuthorId);
     }
 
@@ -251,7 +251,7 @@ public sealed class TopicServiceTests
         var result = await service.CreateAsync("member-a", request, CancellationToken.None);
 
         Assert.False(result.Succeeded);
-        Assert.Contains("categoryId", result.Errors.Keys);
+        Assert.Contains("categoryId", new[] { result.Field });
         Assert.Null(repository.AddedTopic);
     }
 
@@ -322,7 +322,7 @@ public sealed class TopicServiceTests
 
         Assert.True(result.Succeeded);
         Assert.Same(media, Assert.Single(repository.AddedTopic!.MediaAssets));
-        Assert.Contains(media.PublicUrl, result.Topic!.BodyHtml);
+        Assert.Contains(media.PublicUrl, result.Value!.BodyHtml);
     }
 
     [Fact]
@@ -427,7 +427,7 @@ public sealed class TopicServiceTests
         var result = await service.CreateAsync("member-a", request, CancellationToken.None);
 
         Assert.False(result.Succeeded);
-        Assert.Contains("mediaIds", result.Errors.Keys);
+        Assert.Contains("mediaIds", new[] { result.Field });
         Assert.Null(repository.AddedTopic);
     }
 
@@ -489,7 +489,7 @@ public sealed class TopicServiceTests
 
         var result = await service.SoftDeleteAsync(TestIds.Id(10), "member-b", CancellationToken.None);
 
-        Assert.Equal(SoftDeleteTopicFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.False(repository.OwnedTopic.IsDeleted);
         Assert.False(repository.SavedChanges);
     }
@@ -524,7 +524,7 @@ public sealed class TopicServiceTests
 
         var result = await service.CreateAsync("member-a", CreateRequest(), CancellationToken.None);
 
-        Assert.True(result.IsRateLimited);
+        Assert.True((result.Error == ErrorType.TooManyRequests));
         Assert.Equal(25, result.RetryAfterSeconds);
         Assert.Null(repository.AddedTopic);
     }
@@ -558,8 +558,8 @@ public sealed class TopicServiceTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(2, repository.TriedSlugs.Count);
-        Assert.EndsWith("-2", result.Topic!.Slug);
-        Assert.Equal(repository.TriedSlugs[^1], result.Topic.Slug);
+        Assert.EndsWith("-2", result.Value!.Slug);
+        Assert.Equal(repository.TriedSlugs[^1], result.Value.Slug);
     }
 
     [Fact]
@@ -576,8 +576,8 @@ public sealed class TopicServiceTests
         Assert.True(result.Succeeded);
         Assert.Equal(3, repository.TriedSlugs.Count);
         Assert.Equal(3, repository.TriedSlugs.Distinct().Count());
-        Assert.Matches("^tieu-de-kiem-tra-duong-dan-trung-[0-9a-f]{6}$", result.Topic!.Slug);
-        Assert.Equal(repository.TriedSlugs[^1], result.Topic.Slug);
+        Assert.Matches("^tieu-de-kiem-tra-duong-dan-trung-[0-9a-f]{6}$", result.Value!.Slug);
+        Assert.Equal(repository.TriedSlugs[^1], result.Value.Slug);
     }
 
     [Fact]
@@ -592,8 +592,8 @@ public sealed class TopicServiceTests
         var result = await CreateService(repository).CreateAsync("member-a", CreateRequest(), CancellationToken.None);
 
         Assert.False(result.Succeeded);
-        Assert.False(result.IsConflict);
-        Assert.Contains("title", result.Errors.Keys);
+        Assert.False((result.Error == ErrorType.Conflict));
+        Assert.Contains("title", new[] { result.Field });
         Assert.Equal(5, repository.TriedSlugs.Count);
         Assert.Null(repository.AddedTopic);
     }
@@ -623,7 +623,7 @@ public sealed class TopicServiceTests
             existing.Id, existing.AuthorId, CreateUpdateRequest(existing, publish: false), CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.True(result.IsConflict);
+        Assert.True((result.Error == ErrorType.Conflict));
         Assert.False(result.Succeeded);
         Assert.Equal(TopicStatus.Published, existing.Status);
         Assert.False(repository.SavedChanges);
@@ -683,7 +683,7 @@ public sealed class TopicServiceTests
 
         var result = await service.SoftDeleteAsync(TestIds.Id(10), "member-a", CancellationToken.None);
 
-        Assert.Equal(SoftDeleteTopicFailure.HasPublicAnswers, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.False(repository.OwnedTopic.IsDeleted);
         Assert.False(repository.SavedChanges);
     }

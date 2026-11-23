@@ -38,7 +38,7 @@ public sealed class TagService : ITagService
             .Select(item => MapAdminDto(item.Tag, item.TopicCount))
             .ToList();
 
-    public async Task<TagWriteResult> CreateAsync(string administratorId, SaveTagRequest request, CancellationToken cancellationToken)
+    public async Task<Result<AdminTagDto>> CreateAsync(string administratorId, SaveTagRequest request, CancellationToken cancellationToken)
     {
         var validation = Validate(request);
         if (validation is not null)
@@ -48,7 +48,7 @@ public sealed class TagService : ITagService
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await tagRepository.SlugExistsAsync(slug, null, cancellationToken))
         {
-            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return Result<AdminTagDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
 
         var tag = new Tag
@@ -60,14 +60,14 @@ public sealed class TagService : ITagService
         };
         if (!await tagRepository.AddAsync(tag, cancellationToken))
         {
-            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return Result<AdminTagDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "tag-created", "Tag", tag.Id.ToString(), null,
             $"name={tag.Name};slug={tag.Slug};active=true", "Tạo thẻ.", cancellationToken);
-        return TagWriteResult.Success(MapAdminDto(tag, 0));
+        return Result<AdminTagDto>.Success(MapAdminDto(tag, 0));
     }
 
-    public async Task<TagWriteResult> UpdateAsync(
+    public async Task<Result<AdminTagDto>> UpdateAsync(
         string administratorId,
         Guid id,
         SaveTagRequest request,
@@ -81,13 +81,13 @@ public sealed class TagService : ITagService
         var tag = await tagRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (tag is null)
         {
-            return TagWriteResult.Failed(TagWriteFailure.NotFound, "Không tìm thấy thẻ.");
+            return Result<AdminTagDto>.Fail(ErrorType.NotFound, "Không tìm thấy thẻ", "Không tìm thấy thẻ.");
         }
 
         var slug = request.Slug!.Trim().ToLowerInvariant();
         if (await tagRepository.SlugExistsAsync(slug, id, cancellationToken))
         {
-            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return Result<AdminTagDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
         var previous = $"name={tag.Name};slug={tag.Slug}";
         tag.Name = request.Name!.Trim();
@@ -95,14 +95,14 @@ public sealed class TagService : ITagService
         tag.Description = NormalizeDescription(request.Description);
         if (!await tagRepository.SaveChangesAsync(cancellationToken))
         {
-            return TagWriteResult.Failed(TagWriteFailure.DuplicateSlug, "Đường dẫn thẻ đã được sử dụng.", "slug");
+            return Result<AdminTagDto>.Fail(ErrorType.Conflict, "Đường dẫn bị trùng", "Đường dẫn thẻ đã được sử dụng.", "slug");
         }
         await auditService.RecordAsync(administratorId, "tag-updated", "Tag", tag.Id.ToString(), previous,
             $"name={tag.Name};slug={tag.Slug}", "Cập nhật thẻ.", cancellationToken);
-        return TagWriteResult.Success(MapAdminDto(tag, await tagRepository.GetTopicCountAsync(id, cancellationToken)));
+        return Result<AdminTagDto>.Success(MapAdminDto(tag, await tagRepository.GetTopicCountAsync(id, cancellationToken)));
     }
 
-    public async Task<TagWriteResult> SetActiveAsync(
+    public async Task<Result<AdminTagDto>> SetActiveAsync(
         string administratorId,
         Guid id,
         bool isActive,
@@ -111,7 +111,7 @@ public sealed class TagService : ITagService
         var tag = await tagRepository.GetTrackedByIdAsync(id, cancellationToken);
         if (tag is null)
         {
-            return TagWriteResult.Failed(TagWriteFailure.NotFound, "Không tìm thấy thẻ.");
+            return Result<AdminTagDto>.Fail(ErrorType.NotFound, "Không tìm thấy thẻ", "Không tìm thấy thẻ.");
         }
         var previous = tag.IsActive;
         tag.IsActive = isActive;
@@ -119,24 +119,24 @@ public sealed class TagService : ITagService
         await auditService.RecordAsync(administratorId, isActive ? "tag-activated" : "tag-deactivated", "Tag",
             tag.Id.ToString(), $"active={previous}", $"active={isActive}",
             isActive ? "Kích hoạt thẻ." : "Ngừng sử dụng thẻ.", cancellationToken);
-        return TagWriteResult.Success(MapAdminDto(tag, await tagRepository.GetTopicCountAsync(id, cancellationToken)));
+        return Result<AdminTagDto>.Success(MapAdminDto(tag, await tagRepository.GetTopicCountAsync(id, cancellationToken)));
     }
 
-    private static TagWriteResult? Validate(SaveTagRequest request)
+    private static Result<AdminTagDto>? Validate(SaveTagRequest request)
     {
         var name = request.Name?.Trim();
         if (string.IsNullOrWhiteSpace(name) || name.Length > 60)
         {
-            return TagWriteResult.Failed(TagWriteFailure.Validation, "Tên thẻ phải có từ 1 đến 60 ký tự.", "name");
+            return Result<AdminTagDto>.Fail(ErrorType.Validation, null, "Tên thẻ phải có từ 1 đến 60 ký tự.", "name");
         }
         var slug = request.Slug?.Trim();
         if (string.IsNullOrWhiteSpace(slug) || slug.Length > 60 ||
             slug.StartsWith('-') || slug.EndsWith('-') || slug.Contains("--", StringComparison.Ordinal) ||
             slug.Any(character => !((character >= 'a' && character <= 'z') || char.IsDigit(character) || character == '-')))
-            return TagWriteResult.Failed(TagWriteFailure.Validation, "Đường dẫn chỉ gồm chữ thường, số và dấu gạch ngang.", "slug");
+            return Result<AdminTagDto>.Fail(ErrorType.Validation, null, "Đường dẫn chỉ gồm chữ thường, số và dấu gạch ngang.", "slug");
         if (request.Description?.Trim().Length > 300)
         {
-            return TagWriteResult.Failed(TagWriteFailure.Validation, "Mô tả không được vượt quá 300 ký tự.", "description");
+            return Result<AdminTagDto>.Fail(ErrorType.Validation, null, "Mô tả không được vượt quá 300 ký tự.", "description");
         }
         return null;
     }

@@ -121,77 +121,18 @@ public sealed class TopicsController : ControllerBase
 
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<OwnTopicDto>> Create(
-        [FromBody] CreateTopicRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<OwnTopicDto>> Create([FromBody] CreateTopicRequest request, CancellationToken cancellationToken)
     {
-        var authorId = User.GetUserIdOrNull();
-        if (string.IsNullOrWhiteSpace(authorId))
-        {
-            return Unauthorized(new ProblemDetails
-            {
-                Status = StatusCodes.Status401Unauthorized,
-                Title = "Bạn cần đăng nhập"
-            });
-        }
-
-        var result = await topicService.CreateAsync(authorId, request, cancellationToken);
-        if (result.IsRateLimited)
-        {
-            return this.PostingTooFast(result.RetryAfterSeconds, "Bạn đăng bài quá nhanh", "đăng bài tiếp");
-        }
-
-        if (!result.Succeeded)
-        {
-            return BadRequest(new ValidationProblemDetails(
-                result.Errors.ToDictionary(item => item.Key, item => item.Value))
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Nội dung gửi lên chưa hợp lệ"
-            });
-        }
-
-        return StatusCode(StatusCodes.Status201Created, result.Topic);
+        var result = await topicService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result, StatusCodes.Status201Created);
     }
 
     [Authorize]
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<OwnTopicDto>> Update(
-        Guid id,
-        [FromBody] UpdateTopicRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<OwnTopicDto>> Update(Guid id, [FromBody] UpdateTopicRequest request, CancellationToken cancellationToken)
     {
         var result = await topicService.UpdateAsync(id, User.GetRequiredUserId(), request, cancellationToken);
-        if (result is null)
-        {
-            return NotFound(CreateNotFoundProblem());
-        }
-        if (result.IsRateLimited)
-        {
-            return this.PostingTooFast(result.RetryAfterSeconds, "Bạn đăng bài quá nhanh", "xuất bản bài tiếp");
-        }
-
-        if (result.IsConflict)
-        {
-            return Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Không thể lưu thành bản nháp",
-                Detail = result.ConflictMessage
-            });
-        }
-
-        if (!result.Succeeded)
-        {
-            return BadRequest(new ValidationProblemDetails(
-                result.Errors.ToDictionary(item => item.Key, item => item.Value))
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Nội dung gửi lên chưa hợp lệ"
-            });
-        }
-
-        return Ok(result.Topic);
+        return this.ToActionResult(result);
     }
 
     [Authorize]
@@ -199,17 +140,7 @@ public sealed class TopicsController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await topicService.SoftDeleteAsync(id, User.GetRequiredUserId(), cancellationToken);
-        return result.Failure switch
-        {
-            SoftDeleteTopicFailure.None => NoContent(),
-            SoftDeleteTopicFailure.HasPublicAnswers => Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Không thể xóa nội dung",
-                Detail = "Nội dung đã có câu trả lời công khai. Bạn có thể giữ nguyên hoặc liên hệ quản trị viên khi cần xử lý."
-            }),
-            _ => NotFound(CreateNotFoundProblem())
-        };
+        return this.ToActionResult(result);
     }
 
     private static ProblemDetails CreateNotFoundProblem() => new()

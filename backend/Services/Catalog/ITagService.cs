@@ -8,7 +8,7 @@ public interface ITagService
 
     Task<TagDto?> GetActiveByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<IReadOnlyList<AdminTagDto>> GetAdminAsync(CancellationToken cancellationToken);
-    Task<TagWriteResult> CreateAsync(string administratorId, SaveTagRequest request, CancellationToken cancellationToken);
-    Task<TagWriteResult> UpdateAsync(string administratorId, Guid id, SaveTagRequest request, CancellationToken cancellationToken);
-    Task<TagWriteResult> SetActiveAsync(string administratorId, Guid id, bool isActive, CancellationToken cancellationToken);
+    Task<Result<AdminTagDto>> CreateAsync(string administratorId, SaveTagRequest request, CancellationToken cancellationToken);
+    Task<Result<AdminTagDto>> UpdateAsync(string administratorId, Guid id, SaveTagRequest request, CancellationToken cancellationToken);
+    Task<Result<AdminTagDto>> SetActiveAsync(string administratorId, Guid id, bool isActive, CancellationToken cancellationToken);
 }

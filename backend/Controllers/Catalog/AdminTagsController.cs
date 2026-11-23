@@ -20,38 +20,29 @@ public sealed class AdminTagsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AdminTagDto>>> GetAll(CancellationToken cancellationToken) =>
-        Ok(await tagService.GetAdminAsync(cancellationToken));
+    public async Task<ActionResult<IReadOnlyList<AdminTagDto>>> GetAll(CancellationToken cancellationToken)
+    {
+        return Ok(await tagService.GetAdminAsync(cancellationToken));
+    }
 
     [HttpPost]
-    public async Task<ActionResult<AdminTagDto>> Create(
-        [FromBody] SaveTagRequest request,
-        CancellationToken cancellationToken) =>
-        ToActionResult(await tagService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken), true);
+    public async Task<ActionResult<AdminTagDto>> Create([FromBody] SaveTagRequest request, CancellationToken cancellationToken)
+    {
+        var result = await tagService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result, StatusCodes.Status201Created);
+    }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<AdminTagDto>> Update(
-        Guid id,
-        [FromBody] SaveTagRequest request,
-        CancellationToken cancellationToken) =>
-        ToActionResult(await tagService.UpdateAsync(User.GetRequiredUserId(), id, request, cancellationToken));
+    public async Task<ActionResult<AdminTagDto>> Update(Guid id, [FromBody] SaveTagRequest request, CancellationToken cancellationToken)
+    {
+        var result = await tagService.UpdateAsync(User.GetRequiredUserId(), id, request, cancellationToken);
+        return this.ToActionResult(result);
+    }
 
     [HttpPut("{id:guid}/active")]
-    public async Task<ActionResult<AdminTagDto>> SetActive(
-        Guid id,
-        [FromBody] SetActiveRequest request,
-        CancellationToken cancellationToken) =>
-        ToActionResult(await tagService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken));
-
-    private ActionResult<AdminTagDto> ToActionResult(TagWriteResult result, bool created = false) =>
-        result.Failure switch
-        {
-            TagWriteFailure.None when created => StatusCode(StatusCodes.Status201Created, result.Tag),
-            TagWriteFailure.None => Ok(result.Tag),
-            TagWriteFailure.NotFound => NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy thẻ", Detail = result.Message }),
-            TagWriteFailure.DuplicateSlug => Conflict(new ProblemDetails { Status = 409, Title = "Đường dẫn bị trùng", Detail = result.Message }),
-            TagWriteFailure.Validation => BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]> { [result.Field ?? "tag"] = [result.Message ?? "Dữ liệu chưa hợp lệ."] })),
-            _ => throw new InvalidOperationException("Trạng thái cập nhật thẻ không được hỗ trợ.")
-        };
+    public async Task<ActionResult<AdminTagDto>> SetActive(Guid id, [FromBody] SetActiveRequest request, CancellationToken cancellationToken)
+    {
+        var result = await tagService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken);
+        return this.ToActionResult(result);
+    }
 }

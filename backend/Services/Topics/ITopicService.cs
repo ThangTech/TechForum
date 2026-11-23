@@ -25,18 +25,18 @@ public interface ITopicService
         string authorId,
         CancellationToken cancellationToken);
 
-    Task<CreateTopicResult> CreateAsync(
+    Task<Result<OwnTopicDto>> CreateAsync(
         string authorId,
         CreateTopicRequest request,
         CancellationToken cancellationToken);
 
-    Task<CreateTopicResult?> UpdateAsync(
+    Task<Result<OwnTopicDto>> UpdateAsync(
         Guid id,
         string authorId,
         UpdateTopicRequest request,
         CancellationToken cancellationToken);
 
-    Task<SoftDeleteTopicResult> SoftDeleteAsync(
+    Task<Result> SoftDeleteAsync(
         Guid id,
         string authorId,
         CancellationToken cancellationToken);

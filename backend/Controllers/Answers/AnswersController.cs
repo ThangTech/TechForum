@@ -67,162 +67,50 @@ public sealed class AnswersController : ControllerBase
 
     [Authorize]
     [HttpPut("{answerId:guid}/helpful")]
-    public async Task<ActionResult<AnswerHelpfulDto>> AddHelpful(
-        Guid topicId,
-        Guid answerId,
-        CancellationToken cancellationToken) =>
-        ToHelpfulResponse(await answerService.SetHelpfulAsync(
-            topicId, answerId, User.GetRequiredUserId(), true, cancellationToken));
+    public async Task<ActionResult<AnswerHelpfulDto>> AddHelpful(Guid topicId, Guid answerId, CancellationToken cancellationToken)
+    {
+        var result = await answerService.SetHelpfulAsync(topicId, answerId, User.GetRequiredUserId(), true, cancellationToken);
+        return this.ToActionResult(result);
+    }
 
     [Authorize]
     [HttpDelete("{answerId:guid}/helpful")]
-    public async Task<ActionResult<AnswerHelpfulDto>> RemoveHelpful(
-        Guid topicId,
-        Guid answerId,
-        CancellationToken cancellationToken) =>
-        ToHelpfulResponse(await answerService.SetHelpfulAsync(
-            topicId, answerId, User.GetRequiredUserId(), false, cancellationToken));
-
-    private ActionResult<AnswerHelpfulDto> ToHelpfulResponse(AnswerHelpfulResult result) =>
-        result.Failure switch
-        {
-            AnswerHelpfulFailure.None => Ok(result.Status),
-            AnswerHelpfulFailure.NotFound => NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "Không tìm thấy câu trả lời",
-                Detail = "Chủ đề hoặc câu trả lời không tồn tại hoặc không còn công khai."
-            }),
-            AnswerHelpfulFailure.OwnAnswer => Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Không thể tự bình chọn",
-                Detail = "Bạn không thể đánh dấu hữu ích cho câu trả lời của chính mình."
-            }),
-            _ => throw new InvalidOperationException("Trạng thái bình chọn câu trả lời không được hỗ trợ.")
-        };
+    public async Task<ActionResult<AnswerHelpfulDto>> RemoveHelpful(Guid topicId, Guid answerId, CancellationToken cancellationToken)
+    {
+        var result = await answerService.SetHelpfulAsync(topicId, answerId, User.GetRequiredUserId(), false, cancellationToken);
+        return this.ToActionResult(result);
+    }
 
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<AnswerDto>> Create(
-        Guid topicId,
-        [FromBody] CreateAnswerRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AnswerDto>> Create(Guid topicId, [FromBody] CreateAnswerRequest request, CancellationToken cancellationToken)
     {
-        var authorId = User.GetUserIdOrNull();
-        if (string.IsNullOrWhiteSpace(authorId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await answerService.CreateAsync(
-            topicId,
-            authorId,
-            request,
-            cancellationToken);
-
-        return result.Failure switch
-        {
-            CreateAnswerFailure.None => StatusCode(StatusCodes.Status201Created, result.Answer),
-            CreateAnswerFailure.TopicNotFound => NotFound(CreateTopicNotFoundProblem()),
-            CreateAnswerFailure.DiscussionLocked => Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Thảo luận đã bị khóa",
-                Detail = result.Message
-            }),
-            CreateAnswerFailure.Validation => BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]>
-                {
-                    [result.Field ?? "bodyHtml"] = [result.Message ?? "Câu trả lời chưa hợp lệ."]
-                })
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Câu trả lời gửi lên chưa hợp lệ"
-            }),
-            CreateAnswerFailure.RateLimited => this.PostingTooFast(
-                result.RetryAfterSeconds, "Bạn trả lời quá nhanh", "gửi câu trả lời tiếp"),
-            _ => throw new InvalidOperationException("Trạng thái tạo câu trả lời không được hỗ trợ.")
-        };
+        var result = await answerService.CreateAsync(topicId, User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result, StatusCodes.Status201Created);
     }
 
     [Authorize]
     [HttpPut("{answerId:guid}/accepted")]
-    public async Task<ActionResult<AnswerDto>> Accept(
-        Guid topicId,
-        Guid answerId,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AnswerDto>> Accept(Guid topicId, Guid answerId, CancellationToken cancellationToken)
     {
-        var authorId = User.GetUserIdOrNull();
-        if (string.IsNullOrWhiteSpace(authorId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await answerService.AcceptAsync(
-            topicId,
-            answerId,
-            authorId,
-            cancellationToken);
-
-        return result.Failure switch
-        {
-            AcceptAnswerFailure.None => Ok(result.Answer),
-            AcceptAnswerFailure.NotFound => NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "Không thể chọn câu trả lời",
-                Detail = "Chủ đề hoặc câu trả lời không tồn tại, không công khai hoặc không thuộc quyền quản lý của bạn."
-            }),
-            AcceptAnswerFailure.NotQuestion => Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Chỉ câu hỏi mới có câu trả lời được chấp nhận"
-            }),
-            _ => throw new InvalidOperationException("Trạng thái chọn câu trả lời không được hỗ trợ.")
-        };
+        var result = await answerService.AcceptAsync(topicId, answerId, User.GetRequiredUserId(), cancellationToken);
+        return this.ToActionResult(result);
     }
 
     [Authorize]
     [HttpPut("{answerId:guid}")]
-    public async Task<ActionResult<AnswerDto>> Update(
-        Guid topicId,
-        Guid answerId,
-        [FromBody] CreateAnswerRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AnswerDto>> Update(Guid topicId, Guid answerId, [FromBody] CreateAnswerRequest request, CancellationToken cancellationToken)
     {
-        var result = await answerService.UpdateAsync(
-            topicId, answerId, User.GetRequiredUserId(), request, cancellationToken);
-        return result.Failure switch
-        {
-            UpdateAnswerFailure.None => Ok(result.Answer),
-            UpdateAnswerFailure.NotFound => NotFound(new ProblemDetails
-            {
-                Status = 404,
-                Title = "Không tìm thấy câu trả lời",
-                Detail = result.Message
-            }),
-            UpdateAnswerFailure.Validation => BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]> { [result.Field ?? "bodyHtml"] = [result.Message ?? "Câu trả lời chưa hợp lệ."] })),
-            _ => throw new InvalidOperationException("Trạng thái sửa câu trả lời không được hỗ trợ.")
-        };
+        var result = await answerService.UpdateAsync(topicId, answerId, User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result);
     }
 
     [Authorize]
     [HttpDelete("{answerId:guid}")]
-    public async Task<IActionResult> Delete(
-        Guid topicId,
-        Guid answerId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid topicId, Guid answerId, CancellationToken cancellationToken)
     {
-        var deleted = await answerService.DeleteAsync(
-            topicId, answerId, User.GetRequiredUserId(), cancellationToken);
-        return deleted ? NoContent() : NotFound(new ProblemDetails
-        {
-            Status = 404,
-            Title = "Không tìm thấy câu trả lời",
-            Detail = "Câu trả lời không tồn tại hoặc không thuộc tài khoản của bạn."
-        });
+        var result = await answerService.DeleteAsync(topicId, answerId, User.GetRequiredUserId(), cancellationToken);
+        return this.ToActionResult(result);
     }
 
     private static ValidationProblemDetails? Validate(AnswerQuery query)

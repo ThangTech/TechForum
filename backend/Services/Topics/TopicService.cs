@@ -13,6 +13,9 @@ namespace TechForum.Api.Services;
 public sealed partial class TopicService : ITopicService
 {
     private const int MaxSlugAttempts = 5;
+    private const string NotFoundTitle = "Không tìm thấy nội dung";
+    private const string NotFoundMessage = "Nội dung không tồn tại hoặc không thuộc tài khoản này.";
+    private const string InvalidTitle = "Nội dung gửi lên chưa hợp lệ";
 
     private readonly ITopicRepository topicRepository;
     private readonly IMediaAssetRepository mediaAssetRepository;
@@ -108,7 +111,7 @@ public sealed partial class TopicService : ITopicService
             totalPages);
     }
 
-    public async Task<CreateTopicResult> CreateAsync(
+    public async Task<Result<OwnTopicDto>> CreateAsync(
         string authorId,
         CreateTopicRequest request,
         CancellationToken cancellationToken)
@@ -130,7 +133,7 @@ public sealed partial class TopicService : ITopicService
         // Only publishing is counted, when the topic is valid: saving a draft is not.
         if (request.Publish && !postingRateLimiter.TryAcquireTopic(authorId, out var retryAfter))
         {
-            return CreateTopicResult.Limited(MemberRateLimit.ToSeconds(retryAfter));
+            return PostingTooFast(retryAfter, "đăng bài tiếp");
         }
 
         var values = validation.Values;
@@ -155,17 +158,16 @@ public sealed partial class TopicService : ITopicService
 
         if (!await TryAddWithUniqueSlugAsync(topic, values.Title, cancellationToken))
         {
-            return CreateTopicResult.ValidationError(
-                "title",
-                "Không thể tạo đường dẫn riêng cho tiêu đề này lúc này. Vui lòng thử lại.");
+            return Result<OwnTopicDto>.Fail(ErrorType.Validation, InvalidTitle,
+                "Không thể tạo đường dẫn riêng cho tiêu đề này lúc này. Vui lòng thử lại.", "title");
         }
 
         // The topic is saved, so the automatic draft of the new topic is not needed any more.
         await draftRepository.DeleteForTargetAsync(authorId, null, cancellationToken);
-        return CreateTopicResult.Success(MapSavedTopic(topic, values));
+        return Result<OwnTopicDto>.Success(MapSavedTopic(topic, values));
     }
 
-    public async Task<CreateTopicResult?> UpdateAsync(
+    public async Task<Result<OwnTopicDto>> UpdateAsync(
         Guid id,
         string authorId,
         UpdateTopicRequest request,
@@ -174,7 +176,7 @@ public sealed partial class TopicService : ITopicService
         var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
         if (topic is null)
         {
-            return null;
+            return Result<OwnTopicDto>.Fail(ErrorType.NotFound, NotFoundTitle, NotFoundMessage);
         }
 
         // Going back to draft hides the whole topic, including the answers of other members.
@@ -182,7 +184,7 @@ public sealed partial class TopicService : ITopicService
         var wouldBecomeDraft = topic.Status == TopicStatus.Published && !request.Publish;
         if (wouldBecomeDraft && await topicRepository.HasPublicAnswersAsync(topic.Id, cancellationToken))
         {
-            return CreateTopicResult.Conflict(
+            return Result<OwnTopicDto>.Fail(ErrorType.Conflict, "Không thể lưu thành bản nháp", 
                 "Nội dung đã có câu trả lời công khai nên không thể chuyển về bản nháp. " +
                 "Bạn có thể giữ nguyên bài đã xuất bản hoặc liên hệ quản trị viên khi cần xử lý.");
         }
@@ -205,7 +207,7 @@ public sealed partial class TopicService : ITopicService
         if (request.Publish && topic.Status != TopicStatus.Published &&
             !postingRateLimiter.TryAcquireTopic(authorId, out var retryAfter))
         {
-            return CreateTopicResult.Limited(MemberRateLimit.ToSeconds(retryAfter));
+            return PostingTooFast(retryAfter, "xuất bản bài tiếp");
         }
 
         var values = validation.Values;
@@ -246,10 +248,10 @@ public sealed partial class TopicService : ITopicService
 
         await topicRepository.SaveChangesAsync(cancellationToken);
         await draftRepository.DeleteForTargetAsync(authorId, topic.Id, cancellationToken);
-        return CreateTopicResult.Success(MapSavedTopic(topic, values));
+        return Result<OwnTopicDto>.Success(MapSavedTopic(topic, values));
     }
 
-    public async Task<SoftDeleteTopicResult> SoftDeleteAsync(
+    public async Task<Result> SoftDeleteAsync(
         Guid id,
         string authorId,
         CancellationToken cancellationToken)
@@ -257,12 +259,13 @@ public sealed partial class TopicService : ITopicService
         var topic = await topicRepository.GetOwnedByIdAsync(id, authorId, cancellationToken);
         if (topic is null)
         {
-            return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.NotFound);
+            return Result.Fail(ErrorType.NotFound, NotFoundTitle, NotFoundMessage);
         }
 
         if (await topicRepository.HasPublicAnswersAsync(id, cancellationToken))
         {
-            return SoftDeleteTopicResult.Failed(SoftDeleteTopicFailure.HasPublicAnswers);
+            return Result.Fail(ErrorType.Conflict, "Không thể xóa nội dung",
+                "Nội dung đã có câu trả lời công khai. Bạn có thể giữ nguyên hoặc liên hệ quản trị viên khi cần xử lý.");
         }
 
         topic.IsDeleted = true;
@@ -273,7 +276,13 @@ public sealed partial class TopicService : ITopicService
         topic.MediaAssets.Clear();
         await topicRepository.SaveChangesAsync(cancellationToken);
         await draftRepository.DeleteForTargetAsync(authorId, id, cancellationToken);
-        return SoftDeleteTopicResult.Success();
+        return Result.Success();
+    }
+
+    private static Result<OwnTopicDto> PostingTooFast(TimeSpan retryAfter, string action)
+    {
+        var seconds = MemberRateLimit.ToSeconds(retryAfter);
+        return Result<OwnTopicDto>.TooManyRequests("Bạn đăng bài quá nhanh", $"Vui lòng chờ {MemberRateLimit.FormatWait(seconds)} rồi {action}.", seconds);
     }
 
     // The fields of the "write a topic" form. Creating and editing send the same fields.
@@ -302,9 +311,9 @@ public sealed partial class TopicService : ITopicService
     private sealed class TopicValidation
     {
         private readonly ValidatedTopic? values;
-        private readonly CreateTopicResult? error;
+        private readonly Result<OwnTopicDto>? error;
 
-        private TopicValidation(ValidatedTopic? values, CreateTopicResult? error)
+        private TopicValidation(ValidatedTopic? values, Result<OwnTopicDto>? error)
         {
             this.values = values;
             this.error = error;
@@ -316,12 +325,12 @@ public sealed partial class TopicService : ITopicService
 
         public ValidatedTopic? Values => values;
 
-        public CreateTopicResult? Error => error;
+        public Result<OwnTopicDto>? Error => error;
 
         public static TopicValidation Valid(ValidatedTopic values) => new(values, null);
 
         public static TopicValidation Invalid(string field, string message) =>
-            new(null, CreateTopicResult.ValidationError(field, message));
+            new(null, Result<OwnTopicDto>.Fail(ErrorType.Validation, InvalidTitle, message, field));
     }
 
     // Checks the form of a new topic (editingTopicId is null) or of a topic that is being edited.
