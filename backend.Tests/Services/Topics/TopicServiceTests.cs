@@ -495,6 +495,38 @@ public sealed class TopicServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WhenThePostingLimitIsUsed_RefusesWithTheWaitAndSavesNothing()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = TestIds.Id(1), Name = "Lập trình", Slug = "lap-trinh" }
+        };
+        var service = CreateService(repository, postingRateLimiter: new RefusingPostingRateLimiter(TimeSpan.FromSeconds(25)));
+
+        var result = await service.CreateAsync("member-a", CreateRequest(), CancellationToken.None);
+
+        Assert.True(result.IsRateLimited);
+        Assert.Equal(25, result.RetryAfterSeconds);
+        Assert.Null(repository.AddedTopic);
+    }
+
+    [Fact]
+    public async Task CreateAsync_SavingADraft_DoesNotUseThePostingLimit()
+    {
+        var repository = new FakeTopicRepository
+        {
+            Category = new Category { Id = TestIds.Id(1), Name = "Lập trình", Slug = "lap-trinh" }
+        };
+        var limiter = new RefusingPostingRateLimiter(TimeSpan.FromSeconds(25));
+        var draft = CreateRequest() with { Publish = false };
+
+        var result = await CreateService(repository, postingRateLimiter: limiter).CreateAsync("member-a", draft, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(0, limiter.Calls);
+    }
+
+    [Fact]
     public async Task CreateAsync_WhenAnotherRequestTookTheSlugFirst_UsesTheNextFreeNumber()
     {
         var repository = new FakeTopicRepository
@@ -728,8 +760,10 @@ public sealed class TopicServiceTests
     private static TopicService CreateService(
         FakeTopicRepository repository,
         FakeMediaAssetRepository? mediaRepository = null,
-        FakeDraftRepository? draftRepository = null) =>
-        new(repository, mediaRepository ?? new FakeMediaAssetRepository(), draftRepository ?? new FakeDraftRepository(), TestMediaRules.CreateSanitizer(), TestMediaRules.Create(), TimeProvider.System);
+        FakeDraftRepository? draftRepository = null,
+        IPostingRateLimiter? postingRateLimiter = null) =>
+        new(repository, mediaRepository ?? new FakeMediaAssetRepository(), draftRepository ?? new FakeDraftRepository(), TestMediaRules.CreateSanitizer(), TestMediaRules.Create(), TimeProvider.System,
+            postingRateLimiter ?? new UnlimitedPostingRateLimiter());
 
     private sealed class FakeTopicRepository : ITopicRepository
     {

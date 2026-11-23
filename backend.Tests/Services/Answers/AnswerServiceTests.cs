@@ -3,6 +3,7 @@ using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
 using TechForum.Api.Models;
 using TechForum.Api.Services;
+using TechForum.Api.Tests.Fakes;
 using Xunit;
 
 namespace TechForum.Api.Tests.Services;
@@ -21,7 +22,7 @@ public sealed class AnswerServiceTests
         };
         var service = new AnswerService(answerRepository,
             new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.GetPublicPageAsync(TestIds.Id(1), new AnswerQuery(), CancellationToken.None);
 
@@ -38,7 +39,7 @@ public sealed class AnswerServiceTests
         };
         var service = new AnswerService(answerRepository,
             new FakeTopicRepository(CreateTopic()), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.GetPublicPageAsync(TestIds.Id(1),
             new AnswerQuery { Page = 1, PageSize = 20, AroundAnswerId = TestIds.Id(41) }, CancellationToken.None);
@@ -62,7 +63,7 @@ public sealed class AnswerServiceTests
         answer.Score = score;
         var repository = new FakeAnswerRepository(answer) { PageResult = new AnswerPage([answer], 1, 1) };
         var service = new AnswerService(repository, new FakeTopicRepository(CreateTopic()), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var item = Assert.Single((await service.GetPublicPageAsync(TestIds.Id(1), new AnswerQuery(), CancellationToken.None))!.Items);
 
@@ -76,7 +77,7 @@ public sealed class AnswerServiceTests
         var answerRepository = new FakeAnswerRepository { PageResult = null };
         var service = new AnswerService(answerRepository,
             new FakeTopicRepository(CreateTopic()), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.GetPublicPageAsync(TestIds.Id(1),
             new AnswerQuery { AroundAnswerId = TestIds.Id(41) }, CancellationToken.None);
@@ -98,7 +99,7 @@ public sealed class AnswerServiceTests
         var answerRepository = new FakeAnswerRepository();
         var service = new AnswerService(answerRepository,
             new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.GetPublicPageAsync(TestIds.Id(1),
             new AnswerQuery { AroundAnswerId = TestIds.Id(41) }, CancellationToken.None);
@@ -113,7 +114,7 @@ public sealed class AnswerServiceTests
         var topic = CreateTopic();
         var repository = new FakeAnswerRepository(CreateAnswer(TestIds.Id(10), "member-a"));
         var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
@@ -128,7 +129,7 @@ public sealed class AnswerServiceTests
         topic.AcceptedAnswerId = TestIds.Id(9);
         var repository = new FakeAnswerRepository(CreateAnswer(TestIds.Id(9), "member-b"), CreateAnswer(TestIds.Id(10), "member-a"));
         var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
@@ -144,7 +145,7 @@ public sealed class AnswerServiceTests
         topic.AcceptedAnswerId = TestIds.Id(10);
         var repository = new FakeAnswerRepository(CreateAnswer(TestIds.Id(10), "member-a"));
         var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
@@ -157,7 +158,7 @@ public sealed class AnswerServiceTests
         var topic = CreateTopic();
         var repository = new FakeAnswerRepository(CreateAnswer(TestIds.Id(10), topic.AuthorId));
         var service = new AnswerService(repository, new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
@@ -171,7 +172,7 @@ public sealed class AnswerServiceTests
         topic.AcceptedAnswerId = TestIds.Id(9);
         var service = new AnswerService(new FakeAnswerRepository(CreateAnswer(TestIds.Id(10), "member-a")),
             new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), "another-member", CancellationToken.None);
 
@@ -186,7 +187,7 @@ public sealed class AnswerServiceTests
         topic.AcceptedAnswerId = TestIds.Id(9);
         var service = new AnswerService(new FakeAnswerRepository(CreateAnswer(TestIds.Id(10), "member-a")),
             new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
@@ -204,7 +205,7 @@ public sealed class AnswerServiceTests
         topic.IsHiddenByModerator = hidden;
         var service = new AnswerService(new FakeAnswerRepository(CreateAnswer(TestIds.Id(10), "member-a")),
             new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(10), topic.AuthorId, CancellationToken.None);
 
@@ -220,12 +221,49 @@ public sealed class AnswerServiceTests
         reply.ParentAnswerId = TestIds.Id(10);
         var service = new AnswerService(new FakeAnswerRepository(reply),
             new FakeTopicRepository(topic), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.AcceptAsync(TestIds.Id(1), TestIds.Id(11), topic.AuthorId, CancellationToken.None);
 
         Assert.Equal(AcceptAnswerFailure.NotFound, result.Failure);
         Assert.Null(topic.AcceptedAnswerId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenThePostingLimitIsUsed_RefusesWithTheWaitAndSavesNothing()
+    {
+        var answerRepository = new FakeAnswerRepository();
+        var service = new AnswerService(
+            answerRepository,
+            new FakeTopicRepository(CreateTopic()),
+            new FakeNotificationService(),
+            new PlainTextSanitizer(),
+            TimeProvider.System, new RefusingPostingRateLimiter(TimeSpan.FromSeconds(42)));
+
+        var result = await service.CreateAsync(
+            TestIds.Id(1), "member", new CreateAnswerRequest("<p>Câu trả lời</p>", null), CancellationToken.None);
+
+        Assert.Equal(CreateAnswerFailure.RateLimited, result.Failure);
+        Assert.Equal(42, result.RetryAfterSeconds);
+        Assert.Null(answerRepository.Added);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenTheAnswerIsInvalid_DoesNotUseThePostingLimit()
+    {
+        var limiter = new RefusingPostingRateLimiter(TimeSpan.FromSeconds(42));
+        var service = new AnswerService(
+            new FakeAnswerRepository(),
+            new FakeTopicRepository(CreateTopic()),
+            new FakeNotificationService(),
+            new PlainTextSanitizer(),
+            TimeProvider.System, limiter);
+
+        var result = await service.CreateAsync(
+            TestIds.Id(1), "member", new CreateAnswerRequest("   ", null), CancellationToken.None);
+
+        Assert.Equal(CreateAnswerFailure.Validation, result.Failure);
+        Assert.Equal(0, limiter.Calls);
     }
 
     [Fact]
@@ -242,7 +280,7 @@ public sealed class AnswerServiceTests
             new FakeTopicRepository(CreateTopic()),
             notificationService,
             new PlainTextSanitizer(),
-            TimeProvider.System);
+            TimeProvider.System, new UnlimitedPostingRateLimiter());
 
         var result = await service.CreateAsync(
             TestIds.Id(1),
@@ -403,7 +441,7 @@ public sealed class AnswerServiceTests
 
     private static AnswerService CreateService(FakeAnswerRepository repository, Topic? topic = null) =>
         new(repository, new FakeTopicRepository(topic ?? CreateTopic()), new FakeNotificationService(),
-            new PlainTextSanitizer(), TimeProvider.System);
+            new PlainTextSanitizer(), TimeProvider.System, new UnlimitedPostingRateLimiter());
 
     private static Topic CreateTopic()
     {
@@ -475,8 +513,11 @@ public sealed class AnswerServiceTests
                 ? answer : null);
         }
 
+        public Answer? Added { get; private set; }
+
         public Task AddAsync(Answer answer, CancellationToken cancellationToken)
         {
+            Added = answer;
             answer.Id = TestIds.Id(20);
             answer.Author = CreateUser(answer.AuthorId);
             return Task.CompletedTask;

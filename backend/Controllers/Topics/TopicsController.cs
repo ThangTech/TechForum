@@ -129,6 +129,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     [ProducesResponseType<OwnTopicDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<OwnTopicDto>> Create(
         [FromBody] CreateTopicRequest request,
         CancellationToken cancellationToken)
@@ -144,6 +145,11 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         }
 
         var result = await topicService.CreateAsync(authorId, request, cancellationToken);
+        if (result.IsRateLimited)
+        {
+            return this.PostingTooFast(result.RetryAfterSeconds, "Bạn đăng bài quá nhanh", "đăng bài tiếp");
+        }
+
         if (!result.Succeeded)
         {
             return BadRequest(new ValidationProblemDetails(
@@ -163,6 +169,7 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<OwnTopicDto>> Update(
         Guid id,
         [FromBody] UpdateTopicRequest request,
@@ -173,6 +180,11 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
         {
             return NotFound(CreateNotFoundProblem());
         }
+        if (result.IsRateLimited)
+        {
+            return this.PostingTooFast(result.RetryAfterSeconds, "Bạn đăng bài quá nhanh", "xuất bản bài tiếp");
+        }
+
         if (result.IsConflict)
         {
             return Conflict(new ProblemDetails

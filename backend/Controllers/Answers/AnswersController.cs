@@ -116,6 +116,7 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AnswerDto>> Create(
         Guid topicId,
         [FromBody] CreateAnswerRequest request,
@@ -152,6 +153,8 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
                 Status = StatusCodes.Status400BadRequest,
                 Title = "Câu trả lời gửi lên chưa hợp lệ"
             }),
+            CreateAnswerFailure.RateLimited => this.PostingTooFast(
+                result.RetryAfterSeconds, "Bạn trả lời quá nhanh", "gửi câu trả lời tiếp"),
             _ => throw new InvalidOperationException("Trạng thái tạo câu trả lời không được hỗ trợ.")
         };
     }

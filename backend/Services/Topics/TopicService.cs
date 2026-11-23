@@ -16,7 +16,8 @@ public sealed partial class TopicService(
     IDraftRepository draftRepository,
     IContentSanitizer contentSanitizer,
     MediaUrlRules mediaUrlRules,
-    TimeProvider timeProvider) : ITopicService
+    TimeProvider timeProvider,
+    IPostingRateLimiter postingRateLimiter) : ITopicService
 {
     private const int MaxSlugAttempts = 5;
 
@@ -107,6 +108,12 @@ public sealed partial class TopicService(
             return validation.Error;
         }
 
+        // Only publishing is counted, when the topic is valid: saving a draft is not.
+        if (request.Publish && !postingRateLimiter.TryAcquireTopic(authorId, out var retryAfter))
+        {
+            return CreateTopicResult.Limited(MemberRateLimit.ToSeconds(retryAfter));
+        }
+
         var values = validation.Values;
         var slug = await CreateUniqueSlugAsync(values.Title, cancellationToken);
         var now = timeProvider.GetUtcNow();
@@ -173,6 +180,13 @@ public sealed partial class TopicService(
         if (!validation.IsValid)
         {
             return validation.Error;
+        }
+
+        // A draft that is published now counts like a new topic.
+        if (request.Publish && topic.Status != TopicStatus.Published &&
+            !postingRateLimiter.TryAcquireTopic(authorId, out var retryAfter))
+        {
+            return CreateTopicResult.Limited(MemberRateLimit.ToSeconds(retryAfter));
         }
 
         var values = validation.Values;

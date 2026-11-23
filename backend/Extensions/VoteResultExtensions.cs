@@ -43,19 +43,11 @@ public static class VoteResultExtensions
                     Status = 429,
                     Title = "Bạn bình chọn quá nhanh",
                     Detail = result.RetryAfterSeconds >= 3600
-                        ? $"Bạn đã dùng hết số lượt bình chọn trong ngày. Vui lòng thử lại sau {FormatWait(result.RetryAfterSeconds)}."
-                        : $"Bạn đã bình chọn quá nhiều trong thời gian ngắn. Vui lòng thử lại sau {FormatWait(result.RetryAfterSeconds)}."
+                        ? $"Bạn đã dùng hết số lượt bình chọn trong ngày. Vui lòng thử lại sau {MemberRateLimit.FormatWait(result.RetryAfterSeconds)}."
+                        : $"Bạn đã bình chọn quá nhiều trong thời gian ngắn. Vui lòng thử lại sau {MemberRateLimit.FormatWait(result.RetryAfterSeconds)}."
                 });
             default:
                 throw new InvalidOperationException("Kết quả bình chọn không được hỗ trợ.");
         }
     }
-
-    // "30 giây", "5 phút", "2 giờ": a wait is told in the unit that a person can use.
-    private static string FormatWait(int seconds) => seconds switch
-    {
-        < 90 => $"{seconds} giây",
-        < 5400 => $"{(int)Math.Ceiling(seconds / 60.0)} phút",
-        _ => $"{(int)Math.Ceiling(seconds / 3600.0)} giờ"
-    };
 }

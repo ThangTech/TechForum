@@ -12,7 +12,8 @@ public sealed partial class AnswerService(
     ITopicRepository topicRepository,
     INotificationService notificationService,
     IContentSanitizer contentSanitizer,
-    TimeProvider timeProvider) : IAnswerService
+    TimeProvider timeProvider,
+    IPostingRateLimiter postingRateLimiter) : IAnswerService
 {
     public async Task<PagedResultDto<AnswerDto>?> GetPublicPageAsync(
         Guid topicId,
@@ -152,6 +153,12 @@ public sealed partial class AnswerService(
                 parentAnswer = await answerRepository.GetVisibleByIdAsync(
                     topicId, parentAnswer.ParentAnswerId.Value, cancellationToken);
             }
+        }
+
+        // Counted only now, when the answer is valid and about to be saved.
+        if (!postingRateLimiter.TryAcquireAnswer(authorId, out var retryAfter))
+        {
+            return CreateAnswerResult.Limited(MemberRateLimit.ToSeconds(retryAfter));
         }
 
         var answer = new Answer

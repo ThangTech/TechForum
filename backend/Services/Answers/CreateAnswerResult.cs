@@ -7,14 +7,16 @@ public enum CreateAnswerFailure
     None,
     TopicNotFound,
     DiscussionLocked,
-    Validation
+    Validation,
+    RateLimited
 }
 
 public sealed record CreateAnswerResult(
     AnswerDto? Answer,
     CreateAnswerFailure Failure,
     string? Field,
-    string? Message)
+    string? Message,
+    int RetryAfterSeconds = 0)
 {
     public bool Succeeded => Answer is not null;
 
@@ -26,4 +28,7 @@ public sealed record CreateAnswerResult(
         string message,
         string? field = null) =>
         new(null, failure, field, message);
+
+    public static CreateAnswerResult Limited(int retryAfterSeconds) =>
+        new(null, CreateAnswerFailure.RateLimited, null, null, retryAfterSeconds);
 }
