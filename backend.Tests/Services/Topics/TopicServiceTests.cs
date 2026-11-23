@@ -136,30 +136,45 @@ public sealed class TopicServiceTests
     }
 
     [Fact]
-    public async Task FollowingController_UsesServerIdentityAndValidatesBeforeQuerying()
+    public async Task FollowingController_UsesTheServerIdentity()
     {
         var repository = new FakeTopicRepository();
         var controller = CreateController(repository, "signed-in-member");
 
-        var invalid = await controller.GetFollowing(new TopicQuery { PageSize = 51 }, default);
-        Assert.IsType<BadRequestObjectResult>(invalid.Result);
-        Assert.Null(repository.LastFollowerId);
-
         var valid = await controller.GetFollowing(new TopicQuery { Sort = "weekly" }, default);
+
         Assert.IsType<OkObjectResult>(valid.Result);
         Assert.Equal("signed-in-member", repository.LastFollowerId);
     }
 
+    // [ApiController] kiểm tra TopicQuery trước khi vào action; ở đây gọi chính bộ kiểm tra đó.
     [Theory]
-    [InlineData("popular", 400)]
-    [InlineData("weekly", 200)]
-    [InlineData("WEEKLY", 200)]
-    [InlineData("discussion", 200)]
-    public async Task PublicController_ValidatesFeedSort(string sort, int expectedStatus)
+    [InlineData("popular", false)]
+    [InlineData("weekly", true)]
+    [InlineData("WEEKLY", true)]
+    [InlineData("discussion", true)]
+    public void TopicQuery_ChecksTheSort(string sort, bool valid)
     {
-        var result = await CreateController(new FakeTopicRepository()).GetAll(new TopicQuery { Sort = sort }, default);
-        var response = Assert.IsAssignableFrom<ObjectResult>(result.Result);
-        Assert.Equal(expectedStatus, response.StatusCode);
+        Assert.Equal(valid, IsValid(new TopicQuery { Sort = sort }));
+    }
+
+    [Fact]
+    public void TopicQuery_ChecksThePageAndTheFilters()
+    {
+        Assert.True(IsValid(new TopicQuery()));
+        Assert.Equal(10, new TopicQuery().PageSize);
+        Assert.False(IsValid(new TopicQuery { PageSize = 51 }));
+        Assert.False(IsValid(new TopicQuery { Page = 0 }));
+        Assert.False(IsValid(new TopicQuery { CategoryId = Guid.Empty }));
+        Assert.False(IsValid(new TopicQuery { Type = TopicType.Article, QuestionStatus = "solved" }));
+        Assert.False(IsValid(new TopicQuery { Range = "year" }));
+    }
+
+    private static bool IsValid(object query)
+    {
+        var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        return System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+            query, new System.ComponentModel.DataAnnotations.ValidationContext(query), results, validateAllProperties: true);
     }
 
     private static TopicsController CreateController(FakeTopicRepository repository, string? userId = null)

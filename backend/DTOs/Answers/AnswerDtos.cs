@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using TechForum.Api.Filters;
 
 namespace TechForum.Api.Dtos;
@@ -24,10 +25,18 @@ public sealed record AnswerHelpfulDto(int HelpfulCount, bool IsHelpful);
 
 public sealed record CreateAnswerRequest([property: FilterProfanity(IsHtml = true)] string? BodyHtml, Guid? ParentAnswerId = null);
 
-public sealed class AnswerQuery
+public sealed class AnswerQuery : PageQuery, IValidatableObject
 {
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 20;
     public Guid? AroundAnswerId { get; init; }
+
+    [RegularExpression("^(oldest|helpful|score)$", ErrorMessage = "Cách sắp xếp phải là oldest, helpful hoặc score.")]
     public string Sort { get; init; } = "oldest";
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (AroundAnswerId == Guid.Empty)
+        {
+            yield return new ValidationResult("Mã câu trả lời không hợp lệ.", ["aroundAnswerId"]);
+        }
+    }
 }

@@ -28,36 +28,15 @@ public sealed class ReportsController : ControllerBase
 
     [HttpGet("admin")]
     [Authorize(Roles = RoleNames.Administrator)]
-    public async Task<ActionResult<PagedResultDto<AdminReportDto>>> GetAdminPage(
-        [FromQuery] string? status = "pending",
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default)
+    public async Task<ActionResult<PagedResultDto<AdminReportDto>>> GetAdminPage([FromQuery] AdminReportQuery query, CancellationToken cancellationToken)
     {
-        var result = await reportService.GetAdminPageAsync(status, page, pageSize, cancellationToken);
-        return result is null
-            ? BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["status"] = ["Trạng thái phải là pending, accepted hoặc rejected."]
-            }))
-            : Ok(result);
+        return Ok(await reportService.GetAdminPageAsync(query.Status, query.Page, query.PageSize, cancellationToken));
     }
 
     [HttpGet("mine")]
-    public async Task<ActionResult<PagedResultDto<MyReportDto>>> GetMine(
-        [FromQuery] string? status = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        CancellationToken cancellationToken = default)
+    public async Task<ActionResult<PagedResultDto<MyReportDto>>> GetMine([FromQuery] MyReportQuery query, CancellationToken cancellationToken)
     {
-        var userId = User.GetRequiredUserId();
-        var result = await reportService.GetMineAsync(userId, status, page, pageSize, cancellationToken);
-        return result is null
-            ? BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["status"] = ["Trạng thái phải là pending, accepted hoặc rejected."]
-            }))
-            : Ok(result);
+        return Ok(await reportService.GetMineAsync(User.GetRequiredUserId(), query.Status, query.Page, query.PageSize, cancellationToken));
     }
 
     [HttpPut("admin/{reportId:guid}/resolution")]

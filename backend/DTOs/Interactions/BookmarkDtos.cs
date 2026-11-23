@@ -13,8 +13,10 @@ public sealed record SavedTopicDto(
     DateTimeOffset PublishedAtUtc,
     DateTimeOffset SavedAtUtc);
 
-public sealed class BookmarkQuery
+public sealed class BookmarkQuery : PageQuery
 {
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 10;
+    public BookmarkQuery()
+    {
+        PageSize = 10;
+    }
 }

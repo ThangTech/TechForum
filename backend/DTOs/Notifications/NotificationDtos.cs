@@ -16,3 +16,11 @@ public sealed record NotificationPageDto(
     int TotalItems,
     int TotalPages,
     int UnreadCount);
+
+public sealed class NotificationQuery : PageQuery
+{
+    public NotificationQuery()
+    {
+        PageSize = 10;
+    }
+}

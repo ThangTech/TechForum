@@ -16,23 +16,14 @@ public sealed class SkillCommunitiesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<SkillCommunityDto>> Get(
-        Guid tagId,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default)
+    public async Task<ActionResult<SkillCommunityDto>> Get(Guid tagId, [FromQuery] PageQuery query, CancellationToken cancellationToken)
     {
-        if (page < 1 || pageSize is < 1 or > 50)
+        var result = await service.GetAsync(tagId, query.Page, query.PageSize, cancellationToken);
+        if (result is null)
         {
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                [page < 1 ? "page" : "pageSize"] =
-                    [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số thành viên mỗi trang phải từ 1 đến 50."]
-            }));
+            return NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy kỹ năng" });
         }
-        var result = await service.GetAsync(tagId, page, pageSize, cancellationToken);
-        return result is null
-            ? NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy kỹ năng" })
-            : Ok(result);
+
+        return Ok(result);
     }
 }

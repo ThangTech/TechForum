@@ -25,16 +25,6 @@ public sealed class TopicsController : ControllerBase
         [FromQuery] TopicQuery query,
         CancellationToken cancellationToken)
     {
-        var errors = Validate(query);
-        if (errors.Count > 0)
-        {
-            return BadRequest(new ValidationProblemDetails(errors)
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Bộ lọc chủ đề chưa hợp lệ"
-            });
-        }
-
         return Ok(await topicService.GetPublicPageAsync(query, cancellationToken));
     }
 
@@ -50,16 +40,6 @@ public sealed class TopicsController : ControllerBase
             return Unauthorized();
         }
 
-        var errors = Validate(query);
-        if (errors.Count > 0)
-        {
-            return BadRequest(new ValidationProblemDetails(errors)
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Bộ lọc chủ đề chưa hợp lệ"
-            });
-        }
-
         return Ok(await topicService.GetFollowingPageAsync(followerId, query, cancellationToken));
     }
 
@@ -73,16 +53,6 @@ public sealed class TopicsController : ControllerBase
         if (string.IsNullOrWhiteSpace(authorId))
         {
             return Unauthorized();
-        }
-
-        var errors = Validate(query);
-        if (errors.Count > 0)
-        {
-            return BadRequest(new ValidationProblemDetails(errors)
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Bộ lọc nội dung chưa hợp lệ"
-            });
         }
 
         return Ok(await topicService.GetOwnedPageAsync(authorId, query, cancellationToken));
@@ -149,67 +119,4 @@ public sealed class TopicsController : ControllerBase
         Title = "Không tìm thấy nội dung",
         Detail = "Nội dung không tồn tại hoặc không thuộc tài khoản này."
     };
-
-    private static Dictionary<string, string[]> Validate(TopicQuery query)
-    {
-        var errors = new Dictionary<string, string[]>();
-        if (query.Page < 1)
-        {
-            errors["page"] = ["Trang phải lớn hơn hoặc bằng 1."];
-        }
-
-        if (query.PageSize is < 1 or > 50)
-        {
-            errors["pageSize"] = ["Số phần tử mỗi trang phải từ 1 đến 50."];
-        }
-
-        if (query.Keyword?.Trim().Length > 100)
-        {
-            errors["keyword"] = ["Từ khóa không được vượt quá 100 ký tự."];
-        }
-
-        if (query.Type.HasValue && !Enum.IsDefined(query.Type.Value))
-        {
-            errors["type"] = ["Loại nội dung không hợp lệ."];
-        }
-
-        if (query.CategoryId == Guid.Empty)
-        {
-            errors["categoryId"] = ["Mã chuyên mục phải lớn hơn 0."];
-        }
-
-        if (query.TagId == Guid.Empty)
-        {
-            errors["tagId"] = ["Mã thẻ phải lớn hơn 0."];
-        }
-
-        if (query.Sort is not null &&
-            !string.Equals(query.Sort, "discussion", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(query.Sort, "weekly", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(query.Sort, "hot", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(query.Sort, "top", StringComparison.OrdinalIgnoreCase))
-        {
-            errors["sort"] = ["Kiểu sắp xếp chỉ hỗ trợ 'discussion', 'weekly', 'hot' hoặc 'top'."];
-        }
-
-        if (query.Range is not null &&
-            query.Range.ToLowerInvariant() is not ("day" or "week" or "month" or "all"))
-        {
-            errors["range"] = ["Khoảng thời gian chỉ hỗ trợ 'day', 'week', 'month' hoặc 'all'."];
-        }
-
-        if (query.QuestionStatus is not null)
-        {
-            if (query.QuestionStatus is not ("unanswered" or "unsolved" or "solved"))
-            {
-                errors["questionStatus"] = ["Trạng thái câu hỏi không hợp lệ."];
-            }
-            if (query.Type == TopicType.Article)
-            {
-                errors["questionStatus"] = ["Bộ lọc trạng thái chỉ dùng cho câu hỏi."];
-            }
-        }
-
-        return errors;
-    }
 }

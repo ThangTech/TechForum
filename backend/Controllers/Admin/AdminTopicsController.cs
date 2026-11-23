@@ -20,14 +20,9 @@ public sealed class AdminTopicsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResultDto<AdminTopicDto>>> GetPage(
-        [FromQuery] AdminTopicQuery query,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResultDto<AdminTopicDto>>> GetPage([FromQuery] AdminTopicQuery query, CancellationToken cancellationToken)
     {
-        var result = await topicService.GetPageAsync(query, cancellationToken);
-        return result is null
-            ? BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]> { ["filters"] = ["Bộ lọc nội dung không hợp lệ."] }))
-            : Ok(result);
+        return Ok(await topicService.GetPageAsync(query, cancellationToken));
     }
 
     [HttpGet("{topicId:guid}")]

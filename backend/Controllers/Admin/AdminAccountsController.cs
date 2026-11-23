@@ -20,31 +20,9 @@ public sealed class AdminAccountsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResultDto<AdminAccountDto>>> GetPage(
-        [FromQuery] string? keyword = null,
-        [FromQuery] string? status = null,
-        [FromQuery] string? role = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default)
+    public async Task<ActionResult<PagedResultDto<AdminAccountDto>>> GetPage([FromQuery] AdminAccountQuery query, CancellationToken cancellationToken)
     {
-        if (keyword?.Trim().Length > 100)
-        {
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["keyword"] = ["Từ khóa không được vượt quá 100 ký tự."]
-            }));
-        }
-        status = status?.Trim().ToLowerInvariant();
-        role = role?.Trim().ToLowerInvariant();
-        if (status is not (null or "" or "locked" or "unlocked") || role is not (null or "" or "administrator" or "member"))
-        {
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["filters"] = ["Trạng thái phải là locked/unlocked, vai trò phải là administrator/member."]
-            }));
-        }
-        return Ok(await accountService.GetPageAsync(keyword, status, role, page, pageSize, cancellationToken));
+        return Ok(await accountService.GetPageAsync(query.Keyword, query.Status, query.Role, query.Page, query.PageSize, cancellationToken));
     }
 
     [HttpPut("{userId}/lock")]

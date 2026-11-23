@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace TechForum.Api.Dtos;
 
 public sealed record AdminTopicDto(
@@ -16,14 +17,26 @@ public sealed record AdminTopicDto(
 
 public sealed record AdminTopicDetailDto(AdminTopicDto Topic, string BodyHtml);
 
-public sealed class AdminTopicQuery
+public sealed class AdminTopicQuery : PageQuery, IValidatableObject
 {
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 20;
+    [StringLength(100, ErrorMessage = "Từ khóa không được vượt quá 100 ký tự.")]
     public string? Keyword { get; init; }
+
+    [RegularExpression("(?i)^(article|question)?$", ErrorMessage = "Loại nội dung phải là article hoặc question.")]
     public string? Type { get; init; }
+
     public Guid? CategoryId { get; init; }
+
+    [RegularExpression("(?i)^(visible|draft|hidden|deleted)?$", ErrorMessage = "Trạng thái hiển thị không hợp lệ.")]
     public string? Visibility { get; init; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (CategoryId == Guid.Empty)
+        {
+            yield return new ValidationResult("Mã chuyên mục không hợp lệ.", ["categoryId"]);
+        }
+    }
 }
 
 public sealed record ModerateTopicRequest(

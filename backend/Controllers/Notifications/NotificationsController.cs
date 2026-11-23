@@ -19,26 +19,9 @@ public sealed class NotificationsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<NotificationPageDto>> GetAll(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        CancellationToken cancellationToken = default)
+    public async Task<ActionResult<NotificationPageDto>> GetAll([FromQuery] NotificationQuery query, CancellationToken cancellationToken)
     {
-        if (page < 1 || pageSize is < 1 or > 50)
-        {
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                [page < 1 ? "page" : "pageSize"] =
-                    [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số thông báo mỗi trang phải từ 1 đến 50."]
-            })
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Phân trang thông báo chưa hợp lệ"
-            });
-        }
-
-        return Ok(await notificationService.GetPageAsync(
-            User.GetRequiredUserId(), page, pageSize, cancellationToken));
+        return Ok(await notificationService.GetPageAsync(User.GetRequiredUserId(), query.Page, query.PageSize, cancellationToken));
     }
 
     [HttpPut("{id:guid}/read")]

@@ -4,7 +4,7 @@ namespace TechForum.Api.Services;
 
 public interface IAdminTopicService
 {
-    Task<PagedResultDto<AdminTopicDto>?> GetPageAsync(AdminTopicQuery query, CancellationToken cancellationToken);
+    Task<PagedResultDto<AdminTopicDto>> GetPageAsync(AdminTopicQuery query, CancellationToken cancellationToken);
     Task<AdminTopicDetailDto?> GetByIdAsync(Guid topicId, CancellationToken cancellationToken);
     Task<Result<AdminTopicDto>> ModerateAsync(
         Guid topicId,

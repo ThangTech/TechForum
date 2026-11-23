@@ -62,20 +62,16 @@ public sealed class ProfilesController : ControllerBase
     }
 
     [HttpGet("{userId}/followers")]
-    public Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetFollowers(
-        string userId,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default) =>
-        GetConnections(userId, true, page, pageSize, cancellationToken);
+    public async Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetFollowers(string userId, [FromQuery] PageQuery query, CancellationToken cancellationToken)
+    {
+        return await GetConnections(userId, true, query, cancellationToken);
+    }
 
     [HttpGet("{userId}/following")]
-    public Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetFollowing(
-        string userId,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default) =>
-        GetConnections(userId, false, page, pageSize, cancellationToken);
+    public async Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetFollowing(string userId, [FromQuery] PageQuery query, CancellationToken cancellationToken)
+    {
+        return await GetConnections(userId, false, query, cancellationToken);
+    }
 
     [Authorize]
     [HttpPut("{userId}/follow")]
@@ -93,25 +89,14 @@ public sealed class ProfilesController : ControllerBase
         Ok(await followService.UnfollowAsync(User.GetRequiredUserId(), userId, cancellationToken));
 
     private async Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetConnections(
-        string userId,
-        bool followers,
-        int page,
-        int pageSize,
-        CancellationToken cancellationToken)
+        string userId, bool followers, PageQuery query, CancellationToken cancellationToken)
     {
-        if (page < 1 || pageSize is < 1 or > 50)
+        var result = await followService.GetConnectionsAsync(userId, followers, query.Page, query.PageSize, cancellationToken);
+        if (result is null)
         {
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                [page < 1 ? "page" : "pageSize"] =
-                    [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số thành viên mỗi trang phải từ 1 đến 50."]
-            }));
+            return NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy thành viên" });
         }
 
-        var result = await followService.GetConnectionsAsync(
-            userId, followers, page, pageSize, cancellationToken);
-        return result is null
-            ? NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy thành viên" })
-            : Ok(result);
+        return Ok(result);
     }
 }

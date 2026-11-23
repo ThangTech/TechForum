@@ -19,20 +19,8 @@ public sealed class ActivityController : ControllerBase
     }
 
     [HttpGet("mine")]
-    public async Task<ActionResult<PagedResultDto<ActivityItemDto>>> GetMine(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken cancellationToken = default)
+    public async Task<ActionResult<PagedResultDto<ActivityItemDto>>> GetMine([FromQuery] PageQuery query, CancellationToken cancellationToken)
     {
-        if (page < 1 || pageSize is < 1 or > 50)
-        {
-            return BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                [page < 1 ? "page" : "pageSize"] =
-                    [page < 1 ? "Trang phải lớn hơn hoặc bằng 1." : "Số hoạt động mỗi trang phải từ 1 đến 50."]
-            }));
-        }
-        return Ok(await activityService.GetMineAsync(User.GetRequiredUserId(), page, pageSize, cancellationToken));
+        return Ok(await activityService.GetMineAsync(User.GetRequiredUserId(), query.Page, query.PageSize, cancellationToken));
     }
-
 }

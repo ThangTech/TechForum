@@ -15,6 +15,23 @@ public sealed class AdminAccountService : IAdminAccountService
         this.timeProvider = timeProvider;
     }
 
+    // "locked"/"unlocked" thành true/false; để trống thì không lọc.
+    private static bool? ParseFilter(string? value, string yes, string no)
+    {
+        var text = value?.Trim();
+        if (string.Equals(text, yes, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (string.Equals(text, no, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return null;
+    }
+
     public async Task<PagedResultDto<AdminAccountDto>> GetPageAsync(
         string? keyword,
         string? status,
@@ -25,8 +42,8 @@ public sealed class AdminAccountService : IAdminAccountService
     {
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 50);
-        bool? isLocked = status switch { "locked" => true, "unlocked" => false, _ => null };
-        bool? isAdministrator = role switch { "administrator" => true, "member" => false, _ => null };
+        bool? isLocked = ParseFilter(status, "locked", "unlocked");
+        bool? isAdministrator = ParseFilter(role, "administrator", "member");
         var result = await accountRepository.GetPageAsync(keyword, isLocked, isAdministrator,
             timeProvider.GetUtcNow(), page, pageSize, cancellationToken);
         return new PagedResultDto<AdminAccountDto>(

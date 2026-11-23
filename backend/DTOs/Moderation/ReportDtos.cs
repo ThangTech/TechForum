@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace TechForum.Api.Dtos;
 
 public sealed record CreateReportRequest(
@@ -57,3 +58,20 @@ public sealed record AdminReportDto(
     bool IsTargetAutoHidden,
     bool IsTargetDeleted,
     string? ParentAnswerBodyHtml);
+
+public sealed class AdminReportQuery : PageQuery
+{
+    [RegularExpression("(?i)^(pending|accepted|rejected)?$", ErrorMessage = "Trạng thái phải là pending, accepted hoặc rejected.")]
+    public string? Status { get; init; } = "pending";
+}
+
+public sealed class MyReportQuery : PageQuery
+{
+    public MyReportQuery()
+    {
+        PageSize = 10;
+    }
+
+    [RegularExpression("(?i)^(pending|accepted|rejected)?$", ErrorMessage = "Trạng thái phải là pending, accepted hoặc rejected.")]
+    public string? Status { get; init; }
+}

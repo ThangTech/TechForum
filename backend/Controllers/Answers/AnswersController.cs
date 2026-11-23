@@ -36,12 +36,6 @@ public sealed class AnswersController : ControllerBase
         [FromQuery] AnswerQuery query,
         CancellationToken cancellationToken)
     {
-        var validationProblem = Validate(query);
-        if (validationProblem is not null)
-        {
-            return BadRequest(validationProblem);
-        }
-
         var viewerId = User.Identity?.IsAuthenticated == true
             ? User.GetUserIdOrNull()
             : null;
@@ -109,35 +103,6 @@ public sealed class AnswersController : ControllerBase
     {
         var result = await answerService.DeleteAsync(topicId, answerId, User.GetRequiredUserId(), cancellationToken);
         return this.ToActionResult(result);
-    }
-
-    private static ValidationProblemDetails? Validate(AnswerQuery query)
-    {
-        var errors = new Dictionary<string, string[]>();
-        if (query.Page < 1)
-        {
-            errors["page"] = ["Trang phải lớn hơn hoặc bằng 1."];
-        }
-        if (query.PageSize is < 1 or > 50)
-        {
-            errors["pageSize"] = ["Số câu trả lời mỗi trang phải từ 1 đến 50."];
-        }
-        if (query.AroundAnswerId == Guid.Empty)
-        {
-            errors["aroundAnswerId"] = ["Mã câu trả lời phải lớn hơn 0."];
-        }
-        if (query.Sort is not ("oldest" or "helpful" or "score"))
-        {
-            errors["sort"] = ["Cách sắp xếp phải là oldest, helpful hoặc score."];
-        }
-
-        return errors.Count == 0
-            ? null
-            : new ValidationProblemDetails(errors)
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Bộ lọc câu trả lời chưa hợp lệ"
-            };
     }
 
     private static ProblemDetails CreateTopicNotFoundProblem() => new()

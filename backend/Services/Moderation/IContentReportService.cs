@@ -8,12 +8,12 @@ public interface IContentReportService
         string reporterId,
         CreateReportRequest request,
         CancellationToken cancellationToken);
-    Task<PagedResultDto<AdminReportDto>?> GetAdminPageAsync(
+    Task<PagedResultDto<AdminReportDto>> GetAdminPageAsync(
         string? status,
         int page,
         int pageSize,
         CancellationToken cancellationToken);
-    Task<PagedResultDto<MyReportDto>?> GetMineAsync(
+    Task<PagedResultDto<MyReportDto>> GetMineAsync(
         string reporterId, string? status, int page, int pageSize, CancellationToken cancellationToken);
     Task<Result<AdminReportDto>> ResolveAsync(
         Guid reportId,

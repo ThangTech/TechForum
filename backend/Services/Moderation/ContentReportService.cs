@@ -92,25 +92,24 @@ public sealed class ContentReportService : IContentReportService
             report.Id, targetType, request.TargetId, reason, details, "pending", report.CreatedAtUtc));
     }
 
-    public async Task<PagedResultDto<AdminReportDto>?> GetAdminPageAsync(
+    // Trạng thái đã được kiểm tra ở query (AdminReportQuery, MyReportQuery); để trống thì lấy mọi trạng thái.
+    private static ReportStatus? ParseStatus(string? status)
+    {
+        if (Enum.TryParse<ReportStatus>(status?.Trim(), true, out var parsed))
+        {
+            return parsed;
+        }
+
+        return null;
+    }
+
+    public async Task<PagedResultDto<AdminReportDto>> GetAdminPageAsync(
         string? status,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
     {
-        ReportStatus? parsedStatus = status?.Trim().ToLowerInvariant() switch
-        {
-            null or "" => null,
-            "pending" => ReportStatus.Pending,
-            "accepted" => ReportStatus.Accepted,
-            "rejected" => ReportStatus.Rejected,
-            _ => (ReportStatus?)null
-        };
-        if (!string.IsNullOrWhiteSpace(status) && !parsedStatus.HasValue)
-        {
-            return null;
-        }
-
+        var parsedStatus = ParseStatus(status);
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 50);
         var result = await reportRepository.GetPageAsync(parsedStatus, page, pageSize, cancellationToken);
@@ -271,21 +270,10 @@ public sealed class ContentReportService : IContentReportService
             ? (topic.AuthorId, topic.Title, "Bài viết")
             : (answer!.AuthorId, answer.Topic.Title, "Câu trả lời");
 
-    public async Task<PagedResultDto<MyReportDto>?> GetMineAsync(
+    public async Task<PagedResultDto<MyReportDto>> GetMineAsync(
         string reporterId, string? status, int page, int pageSize, CancellationToken cancellationToken)
     {
-        ReportStatus? parsedStatus = status?.Trim().ToLowerInvariant() switch
-        {
-            null or "" => null,
-            "pending" => ReportStatus.Pending,
-            "accepted" => ReportStatus.Accepted,
-            "rejected" => ReportStatus.Rejected,
-            _ => null
-        };
-        if (!string.IsNullOrWhiteSpace(status) && !parsedStatus.HasValue)
-        {
-            return null;
-        }
+        var parsedStatus = ParseStatus(status);
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 50);
         var result = await reportRepository.GetMineAsync(reporterId, parsedStatus, page, pageSize, cancellationToken);

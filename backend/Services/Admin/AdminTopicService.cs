@@ -30,29 +30,15 @@ public sealed class AdminTopicService : IAdminTopicService
         return topic is null ? null : new AdminTopicDetailDto(Map(topic), contentSanitizer.Sanitize(topic.BodyHtml));
     }
 
-    public async Task<PagedResultDto<AdminTopicDto>?> GetPageAsync(
+    public async Task<PagedResultDto<AdminTopicDto>> GetPageAsync(
         AdminTopicQuery query,
         CancellationToken cancellationToken)
     {
-        if (query.Page < 1 || query.PageSize is < 1 or > 50 || query.Keyword?.Trim().Length > 100 || query.CategoryId == Guid.Empty)
+        // Bộ lọc đã được kiểm tra ở AdminTopicQuery; để trống thì lấy mọi loại.
+        TopicType? type = null;
+        if (Enum.TryParse<TopicType>(query.Type?.Trim(), true, out var parsedType))
         {
-            return null;
-        }
-        TopicType? type = query.Type?.Trim().ToLowerInvariant() switch
-        {
-            null or "" => null,
-            "article" => TopicType.Article,
-            "question" => TopicType.Question,
-            _ => (TopicType?)null
-        };
-        if (!string.IsNullOrWhiteSpace(query.Type) && !type.HasValue)
-        {
-            return null;
-        }
-        var visibility = query.Visibility?.Trim().ToLowerInvariant();
-        if (visibility is not (null or "" or "visible" or "draft" or "hidden" or "deleted"))
-        {
-            return null;
+            type = parsedType;
         }
 
         var page = await topicRepository.GetPageAsync(query, type, cancellationToken);
