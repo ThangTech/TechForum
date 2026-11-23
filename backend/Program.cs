@@ -179,6 +179,7 @@ builder.Services.Configure<VoteLimitOptions>(builder.Configuration.GetSection(Vo
 builder.Services.AddSingleton<IVoteRateLimiter, VoteRateLimiter>();
 builder.Services.Configure<PostingLimitOptions>(builder.Configuration.GetSection(PostingLimitOptions.SectionName));
 builder.Services.AddSingleton<IPostingRateLimiter, PostingRateLimiter>();
+builder.Services.Configure<ReportLimitOptions>(builder.Configuration.GetSection(ReportLimitOptions.SectionName));
 builder.Services.AddScoped<IVoteService, VoteService>();
 builder.Services.AddSingleton<IBannedWordLoader, BannedWordLoader>();
 builder.Services.AddSingleton<IProfanityFilter, ProfanityFilter>();

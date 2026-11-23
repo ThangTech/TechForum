@@ -45,7 +45,11 @@ export const ReportPreviewDialog = ({
     <Typography component="h3" sx={{ fontSize: '1.125rem', fontWeight: 700 }}>{report.targetTitle}</Typography>
     <Typography sx={{ ...smallTextSx, mt: 1 }}>
       {report.targetType === 'topic' ? 'Chủ đề' : 'Câu trả lời'} của {report.targetAuthor.displayName} ·{' '}
-      {report.isTargetDeleted ? 'Tác giả đã xóa' : report.isTargetHidden ? 'Đang bị ẩn' : 'Đang hiển thị'}
+      {report.isTargetDeleted
+        ? 'Tác giả đã xóa'
+        : report.isTargetAutoHidden
+          ? 'Tạm ẩn vì nhiều báo cáo'
+          : report.isTargetHidden ? 'Đang bị ẩn' : 'Đang hiển thị'}
     </Typography>
     <Box sx={{ ...noteBoxSx, bgcolor: 'var(--color-subtle)' }}>
       <strong>{reportReasonLabels[report.reason]}</strong>
@@ -83,8 +87,9 @@ export const ReportPreviewDialog = ({
       </Box>
     )}
     <Typography sx={{ ...smallTextSx, mt: 2, lineHeight: '1.5rem' }}>
-      Kết quả báo cáo được lưu riêng. Nếu cần ẩn hoặc khóa chủ đề, hãy mở quản lý nội dung và thực hiện kiểm
-      duyệt kèm lý do.
+      {report.isTargetAutoHidden
+        ? 'Nội dung đang tạm ẩn vì nhiều thành viên báo cáo. Chấp nhận báo cáo thì nội dung tiếp tục bị ẩn; khi đã từ chối hết các báo cáo đang chờ, nội dung tự hiển thị lại.'
+        : 'Kết quả báo cáo được lưu riêng. Nếu cần ẩn hoặc khóa chủ đề, hãy mở quản lý nội dung và thực hiện kiểm duyệt kèm lý do.'}
     </Typography>
     <Stack direction="row" sx={{ mt: 2, flexWrap: 'wrap', gap: 2 }}>
       <MuiLink component={Link} sx={linkSx} to={appRoutes.adminTopics + `?keyword=${encodeURIComponent(report.targetTitle)}`} underline="hover">

@@ -79,8 +79,9 @@ public sealed class AdminTopicService(
         var previousValue = Describe(topic);
         switch (action)
         {
-            case "hide": topic.IsHiddenByModerator = true; break;
-            case "restore": topic.IsHiddenByModerator = false; break;
+            // A decision of a moderator: the content is no longer "hidden by the reports" (see Topic.AutoHiddenAtUtc).
+            case "hide": topic.IsHiddenByModerator = true; topic.AutoHiddenAtUtc = null; break;
+            case "restore": topic.IsHiddenByModerator = false; topic.AutoHiddenAtUtc = null; break;
             case "lock": topic.IsDiscussionLocked = true; break;
             case "unlock": topic.IsDiscussionLocked = false; break;
             case "pin": topic.IsPinned = true; break;

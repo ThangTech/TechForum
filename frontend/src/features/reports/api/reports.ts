@@ -32,7 +32,7 @@ const isAdminReport = (value: unknown): value is AdminReport =>
   (value.resolvedAtUtc === null || typeof value.resolvedAtUtc === 'string') &&
   (value.resolutionNote === null || typeof value.resolutionNote === 'string') &&
   typeof value.topicId === 'string' && isReportUser(value.targetAuthor) &&
-  typeof value.isTargetHidden === 'boolean' && typeof value.isTargetDeleted === 'boolean' &&
+  typeof value.isTargetHidden === 'boolean' && typeof value.isTargetAutoHidden === 'boolean' && typeof value.isTargetDeleted === 'boolean' &&
   (value.parentAnswerBodyHtml === null || typeof value.parentAnswerBodyHtml === 'string')
 
 const isMyReport = (value: unknown): value is MyReport =>

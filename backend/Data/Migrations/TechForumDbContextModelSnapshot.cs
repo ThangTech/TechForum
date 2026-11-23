@@ -233,6 +233,9 @@ namespace TechForum.Api.Data.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTimeOffset?>("AutoHiddenAtUtc")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("BodyHtml")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -789,6 +792,9 @@ namespace TechForum.Api.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset?>("AutoHiddenAtUtc")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("BodyHtml")
                         .IsRequired()

@@ -43,6 +43,7 @@ export interface AdminReport {
   topicId: string
   targetAuthor: ReportUser
   isTargetHidden: boolean
+  isTargetAutoHidden: boolean
   isTargetDeleted: boolean
   parentAnswerBodyHtml: string | null
 }

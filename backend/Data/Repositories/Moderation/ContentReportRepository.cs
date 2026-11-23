@@ -50,6 +50,86 @@ public sealed class ContentReportRepository(TechForumDbContext dbContext) : ICon
         }
     }
 
+    public Task<int> CountPendingReportersAsync(
+        Guid? topicId, Guid? answerId, DateTimeOffset accountsCreatedBefore, CancellationToken cancellationToken) =>
+        dbContext.ContentReports
+            .Where(item => item.TopicId == topicId && item.AnswerId == answerId &&
+                item.Status == ReportStatus.Pending && item.Reporter.CreatedAtUtc <= accountsCreatedBefore)
+            .Select(item => item.ReporterId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+
+    public Task<bool> HasAcceptedReportAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken) =>
+        dbContext.ContentReports.AnyAsync(item => item.TopicId == topicId && item.AnswerId == answerId &&
+            item.Status == ReportStatus.Accepted, cancellationToken);
+
+    public async Task<bool> AutoHideAsync(
+        Guid? topicId, Guid? answerId, DateTimeOffset now, Notification notification, CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        // One UPDATE with the condition in it, so two reports that arrive together hide the content only once.
+        var affected = topicId.HasValue
+            ? await dbContext.Topics
+                .Where(topic => topic.Id == topicId && !topic.IsHiddenByModerator && !topic.IsDeleted)
+                .ExecuteUpdateAsync(set => set
+                    .SetProperty(topic => topic.IsHiddenByModerator, true)
+                    .SetProperty(topic => topic.AutoHiddenAtUtc, now), cancellationToken)
+            : await dbContext.Answers
+                .Where(answer => answer.Id == answerId && !answer.IsHiddenByModerator && !answer.IsDeleted)
+                .ExecuteUpdateAsync(set => set
+                    .SetProperty(answer => answer.IsHiddenByModerator, true)
+                    .SetProperty(answer => answer.AutoHiddenAtUtc, now), cancellationToken);
+        if (affected != 1)
+        {
+            return false;
+        }
+
+        dbContext.Notifications.Add(notification);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ShowAutoHiddenAsync(
+        Guid? topicId, Guid? answerId, Notification notification, CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var affected = topicId.HasValue
+            ? await dbContext.Topics
+                .Where(topic => topic.Id == topicId && topic.AutoHiddenAtUtc != null)
+                .ExecuteUpdateAsync(set => set
+                    .SetProperty(topic => topic.IsHiddenByModerator, false)
+                    .SetProperty(topic => topic.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken)
+            : await dbContext.Answers
+                .Where(answer => answer.Id == answerId && answer.AutoHiddenAtUtc != null)
+                .ExecuteUpdateAsync(set => set
+                    .SetProperty(answer => answer.IsHiddenByModerator, false)
+                    .SetProperty(answer => answer.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken);
+        if (affected != 1)
+        {
+            return false;
+        }
+
+        dbContext.Notifications.Add(notification);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task KeepHiddenByModeratorAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken)
+    {
+        if (topicId.HasValue)
+        {
+            await dbContext.Topics.Where(topic => topic.Id == topicId && topic.AutoHiddenAtUtc != null)
+                .ExecuteUpdateAsync(set => set.SetProperty(topic => topic.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken);
+        }
+        else
+        {
+            await dbContext.Answers.Where(answer => answer.Id == answerId && answer.AutoHiddenAtUtc != null)
+                .ExecuteUpdateAsync(set => set.SetProperty(answer => answer.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken);
+        }
+    }
+
     public async Task<ContentReportPage> GetPageAsync(
         ReportStatus? status,
         int page,

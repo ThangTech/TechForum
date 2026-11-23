@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using TechForum.Api.Configuration;
 using TechForum.Api.Data.Repositories;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
@@ -9,7 +11,8 @@ public sealed class ContentReportService(
     IContentReportRepository reportRepository,
     ITopicRepository topicRepository,
     IContentSanitizer contentSanitizer,
-    TimeProvider timeProvider) : IContentReportService
+    TimeProvider timeProvider,
+    IOptions<ReportLimitOptions> reportLimits) : IContentReportService
 {
     private static readonly HashSet<string> Reasons = new(StringComparer.OrdinalIgnoreCase)
     { "spam", "harassment", "misinformation", "copyright", "other" };
@@ -43,10 +46,9 @@ public sealed class ContentReportService(
 
         Guid? topicId = targetType == "topic" ? request.TargetId : null;
         Guid? answerId = targetType == "answer" ? request.TargetId : null;
-        var exists = topicId.HasValue
-            ? await topicRepository.GetPublicByIdAsync(topicId.Value, cancellationToken) is not null
-            : await reportRepository.GetPublicAnswerAsync(answerId!.Value, cancellationToken) is not null;
-        if (!exists)
+        var topic = topicId.HasValue ? await topicRepository.GetPublicByIdAsync(topicId.Value, cancellationToken) : null;
+        var answer = answerId.HasValue ? await reportRepository.GetPublicAnswerAsync(answerId.Value, cancellationToken) : null;
+        if (topic is null && answer is null)
         {
             return CreateReportResult.Failed(CreateReportFailure.TargetNotFound, "Nội dung không tồn tại hoặc không còn công khai.");
         }
@@ -70,6 +72,7 @@ public sealed class ContentReportService(
         {
             return CreateReportResult.Failed(CreateReportFailure.Duplicate, "Bạn đã gửi báo cáo cho nội dung này và báo cáo đang chờ xử lý.");
         }
+        await HideWhenReportedByManyAsync(topic, answer, cancellationToken);
         return CreateReportResult.Success(new ReportReceiptDto(
             report.Id, targetType, request.TargetId, reason, details, "pending", report.CreatedAtUtc));
     }
@@ -175,10 +178,83 @@ public sealed class ContentReportService(
             return ResolveReportResult.Failed(ResolveReportFailure.AlreadyResolved, "Báo cáo này vừa được quản trị viên khác xử lý.");
         }
 
+        await AfterResolveAsync(existing, status.Value, cancellationToken);
+
         var updated = await reportRepository.GetByIdAsync(reportId, cancellationToken)
             ?? throw new InvalidOperationException("Báo cáo vừa xử lý không còn tồn tại.");
         return ResolveReportResult.Success(MapAdminReport(updated));
     }
+
+    // When enough different members (with accounts old enough) have a waiting report on the same content, the content
+    // hides itself until a moderator looks at the reports, and its author is told.
+    private async Task HideWhenReportedByManyAsync(Topic? topic, Answer? answer, CancellationToken cancellationToken)
+    {
+        var limits = reportLimits.Value;
+        var now = timeProvider.GetUtcNow();
+        var reporters = await reportRepository.CountPendingReportersAsync(
+            topic?.Id, answer?.Id, now.AddDays(-Math.Max(0, limits.MinReporterAccountAgeDays)), cancellationToken);
+        if (reporters < Math.Max(1, limits.AutoHideThreshold))
+        {
+            return;
+        }
+
+        var (authorId, title, kind) = DescribeTarget(topic, answer);
+        await reportRepository.AutoHideAsync(topic?.Id, answer?.Id, now, new Notification
+        {
+            UserId = authorId,
+            Type = "content-auto-hidden",
+            Title = $"{kind} của bạn đang tạm ẩn",
+            Message = $"{kind} trong \"{title}\" nhận nhiều báo cáo nên được tạm ẩn trong lúc quản trị viên xem xét. " +
+                "Nếu báo cáo không đúng, nội dung sẽ được hiển thị lại.",
+            Link = topic is not null ? "/my-topics" : $"/topics/{answer!.TopicId}",
+            SourceKey = $"content-auto-hidden:{topic?.Id ?? answer!.Id}:{now.ToUnixTimeSeconds()}",
+            CreatedAtUtc = now
+        }, cancellationToken);
+    }
+
+    // A moderator who accepts a report keeps the content hidden as a decision of their own. When a moderator rejects the
+    // last waiting report, the content that hid itself is shown again (unless another report about it was accepted).
+    private async Task AfterResolveAsync(ContentReport report, ReportStatus status, CancellationToken cancellationToken)
+    {
+        var target = (Hidden: report.Topic?.AutoHiddenAtUtc ?? report.Answer?.AutoHiddenAtUtc, report.TopicId, report.AnswerId);
+        if (target.Hidden is null)
+        {
+            return;
+        }
+
+        if (status == ReportStatus.Accepted)
+        {
+            await reportRepository.KeepHiddenByModeratorAsync(target.TopicId, target.AnswerId, cancellationToken);
+            return;
+        }
+
+        var now = timeProvider.GetUtcNow();
+        // Every waiting report counts here, also those of new accounts: a moderator has not looked at them yet.
+        var stillWaiting = await reportRepository.CountPendingReportersAsync(
+            target.TopicId, target.AnswerId, DateTimeOffset.MaxValue, cancellationToken);
+        if (stillWaiting > 0 ||
+            await reportRepository.HasAcceptedReportAsync(target.TopicId, target.AnswerId, cancellationToken))
+        {
+            return;
+        }
+
+        var (authorId, title, kind) = DescribeTarget(report.Topic, report.Answer);
+        await reportRepository.ShowAutoHiddenAsync(target.TopicId, target.AnswerId, new Notification
+        {
+            UserId = authorId,
+            Type = "content-restored",
+            Title = $"{kind} của bạn đã hiển thị lại",
+            Message = $"Quản trị viên đã xem xét báo cáo về {kind.ToLowerInvariant()} trong \"{title}\" và hiển thị lại nội dung.",
+            Link = report.Topic is not null ? $"/topics/{report.Topic.Id}" : $"/topics/{report.Answer!.TopicId}#answer-{report.Answer.Id}",
+            SourceKey = $"content-restored:{target.TopicId ?? target.AnswerId}:{now.ToUnixTimeSeconds()}",
+            CreatedAtUtc = now
+        }, cancellationToken);
+    }
+
+    private static (string AuthorId, string Title, string Kind) DescribeTarget(Topic? topic, Answer? answer) =>
+        topic is not null
+            ? (topic.AuthorId, topic.Title, "Bài viết")
+            : (answer!.AuthorId, answer.Topic.Title, "Câu trả lời");
 
     public async Task<PagedResultDto<MyReportDto>?> GetMineAsync(
         string reporterId, string? status, int page, int pageSize, CancellationToken cancellationToken)
@@ -246,6 +322,7 @@ public sealed class ContentReportService(
             topic.Id,
             new ReportUserDto(author.Id, author.DisplayName),
             topic.IsHiddenByModerator || report.Answer?.IsHiddenByModerator == true,
+            (report.Answer is null ? topic.AutoHiddenAtUtc : report.Answer.AutoHiddenAtUtc) is not null,
             topic.IsDeleted || report.Answer?.IsDeleted == true,
             report.Answer?.ParentAnswer is null ? null : contentSanitizer.Sanitize(report.Answer.ParentAnswer.BodyHtml));
     }

@@ -14,6 +14,9 @@ public sealed class Answer
     public DateTimeOffset? UpdatedAtUtc { get; set; }
     public bool IsDeleted { get; set; }
     public bool IsHiddenByModerator { get; set; }
+    // Set when the content was hidden by itself because enough members reported it (not by a moderator). A moderator
+    // who rejects the reports shows it again; a moderator decision (hide, restore, accept a report) clears it.
+    public DateTimeOffset? AutoHiddenAtUtc { get; set; }
     // The sum of the votes (+1 and -1) of the members. Kept in step with the table of votes in one transaction.
     public int Score { get; set; }
     public ICollection<AnswerHelpfulVote> HelpfulVotes { get; set; } = new List<AnswerHelpfulVote>();

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using TechForum.Api.Configuration;
 using TechForum.Api.Data.Repositories;
 using TechForum.Api.Dtos;
 using TechForum.Api.Enums;
@@ -175,8 +177,93 @@ public sealed class ContentReportServiceTests
         Assert.Equal("author", item.TargetAuthor.Id);
     }
 
-    private static ContentReportService Service(FakeReports repository) =>
-        new(repository, new UnusedTopics(), TestMediaRules.CreateSanitizer(), TimeProvider.System);
+    [Fact]
+    public async Task Create_WhenEnoughMembersReported_HidesTheTopicAndTellsTheAuthor()
+    {
+        var report = CreateReport();
+        var repository = new FakeReports { Report = report, PendingReporters = 5 };
+
+        var result = await Service(repository, report.Topic).CreateAsync(
+            "reporter", new CreateReportRequest("topic", TestIds.Id(5), "spam", null), default);
+
+        Assert.Equal(CreateReportFailure.None, result.Failure);
+        Assert.Equal(TestIds.Id(5), repository.AutoHiddenTopicId);
+        var notification = Assert.Single(repository.Notifications);
+        Assert.Equal("author", notification.UserId);
+        Assert.Equal("content-auto-hidden", notification.Type);
+    }
+
+    [Fact]
+    public async Task Create_BelowTheThreshold_LeavesTheTopicShown()
+    {
+        var report = CreateReport();
+        var repository = new FakeReports { Report = report, PendingReporters = 4 };
+
+        await Service(repository, report.Topic).CreateAsync(
+            "reporter", new CreateReportRequest("topic", TestIds.Id(5), "spam", null), default);
+
+        Assert.Null(repository.AutoHiddenTopicId);
+        Assert.Empty(repository.Notifications);
+    }
+
+    [Fact]
+    public async Task Create_CountsOnlyAccountsOlderThanTheMinimumAge()
+    {
+        var report = CreateReport();
+        var repository = new FakeReports { Report = report };
+        var before = DateTimeOffset.UtcNow.AddDays(-3);
+
+        await Service(repository, report.Topic).CreateAsync(
+            "reporter", new CreateReportRequest("topic", TestIds.Id(5), "spam", null), default);
+
+        Assert.NotNull(repository.CountedAccountsBefore);
+        Assert.True(repository.CountedAccountsBefore <= before.AddSeconds(5) && repository.CountedAccountsBefore >= before.AddSeconds(-5));
+    }
+
+    [Fact]
+    public async Task Resolve_RejectingTheLastReportOfAutoHiddenContent_ShowsItAgain()
+    {
+        var report = CreateReport();
+        report.Topic!.IsHiddenByModerator = true;
+        report.Topic.AutoHiddenAtUtc = DateTimeOffset.UtcNow;
+        var repository = new FakeReports { Report = report, PendingReporters = 0 };
+
+        await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("rejected", "Không vi phạm"), default);
+
+        Assert.Equal(TestIds.Id(5), repository.ShownAgainTopicId);
+        Assert.Contains(repository.Notifications, item => item.Type == "content-restored" && item.UserId == "author");
+    }
+
+    [Fact]
+    public async Task Resolve_RejectingWhileOtherReportsStillWait_KeepsItHidden()
+    {
+        var report = CreateReport();
+        report.Topic!.IsHiddenByModerator = true;
+        report.Topic.AutoHiddenAtUtc = DateTimeOffset.UtcNow;
+        var repository = new FakeReports { Report = report, PendingReporters = 1 };
+
+        await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("rejected", "Không vi phạm"), default);
+
+        Assert.Null(repository.ShownAgainTopicId);
+    }
+
+    [Fact]
+    public async Task Resolve_AcceptingAReportOfAutoHiddenContent_MakesTheHidingADecisionOfTheModerator()
+    {
+        var report = CreateReport();
+        report.Topic!.IsHiddenByModerator = true;
+        report.Topic.AutoHiddenAtUtc = DateTimeOffset.UtcNow;
+        var repository = new FakeReports { Report = report };
+
+        await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("accepted", "Vi phạm"), default);
+
+        Assert.Equal(TestIds.Id(5), repository.KeptHiddenTopicId);
+        Assert.Null(repository.ShownAgainTopicId);
+    }
+
+    private static ContentReportService Service(FakeReports repository, Topic? publicTopic = null) =>
+        new(repository, new UnusedTopics(publicTopic), TestMediaRules.CreateSanitizer(), TimeProvider.System,
+            Options.Create(new ReportLimitOptions { AutoHideThreshold = 5, MinReporterAccountAgeDays = 3 }));
 
     private static ContentReport CreateReport()
     {
@@ -200,6 +287,34 @@ public sealed class ContentReportServiceTests
         public string? RequestedReporterId { get; private set; }
         public List<Notification> Notifications { get; } = [];
         public List<AdminAuditLog> Audits { get; } = [];
+        public int PendingReporters { get; init; }
+        public DateTimeOffset? CountedAccountsBefore { get; private set; }
+        public Guid? AutoHiddenTopicId { get; private set; }
+        public Guid? ShownAgainTopicId { get; private set; }
+        public Guid? KeptHiddenTopicId { get; private set; }
+        public Task<int> CountPendingReportersAsync(Guid? topicId, Guid? answerId, DateTimeOffset accountsCreatedBefore, CancellationToken cancellationToken)
+        {
+            CountedAccountsBefore = accountsCreatedBefore;
+            return Task.FromResult(PendingReporters);
+        }
+        public Task<bool> HasAcceptedReportAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task<bool> AutoHideAsync(Guid? topicId, Guid? answerId, DateTimeOffset now, Notification notification, CancellationToken cancellationToken)
+        {
+            AutoHiddenTopicId = topicId;
+            Notifications.Add(notification);
+            return Task.FromResult(true);
+        }
+        public Task<bool> ShowAutoHiddenAsync(Guid? topicId, Guid? answerId, Notification notification, CancellationToken cancellationToken)
+        {
+            ShownAgainTopicId = topicId;
+            Notifications.Add(notification);
+            return Task.FromResult(true);
+        }
+        public Task KeepHiddenByModeratorAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken)
+        {
+            KeptHiddenTopicId = topicId;
+            return Task.CompletedTask;
+        }
         public Task<Answer?> GetPublicAnswerAsync(Guid answerId, CancellationToken cancellationToken) => Task.FromResult<Answer?>(null);
         public Task<bool> PendingExistsAsync(string reporterId, Guid? topicId, Guid? answerId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<bool> AddAsync(ContentReport report, CancellationToken cancellationToken) => Task.FromResult(true);
@@ -224,12 +339,13 @@ public sealed class ContentReportServiceTests
         }
     }
 
-    private sealed class UnusedTopics : ITopicRepository
+    private sealed class UnusedTopics(Topic? publicTopic = null) : ITopicRepository
     {
         public Task<TopicPage> GetPublicPageAsync(TopicQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<TopicPage> GetFollowingPageAsync(string followerId, TopicQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<TopicPage> GetOwnedPageAsync(string authorId, TopicQuery query, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<Topic?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Topic?> GetPublicByIdAsync(Guid id, CancellationToken cancellationToken) =>
+            publicTopic is not null && publicTopic.Id == id ? Task.FromResult<Topic?>(publicTopic) : throw new NotSupportedException();
         public Task<Topic?> GetOwnedByIdAsync(Guid id, string authorId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<Category?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<IReadOnlyList<Tag>> GetActiveTagsByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) => throw new NotSupportedException();

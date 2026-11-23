@@ -22,6 +22,9 @@ public sealed class Topic
     public DateTimeOffset? PublishedAtUtc { get; set; }
     public bool IsDeleted { get; set; }
     public bool IsHiddenByModerator { get; set; }
+    // Set when the content was hidden by itself because enough members reported it (not by a moderator). A moderator
+    // who rejects the reports shows it again; a moderator decision (hide, restore, accept a report) clears it.
+    public DateTimeOffset? AutoHiddenAtUtc { get; set; }
     public bool IsDiscussionLocked { get; set; }
     public bool IsPinned { get; set; }
     public int ViewCount { get; set; }

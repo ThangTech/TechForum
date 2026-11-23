@@ -53,5 +53,7 @@ public sealed record AdminReportDto(
     Guid TopicId,
     ReportUserDto TargetAuthor,
     bool IsTargetHidden,
+    // Hidden by itself because many members reported it; rejecting the reports shows it again.
+    bool IsTargetAutoHidden,
     bool IsTargetDeleted,
     string? ParentAnswerBodyHtml);
