@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TechForum.Api.Data;
 
@@ -66,7 +67,33 @@ public static class HostingRegistration
 
         await using var scope = app.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<TechForumDbContext>();
-        if (migrate) await dbContext.Database.MigrateAsync();
-        if (seed) await DevelopmentDataSeeder.SeedAsync(dbContext);
+        if (migrate)
+        {
+            await MigrateWhenDatabaseIsReadyAsync(dbContext, app.Logger);
+        }
+        if (seed)
+        {
+            await DevelopmentDataSeeder.SeedAsync(dbContext);
+        }
+    }
+
+    // Ngay sau khi SQL Server khởi động, database có thể vẫn đang phục hồi: EF Core không mở được nó, tưởng nó chưa có,
+    // thử CREATE DATABASE và gặp lỗi 1801 ("đã tồn tại"). Lỗi đó nghĩa là database có rồi, nên chờ một chút rồi thử lại.
+    private static async Task MigrateWhenDatabaseIsReadyAsync(TechForumDbContext dbContext, ILogger logger)
+    {
+        const int maxAttempts = 10;
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await dbContext.Database.MigrateAsync();
+                return;
+            }
+            catch (SqlException exception) when (exception.Number == 1801 && attempt < maxAttempts)
+            {
+                logger.LogInformation("Database chưa sẵn sàng (lần {Attempt}), thử lại sau 3 giây.", attempt);
+                await Task.Delay(TimeSpan.FromSeconds(3));
+            }
+        }
     }
 }

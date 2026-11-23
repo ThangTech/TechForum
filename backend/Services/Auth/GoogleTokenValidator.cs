@@ -27,8 +27,10 @@ public sealed class GoogleTokenValidator : IGoogleTokenValidator
             var payload = await GoogleJsonWebSignature.ValidateAsync(credential, settings);
             return new GoogleIdentity(payload.Subject, payload.Email, payload.EmailVerified, payload.Name);
         }
-        catch (InvalidJwtException exception)
+        catch (Exception exception) when (exception is InvalidJwtException || exception is FormatException ||
+            exception is ArgumentException || exception is Newtonsoft.Json.JsonException)
         {
+            // Token sai định dạng (không phải Base64, không phải JSON) cũng chỉ là token không hợp lệ, không phải lỗi server.
             logger.LogInformation("ID token Google không hợp lệ: {Reason}", exception.Message);
             return null;
         }
