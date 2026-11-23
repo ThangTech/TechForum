@@ -14,7 +14,7 @@ public sealed class UserFollowServiceTests
 
         var result = await service.FollowAsync("member", "member", CancellationToken.None);
 
-        Assert.Equal(FollowFailure.SelfFollow, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
     }
 
     [Fact]
@@ -25,9 +25,9 @@ public sealed class UserFollowServiceTests
 
         var result = await service.FollowAsync("member-a", "member-b", CancellationToken.None);
 
-        Assert.Equal(FollowFailure.None, result.Failure);
-        Assert.True(result.Status?.IsFollowing);
-        Assert.Equal(3, result.Status?.FollowerCount);
+        Assert.True(result.Succeeded);
+        Assert.True(result.Value?.IsFollowing);
+        Assert.Equal(3, result.Value?.FollowerCount);
         Assert.Equal("member-a", repository.Added?.FollowerId);
         Assert.Equal("member-b", repository.Added?.FollowingId);
     }

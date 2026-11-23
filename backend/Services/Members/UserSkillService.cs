@@ -17,7 +17,7 @@ public sealed class UserSkillService : IUserSkillService
     public async Task<IReadOnlyList<SkillTagDto>> GetAsync(string userId, CancellationToken cancellationToken) =>
         Map(await repository.GetChosenAsync(userId, cancellationToken));
 
-    public async Task<UserSkillResult> ReplaceAsync(
+    public async Task<Result<IReadOnlyList<SkillTagDto>>> ReplaceAsync(
         string userId,
         IReadOnlyCollection<Guid> tagIds,
         CancellationToken cancellationToken)
@@ -26,17 +26,19 @@ public sealed class UserSkillService : IUserSkillService
         var wanted = tagIds.Distinct().ToList();
         if (wanted.Count > IUserSkillService.MaxSkills)
         {
-            return new UserSkillResult(SkillFailure.TooMany, []);
+            return Result<IReadOnlyList<SkillTagDto>>.Fail(ErrorType.Validation, null,
+                $"Mỗi thành viên chọn tối đa {IUserSkillService.MaxSkills} kỹ năng.", "tagIds");
         }
 
         var activeIds = await repository.GetActiveTagIdsAsync(wanted, cancellationToken);
         if (activeIds.Count != wanted.Count)
         {
-            return new UserSkillResult(SkillFailure.UnknownTag, []);
+            return Result<IReadOnlyList<SkillTagDto>>.Fail(ErrorType.Validation, null,
+                "Có thẻ không tồn tại hoặc đã bị tắt. Hãy tải lại danh sách thẻ.", "tagIds");
         }
 
         await repository.ReplaceAsync(userId, wanted, timeProvider.GetUtcNow(), cancellationToken);
-        return new UserSkillResult(SkillFailure.None, await GetAsync(userId, cancellationToken));
+        return Result<IReadOnlyList<SkillTagDto>>.Success(await GetAsync(userId, cancellationToken));
     }
 
     private static IReadOnlyList<SkillTagDto> Map(IReadOnlyList<SkillTagData> tags) =>

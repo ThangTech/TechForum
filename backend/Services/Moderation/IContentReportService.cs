@@ -4,7 +4,7 @@ namespace TechForum.Api.Services;
 
 public interface IContentReportService
 {
-    Task<CreateReportResult> CreateAsync(
+    Task<Result<ReportReceiptDto>> CreateAsync(
         string reporterId,
         CreateReportRequest request,
         CancellationToken cancellationToken);
@@ -15,7 +15,7 @@ public interface IContentReportService
         CancellationToken cancellationToken);
     Task<PagedResultDto<MyReportDto>?> GetMineAsync(
         string reporterId, string? status, int page, int pageSize, CancellationToken cancellationToken);
-    Task<ResolveReportResult> ResolveAsync(
+    Task<Result<AdminReportDto>> ResolveAsync(
         Guid reportId,
         string administratorId,
         ResolveReportRequest request,

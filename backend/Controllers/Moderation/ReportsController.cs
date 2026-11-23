@@ -20,21 +20,10 @@ public sealed class ReportsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ReportReceiptDto>> Create(
-        [FromBody] CreateReportRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<ReportReceiptDto>> Create([FromBody] CreateReportRequest request, CancellationToken cancellationToken)
     {
-        var userId = User.GetRequiredUserId();
-        var result = await reportService.CreateAsync(userId, request, cancellationToken);
-        return result.Failure switch
-        {
-            CreateReportFailure.None => StatusCode(StatusCodes.Status201Created, result.Report),
-            CreateReportFailure.TargetNotFound => NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy nội dung", Detail = result.Message }),
-            CreateReportFailure.Duplicate => Conflict(new ProblemDetails { Status = 409, Title = "Báo cáo đang chờ xử lý", Detail = result.Message }),
-            CreateReportFailure.Validation => BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]> { [result.Field ?? "report"] = [result.Message ?? "Báo cáo chưa hợp lệ."] })),
-            _ => throw new InvalidOperationException("Trạng thái tạo báo cáo không được hỗ trợ.")
-        };
+        var result = await reportService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result, StatusCodes.Status201Created);
     }
 
     [HttpGet("admin")]
@@ -73,21 +62,9 @@ public sealed class ReportsController : ControllerBase
 
     [HttpPut("admin/{reportId:guid}/resolution")]
     [Authorize(Roles = RoleNames.Administrator)]
-    public async Task<ActionResult<AdminReportDto>> Resolve(
-        Guid reportId,
-        [FromBody] ResolveReportRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<AdminReportDto>> Resolve(Guid reportId, [FromBody] ResolveReportRequest request, CancellationToken cancellationToken)
     {
-        var administratorId = User.GetRequiredUserId();
-        var result = await reportService.ResolveAsync(reportId, administratorId, request, cancellationToken);
-        return result.Failure switch
-        {
-            ResolveReportFailure.None => Ok(result.Report),
-            ResolveReportFailure.NotFound => NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy báo cáo", Detail = result.Message }),
-            ResolveReportFailure.AlreadyResolved => Conflict(new ProblemDetails { Status = 409, Title = "Báo cáo đã được xử lý", Detail = result.Message }),
-            ResolveReportFailure.Validation => BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]> { [result.Field ?? "report"] = [result.Message ?? "Yêu cầu chưa hợp lệ."] })),
-            _ => throw new InvalidOperationException("Trạng thái xử lý báo cáo không được hỗ trợ.")
-        };
+        var result = await reportService.ResolveAsync(reportId, User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result);
     }
 }

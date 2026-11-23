@@ -131,8 +131,8 @@ public sealed class ContentReportServiceTests
         var first = await service.ResolveAsync(TestIds.Id(1), "admin", new("accepted", "  Đã xử lý spam  "), default);
         var second = await service.ResolveAsync(TestIds.Id(1), "admin", new("accepted", "Đã xử lý spam"), default);
 
-        Assert.Equal(ResolveReportFailure.None, first.Failure);
-        Assert.Equal(ResolveReportFailure.AlreadyResolved, second.Failure);
+        Assert.True(first.Succeeded);
+        Assert.Equal(ErrorType.Conflict, second.Error);
         var notification = Assert.Single(repository.Notifications);
         Assert.Equal("reporter", notification.UserId);
         Assert.Equal($"report-resolved:{TestIds.Id(1)}", notification.SourceKey);
@@ -146,7 +146,7 @@ public sealed class ContentReportServiceTests
     {
         var repository = new FakeReports { Report = CreateReport(), ShouldResolve = false };
         var result = await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("rejected", "Chưa có vi phạm"), default);
-        Assert.Equal(ResolveReportFailure.AlreadyResolved, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.Empty(repository.Notifications);
         Assert.Empty(repository.Audits);
     }
@@ -158,7 +158,7 @@ public sealed class ContentReportServiceTests
     {
         var repository = new FakeReports { Report = CreateReport() };
         var result = await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new(decision, reason), default);
-        Assert.Equal(ResolveReportFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Empty(repository.Notifications);
         Assert.Empty(repository.Audits);
     }
@@ -186,7 +186,7 @@ public sealed class ContentReportServiceTests
         var result = await Service(repository, report.Topic).CreateAsync(
             "reporter", new CreateReportRequest("topic", TestIds.Id(5), "spam", null), default);
 
-        Assert.Equal(CreateReportFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Equal(TestIds.Id(5), repository.AutoHiddenTopicId);
         var notification = Assert.Single(repository.Notifications);
         Assert.Equal("author", notification.UserId);

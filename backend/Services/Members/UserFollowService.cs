@@ -15,18 +15,18 @@ public sealed class UserFollowService : IUserFollowService
         this.timeProvider = timeProvider;
     }
 
-    public async Task<UserFollowResult> FollowAsync(
+    public async Task<Result<FollowStatusDto>> FollowAsync(
         string followerId,
         string followingId,
         CancellationToken cancellationToken)
     {
         if (followerId == followingId)
         {
-            return UserFollowResult.Failed(FollowFailure.SelfFollow);
+            return Result<FollowStatusDto>.Fail(ErrorType.Conflict, "Bạn không thể tự theo dõi mình");
         }
         if (!await repository.UserExistsAsync(followingId, cancellationToken))
         {
-            return UserFollowResult.Failed(FollowFailure.NotFound);
+            return Result<FollowStatusDto>.Fail(ErrorType.NotFound, "Không tìm thấy thành viên");
         }
         await repository.AddIfMissingAsync(new UserFollow
         {
@@ -34,7 +34,7 @@ public sealed class UserFollowService : IUserFollowService
             FollowingId = followingId,
             CreatedAtUtc = timeProvider.GetUtcNow()
         }, cancellationToken);
-        return UserFollowResult.Success(new FollowStatusDto(
+        return Result<FollowStatusDto>.Success(new FollowStatusDto(
             true,
             await repository.GetFollowerCountAsync(followingId, cancellationToken)));
     }

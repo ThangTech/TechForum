@@ -20,8 +20,8 @@ public sealed class BannedWordServiceTests
     {
         var result = await CreateService().AddAsync("admin", new SaveBannedWordRequest("  Dịp   NÀY "), default);
 
-        Assert.Equal(BannedWordFailure.None, result.Failure);
-        Assert.Equal("dịp này", result.Word!.Word);
+        Assert.True(result.Succeeded);
+        Assert.Equal("dịp này", result.Value!.Word);
         Assert.Equal("dịp này", Assert.Single(repository.Items).Word);
         Assert.Equal(["banned-word-added"], audit.Actions);
         Assert.Equal(1, filter.WarmUps);
@@ -39,7 +39,7 @@ public sealed class BannedWordServiceTests
     {
         var result = await CreateService().AddAsync("admin", new SaveBannedWordRequest(word), default);
 
-        Assert.Equal(BannedWordFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Empty(repository.Items);
         Assert.Empty(audit.Actions);
         Assert.Equal(0, filter.WarmUps);
@@ -50,7 +50,7 @@ public sealed class BannedWordServiceTests
     {
         var result = await CreateService().AddAsync("admin", new SaveBannedWordRequest(new string('a', 61)), default);
 
-        Assert.Equal(BannedWordFailure.Validation, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public sealed class BannedWordServiceTests
 
         var result = await service.AddAsync("admin", new SaveBannedWordRequest("  FOOBAR "), default);
 
-        Assert.Equal(BannedWordFailure.Duplicate, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.Single(repository.Items);
         Assert.Equal(["banned-word-added"], audit.Actions);
     }
@@ -73,7 +73,7 @@ public sealed class BannedWordServiceTests
 
         var result = await CreateService().RemoveAsync("admin", TestIds.Id(4), default);
 
-        Assert.Equal(BannedWordFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Empty(repository.Items);
         Assert.Equal(["banned-word-removed"], audit.Actions);
         Assert.Equal(1, filter.WarmUps);
@@ -84,7 +84,7 @@ public sealed class BannedWordServiceTests
     {
         var result = await CreateService().RemoveAsync("admin", TestIds.Id(99), default);
 
-        Assert.Equal(BannedWordFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Empty(audit.Actions);
         Assert.Equal(0, filter.WarmUps);
     }

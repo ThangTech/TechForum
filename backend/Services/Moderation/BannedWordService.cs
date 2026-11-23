@@ -26,30 +26,30 @@ public sealed class BannedWordService : IBannedWordService
     public async Task<IReadOnlyList<BannedWordDto>> GetAllAsync(CancellationToken cancellationToken) =>
         (await repository.GetAllAsync(cancellationToken)).Select(Map).ToList();
 
-    public async Task<BannedWordWriteResult> AddAsync(
+    public async Task<Result<BannedWordDto>> AddAsync(
         string administratorId,
         SaveBannedWordRequest request,
         CancellationToken cancellationToken)
     {
         if (!BannedWordRules.TryNormalize(request.Word, out var text))
         {
-            return BannedWordWriteResult.Failed(BannedWordFailure.Validation, BannedWordRules.InvalidMessage);
+            return Result<BannedWordDto>.Fail(ErrorType.Validation, null, BannedWordRules.InvalidMessage, "word");
         }
 
         var word = new BannedWord { Word = text, CreatedAtUtc = timeProvider.GetUtcNow() };
         if (!await repository.AddAsync(word, cancellationToken))
         {
-            return BannedWordWriteResult.Failed(BannedWordFailure.Duplicate, "Từ này đã có trong danh sách.");
+            return Result<BannedWordDto>.Fail(ErrorType.Conflict, "Từ cấm bị trùng", "Từ này đã có trong danh sách.");
         }
 
         await auditService.RecordAsync(administratorId, "banned-word-added", "BannedWord", word.Id.ToString(),
             null, $"word={word.Word}", "Thêm từ cấm.", cancellationToken);
         // The next post is already filtered with the new list.
         await profanityFilter.WarmUpAsync(cancellationToken);
-        return BannedWordWriteResult.Success(Map(word));
+        return Result<BannedWordDto>.Success(Map(word));
     }
 
-    public async Task<BannedWordWriteResult> RemoveAsync(
+    public async Task<Result> RemoveAsync(
         string administratorId,
         Guid id,
         CancellationToken cancellationToken)
@@ -57,7 +57,7 @@ public sealed class BannedWordService : IBannedWordService
         var word = await repository.GetByIdAsync(id, cancellationToken);
         if (word is null)
         {
-            return BannedWordWriteResult.Failed(BannedWordFailure.NotFound, "Không tìm thấy từ cấm.");
+            return Result.Fail(ErrorType.NotFound, "Không tìm thấy từ cấm", "Không tìm thấy từ cấm.");
         }
 
         var removed = Map(word);
@@ -65,7 +65,7 @@ public sealed class BannedWordService : IBannedWordService
         await auditService.RecordAsync(administratorId, "banned-word-removed", "BannedWord", id.ToString(),
             $"word={removed.Word}", null, "Xóa từ cấm.", cancellationToken);
         await profanityFilter.WarmUpAsync(cancellationToken);
-        return BannedWordWriteResult.Success(removed);
+        return Result.Success();
     }
 
     private static BannedWordDto Map(BannedWord word) => new(word.Id, word.Word, word.CreatedAtUtc);

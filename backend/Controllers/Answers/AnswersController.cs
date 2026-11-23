@@ -24,13 +24,11 @@ public sealed class AnswersController : ControllerBase
     // Upvote (1), downvote (-1) or take the vote back (0). The score and the reputation of the author change with it.
     [Authorize]
     [HttpPut("{answerId:guid}/vote")]
-    public async Task<ActionResult<VoteDto>> SetVote(
-        Guid topicId,
-        Guid answerId,
-        [FromBody] SetVoteRequest request,
-        CancellationToken cancellationToken) =>
-        this.ToVoteResponse(await voteService.SetAnswerVoteAsync(
-            topicId, answerId, User.GetRequiredUserId(), request.Value, cancellationToken));
+    public async Task<ActionResult<VoteDto>> SetVote(Guid topicId, Guid answerId, [FromBody] SetVoteRequest request, CancellationToken cancellationToken)
+    {
+        var result = await voteService.SetAnswerVoteAsync(topicId, answerId, User.GetRequiredUserId(), request.Value, cancellationToken);
+        return this.ToActionResult(result);
+    }
 
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<AnswerDto>>> GetAll(

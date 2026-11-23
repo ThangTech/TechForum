@@ -40,7 +40,7 @@ public sealed class VoteServiceTests
     {
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", value, default);
 
-        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         var command = Assert.Single(votes.Commands);
         Assert.Equal(("voter", VoteTargetType.Topic, TestIds.Id(1), "author", value), (command.VoterId, command.TargetType, command.TargetId, command.AuthorId, command.NewValue));
     }
@@ -53,7 +53,7 @@ public sealed class VoteServiceTests
     {
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", value, default);
 
-        Assert.Equal(VoteFailure.InvalidValue, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.Empty(votes.Commands);
     }
 
@@ -62,7 +62,7 @@ public sealed class VoteServiceTests
     {
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "author", 1, default);
 
-        Assert.Equal(VoteFailure.OwnContent, result.Failure);
+        Assert.Equal(ErrorType.Conflict, result.Error);
         Assert.Empty(votes.Commands);
     }
 
@@ -78,7 +78,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
-        Assert.Equal(VoteFailure.NotFound, result.Failure);
+        Assert.Equal(ErrorType.NotFound, result.Error);
         Assert.Empty(votes.Commands);
     }
 
@@ -89,8 +89,8 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
-        Assert.Equal(4, result.Vote!.Score);
-        Assert.Equal(1, result.Vote.MyVote);
+        Assert.Equal(4, result.Value!.Score);
+        Assert.Equal(1, result.Value.MyVote);
     }
 
     [Fact]
@@ -100,8 +100,9 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
-        Assert.Equal(VoteFailure.DownvoteNotAllowed, result.Failure);
-        Assert.Equal(new DownvoteRequirement(7, 50, 2, 50), result.Downvote);
+        Assert.Equal(VoteService.DownvoteNotAllowedTitle, result.Title);
+        Assert.Contains("ít nhất 7 ngày hoặc có từ 50 điểm", result.Message);
+        Assert.Contains("còn khoảng 2 ngày nữa, hoặc cần thêm 50 điểm", result.Message);
         Assert.Empty(votes.Commands);
     }
 
@@ -112,7 +113,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
-        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
     }
 
     [Fact]
@@ -122,7 +123,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
-        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
     }
 
     [Theory]
@@ -138,8 +139,9 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
-        Assert.Equal(allowed ? VoteFailure.None : VoteFailure.DownvoteNotAllowed, result.Failure);
-        if (!allowed) Assert.Equal(50 - Math.Max(0, reputation), result.Downvote!.ReputationLeft);
+        Assert.Equal(allowed, result.Succeeded);
+        if (!allowed) Assert.Equal(VoteService.DownvoteNotAllowedTitle, result.Title);
+        if (!allowed) Assert.Contains($"cần thêm {50 - Math.Max(0, reputation)} điểm danh tiếng", result.Message);
     }
 
     [Fact]
@@ -150,8 +152,8 @@ public sealed class VoteServiceTests
         var down = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", -1, default);
         var up = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
 
-        Assert.Equal(VoteFailure.DownvoteNotAllowed, down.Failure);
-        Assert.Equal(VoteFailure.None, up.Failure);
+        Assert.Equal(VoteService.DownvoteNotAllowedTitle, down.Title);
+        Assert.True(up.Succeeded);
     }
 
     [Fact]
@@ -161,7 +163,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 0, default);
 
-        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
     }
 
     [Theory]
@@ -220,7 +222,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
-        Assert.Equal(new VoteDto(0, 1, true), result.Vote);
+        Assert.Equal(new VoteDto(0, 1, true), result.Value);
     }
 
     [Fact]
@@ -236,8 +238,8 @@ public sealed class VoteServiceTests
         var freshResult = await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
         var oldResult = await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default);
 
-        Assert.Equal(new VoteDto(0, 1, true), freshResult.Vote);
-        Assert.Equal(new VoteDto(4, 1, false), oldResult.Vote);
+        Assert.Equal(new VoteDto(0, 1, true), freshResult.Value);
+        Assert.Equal(new VoteDto(4, 1, false), oldResult.Value);
     }
 
     [Theory]
@@ -273,7 +275,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
-        Assert.Equal(shown, result.Vote!.Score);
+        Assert.Equal(shown, result.Value!.Score);
     }
 
     [Fact]
@@ -301,7 +303,7 @@ public sealed class VoteServiceTests
     {
         var result = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", -1, default);
 
-        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         var command = Assert.Single(votes.Commands);
         Assert.Equal((VoteTargetType.Answer, TestIds.Id(10), "answerer", -1), (command.TargetType, command.TargetId, command.AuthorId, command.NewValue));
     }
@@ -311,9 +313,9 @@ public sealed class VoteServiceTests
     {
         var service = CreateService(CreateAnswer(TestIds.Id(10), "answerer"), new Answer { Id = TestIds.Id(11), TopicId = TestIds.Id(2), AuthorId = "x", BodyHtml = "<p>b</p>" });
 
-        Assert.Equal(VoteFailure.OwnContent, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "answerer", 1, default)).Failure);
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default)).Failure);
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(99), "voter", 1, default)).Failure);
+        Assert.Equal(ErrorType.Conflict, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "answerer", 1, default)).Error);
+        Assert.Equal(ErrorType.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default)).Error);
+        Assert.Equal(ErrorType.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(99), "voter", 1, default)).Error);
         Assert.Empty(votes.Commands);
     }
 
@@ -326,8 +328,8 @@ public sealed class VoteServiceTests
         hidden.IsHiddenByModerator = true;
         var service = CreateService(deleted, hidden);
 
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default)).Failure);
-        Assert.Equal(VoteFailure.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default)).Failure);
+        Assert.Equal(ErrorType.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default)).Error);
+        Assert.Equal(ErrorType.NotFound, (await service.SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(11), "voter", 1, default)).Error);
     }
 
     [Fact]
@@ -358,9 +360,9 @@ public sealed class VoteServiceTests
         var up = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
         var down = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
 
-        Assert.Equal(VoteFailure.AccountTooNew, up.Failure);
-        Assert.Equal(2, up.DaysLeft);
-        Assert.Equal(VoteFailure.AccountTooNew, down.Failure);
+        Assert.Equal(VoteService.AccountTooNewTitle, up.Title);
+        Assert.Contains("sau khoảng 2 ngày nữa", up.Message);
+        Assert.Equal(VoteService.AccountTooNewTitle, down.Title);
         Assert.Empty(votes.Commands);
     }
 
@@ -371,8 +373,8 @@ public sealed class VoteServiceTests
 
         var result = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
 
-        Assert.Equal(VoteFailure.AccountTooNew, result.Failure);
-        Assert.Equal(1, result.DaysLeft);
+        Assert.Equal(VoteService.AccountTooNewTitle, result.Title);
+        Assert.Contains("sau khoảng 1 ngày nữa", result.Message);
         Assert.Empty(votes.Commands);
     }
 
@@ -383,7 +385,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
-        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
     }
 
     [Fact]
@@ -393,7 +395,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 0, default);
 
-        Assert.Equal(VoteFailure.None, result.Failure);
+        Assert.True(result.Succeeded);
         Assert.Equal(0, Assert.Single(votes.Commands).NewValue);
     }
 
@@ -405,7 +407,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService().SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
 
-        Assert.Equal(VoteFailure.RateLimited, result.Failure);
+        Assert.Equal(ErrorType.TooManyRequests, result.Error);
         Assert.Equal(45, result.RetryAfterSeconds);
         Assert.Empty(votes.Commands);
     }
@@ -417,7 +419,7 @@ public sealed class VoteServiceTests
 
         var result = await CreateService(CreateAnswer(TestIds.Id(10), "answerer")).SetAnswerVoteAsync(TestIds.Id(1), TestIds.Id(10), "voter", 1, default);
 
-        Assert.Equal(VoteFailure.RateLimited, result.Failure);
+        Assert.Equal(ErrorType.TooManyRequests, result.Error);
         Assert.True(result.RetryAfterSeconds >= 1);
     }
 

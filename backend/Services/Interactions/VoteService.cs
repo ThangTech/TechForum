@@ -8,6 +8,9 @@ namespace TechForum.Api.Services;
 
 public sealed class VoteService : IVoteService
 {
+    public const string AccountTooNewTitle = "Tài khoản chưa đủ lâu để bình chọn";
+    public const string DownvoteNotAllowedTitle = "Chưa thể bình chọn chưa tốt";
+
     private readonly ITopicRepository topicRepository;
     private readonly IAnswerRepository answerRepository;
     private readonly IVoteRepository voteRepository;
@@ -46,21 +49,21 @@ public sealed class VoteService : IVoteService
         return new VoteDto(ReputationRules.ShownScore(topic.Score, isHidden), myVote, isHidden);
     }
 
-    public async Task<VoteResult> SetTopicVoteAsync(Guid topicId, string userId, int value, CancellationToken cancellationToken)
+    public async Task<Result<VoteDto>> SetTopicVoteAsync(Guid topicId, string userId, int value, CancellationToken cancellationToken)
     {
         var refused = CheckValueAndSpeed(userId, value);
         if (refused is not null) return refused;
 
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
-        if (topic is null) return VoteResult.Failed(VoteFailure.NotFound);
-        if (topic.AuthorId == userId) return VoteResult.Failed(VoteFailure.OwnContent);
+        if (topic is null) return NotFound();
+        if (topic.AuthorId == userId) return OwnContent();
         var tooNew = await CheckAccountAgeAsync(userId, value, cancellationToken);
         if (tooNew is not null) return tooNew;
 
         return await ApplyAsync(userId, VoteTargetType.Topic, topicId, topic.AuthorId, value, topic.PublishedAtUtc, cancellationToken);
     }
 
-    public async Task<VoteResult> SetAnswerVoteAsync(
+    public async Task<Result<VoteDto>> SetAnswerVoteAsync(
         Guid topicId,
         Guid answerId,
         string userId,
@@ -72,41 +75,65 @@ public sealed class VoteService : IVoteService
 
         // The answer must be one that everyone can read, in a post that everyone can read.
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
-        if (topic is null) return VoteResult.Failed(VoteFailure.NotFound);
+        if (topic is null) return NotFound();
         var answer = await answerRepository.GetVisibleByIdAsync(topicId, answerId, cancellationToken);
-        if (answer is null) return VoteResult.Failed(VoteFailure.NotFound);
-        if (answer.AuthorId == userId) return VoteResult.Failed(VoteFailure.OwnContent);
+        if (answer is null) return NotFound();
+        if (answer.AuthorId == userId) return OwnContent();
         var tooNew = await CheckAccountAgeAsync(userId, value, cancellationToken);
         if (tooNew is not null) return tooNew;
 
         return await ApplyAsync(userId, VoteTargetType.Answer, answerId, answer.AuthorId, value, answer.CreatedAtUtc, cancellationToken);
     }
 
+    private static Result<VoteDto> NotFound()
+    {
+        return Result<VoteDto>.Fail(ErrorType.NotFound, "Không tìm thấy nội dung");
+    }
+
+    private static Result<VoteDto> OwnContent()
+    {
+        return Result<VoteDto>.Fail(ErrorType.Conflict, "Bạn không thể bình chọn nội dung của chính mình");
+    }
+
     // The checks that do not need the database: the value, and how fast the member votes. A request that is refused for
     // its value does not use a place of the limit.
-    private VoteResult? CheckValueAndSpeed(string userId, int value)
+    private Result<VoteDto>? CheckValueAndSpeed(string userId, int value)
     {
-        if (value is < -1 or > 1) return VoteResult.Failed(VoteFailure.InvalidValue);
+        if (value < -1 || value > 1)
+        {
+            return Result<VoteDto>.Fail(ErrorType.Validation, "Giá trị bình chọn chưa hợp lệ", "Giá trị bình chọn phải là 1, -1 hoặc 0.", "value");
+        }
+
         if (!rateLimiter.TryAcquire(userId, out var retryAfter))
         {
-            return VoteResult.Limited((int)Math.Ceiling(Math.Max(1, retryAfter.TotalSeconds)));
+            var seconds = MemberRateLimit.ToSeconds(retryAfter);
+            // Chờ từ một giờ trở lên nghĩa là đã hết lượt của cả ngày.
+            var message = seconds >= 3600
+                ? $"Bạn đã dùng hết số lượt bình chọn trong ngày. Vui lòng thử lại sau {MemberRateLimit.FormatWait(seconds)}."
+                : $"Bạn đã bình chọn quá nhiều trong thời gian ngắn. Vui lòng thử lại sau {MemberRateLimit.FormatWait(seconds)}.";
+            return Result<VoteDto>.TooManyRequests("Bạn bình chọn quá nhanh", message, seconds);
         }
         return null;
     }
 
     // A new account cannot give a vote, and a downvote needs more: an account of at least DownvoteMinAccountAgeDays or a member
     // with at least DownvoteMinReputation points. Taking a vote back (value 0) is always allowed.
-    private async Task<VoteResult?> CheckAccountAgeAsync(string userId, int value, CancellationToken cancellationToken)
+    private async Task<Result<VoteDto>?> CheckAccountAgeAsync(string userId, int value, CancellationToken cancellationToken)
     {
         if (value == 0) return null;
 
         var limits = limitOptions.Value;
         var user = await accountRepository.FindByIdAsync(userId);
-        if (user is null) return VoteResult.Failed(VoteFailure.NotFound);
+        if (user is null) return NotFound();
 
         var age = timeProvider.GetUtcNow() - user.CreatedAtUtc;
         var minimumAge = TimeSpan.FromDays(limits.MinAccountAgeDays);
-        if (age < minimumAge) return VoteResult.TooNew((int)Math.Ceiling((minimumAge - age).TotalDays));
+        if (age < minimumAge)
+        {
+            var daysLeft = (int)Math.Ceiling((minimumAge - age).TotalDays);
+            return Result<VoteDto>.Fail(ErrorType.Forbidden, AccountTooNewTitle,
+                $"Tài khoản cần được tạo ít nhất vài ngày mới được bình chọn. Bạn có thể bình chọn sau khoảng {daysLeft} ngày nữa.");
+        }
 
         if (value < 0)
         {
@@ -114,17 +141,17 @@ public sealed class VoteService : IVoteService
             // The real reputation counts (the one shown is never below 0, the real one can be).
             if (age < downvoteAge && user.Reputation < limits.DownvoteMinReputation)
             {
-                return VoteResult.DownvoteLocked(new DownvoteRequirement(
-                    limits.DownvoteMinAccountAgeDays,
-                    limits.DownvoteMinReputation,
-                    (int)Math.Ceiling((downvoteAge - age).TotalDays),
-                    limits.DownvoteMinReputation - Math.Max(0, user.Reputation)));
+                var daysLeft = (int)Math.Ceiling((downvoteAge - age).TotalDays);
+                var reputationLeft = limits.DownvoteMinReputation - Math.Max(0, user.Reputation);
+                return Result<VoteDto>.Fail(ErrorType.Forbidden, DownvoteNotAllowedTitle,
+                    $"Để bình chọn chưa tốt, tài khoản cần tồn tại ít nhất {limits.DownvoteMinAccountAgeDays} ngày hoặc có từ {limits.DownvoteMinReputation} điểm danh tiếng. " +
+                    $"Bạn còn khoảng {daysLeft} ngày nữa, hoặc cần thêm {reputationLeft} điểm danh tiếng.");
             }
         }
         return null;
     }
 
-    private async Task<VoteResult> ApplyAsync(
+    private async Task<Result<VoteDto>> ApplyAsync(
         string userId,
         VoteTargetType targetType,
         Guid targetId,
@@ -137,7 +164,7 @@ public sealed class VoteService : IVoteService
             new VoteCommand(userId, targetType, targetId, authorId, value, timeProvider.GetUtcNow()),
             cancellationToken);
         var isHidden = IsHidden(postedAtUtc);
-        return VoteResult.Success(new VoteDto(ReputationRules.ShownScore(outcome.Score, isHidden), outcome.NewValue, isHidden));
+        return Result<VoteDto>.Success(new VoteDto(ReputationRules.ShownScore(outcome.Score, isHidden), outcome.NewValue, isHidden));
     }
 
     // The score of a new post or answer is hidden for the first hours.

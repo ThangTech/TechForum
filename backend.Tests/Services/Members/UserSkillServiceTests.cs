@@ -16,7 +16,7 @@ public sealed class UserSkillServiceTests
         var result = await CreateService().ReplaceAsync("member-a", [TestIds.Id(2), TestIds.Id(1)], CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.Equal(["ASP.NET Core", "React"], result.Skills.Select(skill => skill.Name));
+        Assert.Equal(["ASP.NET Core", "React"], result.Value.Select(skill => skill.Name));
         Assert.Equal([TestIds.Id(2), TestIds.Id(1)], repository.Saved["member-a"]);
     }
 
@@ -37,7 +37,7 @@ public sealed class UserSkillServiceTests
         var result = await CreateService().ReplaceAsync("member-a", [], CancellationToken.None);
 
         Assert.True(result.Succeeded);
-        Assert.Empty(result.Skills);
+        Assert.Empty(result.Value);
         Assert.Empty(repository.Saved["member-a"]);
     }
 
@@ -49,8 +49,8 @@ public sealed class UserSkillServiceTests
         var unknown = await CreateService().ReplaceAsync("member-a", [TestIds.Id(1), TestIds.Id(99)], CancellationToken.None);
         var turnedOff = await CreateService().ReplaceAsync("member-a", [TestIds.Id(3)], CancellationToken.None);
 
-        Assert.Equal(SkillFailure.UnknownTag, unknown.Failure);
-        Assert.Equal(SkillFailure.UnknownTag, turnedOff.Failure);
+        Assert.Equal(ErrorType.Validation, unknown.Error);
+        Assert.Equal(ErrorType.Validation, turnedOff.Error);
         Assert.Equal([TestIds.Id(1)], repository.Saved["member-a"]);
     }
 
@@ -61,7 +61,7 @@ public sealed class UserSkillServiceTests
 
         var result = await CreateService().ReplaceAsync("member-a", tooMany, CancellationToken.None);
 
-        Assert.Equal(SkillFailure.TooMany, result.Failure);
+        Assert.Equal(ErrorType.Validation, result.Error);
         Assert.False(repository.Saved.ContainsKey("member-a"));
     }
 

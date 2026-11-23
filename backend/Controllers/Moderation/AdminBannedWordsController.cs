@@ -25,27 +25,16 @@ public sealed class AdminBannedWordsController : ControllerBase
         Ok(await bannedWordService.GetAllAsync(cancellationToken));
 
     [HttpPost]
-    public async Task<ActionResult<BannedWordDto>> Add(
-        [FromBody] SaveBannedWordRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<BannedWordDto>> Add([FromBody] SaveBannedWordRequest request, CancellationToken cancellationToken)
     {
         var result = await bannedWordService.AddAsync(User.GetRequiredUserId(), request, cancellationToken);
-        return result.Failure switch
-        {
-            BannedWordFailure.None => StatusCode(StatusCodes.Status201Created, result.Word),
-            BannedWordFailure.Duplicate => Conflict(new ProblemDetails { Status = 409, Title = "Từ cấm bị trùng", Detail = result.Message }),
-            BannedWordFailure.Validation => BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]> { ["word"] = [result.Message ?? "Từ cấm chưa hợp lệ."] })),
-            _ => throw new InvalidOperationException("Trạng thái thêm từ cấm không được hỗ trợ.")
-        };
+        return this.ToActionResult(result, StatusCodes.Status201Created);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Remove(Guid id, CancellationToken cancellationToken)
     {
         var result = await bannedWordService.RemoveAsync(User.GetRequiredUserId(), id, cancellationToken);
-        return result.Failure == BannedWordFailure.None
-            ? NoContent()
-            : NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy từ cấm", Detail = result.Message });
+        return this.ToActionResult(result);
     }
 }

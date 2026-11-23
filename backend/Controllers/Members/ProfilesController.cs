@@ -33,24 +33,10 @@ public sealed class ProfilesController : ControllerBase
     // Replaces the whole list: what is not in the request is removed. Only tags that already exist can be chosen.
     [Authorize]
     [HttpPut("me/skills")]
-    public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> SaveMySkills(
-        SaveSkillsRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> SaveMySkills(SaveSkillsRequest request, CancellationToken cancellationToken)
     {
         var result = await skillService.ReplaceAsync(User.GetRequiredUserId(), request.TagIds!, cancellationToken);
-        return result.Failure switch
-        {
-            SkillFailure.None => Ok(result.Skills),
-            SkillFailure.TooMany => BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["tagIds"] = [$"Mỗi thành viên chọn tối đa {IUserSkillService.MaxSkills} kỹ năng."]
-            })),
-            SkillFailure.UnknownTag => BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                ["tagIds"] = ["Có thẻ không tồn tại hoặc đã bị tắt. Hãy tải lại danh sách thẻ."]
-            })),
-            _ => throw new InvalidOperationException("Kết quả kỹ năng không được hỗ trợ.")
-        };
+        return this.ToActionResult(result);
     }
 
     [HttpGet("{userId}")]
@@ -93,18 +79,10 @@ public sealed class ProfilesController : ControllerBase
 
     [Authorize]
     [HttpPut("{userId}/follow")]
-    public async Task<ActionResult<FollowStatusDto>> Follow(
-        string userId,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<FollowStatusDto>> Follow(string userId, CancellationToken cancellationToken)
     {
         var result = await followService.FollowAsync(User.GetRequiredUserId(), userId, cancellationToken);
-        return result.Failure switch
-        {
-            FollowFailure.None => Ok(result.Status),
-            FollowFailure.NotFound => NotFound(new ProblemDetails { Status = 404, Title = "Không tìm thấy thành viên" }),
-            FollowFailure.SelfFollow => Conflict(new ProblemDetails { Status = 409, Title = "Bạn không thể tự theo dõi mình" }),
-            _ => throw new InvalidOperationException("Trạng thái theo dõi không được hỗ trợ.")
-        };
+        return this.ToActionResult(result);
     }
 
     [Authorize]
