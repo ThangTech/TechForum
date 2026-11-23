@@ -15,12 +15,6 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
     // Upvote (1), downvote (-1) or take the vote back (0). The score and the reputation of the author change with it.
     [Authorize]
     [HttpPut("{answerId:guid}/vote")]
-    [ProducesResponseType<VoteDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<VoteDto>> SetVote(
         Guid topicId,
         Guid answerId,
@@ -30,9 +24,6 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
             topicId, answerId, User.GetRequiredUserId(), request.Value, cancellationToken));
 
     [HttpGet]
-    [ProducesResponseType<PagedResultDto<AnswerDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PagedResultDto<AnswerDto>>> GetAll(
         Guid topicId,
         [FromQuery] AnswerQuery query,
@@ -67,10 +58,6 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
 
     [Authorize]
     [HttpPut("{answerId:guid}/helpful")]
-    [ProducesResponseType<AnswerHelpfulDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AnswerHelpfulDto>> AddHelpful(
         Guid topicId,
         Guid answerId,
@@ -80,9 +67,6 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
 
     [Authorize]
     [HttpDelete("{answerId:guid}/helpful")]
-    [ProducesResponseType<AnswerHelpfulDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AnswerHelpfulDto>> RemoveHelpful(
         Guid topicId,
         Guid answerId,
@@ -111,12 +95,6 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
 
     [Authorize]
     [HttpPost]
-    [ProducesResponseType<AnswerDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AnswerDto>> Create(
         Guid topicId,
         [FromBody] CreateAnswerRequest request,
@@ -161,10 +139,6 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
 
     [Authorize]
     [HttpPut("{answerId:guid}/accepted")]
-    [ProducesResponseType<AnswerDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AnswerDto>> Accept(
         Guid topicId,
         Guid answerId,

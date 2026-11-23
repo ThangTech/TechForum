@@ -14,8 +14,6 @@ namespace TechForum.Api.Controllers;
 public sealed class TopicsController(ITopicService topicService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<PagedResultDto<TopicSummaryDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResultDto<TopicSummaryDto>>> GetAll(
         [FromQuery] TopicQuery query,
         CancellationToken cancellationToken)
@@ -35,9 +33,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
     [Authorize]
     [HttpGet("following")]
-    [ProducesResponseType<PagedResultDto<TopicSummaryDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<PagedResultDto<TopicSummaryDto>>> GetFollowing(
         [FromQuery] TopicQuery query,
         CancellationToken cancellationToken)
@@ -63,9 +58,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
     [Authorize]
     [HttpGet("mine")]
-    [ProducesResponseType<PagedResultDto<OwnTopicSummaryDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<PagedResultDto<OwnTopicSummaryDto>>> GetMine(
         [FromQuery] TopicQuery query,
         CancellationToken cancellationToken)
@@ -91,8 +83,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
     [Authorize]
     [HttpGet("mine/{id:guid}")]
-    [ProducesResponseType<OwnTopicDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OwnTopicDto>> GetMineById(
         Guid id,
         CancellationToken cancellationToken)
@@ -104,8 +94,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType<TopicDetailDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicDetailDto>> GetById(
         Guid id,
         CancellationToken cancellationToken)
@@ -126,10 +114,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
     [Authorize]
     [HttpPost]
-    [ProducesResponseType<OwnTopicDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<OwnTopicDto>> Create(
         [FromBody] CreateTopicRequest request,
         CancellationToken cancellationToken)
@@ -165,11 +149,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
     [Authorize]
     [HttpPut("{id:guid}")]
-    [ProducesResponseType<OwnTopicDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<OwnTopicDto>> Update(
         Guid id,
         [FromBody] UpdateTopicRequest request,
@@ -210,9 +189,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
 
     [Authorize]
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var result = await topicService.SoftDeleteAsync(id, User.GetRequiredUserId(), cancellationToken);

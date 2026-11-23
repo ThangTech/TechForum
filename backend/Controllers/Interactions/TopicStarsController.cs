@@ -11,8 +11,6 @@ namespace TechForum.Api.Controllers;
 public sealed class TopicStarsController(ITopicStarService topicStarService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<TopicStarDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicStarDto>> Get(
         Guid topicId,
         CancellationToken cancellationToken)
@@ -26,8 +24,6 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
 
     [Authorize]
     [HttpPut]
-    [ProducesResponseType<TopicStarDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicStarDto>> Add(
         Guid topicId,
         CancellationToken cancellationToken)
@@ -38,8 +34,6 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
 
     [Authorize]
     [HttpDelete]
-    [ProducesResponseType<TopicStarDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TopicStarDto>> Remove(
         Guid topicId,
         CancellationToken cancellationToken)

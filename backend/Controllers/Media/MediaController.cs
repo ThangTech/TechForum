@@ -13,9 +13,6 @@ namespace TechForum.Api.Controllers;
 public sealed class MediaController(IMediaStorageService mediaStorageService) : ControllerBase
 {
     [HttpPost("images")]
-    [ProducesResponseType<MediaUploadDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public Task<ActionResult<MediaUploadDto>> UploadImage(
         IFormFile file,
         CancellationToken cancellationToken) =>
@@ -23,18 +20,12 @@ public sealed class MediaController(IMediaStorageService mediaStorageService) : 
 
     [HttpPost("videos")]
     [VideoUploadSizeLimit]
-    [ProducesResponseType<MediaUploadDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     public Task<ActionResult<MediaUploadDto>> UploadVideo(
         IFormFile file,
         CancellationToken cancellationToken) =>
         StoreAsync(userId => mediaStorageService.StoreVideoAsync(userId, file, cancellationToken));
 
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteUnused(Guid id, CancellationToken cancellationToken)
     {
         var userId = User.GetRequiredUserId();

@@ -13,8 +13,6 @@ namespace TechForum.Api.Controllers;
 public sealed class ModerationController(IContentCheckService contentCheckService) : ControllerBase
 {
     [HttpPost("check")]
-    [ProducesResponseType<ContentCheckResultDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ContentCheckResultDto>> Check(
         [FromBody] CheckContentRequest request,
         CancellationToken cancellationToken) =>

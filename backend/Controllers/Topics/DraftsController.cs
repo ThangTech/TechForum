@@ -14,8 +14,6 @@ public sealed class DraftsController(IDraftService draftService) : ControllerBas
 {
     // The draft for a new topic (no topicId) or for the topic that is being edited. 204 when there is none.
     [HttpGet]
-    [ProducesResponseType<DraftDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult<DraftDto>> Get([FromQuery] Guid? topicId, CancellationToken cancellationToken)
     {
         var draft = await draftService.GetAsync(User.GetRequiredUserId(), topicId, cancellationToken);
@@ -24,9 +22,6 @@ public sealed class DraftsController(IDraftService draftService) : ControllerBas
 
     // Saves the draft: it is created the first time and replaced after that.
     [HttpPost]
-    [ProducesResponseType<DraftDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DraftDto>> Save(
         [FromBody] SaveDraftRequest request,
         CancellationToken cancellationToken)
@@ -51,7 +46,6 @@ public sealed class DraftsController(IDraftService draftService) : ControllerBas
     }
 
     [HttpDelete]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete([FromQuery] Guid? topicId, CancellationToken cancellationToken)
     {
         await draftService.DeleteAsync(User.GetRequiredUserId(), topicId, cancellationToken);

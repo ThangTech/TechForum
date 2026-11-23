@@ -12,8 +12,6 @@ namespace TechForum.Api.Controllers;
 public sealed class ActivityController(IActivityService activityService) : ControllerBase
 {
     [HttpGet("mine")]
-    [ProducesResponseType<PagedResultDto<ActivityItemDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResultDto<ActivityItemDto>>> GetMine(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,

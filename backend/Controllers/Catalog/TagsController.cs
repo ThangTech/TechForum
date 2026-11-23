@@ -9,15 +9,12 @@ namespace TechForum.Api.Controllers;
 public sealed class TagsController(ITagService tagService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<TagDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<TagDto>>> GetAll(CancellationToken cancellationToken)
     {
         return Ok(await tagService.GetActiveAsync(cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType<TagDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TagDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var tag = await tagService.GetActiveByIdAsync(id, cancellationToken);

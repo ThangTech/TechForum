@@ -9,8 +9,6 @@ namespace TechForum.Api.Controllers;
 public sealed class RelatedTopicsController(IRelatedTopicService service) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<RelatedTopicDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<RelatedTopicDto>>> Get(
         Guid topicId,
         CancellationToken cancellationToken)

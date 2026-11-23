@@ -13,8 +13,6 @@ namespace TechForum.Api.Controllers;
 public sealed class StarsController(ITopicStarService starService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<PagedResultDto<SavedTopicDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResultDto<SavedTopicDto>>> GetMine(
         [FromQuery] BookmarkQuery query,
         CancellationToken cancellationToken)

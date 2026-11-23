@@ -20,9 +20,6 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("register")]
-    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AuthResponseDto>> Register(
         RegisterRequest request,
         CancellationToken cancellationToken)
@@ -53,9 +50,6 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
     public async Task<ActionResult<AuthResponseDto>> Login(
         LoginRequest request,
         CancellationToken cancellationToken)
@@ -81,9 +75,6 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("refresh")]
-    [ProducesResponseType<AuthResponseDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
     public async Task<ActionResult<AuthResponseDto>> Refresh(CancellationToken cancellationToken)
     {
         var refreshToken = Request.Cookies[RefreshTokenCookieName];
@@ -109,8 +100,6 @@ public sealed class AuthController(
 
     [Authorize]
     [HttpGet("me")]
-    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<CurrentUserDto>> GetCurrentUser()
     {
         var userId = User.GetUserIdOrNull();
@@ -125,9 +114,6 @@ public sealed class AuthController(
 
     [Authorize]
     [HttpPut("profile")]
-    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<CurrentUserDto>> UpdateProfile(UpdateProfileRequest request)
     {
         var result = await authService.UpdateProfileAsync(User.GetRequiredUserId(), request);
@@ -136,9 +122,6 @@ public sealed class AuthController(
 
     [Authorize]
     [HttpPut("password")]
-    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<CurrentUserDto>> ChangePassword(
         ChangePasswordRequest request,
         CancellationToken cancellationToken)
@@ -156,8 +139,6 @@ public sealed class AuthController(
     [Authorize]
     [HttpPost("avatar")]
     [Consumes("multipart/form-data")]
-    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<CurrentUserDto>> UpdateAvatar(IFormFile file, CancellationToken cancellationToken)
     {
         var result = await avatarService.UpdateAsync(User.GetRequiredUserId(), file, cancellationToken);
@@ -172,7 +153,6 @@ public sealed class AuthController(
 
     [Authorize]
     [HttpDelete("avatar")]
-    [ProducesResponseType<CurrentUserDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult<CurrentUserDto>> DeleteAvatar(CancellationToken cancellationToken)
     {
         var result = await avatarService.DeleteAsync(User.GetRequiredUserId(), cancellationToken);
@@ -182,7 +162,6 @@ public sealed class AuthController(
     // Anonymous on purpose: the access token may already be expired when the user logs out.
     [AllowAnonymous]
     [HttpPost("logout")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
         var refreshToken = Request.Cookies[RefreshTokenCookieName];

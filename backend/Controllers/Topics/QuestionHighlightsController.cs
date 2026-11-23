@@ -9,8 +9,6 @@ namespace TechForum.Api.Controllers;
 public sealed class QuestionHighlightsController(IQuestionHighlightService service) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<QuestionHighlightsDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<QuestionHighlightsDto>> Get(
         [FromQuery] int periodDays = 30,
         [FromQuery] int limit = 5,

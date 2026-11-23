@@ -18,9 +18,6 @@ public sealed class AdminBannedWordsController(IBannedWordService bannedWordServ
         Ok(await bannedWordService.GetAllAsync(cancellationToken));
 
     [HttpPost]
-    [ProducesResponseType<BannedWordDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<BannedWordDto>> Add(
         [FromBody] SaveBannedWordRequest request,
         CancellationToken cancellationToken)
@@ -37,8 +34,6 @@ public sealed class AdminBannedWordsController(IBannedWordService bannedWordServ
     }
 
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Remove(Guid id, CancellationToken cancellationToken)
     {
         var result = await bannedWordService.RemoveAsync(User.GetRequiredUserId(), id, cancellationToken);

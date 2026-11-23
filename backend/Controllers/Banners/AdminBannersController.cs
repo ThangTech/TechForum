@@ -45,8 +45,6 @@ public sealed class AdminBannersController(IBannerService bannerService) : Contr
 
     // Uploads the picture first; the address in the answer goes into the banner form.
     [HttpPost("image")]
-    [ProducesResponseType<BannerImageDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BannerImageDto>> UploadImage(IFormFile file, CancellationToken cancellationToken)
     {
         var result = await bannerService.UploadImageAsync(file, cancellationToken);

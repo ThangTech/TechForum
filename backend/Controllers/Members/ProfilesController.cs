@@ -22,8 +22,6 @@ public sealed class ProfilesController(
     // Replaces the whole list: what is not in the request is removed. Only tags that already exist can be chosen.
     [Authorize]
     [HttpPut("me/skills")]
-    [ProducesResponseType<IReadOnlyList<SkillTagDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IReadOnlyList<SkillTagDto>>> SaveMySkills(
         SaveSkillsRequest request,
         CancellationToken cancellationToken)
@@ -45,8 +43,6 @@ public sealed class ProfilesController(
     }
 
     [HttpGet("{userId}")]
-    [ProducesResponseType<PublicProfileDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PublicProfileDto>> GetByUserId(
         string userId,
         CancellationToken cancellationToken)

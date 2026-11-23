@@ -12,8 +12,6 @@ namespace TechForum.Api.Controllers;
 public sealed class NotificationsController(INotificationService notificationService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<NotificationPageDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<NotificationPageDto>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -37,8 +35,6 @@ public sealed class NotificationsController(INotificationService notificationSer
     }
 
     [HttpPut("{id:guid}/read")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> MarkRead(Guid id, CancellationToken cancellationToken)
     {
         var updated = await notificationService.MarkReadAsync(id, User.GetRequiredUserId(), cancellationToken);

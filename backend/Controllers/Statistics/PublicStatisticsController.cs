@@ -9,7 +9,6 @@ namespace TechForum.Api.Controllers;
 public sealed class PublicStatisticsController(IPublicStatisticsService service) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<PublicStatisticsDto>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PublicStatisticsDto>> Get(CancellationToken cancellationToken) =>
         Ok(await service.GetAsync(cancellationToken));
 }

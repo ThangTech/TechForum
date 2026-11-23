@@ -9,7 +9,6 @@ namespace TechForum.Api.Controllers;
 public sealed class CategoriesController(ICategoryService categoryService) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<CategoryDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<CategoryDto>>> GetAll(CancellationToken cancellationToken)
     {
         var categories = await categoryService.GetAllAsync(cancellationToken);
@@ -17,8 +16,6 @@ public sealed class CategoriesController(ICategoryService categoryService) : Con
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType<CategoryDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CategoryDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var category = await categoryService.GetByIdAsync(id, cancellationToken);
