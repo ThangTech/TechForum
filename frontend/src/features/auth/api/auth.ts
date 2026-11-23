@@ -22,7 +22,9 @@ const isCurrentUser = (value: unknown): value is CurrentUser => {
     (user.avatarUrl === null || typeof user.avatarUrl === 'string') &&
     typeof user.email === 'string' &&
     Array.isArray(user.roles) &&
-    user.roles.every((role) => typeof role === 'string')
+    user.roles.every((role) => typeof role === 'string') &&
+    typeof user.hasPassword === 'boolean' &&
+    typeof user.isGoogleLinked === 'boolean'
   )
 }
 
@@ -101,6 +103,14 @@ export const updateProfile = (input: UpdateProfileInput) => {
   return requestUser('/api/auth/profile', {
     method: 'PUT',
     body: JSON.stringify(input),
+  })
+}
+
+// Đặt mật khẩu lần đầu cho tài khoản chưa có (tài khoản Google), nên không gửi mật khẩu hiện tại.
+export const setPassword = (newPassword: string) => {
+  return requestUser('/api/auth/password', {
+    method: 'POST',
+    body: JSON.stringify({ newPassword }),
   })
 }
 

@@ -72,6 +72,22 @@ public sealed class AccountRepository : IAccountRepository
         return await userManager.UpdateAsync(user);
     }
 
+    public async Task<bool> HasPasswordAsync(ApplicationUser user)
+    {
+        return await userManager.HasPasswordAsync(user);
+    }
+
+    public async Task<IReadOnlyList<string>> GetLoginProvidersAsync(ApplicationUser user)
+    {
+        var logins = await userManager.GetLoginsAsync(user);
+        return logins.Select(login => login.LoginProvider).ToList();
+    }
+
+    public async Task<IdentityResult> AddPasswordAsync(ApplicationUser user, string password)
+    {
+        return await userManager.AddPasswordAsync(user, password);
+    }
+
     public async Task<IdentityResult> CreateMemberAsync(
         ApplicationUser user,
         string password)

@@ -85,6 +85,20 @@ public sealed class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("password")]
+    public async Task<ActionResult<CurrentUserDto>> SetPassword(SetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.SetPasswordAsync(User.GetRequiredUserId(), request, cancellationToken);
+        if (result.Succeeded)
+        {
+            // Mọi refresh token đã bị thu hồi nên cookie trong trình duyệt không còn tác dụng.
+            DeleteRefreshTokenCookie();
+        }
+
+        return this.ToActionResult(result);
+    }
+
+    [Authorize]
     [HttpPut("password")]
     public async Task<ActionResult<CurrentUserDto>> ChangePassword(ChangePasswordRequest request, CancellationToken cancellationToken)
     {

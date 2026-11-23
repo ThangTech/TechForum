@@ -22,6 +22,13 @@ public interface IAccountRepository
     // và đánh dấu email đã xác minh. Security stamp đổi nên access token cũ hết hiệu lực.
     Task<IdentityResult> ClaimByVerifiedEmailAsync(ApplicationUser user);
 
+    Task<bool> HasPasswordAsync(ApplicationUser user);
+
+    // Tên các nhà cung cấp đăng nhập đã liên kết, ví dụ "Google".
+    Task<IReadOnlyList<string>> GetLoginProvidersAsync(ApplicationUser user);
+
+    Task<IdentityResult> AddPasswordAsync(ApplicationUser user, string password);
+
     Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password);
 
     Task<bool> IsLockedOutAsync(ApplicationUser user);

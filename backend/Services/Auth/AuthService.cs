@@ -12,7 +12,7 @@ public sealed class AuthService : IAuthService
 {
     private const string ProfileTitle = "Không thể cập nhật hồ sơ";
     private const string NotSignedInTitle = "Bạn cần đăng nhập";
-    private const string GoogleProvider = "Google";
+    private const string GoogleProvider = CurrentUserFactory.GoogleProvider;
 
     private readonly IAccountRepository accountRepository;
     private readonly IRefreshTokenRepository refreshTokenRepository;
@@ -340,6 +340,33 @@ public sealed class AuthService : IAuthService
         return Result<CurrentUserDto>.Success(await MapUserAsync(user));
     }
 
+    public async Task<Result<CurrentUserDto>> SetPasswordAsync(
+        string userId,
+        SetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await accountRepository.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return Result<CurrentUserDto>.Fail(ErrorType.Unauthorized, NotSignedInTitle);
+        }
+        if (await accountRepository.HasPasswordAsync(user))
+        {
+            return Result<CurrentUserDto>.Fail(ErrorType.Conflict, "Tài khoản đã có mật khẩu",
+                "Hãy dùng chức năng đổi mật khẩu.");
+        }
+
+        var addResult = await accountRepository.AddPasswordAsync(user, request.NewPassword);
+        if (!addResult.Succeeded)
+        {
+            return Result<CurrentUserDto>.Invalid("Không thể đặt mật khẩu", MapPasswordChangeErrors(addResult.Errors));
+        }
+
+        // Đặt mật khẩu làm đổi security stamp, nên access token cũ hết hiệu lực; đăng xuất mọi thiết bị như khi đổi mật khẩu.
+        await refreshTokenRepository.RevokeAllForUserAsync(user.Id, timeProvider.GetUtcNow(), cancellationToken);
+        return Result<CurrentUserDto>.Success(await MapUserAsync(user));
+    }
+
     public async Task LogoutAsync(string? refreshToken, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
@@ -397,15 +424,7 @@ public sealed class AuthService : IAuthService
 
     private async Task<CurrentUserDto> MapUserAsync(ApplicationUser user)
     {
-        var roles = await accountRepository.GetRolesAsync(user);
-        return new CurrentUserDto(
-            user.Id,
-            user.DisplayName,
-            user.Bio,
-            user.AvatarUrl,
-            user.Email ?? string.Empty,
-            roles,
-            ReputationRules.ForDisplay(user.Reputation));
+        return await CurrentUserFactory.CreateAsync(accountRepository, user);
     }
 
     private static bool IsDuplicateEmail(IEnumerable<IdentityError> errors)

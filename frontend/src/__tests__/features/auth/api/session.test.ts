@@ -10,6 +10,8 @@ const createSession = (accessToken: string, expiresAt: number): AuthSession => (
     avatarUrl: null,
     email: 'member.a@techforum.local',
     roles: ['Member'],
+    hasPassword: true,
+    isGoogleLinked: false,
   },
   accessToken,
   accessTokenExpiresAtUtc: new Date(expiresAt).toISOString(),

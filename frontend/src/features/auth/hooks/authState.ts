@@ -6,6 +6,7 @@ import {
   loginWithGoogle,
   logout,
   register,
+  setPassword,
   updateAvatar,
   updateProfile,
 } from '../api/authActions'
@@ -25,6 +26,7 @@ export const useAuth = () => {
     register,
     updateProfile,
     changePassword,
+    setPassword,
     updateAvatar,
     deleteAvatar,
     logout,

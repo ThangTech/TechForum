@@ -5,6 +5,7 @@ import {
   loginWithGoogle as loginWithGoogleRequest,
   logout as logoutRequest,
   register as registerRequest,
+  setPassword as setPasswordRequest,
   updateAvatar as updateAvatarRequest,
   updateProfile as updateProfileRequest,
 } from './auth'
@@ -53,6 +54,13 @@ export const updateProfile = async (input: UpdateProfileInput): Promise<CurrentU
 export const changePassword = async (input: ChangePasswordInput): Promise<CurrentUser> => {
   const user = await changePasswordRequest(input)
   // The server signs the account out on every device after a password change.
+  useAuthStore.getState().clearSession()
+  return user
+}
+
+export const setPassword = async (newPassword: string): Promise<CurrentUser> => {
+  const user = await setPasswordRequest(newPassword)
+  // Giống đổi mật khẩu: server đăng xuất tài khoản trên mọi thiết bị.
   useAuthStore.getState().clearSession()
   return user
 }

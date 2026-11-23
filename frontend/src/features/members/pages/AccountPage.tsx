@@ -28,6 +28,7 @@ export const AccountPage = () => {
         <Box component="dl" sx={{ mt: 2.5, mb: 0, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, fontSize: '0.875rem' }}>
           <div><Box component="dt" sx={detailLabelSx}>Email</Box><Box component="dd" sx={detailValueSx}>{user.email}</Box></div>
           <div><Box component="dt" sx={detailLabelSx}>Vai trò</Box><Box component="dd" sx={detailValueSx}>{user.roles.join(', ') || 'Thành viên'}</Box></div>
+          <div><Box component="dt" sx={detailLabelSx}>Đăng nhập bằng</Box><Box component="dd" sx={detailValueSx}>{view.signInMethods}</Box></div>
         </Box>
       </Panel>
 
@@ -45,7 +46,7 @@ export const AccountPage = () => {
 
         <Stack spacing={3}>
           <SkillsForm />
-          <PasswordForm onSave={view.savePassword} />
+          <PasswordForm hasPassword={view.hasPassword} onSave={view.savePassword} />
           <Panel component="section" sx={{ p: 3 }}>
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
               <Box sx={{ minWidth: 0 }}>

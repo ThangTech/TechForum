@@ -200,6 +200,9 @@ public sealed class AvatarServiceTests : IDisposable
 
     private sealed class FakeAccounts : IAccountRepository
     {
+        public Task<bool> HasPasswordAsync(ApplicationUser user) => Task.FromResult(true);
+        public Task<IReadOnlyList<string>> GetLoginProvidersAsync(ApplicationUser user) => Task.FromResult<IReadOnlyList<string>>([]);
+        public Task<IdentityResult> AddPasswordAsync(ApplicationUser user, string password) => throw new NotSupportedException();
         public Task<IdentityResult> CreateExternalMemberAsync(ApplicationUser user, string provider, string providerKey) => throw new NotSupportedException();
         public Task<ApplicationUser?> FindByLoginAsync(string provider, string providerKey) => throw new NotSupportedException();
         public Task<IdentityResult> AddLoginAsync(ApplicationUser user, string provider, string providerKey) => throw new NotSupportedException();

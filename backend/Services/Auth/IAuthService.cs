@@ -18,6 +18,9 @@ public interface IAuthService
     Task<Result<CurrentUserDto>> UpdateProfileAsync(string userId, UpdateProfileRequest request);
 
     // Đổi mật khẩu sẽ đăng xuất mọi thiết bị.
+    // Đặt mật khẩu cho tài khoản chưa có (tài khoản Google); cũng đăng xuất mọi thiết bị.
+    Task<Result<CurrentUserDto>> SetPasswordAsync(string userId, SetPasswordRequest request, CancellationToken cancellationToken);
+
     Task<Result<CurrentUserDto>> ChangePasswordAsync(
         string userId,
         ChangePasswordRequest request,

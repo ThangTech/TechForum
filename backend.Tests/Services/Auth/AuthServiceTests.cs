@@ -563,6 +563,76 @@ public sealed class AuthServiceTests
         public Task<GoogleIdentity?> ValidateAsync(string credential) => Task.FromResult(Identity);
     }
 
+    [Fact]
+    public async Task SetPasswordAsync_ForAnAccountWithoutPassword_SetsItAndSignsOutEveryDevice()
+    {
+        var repository = new FakeAccountRepository();
+        var refreshTokens = new FakeRefreshTokenRepository();
+        var user = CreateUser();
+        user.PasswordHash = null;
+        repository.UsersByEmail[user.Email!] = user;
+        repository.Logins[("Google", "g-1")] = user;
+
+        var result = await CreateService(repository, refreshTokens).SetPasswordAsync(
+            user.Id, new SetPasswordRequest { NewPassword = "MatKhauMoi!1" }, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.True(result.Value!.HasPassword);
+        Assert.True(result.Value.IsGoogleLinked);
+        Assert.Equal("hash-of-MatKhauMoi!1", user.PasswordHash);
+        Assert.Equal(1, refreshTokens.RevokeAllCount);
+    }
+
+    [Fact]
+    public async Task SetPasswordAsync_WhenTheAccountAlreadyHasAPassword_IsAConflict()
+    {
+        var repository = new FakeAccountRepository();
+        var user = CreateUser();
+        user.PasswordHash = "existing";
+        repository.UsersByEmail[user.Email!] = user;
+
+        var result = await CreateService(repository, new FakeRefreshTokenRepository()).SetPasswordAsync(
+            user.Id, new SetPasswordRequest { NewPassword = "MatKhauMoi!1" }, CancellationToken.None);
+
+        Assert.Equal(ErrorType.Conflict, result.Error);
+        Assert.Equal("existing", user.PasswordHash);
+    }
+
+    [Fact]
+    public async Task SetPasswordAsync_WithAWeakPassword_TellsWhatIsMissing()
+    {
+        var repository = new FakeAccountRepository
+        {
+            AddPasswordResult = IdentityResult.Failed(new IdentityError { Code = "PasswordRequiresDigit" })
+        };
+        var refreshTokens = new FakeRefreshTokenRepository();
+        var user = CreateUser();
+        user.PasswordHash = null;
+        repository.UsersByEmail[user.Email!] = user;
+
+        var result = await CreateService(repository, refreshTokens).SetPasswordAsync(
+            user.Id, new SetPasswordRequest { NewPassword = "khongcoso!" }, CancellationToken.None);
+
+        Assert.Equal(ErrorType.Validation, result.Error);
+        Assert.Equal("Mật khẩu cần ít nhất một chữ số.", result.Errors!["newPassword"][0]);
+        Assert.Equal(0, refreshTokens.RevokeAllCount);
+    }
+
+    [Fact]
+    public async Task Login_TellsThatTheAccountHasAPasswordAndNoGoogleLink()
+    {
+        var repository = new FakeAccountRepository();
+        var user = CreateUser();
+        user.PasswordHash = "existing";
+        repository.UsersByEmail[user.Email!] = user;
+
+        var result = await CreateService(repository, new FakeRefreshTokenRepository()).LoginAsync(
+            new LoginRequest { Email = user.Email!, Password = "DungMatKhau!1" }, CancellationToken.None);
+
+        Assert.True(result.Value!.User.HasPassword);
+        Assert.False(result.Value.User.IsGoogleLinked);
+    }
+
     private static AuthService CreateService(
         FakeAccountRepository repository,
         FakeRefreshTokenRepository refreshTokens,
@@ -623,6 +693,25 @@ public sealed class AuthServiceTests
         public Dictionary<(string Provider, string Key), ApplicationUser> Logins { get; } = [];
 
         public List<ApplicationUser> Claimed { get; } = [];
+
+        public IdentityResult AddPasswordResult { get; init; } = IdentityResult.Success;
+
+        public Task<bool> HasPasswordAsync(ApplicationUser user) => Task.FromResult(user.PasswordHash is not null);
+
+        public Task<IReadOnlyList<string>> GetLoginProvidersAsync(ApplicationUser user)
+        {
+            IReadOnlyList<string> providers = Logins.Where(item => item.Value == user).Select(item => item.Key.Provider).ToList();
+            return Task.FromResult(providers);
+        }
+
+        public Task<IdentityResult> AddPasswordAsync(ApplicationUser user, string password)
+        {
+            if (AddPasswordResult.Succeeded)
+            {
+                user.PasswordHash = "hash-of-" + password;
+            }
+            return Task.FromResult(AddPasswordResult);
+        }
 
         public Task<IdentityResult> CreateExternalMemberAsync(ApplicationUser user, string provider, string providerKey)
         {

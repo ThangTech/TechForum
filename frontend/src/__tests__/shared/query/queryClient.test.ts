@@ -13,6 +13,8 @@ const createSession = (userId: string): AuthSession => ({
     avatarUrl: null,
     email: `${userId}@techforum.local`,
     roles: ['Member'],
+    hasPassword: true,
+    isGoogleLinked: false,
   },
   accessToken: 'access-token',
   accessTokenExpiresAtUtc: new Date(Date.now() + 900_000).toISOString(),

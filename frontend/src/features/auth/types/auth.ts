@@ -5,6 +5,9 @@ export interface CurrentUser {
   avatarUrl: string | null
   email: string
   roles: string[]
+  // False khi tài khoản chỉ đăng nhập bằng Google: trang cá nhân cho đặt mật khẩu thay vì đổi mật khẩu.
+  hasPassword: boolean
+  isGoogleLinked: boolean
 }
 
 // Returned by login, register and refresh. The refresh token is only in an HttpOnly cookie.

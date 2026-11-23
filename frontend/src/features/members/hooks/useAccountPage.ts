@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/hooks/authState'
 
 // The account page: the signed-in member, the saves of the forms (avatar, profile, password) and the logout.
 export const useAccountPage = () => {
-  const { user, updateProfile, changePassword, updateAvatar, deleteAvatar, logout } = useAuth()
+  const { user, updateProfile, changePassword, setPassword, updateAvatar, deleteAvatar, logout } = useAuth()
   const navigate = useNavigate()
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -29,19 +29,36 @@ export const useAccountPage = () => {
     await updateProfile({ displayName, bio })
   }
 
+  // Tài khoản chưa có mật khẩu (tài khoản Google) thì đặt mật khẩu, không cần mật khẩu hiện tại.
+  const hasPassword = user?.hasPassword ?? true
+
   const savePassword = async (currentPassword: string, newPassword: string) => {
-    await changePassword({ currentPassword, newPassword })
-    // The server signed this account out on every device, so the user logs in again.
+    if (hasPassword) {
+      await changePassword({ currentPassword, newPassword })
+    } else {
+      await setPassword(newPassword)
+    }
+    // Server đã đăng xuất tài khoản trên mọi thiết bị, nên người dùng đăng nhập lại.
     navigate(appRoutes.login, {
       replace: true,
-      state: { notice: 'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.' },
+      state: {
+        notice: hasPassword
+          ? 'Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.'
+          : 'Đã đặt mật khẩu. Giờ bạn đăng nhập được bằng email và mật khẩu hoặc bằng Google.',
+      },
     })
   }
+
+  const signInMethods = [hasPassword ? 'Email và mật khẩu' : null, user?.isGoogleLinked ? 'Google' : null]
+    .filter((method) => method !== null)
+    .join(', ')
 
   return {
     user,
     saveProfile,
     savePassword,
+    hasPassword,
+    signInMethods,
     uploadAvatar: updateAvatar,
     deleteAvatar,
     logout: { run: logOut, isBusy: isLoggingOut, error: logoutError },

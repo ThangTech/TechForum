@@ -15,10 +15,12 @@ interface PasswordFormValues {
 }
 
 interface PasswordFormProps {
+  // False: tài khoản chưa có mật khẩu (tài khoản Google), form thành "Đặt mật khẩu" và không hỏi mật khẩu hiện tại.
+  hasPassword: boolean
   onSave: (currentPassword: string, newPassword: string) => Promise<void>
 }
 
-export const PasswordForm = ({ onSave }: PasswordFormProps) => {
+export const PasswordForm = ({ hasPassword, onSave }: PasswordFormProps) => {
   const [error, setError] = useState<ApiError | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm<PasswordFormValues>({
@@ -31,11 +33,11 @@ export const PasswordForm = ({ onSave }: PasswordFormProps) => {
     try {
       await onSave(currentPassword, newPassword)
       reset()
-      setMessage('Đã đổi mật khẩu. Vui lòng đăng nhập lại.')
+      setMessage(hasPassword ? 'Đã đổi mật khẩu. Vui lòng đăng nhập lại.' : 'Đã đặt mật khẩu. Vui lòng đăng nhập lại.')
     } catch (requestError) {
       setError(requestError instanceof ApiError
         ? requestError
-        : new ApiError(0, 'Không thể đổi mật khẩu lúc này.'))
+        : new ApiError(0, hasPassword ? 'Không thể đổi mật khẩu lúc này.' : 'Không thể đặt mật khẩu lúc này.'))
     }
   }
 
@@ -44,19 +46,24 @@ export const PasswordForm = ({ onSave }: PasswordFormProps) => {
 
   return (
     <Panel component="form" noValidate onSubmit={handleSubmit(submitPassword)} sx={{ p: 3, overflow: 'visible' }}>
-      <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Đổi mật khẩu</Typography>
-      <Typography color="text.secondary" sx={{ mt: 1, lineHeight: '1.5rem' }} variant="body2">Mật khẩu mới cần ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</Typography>
+      <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>{hasPassword ? 'Đổi mật khẩu' : 'Đặt mật khẩu'}</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1, lineHeight: '1.5rem' }} variant="body2">
+        {!hasPassword && 'Tài khoản đang đăng nhập bằng Google và chưa có mật khẩu. Đặt mật khẩu để đăng nhập được cả bằng email. '}
+        Mật khẩu mới cần ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+      </Typography>
       <Stack spacing={2} sx={{ mt: 2.5 }}>
-        <FormTextField
-          autoComplete="current-password"
-          control={control}
-          label="Mật khẩu hiện tại"
-          name="currentPassword"
-          required
-          rules={{ required: 'Vui lòng nhập mật khẩu hiện tại.' }}
-          serverError={currentPasswordError}
-          type="password"
-        />
+        {hasPassword && (
+          <FormTextField
+            autoComplete="current-password"
+            control={control}
+            label="Mật khẩu hiện tại"
+            name="currentPassword"
+            required
+            rules={{ required: 'Vui lòng nhập mật khẩu hiện tại.' }}
+            serverError={currentPasswordError}
+            type="password"
+          />
+        )}
         <FormTextField
           autoComplete="new-password"
           control={control}
@@ -83,7 +90,7 @@ export const PasswordForm = ({ onSave }: PasswordFormProps) => {
       {error && !currentPasswordError && !newPasswordError && <Typography color="error" role="alert" sx={{ mt: 2 }} variant="body2">{error.message}</Typography>}
       {message && <Typography color="success" role="status" sx={{ mt: 2 }} variant="body2">{message}</Typography>}
       <Stack direction="row" sx={{ mt: 2.5 }}>
-        <Button loading={isSubmitting} type="submit" variant="contained">Đổi mật khẩu</Button>
+        <Button loading={isSubmitting} type="submit" variant="contained">{hasPassword ? 'Đổi mật khẩu' : 'Đặt mật khẩu'}</Button>
       </Stack>
     </Panel>
   )
