@@ -3,8 +3,15 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class QuestionHighlightRepository(TechForumDbContext dbContext) : IQuestionHighlightRepository
+public sealed class QuestionHighlightRepository : IQuestionHighlightRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public QuestionHighlightRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<QuestionHighlightsData> GetAsync(
         DateTimeOffset periodStartUtc,
         int limit,

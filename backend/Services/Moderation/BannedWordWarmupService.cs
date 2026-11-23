@@ -3,13 +3,28 @@ namespace TechForum.Api.Services;
 // When the application starts: first it fills an empty table of banned words from the local list file (the file is not
 // in Git, see .gitignore), then it reads the table into the cache, so the first post does not wait for it.
 // Neither step can stop the application from starting: a problem is written to the log.
-public sealed class BannedWordWarmupService(
-    IServiceScopeFactory scopeFactory,
-    IConfiguration configuration,
-    IHostEnvironment environment,
-    IProfanityFilter profanityFilter,
-    ILogger<BannedWordWarmupService> logger) : IHostedService
+public sealed class BannedWordWarmupService : IHostedService
 {
+    private readonly IServiceScopeFactory scopeFactory;
+    private readonly IConfiguration configuration;
+    private readonly IHostEnvironment environment;
+    private readonly IProfanityFilter profanityFilter;
+    private readonly ILogger<BannedWordWarmupService> logger;
+
+    public BannedWordWarmupService(
+        IServiceScopeFactory scopeFactory,
+        IConfiguration configuration,
+        IHostEnvironment environment,
+        IProfanityFilter profanityFilter,
+        ILogger<BannedWordWarmupService> logger)
+    {
+        this.scopeFactory = scopeFactory;
+        this.configuration = configuration;
+        this.environment = environment;
+        this.profanityFilter = profanityFilter;
+        this.logger = logger;
+    }
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         await SeedFromFileAsync(cancellationToken);

@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class UserSkillRepository(TechForumDbContext dbContext) : IUserSkillRepository
+public sealed class UserSkillRepository : IUserSkillRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public UserSkillRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<IReadOnlyList<SkillTagData>> GetChosenAsync(string userId, CancellationToken cancellationToken) =>
         await dbContext.UserSkills
             .AsNoTracking()

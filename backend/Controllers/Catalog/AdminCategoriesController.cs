@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin/categories")]
-public sealed class AdminCategoriesController(ICategoryService categoryService) : ControllerBase
+public sealed class AdminCategoriesController : ControllerBase
 {
+    private readonly ICategoryService categoryService;
+
+    public AdminCategoriesController(ICategoryService categoryService)
+    {
+        this.categoryService = categoryService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminCategoryDto>>> GetAll(CancellationToken cancellationToken) =>
         Ok(await categoryService.GetAdminAsync(cancellationToken));
@@ -35,7 +42,6 @@ public sealed class AdminCategoriesController(ICategoryService categoryService) 
         [FromBody] SetActiveRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await categoryService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken));
-
 
     private ActionResult<AdminCategoryDto> ToActionResult(CategoryWriteResult result, bool created = false) =>
         result.Failure switch

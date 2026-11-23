@@ -7,8 +7,15 @@ namespace TechForum.Api.Middleware;
 
 // Runs after JWT validation. A valid token is still rejected when the account was locked
 // or its security stamp changed (for example after a password change).
-public sealed class ActiveAccountMiddleware(RequestDelegate next)
+public sealed class ActiveAccountMiddleware
 {
+    private readonly RequestDelegate next;
+
+    public ActiveAccountMiddleware(RequestDelegate next)
+    {
+        this.next = next;
+    }
+
     public async Task InvokeAsync(
         HttpContext context,
         UserManager<ApplicationUser> userManager)

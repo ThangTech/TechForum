@@ -9,8 +9,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/activity")]
-public sealed class ActivityController(IActivityService activityService) : ControllerBase
+public sealed class ActivityController : ControllerBase
 {
+    private readonly IActivityService activityService;
+
+    public ActivityController(IActivityService activityService)
+    {
+        this.activityService = activityService;
+    }
+
     [HttpGet("mine")]
     public async Task<ActionResult<PagedResultDto<ActivityItemDto>>> GetMine(
         [FromQuery] int page = 1,

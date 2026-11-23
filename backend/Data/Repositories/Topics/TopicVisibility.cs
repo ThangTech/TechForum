@@ -39,8 +39,17 @@ public static class TopicVisibility
         return source.Where(Expression.Lambda<Func<T, bool>>(body, topicOf.Parameters));
     }
 
-    private sealed class ReplaceParameter(ParameterExpression parameter, Expression replacement) : ExpressionVisitor
+    private sealed class ReplaceParameter : ExpressionVisitor
     {
+        private readonly ParameterExpression parameter;
+        private readonly Expression replacement;
+
+        public ReplaceParameter(ParameterExpression parameter, Expression replacement)
+        {
+            this.parameter = parameter;
+            this.replacement = replacement;
+        }
+
         protected override Expression VisitParameter(ParameterExpression node) =>
             node == parameter ? replacement : base.VisitParameter(node);
     }

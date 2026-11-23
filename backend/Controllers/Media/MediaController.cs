@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/media")]
-public sealed class MediaController(IMediaStorageService mediaStorageService) : ControllerBase
+public sealed class MediaController : ControllerBase
 {
+    private readonly IMediaStorageService mediaStorageService;
+
+    public MediaController(IMediaStorageService mediaStorageService)
+    {
+        this.mediaStorageService = mediaStorageService;
+    }
+
     [HttpPost("images")]
     public Task<ActionResult<MediaUploadDto>> UploadImage(
         IFormFile file,

@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class TagRepository(TechForumDbContext dbContext) : ITagRepository
+public sealed class TagRepository : ITagRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public TagRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<IReadOnlyList<Tag>> GetActiveAsync(CancellationToken cancellationToken)
     {
         return await dbContext.Tags

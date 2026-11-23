@@ -1,10 +1,21 @@
 namespace TechForum.Api.Services;
 
-public sealed class MediaCleanupBackgroundService(
-    IServiceScopeFactory scopeFactory,
-    IConfiguration configuration,
-    ILogger<MediaCleanupBackgroundService> logger) : BackgroundService
+public sealed class MediaCleanupBackgroundService : BackgroundService
 {
+    private readonly IServiceScopeFactory scopeFactory;
+    private readonly IConfiguration configuration;
+    private readonly ILogger<MediaCleanupBackgroundService> logger;
+
+    public MediaCleanupBackgroundService(
+        IServiceScopeFactory scopeFactory,
+        IConfiguration configuration,
+        ILogger<MediaCleanupBackgroundService> logger)
+    {
+        this.scopeFactory = scopeFactory;
+        this.configuration = configuration;
+        this.logger = logger;
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var intervalMinutes = Math.Max(

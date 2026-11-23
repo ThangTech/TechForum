@@ -6,8 +6,15 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/topics/{topicId:guid}/related")]
-public sealed class RelatedTopicsController(IRelatedTopicService service) : ControllerBase
+public sealed class RelatedTopicsController : ControllerBase
 {
+    private readonly IRelatedTopicService service;
+
+    public RelatedTopicsController(IRelatedTopicService service)
+    {
+        this.service = service;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RelatedTopicDto>>> Get(
         Guid topicId,

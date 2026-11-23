@@ -4,8 +4,15 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Services;
 
-public sealed class RelatedTopicService(IRelatedTopicRepository repository) : IRelatedTopicService
+public sealed class RelatedTopicService : IRelatedTopicService
 {
+    private readonly IRelatedTopicRepository repository;
+
+    public RelatedTopicService(IRelatedTopicRepository repository)
+    {
+        this.repository = repository;
+    }
+
     public async Task<IReadOnlyList<RelatedTopicDto>?> GetPublicRelatedAsync(
         Guid topicId,
         CancellationToken cancellationToken)

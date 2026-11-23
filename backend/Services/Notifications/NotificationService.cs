@@ -4,10 +4,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class NotificationService(
-    INotificationRepository notificationRepository,
-    TimeProvider timeProvider) : INotificationService
+public sealed class NotificationService : INotificationService
 {
+    private readonly INotificationRepository notificationRepository;
+    private readonly TimeProvider timeProvider;
+
+    public NotificationService(INotificationRepository notificationRepository, TimeProvider timeProvider)
+    {
+        this.notificationRepository = notificationRepository;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<NotificationPageDto> GetPageAsync(
         string userId,
         int page,

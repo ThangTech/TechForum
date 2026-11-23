@@ -4,10 +4,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class AccountRepository(
-    UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager) : IAccountRepository
+public sealed class AccountRepository : IAccountRepository
 {
+    private readonly UserManager<ApplicationUser> userManager;
+    private readonly SignInManager<ApplicationUser> signInManager;
+
+    public AccountRepository(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    {
+        this.userManager = userManager;
+        this.signInManager = signInManager;
+    }
+
     public Task<ApplicationUser?> FindByEmailAsync(string email) =>
         userManager.FindByEmailAsync(email);
 

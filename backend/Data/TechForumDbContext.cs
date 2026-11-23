@@ -6,9 +6,13 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data;
 
-public sealed class TechForumDbContext(DbContextOptions<TechForumDbContext> options)
-    : IdentityDbContext<ApplicationUser>(options)
+public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>
 {
+    public TechForumDbContext(DbContextOptions<TechForumDbContext> options)
+        : base(options)
+    {
+    }
+
     public DbSet<Category> Categories => Set<Category>();
 
     public DbSet<Tag> Tags => Set<Tag>();

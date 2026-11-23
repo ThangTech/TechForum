@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/moderation")]
-public sealed class ModerationController(IContentCheckService contentCheckService) : ControllerBase
+public sealed class ModerationController : ControllerBase
 {
+    private readonly IContentCheckService contentCheckService;
+
+    public ModerationController(IContentCheckService contentCheckService)
+    {
+        this.contentCheckService = contentCheckService;
+    }
+
     [HttpPost("check")]
     public async Task<ActionResult<ContentCheckResultDto>> Check(
         [FromBody] CheckContentRequest request,

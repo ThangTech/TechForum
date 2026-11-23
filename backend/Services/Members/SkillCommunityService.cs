@@ -3,8 +3,15 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-public sealed class SkillCommunityService(ISkillCommunityRepository repository) : ISkillCommunityService
+public sealed class SkillCommunityService : ISkillCommunityService
 {
+    private readonly ISkillCommunityRepository repository;
+
+    public SkillCommunityService(ISkillCommunityRepository repository)
+    {
+        this.repository = repository;
+    }
+
     public async Task<SkillCommunityDto?> GetAsync(
         Guid tagId,
         int page,

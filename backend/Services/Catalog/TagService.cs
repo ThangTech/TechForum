@@ -4,8 +4,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class TagService(ITagRepository tagRepository, IAdminAuditService auditService) : ITagService
+public sealed class TagService : ITagService
 {
+    private readonly ITagRepository tagRepository;
+    private readonly IAdminAuditService auditService;
+
+    public TagService(ITagRepository tagRepository, IAdminAuditService auditService)
+    {
+        this.tagRepository = tagRepository;
+        this.auditService = auditService;
+    }
+
     public async Task<IReadOnlyList<TagDto>> GetActiveAsync(CancellationToken cancellationToken)
     {
         var tags = await tagRepository.GetActiveAsync(cancellationToken);

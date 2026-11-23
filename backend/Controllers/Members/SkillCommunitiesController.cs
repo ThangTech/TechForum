@@ -6,8 +6,15 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/tags/{tagId:guid}/community")]
-public sealed class SkillCommunitiesController(ISkillCommunityService service) : ControllerBase
+public sealed class SkillCommunitiesController : ControllerBase
 {
+    private readonly ISkillCommunityService service;
+
+    public SkillCommunitiesController(ISkillCommunityService service)
+    {
+        this.service = service;
+    }
+
     [HttpGet]
     public async Task<ActionResult<SkillCommunityDto>> Get(
         Guid tagId,

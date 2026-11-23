@@ -3,11 +3,22 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class BannedWordSeeder(
-    IBannedWordRepository repository,
-    TimeProvider timeProvider,
-    ILogger<BannedWordSeeder> logger) : IBannedWordSeeder
+public sealed class BannedWordSeeder : IBannedWordSeeder
 {
+    private readonly IBannedWordRepository repository;
+    private readonly TimeProvider timeProvider;
+    private readonly ILogger<BannedWordSeeder> logger;
+
+    public BannedWordSeeder(
+        IBannedWordRepository repository,
+        TimeProvider timeProvider,
+        ILogger<BannedWordSeeder> logger)
+    {
+        this.repository = repository;
+        this.timeProvider = timeProvider;
+        this.logger = logger;
+    }
+
     public async Task<int> SeedIfEmptyAsync(IEnumerable<string> lines, CancellationToken cancellationToken)
     {
         var words = BannedWordRules.ParseLines(lines);

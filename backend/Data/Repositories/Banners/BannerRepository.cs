@@ -3,8 +3,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class BannerRepository(TechForumDbContext dbContext) : IBannerRepository
+public sealed class BannerRepository : IBannerRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public BannerRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<IReadOnlyList<Banner>> GetShownAsync(DateTimeOffset now, CancellationToken cancellationToken) =>
         await dbContext.Banners
             .AsNoTracking()

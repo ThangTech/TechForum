@@ -5,10 +5,17 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-public sealed class TopicEngagementService(
-    ITopicEngagementRepository repository,
-    TimeProvider timeProvider) : ITopicEngagementService
+public sealed class TopicEngagementService : ITopicEngagementService
 {
+    private readonly ITopicEngagementRepository repository;
+    private readonly TimeProvider timeProvider;
+
+    public TopicEngagementService(ITopicEngagementRepository repository, TimeProvider timeProvider)
+    {
+        this.repository = repository;
+        this.timeProvider = timeProvider;
+    }
+
     public Task<TopicEngagementDto?> RecordViewAsync(
         Guid topicId,
         string visitorKey,

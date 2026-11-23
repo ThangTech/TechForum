@@ -6,15 +6,34 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Services;
 
-public sealed class VoteService(
-    ITopicRepository topicRepository,
-    IAnswerRepository answerRepository,
-    IVoteRepository voteRepository,
-    IAccountRepository accountRepository,
-    IVoteRateLimiter rateLimiter,
-    IOptions<VoteLimitOptions> limitOptions,
-    TimeProvider timeProvider) : IVoteService
+public sealed class VoteService : IVoteService
 {
+    private readonly ITopicRepository topicRepository;
+    private readonly IAnswerRepository answerRepository;
+    private readonly IVoteRepository voteRepository;
+    private readonly IAccountRepository accountRepository;
+    private readonly IVoteRateLimiter rateLimiter;
+    private readonly IOptions<VoteLimitOptions> limitOptions;
+    private readonly TimeProvider timeProvider;
+
+    public VoteService(
+        ITopicRepository topicRepository,
+        IAnswerRepository answerRepository,
+        IVoteRepository voteRepository,
+        IAccountRepository accountRepository,
+        IVoteRateLimiter rateLimiter,
+        IOptions<VoteLimitOptions> limitOptions,
+        TimeProvider timeProvider)
+    {
+        this.topicRepository = topicRepository;
+        this.answerRepository = answerRepository;
+        this.voteRepository = voteRepository;
+        this.accountRepository = accountRepository;
+        this.rateLimiter = rateLimiter;
+        this.limitOptions = limitOptions;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<VoteDto?> GetTopicVoteAsync(Guid topicId, string? viewerId, CancellationToken cancellationToken)
     {
         var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);

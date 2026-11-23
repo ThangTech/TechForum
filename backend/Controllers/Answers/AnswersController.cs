@@ -10,8 +10,17 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [ProfanityFilter]
 [Route("api/topics/{topicId:guid}/answers")]
-public sealed class AnswersController(IAnswerService answerService, IVoteService voteService) : ControllerBase
+public sealed class AnswersController : ControllerBase
 {
+    private readonly IAnswerService answerService;
+    private readonly IVoteService voteService;
+
+    public AnswersController(IAnswerService answerService, IVoteService voteService)
+    {
+        this.answerService = answerService;
+        this.voteService = voteService;
+    }
+
     // Upvote (1), downvote (-1) or take the vote back (0). The score and the reputation of the author change with it.
     [Authorize]
     [HttpPut("{answerId:guid}/vote")]
@@ -215,7 +224,6 @@ public sealed class AnswersController(IAnswerService answerService, IVoteService
             Detail = "Câu trả lời không tồn tại hoặc không thuộc tài khoản của bạn."
         });
     }
-
 
     private static ValidationProblemDetails? Validate(AnswerQuery query)
     {

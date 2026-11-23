@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/stars")]
-public sealed class StarsController(ITopicStarService starService) : ControllerBase
+public sealed class StarsController : ControllerBase
 {
+    private readonly ITopicStarService starService;
+
+    public StarsController(ITopicStarService starService)
+    {
+        this.starService = starService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<SavedTopicDto>>> GetMine(
         [FromQuery] BookmarkQuery query,

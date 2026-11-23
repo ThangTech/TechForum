@@ -7,17 +7,30 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed partial class DraftService(
-    IDraftRepository draftRepository,
-    IMediaAssetRepository mediaAssetRepository,
-    IContentSanitizer contentSanitizer,
-    TimeProvider timeProvider) : IDraftService
+public sealed partial class DraftService : IDraftService
 {
     private const int MaxTitleLength = 200;
     private const int MaxSummaryLength = 500;
     private const int MaxBodyLength = 100_000;
     private const int MaxTagCount = 5;
     private const int MaxMediaCount = 20;
+
+    private readonly IDraftRepository draftRepository;
+    private readonly IMediaAssetRepository mediaAssetRepository;
+    private readonly IContentSanitizer contentSanitizer;
+    private readonly TimeProvider timeProvider;
+
+    public DraftService(
+        IDraftRepository draftRepository,
+        IMediaAssetRepository mediaAssetRepository,
+        IContentSanitizer contentSanitizer,
+        TimeProvider timeProvider)
+    {
+        this.draftRepository = draftRepository;
+        this.mediaAssetRepository = mediaAssetRepository;
+        this.contentSanitizer = contentSanitizer;
+        this.timeProvider = timeProvider;
+    }
 
     public async Task<DraftDto?> GetAsync(string userId, Guid? topicId, CancellationToken cancellationToken)
     {

@@ -8,19 +8,35 @@ namespace TechForum.Api.Services;
 // The avatar of a member is kept in the Cloudinary account (folder "avatars"). The user record keeps the address.
 // An avatar of the time before Cloudinary (/media/avatars/...) is still shown and is deleted from the disk when it
 // is replaced.
-public sealed class AvatarService(
-    IAccountRepository accountRepository,
-    IWebHostEnvironment environment,
-    IOptions<MediaOptions> optionsAccessor,
-    ICloudMediaClient cloud,
-    MediaUrlRules rules,
-    ILogger<AvatarService> logger) : IAvatarService
+public sealed class AvatarService : IAvatarService
 {
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
     private static readonly byte[] JpegSignature = [0xFF, 0xD8, 0xFF];
     private static readonly byte[] WebPContainer = "RIFF"u8.ToArray();
     private static readonly byte[] WebPType = "WEBP"u8.ToArray();
-    private readonly MediaOptions options = optionsAccessor.Value;
+
+    private readonly IAccountRepository accountRepository;
+    private readonly IWebHostEnvironment environment;
+    private readonly ICloudMediaClient cloud;
+    private readonly MediaUrlRules rules;
+    private readonly ILogger<AvatarService> logger;
+    private readonly MediaOptions options;
+
+    public AvatarService(
+        IAccountRepository accountRepository,
+        IWebHostEnvironment environment,
+        IOptions<MediaOptions> optionsAccessor,
+        ICloudMediaClient cloud,
+        MediaUrlRules rules,
+        ILogger<AvatarService> logger)
+    {
+        this.accountRepository = accountRepository;
+        this.environment = environment;
+        this.cloud = cloud;
+        this.rules = rules;
+        this.logger = logger;
+        options = optionsAccessor.Value;
+    }
 
     public async Task<AvatarUpdateResult> UpdateAsync(
         string userId,

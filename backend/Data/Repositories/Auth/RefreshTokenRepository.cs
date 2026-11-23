@@ -3,8 +3,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class RefreshTokenRepository(TechForumDbContext dbContext) : IRefreshTokenRepository
+public sealed class RefreshTokenRepository : IRefreshTokenRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public RefreshTokenRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
     {
         dbContext.RefreshTokens.Add(refreshToken);

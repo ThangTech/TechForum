@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class BannedWordRepository(TechForumDbContext dbContext) : IBannedWordRepository
+public sealed class BannedWordRepository : IBannedWordRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public BannedWordRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<IReadOnlyList<BannedWord>> GetAllAsync(CancellationToken cancellationToken) =>
         await dbContext.BannedWords.AsNoTracking().OrderBy(item => item.Word).ToListAsync(cancellationToken);
 

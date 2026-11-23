@@ -4,10 +4,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class UserFollowService(
-    IUserFollowRepository repository,
-    TimeProvider timeProvider) : IUserFollowService
+public sealed class UserFollowService : IUserFollowService
 {
+    private readonly IUserFollowRepository repository;
+    private readonly TimeProvider timeProvider;
+
+    public UserFollowService(IUserFollowRepository repository, TimeProvider timeProvider)
+    {
+        this.repository = repository;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<UserFollowResult> FollowAsync(
         string followerId,
         string followingId,

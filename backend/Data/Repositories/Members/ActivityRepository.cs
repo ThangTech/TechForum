@@ -3,8 +3,15 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class ActivityRepository(TechForumDbContext dbContext) : IActivityRepository
+public sealed class ActivityRepository : IActivityRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public ActivityRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<ActivityPage> GetPublicActivityAsync(
         string userId,
         int page,

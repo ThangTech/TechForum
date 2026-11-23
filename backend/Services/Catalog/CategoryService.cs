@@ -4,10 +4,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class CategoryService(
-    ICategoryRepository categoryRepository,
-    IAdminAuditService auditService) : ICategoryService
+public sealed class CategoryService : ICategoryService
 {
+    private readonly ICategoryRepository categoryRepository;
+    private readonly IAdminAuditService auditService;
+
+    public CategoryService(ICategoryRepository categoryRepository, IAdminAuditService auditService)
+    {
+        this.categoryRepository = categoryRepository;
+        this.auditService = auditService;
+    }
+
     public async Task<IReadOnlyList<CategoryDto>> GetAllAsync(CancellationToken cancellationToken)
     {
         var categories = await categoryRepository.GetAllAsync(cancellationToken);

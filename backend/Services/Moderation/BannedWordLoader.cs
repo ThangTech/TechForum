@@ -3,8 +3,15 @@ using TechForum.Api.Data.Repositories;
 namespace TechForum.Api.Services;
 
 // The cache lives as long as the application, but the repository needs a scope (it uses the DbContext).
-public sealed class BannedWordLoader(IServiceScopeFactory scopeFactory) : IBannedWordLoader
+public sealed class BannedWordLoader : IBannedWordLoader
 {
+    private readonly IServiceScopeFactory scopeFactory;
+
+    public BannedWordLoader(IServiceScopeFactory scopeFactory)
+    {
+        this.scopeFactory = scopeFactory;
+    }
+
     public async Task<IReadOnlyList<string>> LoadAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();

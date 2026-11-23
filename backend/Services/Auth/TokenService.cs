@@ -11,13 +11,18 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class TokenService(
-    IOptions<JwtOptions> options,
-    TimeProvider timeProvider) : ITokenService
+public sealed class TokenService : ITokenService
 {
     private const int RefreshTokenByteCount = 32;
 
-    private readonly JwtOptions jwtOptions = options.Value;
+    private readonly TimeProvider timeProvider;
+    private readonly JwtOptions jwtOptions;
+
+    public TokenService(IOptions<JwtOptions> options, TimeProvider timeProvider)
+    {
+        this.timeProvider = timeProvider;
+        jwtOptions = options.Value;
+    }
 
     public AccessTokenResult CreateAccessToken(ApplicationUser user, IReadOnlyList<string> roles)
     {

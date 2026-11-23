@@ -5,11 +5,22 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class TopicBookmarkService(
-    ITopicRepository topicRepository,
-    ITopicBookmarkRepository bookmarkRepository,
-    TimeProvider timeProvider) : ITopicBookmarkService
+public sealed class TopicBookmarkService : ITopicBookmarkService
 {
+    private readonly ITopicRepository topicRepository;
+    private readonly ITopicBookmarkRepository bookmarkRepository;
+    private readonly TimeProvider timeProvider;
+
+    public TopicBookmarkService(
+        ITopicRepository topicRepository,
+        ITopicBookmarkRepository bookmarkRepository,
+        TimeProvider timeProvider)
+    {
+        this.topicRepository = topicRepository;
+        this.bookmarkRepository = bookmarkRepository;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<BookmarkStatusDto?> GetStatusAsync(
         Guid topicId,
         string? userId,

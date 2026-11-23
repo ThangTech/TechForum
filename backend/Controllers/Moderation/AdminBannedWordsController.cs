@@ -11,8 +11,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin/banned-words")]
-public sealed class AdminBannedWordsController(IBannedWordService bannedWordService) : ControllerBase
+public sealed class AdminBannedWordsController : ControllerBase
 {
+    private readonly IBannedWordService bannedWordService;
+
+    public AdminBannedWordsController(IBannedWordService bannedWordService)
+    {
+        this.bannedWordService = bannedWordService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<BannedWordDto>>> GetAll(CancellationToken cancellationToken) =>
         Ok(await bannedWordService.GetAllAsync(cancellationToken));

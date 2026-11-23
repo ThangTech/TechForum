@@ -5,14 +5,22 @@ namespace TechForum.Api.Services;
 // Keeps the banned words in IMemoryCache, so a post or an answer does not cost a query to the database.
 // The list is read when the application starts (BannedWordWarmupService), after every change of an admin, and again
 // when the cache entry runs out, so another instance of the API that changed the list is noticed within minutes.
-public sealed class ProfanityFilter(
-    IMemoryCache cache,
-    IBannedWordLoader loader,
-    ILogger<ProfanityFilter> logger) : IProfanityFilter
+public sealed class ProfanityFilter : IProfanityFilter
 {
     public const string CacheKey = "banned-words:filter-set";
-
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(10);
+
+    private readonly IMemoryCache cache;
+    private readonly IBannedWordLoader loader;
+    private readonly ILogger<ProfanityFilter> logger;
+
+    public ProfanityFilter(IMemoryCache cache, IBannedWordLoader loader, ILogger<ProfanityFilter> logger)
+    {
+        this.cache = cache;
+        this.loader = loader;
+        this.logger = logger;
+    }
+
     // When the database cannot be read, the filter lets the text pass and tries again soon, instead of asking for
     // every request.
     private static readonly TimeSpan FailureLifetime = TimeSpan.FromMinutes(1);

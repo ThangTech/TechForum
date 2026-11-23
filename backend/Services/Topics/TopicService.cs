@@ -10,16 +10,35 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed partial class TopicService(
-    ITopicRepository topicRepository,
-    IMediaAssetRepository mediaAssetRepository,
-    IDraftRepository draftRepository,
-    IContentSanitizer contentSanitizer,
-    MediaUrlRules mediaUrlRules,
-    TimeProvider timeProvider,
-    IPostingRateLimiter postingRateLimiter) : ITopicService
+public sealed partial class TopicService : ITopicService
 {
     private const int MaxSlugAttempts = 5;
+
+    private readonly ITopicRepository topicRepository;
+    private readonly IMediaAssetRepository mediaAssetRepository;
+    private readonly IDraftRepository draftRepository;
+    private readonly IContentSanitizer contentSanitizer;
+    private readonly MediaUrlRules mediaUrlRules;
+    private readonly TimeProvider timeProvider;
+    private readonly IPostingRateLimiter postingRateLimiter;
+
+    public TopicService(
+        ITopicRepository topicRepository,
+        IMediaAssetRepository mediaAssetRepository,
+        IDraftRepository draftRepository,
+        IContentSanitizer contentSanitizer,
+        MediaUrlRules mediaUrlRules,
+        TimeProvider timeProvider,
+        IPostingRateLimiter postingRateLimiter)
+    {
+        this.topicRepository = topicRepository;
+        this.mediaAssetRepository = mediaAssetRepository;
+        this.draftRepository = draftRepository;
+        this.contentSanitizer = contentSanitizer;
+        this.mediaUrlRules = mediaUrlRules;
+        this.timeProvider = timeProvider;
+        this.postingRateLimiter = postingRateLimiter;
+    }
 
     public async Task<PagedResultDto<TopicSummaryDto>> GetPublicPageAsync(
         TopicQuery query,

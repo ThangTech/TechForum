@@ -9,8 +9,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [AllowAnonymous]
 [Route("api/auth")]
-public sealed class PasswordRecoveryController(IPasswordRecoveryService recoveryService) : ControllerBase
+public sealed class PasswordRecoveryController : ControllerBase
 {
+    private readonly IPasswordRecoveryService recoveryService;
+
+    public PasswordRecoveryController(IPasswordRecoveryService recoveryService)
+    {
+        this.recoveryService = recoveryService;
+    }
+
     [HttpPost("forgot-password")]
     [EnableRateLimiting("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken)

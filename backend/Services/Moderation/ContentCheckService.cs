@@ -4,8 +4,15 @@ namespace TechForum.Api.Services;
 
 // It uses the same filter that cleans a post or an answer when it is saved, so what the member is warned about is
 // exactly what will be changed.
-public sealed class ContentCheckService(IProfanityFilter profanityFilter) : IContentCheckService
+public sealed class ContentCheckService : IContentCheckService
 {
+    private readonly IProfanityFilter profanityFilter;
+
+    public ContentCheckService(IProfanityFilter profanityFilter)
+    {
+        this.profanityFilter = profanityFilter;
+    }
+
     public async Task<ContentCheckResultDto> CheckAsync(CheckContentRequest request, CancellationToken cancellationToken)
     {
         var title = await CleanIfChangedAsync(request.Title, false, cancellationToken);

@@ -7,15 +7,34 @@ using TechForum.Api.Dtos.Auth;
 
 namespace TechForum.Api.Services;
 
-public sealed class PasswordRecoveryService(
-    IPasswordRecoveryRepository repository,
-    IRefreshTokenRepository refreshTokenRepository,
-    IRecoveryEmailSender emailSender,
-    IOptions<RecoveryEmailOptions> options,
-    IHostEnvironment environment,
-    TimeProvider timeProvider,
-    ILogger<PasswordRecoveryService> logger) : IPasswordRecoveryService
+public sealed class PasswordRecoveryService : IPasswordRecoveryService
 {
+    private readonly IPasswordRecoveryRepository repository;
+    private readonly IRefreshTokenRepository refreshTokenRepository;
+    private readonly IRecoveryEmailSender emailSender;
+    private readonly IOptions<RecoveryEmailOptions> options;
+    private readonly IHostEnvironment environment;
+    private readonly TimeProvider timeProvider;
+    private readonly ILogger<PasswordRecoveryService> logger;
+
+    public PasswordRecoveryService(
+        IPasswordRecoveryRepository repository,
+        IRefreshTokenRepository refreshTokenRepository,
+        IRecoveryEmailSender emailSender,
+        IOptions<RecoveryEmailOptions> options,
+        IHostEnvironment environment,
+        TimeProvider timeProvider,
+        ILogger<PasswordRecoveryService> logger)
+    {
+        this.repository = repository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.emailSender = emailSender;
+        this.options = options;
+        this.environment = environment;
+        this.timeProvider = timeProvider;
+        this.logger = logger;
+    }
+
     public async Task<bool> RequestAsync(string email, CancellationToken cancellationToken)
     {
         // URL lấy từ cấu hình tin cậy, không ghép từ Host header của request.

@@ -3,10 +3,17 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-public sealed class UserSkillService(
-    IUserSkillRepository repository,
-    TimeProvider timeProvider) : IUserSkillService
+public sealed class UserSkillService : IUserSkillService
 {
+    private readonly IUserSkillRepository repository;
+    private readonly TimeProvider timeProvider;
+
+    public UserSkillService(IUserSkillRepository repository, TimeProvider timeProvider)
+    {
+        this.repository = repository;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<IReadOnlyList<SkillTagDto>> GetAsync(string userId, CancellationToken cancellationToken) =>
         Map(await repository.GetChosenAsync(userId, cancellationToken));
 

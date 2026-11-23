@@ -3,10 +3,17 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-public sealed class QuestionHighlightService(
-    IQuestionHighlightRepository repository,
-    TimeProvider timeProvider) : IQuestionHighlightService
+public sealed class QuestionHighlightService : IQuestionHighlightService
 {
+    private readonly IQuestionHighlightRepository repository;
+    private readonly TimeProvider timeProvider;
+
+    public QuestionHighlightService(IQuestionHighlightRepository repository, TimeProvider timeProvider)
+    {
+        this.repository = repository;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<QuestionHighlightsDto> GetAsync(
         int periodDays,
         int limit,

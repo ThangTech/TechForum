@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin/banners")]
-public sealed class AdminBannersController(IBannerService bannerService) : ControllerBase
+public sealed class AdminBannersController : ControllerBase
 {
+    private readonly IBannerService bannerService;
+
+    public AdminBannersController(IBannerService bannerService)
+    {
+        this.bannerService = bannerService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminBannerDto>>> GetAll(CancellationToken cancellationToken) =>
         Ok(await bannerService.GetAdminAsync(cancellationToken));

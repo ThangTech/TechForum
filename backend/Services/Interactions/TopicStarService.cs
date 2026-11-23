@@ -3,11 +3,22 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-public sealed class TopicStarService(
-    ITopicRepository topicRepository,
-    ITopicStarRepository topicStarRepository,
-    TimeProvider timeProvider) : ITopicStarService
+public sealed class TopicStarService : ITopicStarService
 {
+    private readonly ITopicRepository topicRepository;
+    private readonly ITopicStarRepository topicStarRepository;
+    private readonly TimeProvider timeProvider;
+
+    public TopicStarService(
+        ITopicRepository topicRepository,
+        ITopicStarRepository topicStarRepository,
+        TimeProvider timeProvider)
+    {
+        this.topicRepository = topicRepository;
+        this.topicStarRepository = topicStarRepository;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<TopicStarDto?> GetAsync(
         Guid topicId,
         string? userId,

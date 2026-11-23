@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/drafts")]
-public sealed class DraftsController(IDraftService draftService) : ControllerBase
+public sealed class DraftsController : ControllerBase
 {
+    private readonly IDraftService draftService;
+
+    public DraftsController(IDraftService draftService)
+    {
+        this.draftService = draftService;
+    }
+
     // The draft for a new topic (no topicId) or for the topic that is being edited. 204 when there is none.
     [HttpGet]
     public async Task<ActionResult<DraftDto>> Get([FromQuery] Guid? topicId, CancellationToken cancellationToken)

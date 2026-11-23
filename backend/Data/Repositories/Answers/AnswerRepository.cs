@@ -6,8 +6,17 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class AnswerRepository(TechForumDbContext dbContext, TimeProvider timeProvider) : IAnswerRepository
+public sealed class AnswerRepository : IAnswerRepository
 {
+    private readonly TechForumDbContext dbContext;
+    private readonly TimeProvider timeProvider;
+
+    public AnswerRepository(TechForumDbContext dbContext, TimeProvider timeProvider)
+    {
+        this.dbContext = dbContext;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<AnswerPage?> GetPublicPageAsync(
         Guid topicId,
         int page,

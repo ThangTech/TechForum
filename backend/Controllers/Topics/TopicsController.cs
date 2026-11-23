@@ -11,8 +11,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [ProfanityFilter]
 [Route("api/topics")]
-public sealed class TopicsController(ITopicService topicService) : ControllerBase
+public sealed class TopicsController : ControllerBase
 {
+    private readonly ITopicService topicService;
+
+    public TopicsController(ITopicService topicService)
+    {
+        this.topicService = topicService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<TopicSummaryDto>>> GetAll(
         [FromQuery] TopicQuery query,
@@ -204,7 +211,6 @@ public sealed class TopicsController(ITopicService topicService) : ControllerBas
             _ => NotFound(CreateNotFoundProblem())
         };
     }
-
 
     private static ProblemDetails CreateNotFoundProblem() => new()
     {

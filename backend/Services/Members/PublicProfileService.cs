@@ -5,9 +5,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class PublicProfileService(IPublicProfileRepository profileRepository)
-    : IPublicProfileService
+public sealed class PublicProfileService : IPublicProfileService
 {
+    private readonly IPublicProfileRepository profileRepository;
+
+    public PublicProfileService(IPublicProfileRepository profileRepository)
+    {
+        this.profileRepository = profileRepository;
+    }
+
     public async Task<PublicProfileDto?> GetByUserIdAsync(
         string userId,
         string? viewerId,

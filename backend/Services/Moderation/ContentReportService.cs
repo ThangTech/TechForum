@@ -7,15 +7,30 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class ContentReportService(
-    IContentReportRepository reportRepository,
-    ITopicRepository topicRepository,
-    IContentSanitizer contentSanitizer,
-    TimeProvider timeProvider,
-    IOptions<ReportLimitOptions> reportLimits) : IContentReportService
+public sealed class ContentReportService : IContentReportService
 {
     private static readonly HashSet<string> Reasons = new(StringComparer.OrdinalIgnoreCase)
     { "spam", "harassment", "misinformation", "copyright", "other" };
+
+    private readonly IContentReportRepository reportRepository;
+    private readonly ITopicRepository topicRepository;
+    private readonly IContentSanitizer contentSanitizer;
+    private readonly TimeProvider timeProvider;
+    private readonly IOptions<ReportLimitOptions> reportLimits;
+
+    public ContentReportService(
+        IContentReportRepository reportRepository,
+        ITopicRepository topicRepository,
+        IContentSanitizer contentSanitizer,
+        TimeProvider timeProvider,
+        IOptions<ReportLimitOptions> reportLimits)
+    {
+        this.reportRepository = reportRepository;
+        this.topicRepository = topicRepository;
+        this.contentSanitizer = contentSanitizer;
+        this.timeProvider = timeProvider;
+        this.reportLimits = reportLimits;
+    }
 
     public async Task<CreateReportResult> CreateAsync(
         string reporterId,

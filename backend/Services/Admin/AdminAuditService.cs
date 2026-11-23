@@ -3,10 +3,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class AdminAuditService(
-    IAdminAuditRepository auditRepository,
-    TimeProvider timeProvider) : IAdminAuditService
+public sealed class AdminAuditService : IAdminAuditService
 {
+    private readonly IAdminAuditRepository auditRepository;
+    private readonly TimeProvider timeProvider;
+
+    public AdminAuditService(IAdminAuditRepository auditRepository, TimeProvider timeProvider)
+    {
+        this.auditRepository = auditRepository;
+        this.timeProvider = timeProvider;
+    }
+
     public Task RecordAsync(
         string administratorId,
         string action,

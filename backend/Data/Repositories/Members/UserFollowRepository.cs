@@ -5,8 +5,15 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class UserFollowRepository(TechForumDbContext dbContext) : IUserFollowRepository
+public sealed class UserFollowRepository : IUserFollowRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public UserFollowRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public Task<bool> UserExistsAsync(string userId, CancellationToken cancellationToken) =>
         dbContext.Users.AsNoTracking().AnyAsync(user => user.Id == userId, cancellationToken);
 

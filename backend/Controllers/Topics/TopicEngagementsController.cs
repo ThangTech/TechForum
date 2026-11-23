@@ -8,9 +8,16 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/topics/{topicId:guid}")]
-public sealed class TopicEngagementsController(ITopicEngagementService engagementService) : ControllerBase
+public sealed class TopicEngagementsController : ControllerBase
 {
     private const string VisitorCookie = "TechForum.Visitor";
+
+    private readonly ITopicEngagementService engagementService;
+
+    public TopicEngagementsController(ITopicEngagementService engagementService)
+    {
+        this.engagementService = engagementService;
+    }
 
     [HttpPost("view")]
     public async Task<ActionResult<TopicEngagementDto>> RecordView(Guid topicId, CancellationToken cancellationToken)

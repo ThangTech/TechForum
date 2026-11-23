@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin/topics")]
-public sealed class AdminTopicsController(IAdminTopicService topicService) : ControllerBase
+public sealed class AdminTopicsController : ControllerBase
 {
+    private readonly IAdminTopicService topicService;
+
+    public AdminTopicsController(IAdminTopicService topicService)
+    {
+        this.topicService = topicService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<AdminTopicDto>>> GetPage(
         [FromQuery] AdminTopicQuery query,

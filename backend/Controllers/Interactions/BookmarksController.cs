@@ -9,8 +9,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/bookmarks")]
-public sealed class BookmarksController(ITopicBookmarkService bookmarkService) : ControllerBase
+public sealed class BookmarksController : ControllerBase
 {
+    private readonly ITopicBookmarkService bookmarkService;
+
+    public BookmarksController(ITopicBookmarkService bookmarkService)
+    {
+        this.bookmarkService = bookmarkService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<SavedTopicDto>>> GetMine(
         [FromQuery] BookmarkQuery query,

@@ -5,8 +5,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class ContentReportRepository(TechForumDbContext dbContext) : IContentReportRepository
+public sealed class ContentReportRepository : IContentReportRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public ContentReportRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     private IQueryable<ContentReport> DetailedQuery() =>
         dbContext.ContentReports
             .Include(item => item.Topic).ThenInclude(topic => topic!.Author)

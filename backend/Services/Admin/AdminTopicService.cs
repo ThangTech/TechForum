@@ -5,13 +5,24 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class AdminTopicService(
-    IAdminTopicRepository topicRepository,
-    IContentSanitizer contentSanitizer,
-    TimeProvider timeProvider) : IAdminTopicService
+public sealed class AdminTopicService : IAdminTopicService
 {
     private static readonly HashSet<string> Actions = new(StringComparer.OrdinalIgnoreCase)
     { "hide", "restore", "lock", "unlock", "pin", "unpin", "move" };
+
+    private readonly IAdminTopicRepository topicRepository;
+    private readonly IContentSanitizer contentSanitizer;
+    private readonly TimeProvider timeProvider;
+
+    public AdminTopicService(
+        IAdminTopicRepository topicRepository,
+        IContentSanitizer contentSanitizer,
+        TimeProvider timeProvider)
+    {
+        this.topicRepository = topicRepository;
+        this.contentSanitizer = contentSanitizer;
+        this.timeProvider = timeProvider;
+    }
 
     public async Task<AdminTopicDetailDto?> GetByIdAsync(Guid topicId, CancellationToken cancellationToken)
     {

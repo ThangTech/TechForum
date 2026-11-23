@@ -9,8 +9,15 @@ namespace TechForum.Api.Controllers;
 // The upvotes and downvotes of a post. The sum is its score; the author earns reputation (see ReputationRules).
 [ApiController]
 [Route("api/topics/{topicId:guid}/vote")]
-public sealed class TopicVotesController(IVoteService voteService) : ControllerBase
+public sealed class TopicVotesController : ControllerBase
 {
+    private readonly IVoteService voteService;
+
+    public TopicVotesController(IVoteService voteService)
+    {
+        this.voteService = voteService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<VoteDto>> Get(Guid topicId, CancellationToken cancellationToken)
     {

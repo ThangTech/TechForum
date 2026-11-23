@@ -5,8 +5,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class TopicEngagementRepository(TechForumDbContext dbContext) : ITopicEngagementRepository
+public sealed class TopicEngagementRepository : ITopicEngagementRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public TopicEngagementRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<TopicEngagementDto?> RecordViewAsync(
         Guid topicId,
         string visitorKeyHash,

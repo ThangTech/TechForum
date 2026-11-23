@@ -4,10 +4,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class AdminAccountService(
-    IAdminAccountRepository accountRepository,
-    TimeProvider timeProvider) : IAdminAccountService
+public sealed class AdminAccountService : IAdminAccountService
 {
+    private readonly IAdminAccountRepository accountRepository;
+    private readonly TimeProvider timeProvider;
+
+    public AdminAccountService(IAdminAccountRepository accountRepository, TimeProvider timeProvider)
+    {
+        this.accountRepository = accountRepository;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<PagedResultDto<AdminAccountDto>> GetPageAsync(
         string? keyword,
         string? status,

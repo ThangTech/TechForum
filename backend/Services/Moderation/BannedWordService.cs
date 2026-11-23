@@ -4,12 +4,25 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class BannedWordService(
-    IBannedWordRepository repository,
-    IProfanityFilter profanityFilter,
-    IAdminAuditService auditService,
-    TimeProvider timeProvider) : IBannedWordService
+public sealed class BannedWordService : IBannedWordService
 {
+    private readonly IBannedWordRepository repository;
+    private readonly IProfanityFilter profanityFilter;
+    private readonly IAdminAuditService auditService;
+    private readonly TimeProvider timeProvider;
+
+    public BannedWordService(
+        IBannedWordRepository repository,
+        IProfanityFilter profanityFilter,
+        IAdminAuditService auditService,
+        TimeProvider timeProvider)
+    {
+        this.repository = repository;
+        this.profanityFilter = profanityFilter;
+        this.auditService = auditService;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<IReadOnlyList<BannedWordDto>> GetAllAsync(CancellationToken cancellationToken) =>
         (await repository.GetAllAsync(cancellationToken)).Select(Map).ToList();
 

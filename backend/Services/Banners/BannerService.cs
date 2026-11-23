@@ -4,15 +4,28 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class BannerService(
-    IBannerRepository bannerRepository,
-    IBannerImageStorage imageStorage,
-    IAdminAuditService auditService,
-    TimeProvider timeProvider) : IBannerService
+public sealed class BannerService : IBannerService
 {
     private const int MaxTitleLength = 120;
     private const int MaxLinkLength = 500;
     private const int MaxDisplayOrder = 10_000;
+
+    private readonly IBannerRepository bannerRepository;
+    private readonly IBannerImageStorage imageStorage;
+    private readonly IAdminAuditService auditService;
+    private readonly TimeProvider timeProvider;
+
+    public BannerService(
+        IBannerRepository bannerRepository,
+        IBannerImageStorage imageStorage,
+        IAdminAuditService auditService,
+        TimeProvider timeProvider)
+    {
+        this.bannerRepository = bannerRepository;
+        this.imageStorage = imageStorage;
+        this.auditService = auditService;
+        this.timeProvider = timeProvider;
+    }
 
     public async Task<IReadOnlyList<BannerDto>> GetShownAsync(CancellationToken cancellationToken) =>
         (await bannerRepository.GetShownAsync(timeProvider.GetUtcNow(), cancellationToken))

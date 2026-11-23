@@ -3,8 +3,15 @@ using TechForum.Api.Dtos;
 
 namespace TechForum.Api.Services;
 
-public sealed class ActivityService(IActivityRepository activityRepository) : IActivityService
+public sealed class ActivityService : IActivityService
 {
+    private readonly IActivityRepository activityRepository;
+
+    public ActivityService(IActivityRepository activityRepository)
+    {
+        this.activityRepository = activityRepository;
+    }
+
     public async Task<PagedResultDto<ActivityItemDto>> GetMineAsync(
         string userId,
         int page,

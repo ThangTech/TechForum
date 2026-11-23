@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class CategoryRepository(TechForumDbContext dbContext) : ICategoryRepository
+public sealed class CategoryRepository : ICategoryRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public CategoryRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<IReadOnlyList<Category>> GetAllAsync(CancellationToken cancellationToken)
     {
         return await dbContext.Categories

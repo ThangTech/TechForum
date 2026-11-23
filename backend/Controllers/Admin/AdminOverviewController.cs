@@ -9,8 +9,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin")]
-public sealed class AdminOverviewController(IAdminOverviewService overviewService) : ControllerBase
+public sealed class AdminOverviewController : ControllerBase
 {
+    private readonly IAdminOverviewService overviewService;
+
+    public AdminOverviewController(IAdminOverviewService overviewService)
+    {
+        this.overviewService = overviewService;
+    }
+
     [HttpGet("statistics")]
     public async Task<ActionResult<AdminStatisticsDto>> GetStatistics(CancellationToken cancellationToken) =>
         Ok(await overviewService.GetStatisticsAsync(cancellationToken));

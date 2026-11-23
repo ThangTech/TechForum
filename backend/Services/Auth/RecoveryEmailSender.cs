@@ -6,11 +6,16 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Services;
 
-public sealed class RecoveryEmailSender(
-    IOptions<RecoveryEmailOptions> options,
-    IHostEnvironment environment) : IRecoveryEmailSender
+public sealed class RecoveryEmailSender : IRecoveryEmailSender
 {
-    private readonly RecoveryEmailOptions settings = options.Value;
+    private readonly IHostEnvironment environment;
+    private readonly RecoveryEmailOptions settings;
+
+    public RecoveryEmailSender(IOptions<RecoveryEmailOptions> options, IHostEnvironment environment)
+    {
+        this.environment = environment;
+        settings = options.Value;
+    }
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(settings.Host) &&
         settings.Port is > 0 and <= 65535 &&

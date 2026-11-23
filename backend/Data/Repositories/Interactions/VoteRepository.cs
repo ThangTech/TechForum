@@ -7,8 +7,15 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class VoteRepository(TechForumDbContext dbContext) : IVoteRepository
+public sealed class VoteRepository : IVoteRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public VoteRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     // Two requests of the same member can arrive at the same moment. In a serializable transaction the second one
     // waits or is chosen as the victim of a deadlock (1205) or meets the primary key (2601, 2627); it then reads the
     // vote again and finds what the first one wrote, so a few tries are enough.

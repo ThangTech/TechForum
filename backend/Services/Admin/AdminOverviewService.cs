@@ -5,11 +5,18 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class AdminOverviewService(
-    IAdminOverviewRepository repository,
-    TimeProvider timeProvider) : IAdminOverviewService
+public sealed class AdminOverviewService : IAdminOverviewService
 {
     private static readonly TimeSpan VietnamOffset = TimeSpan.FromHours(7);
+
+    private readonly IAdminOverviewRepository repository;
+    private readonly TimeProvider timeProvider;
+
+    public AdminOverviewService(IAdminOverviewRepository repository, TimeProvider timeProvider)
+    {
+        this.repository = repository;
+        this.timeProvider = timeProvider;
+    }
 
     public async Task<AdminStatisticsDto> GetStatisticsAsync(CancellationToken cancellationToken)
     {

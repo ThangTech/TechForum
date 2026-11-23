@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class DraftRepository(TechForumDbContext dbContext) : IDraftRepository
+public sealed class DraftRepository : IDraftRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public DraftRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public Task<Draft?> GetForTargetAsync(string userId, Guid? topicId, CancellationToken cancellationToken) =>
         dbContext.Drafts.SingleOrDefaultAsync(
             draft => draft.UserId == userId && draft.TopicId == topicId,

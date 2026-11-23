@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin/accounts")]
-public sealed class AdminAccountsController(IAdminAccountService accountService) : ControllerBase
+public sealed class AdminAccountsController : ControllerBase
 {
+    private readonly IAdminAccountService accountService;
+
+    public AdminAccountsController(IAdminAccountService accountService)
+    {
+        this.accountService = accountService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<AdminAccountDto>>> GetPage(
         [FromQuery] string? keyword = null,

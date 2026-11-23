@@ -8,14 +8,31 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed class AuthService(
-    IAccountRepository accountRepository,
-    IRefreshTokenRepository refreshTokenRepository,
-    ITokenService tokenService,
-    IOptions<JwtOptions> jwtOptions,
-    ILogger<AuthService> logger,
-    TimeProvider timeProvider) : IAuthService
+public sealed class AuthService : IAuthService
 {
+    private readonly IAccountRepository accountRepository;
+    private readonly IRefreshTokenRepository refreshTokenRepository;
+    private readonly ITokenService tokenService;
+    private readonly IOptions<JwtOptions> jwtOptions;
+    private readonly ILogger<AuthService> logger;
+    private readonly TimeProvider timeProvider;
+
+    public AuthService(
+        IAccountRepository accountRepository,
+        IRefreshTokenRepository refreshTokenRepository,
+        ITokenService tokenService,
+        IOptions<JwtOptions> jwtOptions,
+        ILogger<AuthService> logger,
+        TimeProvider timeProvider)
+    {
+        this.accountRepository = accountRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.tokenService = tokenService;
+        this.jwtOptions = jwtOptions;
+        this.logger = logger;
+        this.timeProvider = timeProvider;
+    }
+
     public async Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim();

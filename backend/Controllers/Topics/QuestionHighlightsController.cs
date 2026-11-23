@@ -6,8 +6,15 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/question-highlights")]
-public sealed class QuestionHighlightsController(IQuestionHighlightService service) : ControllerBase
+public sealed class QuestionHighlightsController : ControllerBase
 {
+    private readonly IQuestionHighlightService service;
+
+    public QuestionHighlightsController(IQuestionHighlightService service)
+    {
+        this.service = service;
+    }
+
     [HttpGet]
     public async Task<ActionResult<QuestionHighlightsDto>> Get(
         [FromQuery] int periodDays = 30,

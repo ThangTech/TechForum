@@ -5,10 +5,17 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class AdminAccountRepository(
-    TechForumDbContext dbContext,
-    UserManager<ApplicationUser> userManager) : IAdminAccountRepository
+public sealed class AdminAccountRepository : IAdminAccountRepository
 {
+    private readonly TechForumDbContext dbContext;
+    private readonly UserManager<ApplicationUser> userManager;
+
+    public AdminAccountRepository(TechForumDbContext dbContext, UserManager<ApplicationUser> userManager)
+    {
+        this.dbContext = dbContext;
+        this.userManager = userManager;
+    }
+
     public async Task<AdminAccountPage> GetPageAsync(
         string? keyword,
         bool? isLocked,

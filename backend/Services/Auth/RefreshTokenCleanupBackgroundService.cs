@@ -1,11 +1,22 @@
 namespace TechForum.Api.Services;
 
 // Runs once at start-up and then every day, so the RefreshTokens table does not grow forever.
-public sealed class RefreshTokenCleanupBackgroundService(
-    IServiceScopeFactory scopeFactory,
-    IConfiguration configuration,
-    ILogger<RefreshTokenCleanupBackgroundService> logger) : BackgroundService
+public sealed class RefreshTokenCleanupBackgroundService : BackgroundService
 {
+    private readonly IServiceScopeFactory scopeFactory;
+    private readonly IConfiguration configuration;
+    private readonly ILogger<RefreshTokenCleanupBackgroundService> logger;
+
+    public RefreshTokenCleanupBackgroundService(
+        IServiceScopeFactory scopeFactory,
+        IConfiguration configuration,
+        ILogger<RefreshTokenCleanupBackgroundService> logger)
+    {
+        this.scopeFactory = scopeFactory;
+        this.configuration = configuration;
+        this.logger = logger;
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var intervalHours = Math.Max(

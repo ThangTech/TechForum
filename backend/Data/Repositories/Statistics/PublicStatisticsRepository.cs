@@ -3,8 +3,15 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class PublicStatisticsRepository(TechForumDbContext dbContext) : IPublicStatisticsRepository
+public sealed class PublicStatisticsRepository : IPublicStatisticsRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public PublicStatisticsRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<PublicStatisticsData> GetAsync(CancellationToken cancellationToken)
     {
         // Chỉ đếm nội dung công khai, cùng điều kiện với thống kê quản trị.

@@ -8,8 +8,15 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/topics/{topicId:guid}/star")]
-public sealed class TopicStarsController(ITopicStarService topicStarService) : ControllerBase
+public sealed class TopicStarsController : ControllerBase
 {
+    private readonly ITopicStarService topicStarService;
+
+    public TopicStarsController(ITopicStarService topicStarService)
+    {
+        this.topicStarService = topicStarService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<TopicStarDto>> Get(
         Guid topicId,
@@ -41,7 +48,6 @@ public sealed class TopicStarsController(ITopicStarService topicStarService) : C
         var status = await topicStarService.RemoveAsync(topicId, User.GetRequiredUserId(), cancellationToken);
         return status is null ? NotFoundProblem() : Ok(status);
     }
-
 
     private NotFoundObjectResult NotFoundProblem() => NotFound(new ProblemDetails
     {

@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/reports")]
-public sealed class ReportsController(IContentReportService reportService) : ControllerBase
+public sealed class ReportsController : ControllerBase
 {
+    private readonly IContentReportService reportService;
+
+    public ReportsController(IContentReportService reportService)
+    {
+        this.reportService = reportService;
+    }
+
     [HttpPost]
     public async Task<ActionResult<ReportReceiptDto>> Create(
         [FromBody] CreateReportRequest request,

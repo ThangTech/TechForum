@@ -8,8 +8,15 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/topics/{topicId:guid}/bookmark")]
-public sealed class TopicBookmarksController(ITopicBookmarkService bookmarkService) : ControllerBase
+public sealed class TopicBookmarksController : ControllerBase
 {
+    private readonly ITopicBookmarkService bookmarkService;
+
+    public TopicBookmarksController(ITopicBookmarkService bookmarkService)
+    {
+        this.bookmarkService = bookmarkService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<BookmarkStatusDto>> Get(Guid topicId, CancellationToken cancellationToken)
     {

@@ -10,8 +10,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize(Roles = RoleNames.Administrator)]
 [Route("api/admin/tags")]
-public sealed class AdminTagsController(ITagService tagService) : ControllerBase
+public sealed class AdminTagsController : ControllerBase
 {
+    private readonly ITagService tagService;
+
+    public AdminTagsController(ITagService tagService)
+    {
+        this.tagService = tagService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminTagDto>>> GetAll(CancellationToken cancellationToken) =>
         Ok(await tagService.GetAdminAsync(cancellationToken));
@@ -35,7 +42,6 @@ public sealed class AdminTagsController(ITagService tagService) : ControllerBase
         [FromBody] SetActiveRequest request,
         CancellationToken cancellationToken) =>
         ToActionResult(await tagService.SetActiveAsync(User.GetRequiredUserId(), id, request.IsActive, cancellationToken));
-
 
     private ActionResult<AdminTagDto> ToActionResult(TagWriteResult result, bool created = false) =>
         result.Failure switch

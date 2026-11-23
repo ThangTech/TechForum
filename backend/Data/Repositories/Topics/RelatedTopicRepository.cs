@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class RelatedTopicRepository(TechForumDbContext dbContext) : IRelatedTopicRepository
+public sealed class RelatedTopicRepository : IRelatedTopicRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public RelatedTopicRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<IReadOnlyList<RelatedTopicData>?> GetPublicRelatedAsync(
         Guid topicId,
         int limit,

@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class PublicProfileRepository(TechForumDbContext dbContext) : IPublicProfileRepository
+public sealed class PublicProfileRepository : IPublicProfileRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public PublicProfileRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<PublicProfileData?> GetByUserIdAsync(
         string userId,
         string? viewerId,

@@ -7,14 +7,31 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-public sealed partial class AnswerService(
-    IAnswerRepository answerRepository,
-    ITopicRepository topicRepository,
-    INotificationService notificationService,
-    IContentSanitizer contentSanitizer,
-    TimeProvider timeProvider,
-    IPostingRateLimiter postingRateLimiter) : IAnswerService
+public sealed partial class AnswerService : IAnswerService
 {
+    private readonly IAnswerRepository answerRepository;
+    private readonly ITopicRepository topicRepository;
+    private readonly INotificationService notificationService;
+    private readonly IContentSanitizer contentSanitizer;
+    private readonly TimeProvider timeProvider;
+    private readonly IPostingRateLimiter postingRateLimiter;
+
+    public AnswerService(
+        IAnswerRepository answerRepository,
+        ITopicRepository topicRepository,
+        INotificationService notificationService,
+        IContentSanitizer contentSanitizer,
+        TimeProvider timeProvider,
+        IPostingRateLimiter postingRateLimiter)
+    {
+        this.answerRepository = answerRepository;
+        this.topicRepository = topicRepository;
+        this.notificationService = notificationService;
+        this.contentSanitizer = contentSanitizer;
+        this.timeProvider = timeProvider;
+        this.postingRateLimiter = postingRateLimiter;
+    }
+
     public async Task<PagedResultDto<AnswerDto>?> GetPublicPageAsync(
         Guid topicId,
         AnswerQuery query,

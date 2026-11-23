@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class TopicStarRepository(TechForumDbContext dbContext) : ITopicStarRepository
+public sealed class TopicStarRepository : ITopicStarRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public TopicStarRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken) =>
         dbContext.TopicStars.CountAsync(star => star.TopicId == topicId, cancellationToken);
 

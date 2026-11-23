@@ -7,8 +7,15 @@ namespace TechForum.Api.Controllers;
 // The banners the home page shows right now. Everybody can read them.
 [ApiController]
 [Route("api/banners")]
-public sealed class BannersController(IBannerService bannerService) : ControllerBase
+public sealed class BannersController : ControllerBase
 {
+    private readonly IBannerService bannerService;
+
+    public BannersController(IBannerService bannerService)
+    {
+        this.bannerService = bannerService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<BannerDto>>> GetShown(CancellationToken cancellationToken) =>
         Ok(await bannerService.GetShownAsync(cancellationToken));

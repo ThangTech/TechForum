@@ -8,11 +8,22 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/profiles")]
-public sealed class ProfilesController(
-    IPublicProfileService profileService,
-    IUserFollowService followService,
-    IUserSkillService skillService) : ControllerBase
+public sealed class ProfilesController : ControllerBase
 {
+    private readonly IPublicProfileService profileService;
+    private readonly IUserFollowService followService;
+    private readonly IUserSkillService skillService;
+
+    public ProfilesController(
+        IPublicProfileService profileService,
+        IUserFollowService followService,
+        IUserSkillService skillService)
+    {
+        this.profileService = profileService;
+        this.followService = followService;
+        this.skillService = skillService;
+    }
+
     // The skills that the signed-in member chose for their own profile.
     [Authorize]
     [HttpGet("me/skills")]
@@ -102,7 +113,6 @@ public sealed class ProfilesController(
         string userId,
         CancellationToken cancellationToken) =>
         Ok(await followService.UnfollowAsync(User.GetRequiredUserId(), userId, cancellationToken));
-
 
     private async Task<ActionResult<PagedResultDto<FollowMemberDto>>> GetConnections(
         string userId,

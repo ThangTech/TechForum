@@ -6,8 +6,15 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/tags")]
-public sealed class TagsController(ITagService tagService) : ControllerBase
+public sealed class TagsController : ControllerBase
 {
+    private readonly ITagService tagService;
+
+    public TagsController(ITagService tagService)
+    {
+        this.tagService = tagService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<TagDto>>> GetAll(CancellationToken cancellationToken)
     {

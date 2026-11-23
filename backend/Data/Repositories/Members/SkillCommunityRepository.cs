@@ -3,8 +3,15 @@ using TechForum.Api.Enums;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class SkillCommunityRepository(TechForumDbContext dbContext) : ISkillCommunityRepository
+public sealed class SkillCommunityRepository : ISkillCommunityRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public SkillCommunityRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<SkillCommunityData?> GetAsync(
         Guid tagId,
         int page,

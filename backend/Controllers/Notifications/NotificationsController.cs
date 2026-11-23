@@ -9,8 +9,15 @@ namespace TechForum.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/notifications")]
-public sealed class NotificationsController(INotificationService notificationService) : ControllerBase
+public sealed class NotificationsController : ControllerBase
 {
+    private readonly INotificationService notificationService;
+
+    public NotificationsController(INotificationService notificationService)
+    {
+        this.notificationService = notificationService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<NotificationPageDto>> GetAll(
         [FromQuery] int page = 1,

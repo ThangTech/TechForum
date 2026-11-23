@@ -5,8 +5,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class AdminTopicRepository(TechForumDbContext dbContext) : IAdminTopicRepository
+public sealed class AdminTopicRepository : IAdminTopicRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public AdminTopicRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<AdminTopicPage> GetPageAsync(
         AdminTopicQuery query,
         TopicType? type,

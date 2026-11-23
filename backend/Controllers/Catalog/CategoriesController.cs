@@ -6,8 +6,15 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/categories")]
-public sealed class CategoriesController(ICategoryService categoryService) : ControllerBase
+public sealed class CategoriesController : ControllerBase
 {
+    private readonly ICategoryService categoryService;
+
+    public CategoriesController(ICategoryService categoryService)
+    {
+        this.categoryService = categoryService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CategoryDto>>> GetAll(CancellationToken cancellationToken)
     {

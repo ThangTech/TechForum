@@ -9,10 +9,17 @@ namespace TechForum.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(
-    IAuthService authService,
-    IAvatarService avatarService) : ControllerBase
+public sealed class AuthController : ControllerBase
 {
+    private readonly IAuthService authService;
+    private readonly IAvatarService avatarService;
+
+    public AuthController(IAuthService authService, IAvatarService avatarService)
+    {
+        this.authService = authService;
+        this.avatarService = avatarService;
+    }
+
     // The refresh token lives in an HttpOnly cookie, so JavaScript cannot read it.
     // The cookie is only sent to /api/auth, where refresh and logout are handled.
     private const string RefreshTokenCookieName = "TechForum.Refresh";
@@ -169,7 +176,6 @@ public sealed class AuthController(
         DeleteRefreshTokenCookie();
         return NoContent();
     }
-
 
     // Sets the refresh token cookie and returns the part of the result the browser may keep in memory.
     private AuthResponseDto CreateAuthResponse(AuthResult result)

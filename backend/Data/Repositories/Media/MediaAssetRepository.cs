@@ -3,8 +3,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class MediaAssetRepository(TechForumDbContext dbContext) : IMediaAssetRepository
+public sealed class MediaAssetRepository : IMediaAssetRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public MediaAssetRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task AddAsync(MediaAsset mediaAsset, CancellationToken cancellationToken)
     {
         dbContext.MediaAssets.Add(mediaAsset);

@@ -3,8 +3,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class NotificationRepository(TechForumDbContext dbContext) : INotificationRepository
+public sealed class NotificationRepository : INotificationRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public NotificationRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<NotificationPage> GetPageAsync(
         string userId,
         int page,

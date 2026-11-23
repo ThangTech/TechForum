@@ -5,8 +5,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class TopicBookmarkRepository(TechForumDbContext dbContext) : ITopicBookmarkRepository
+public sealed class TopicBookmarkRepository : ITopicBookmarkRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public TopicBookmarkRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public Task<int> CountAsync(Guid topicId, CancellationToken cancellationToken) =>
         dbContext.TopicBookmarks.CountAsync(item => item.TopicId == topicId, cancellationToken);
 

@@ -7,8 +7,17 @@ using TechForum.Api.Services;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class TopicRepository(TechForumDbContext dbContext, TimeProvider timeProvider) : ITopicRepository
+public sealed class TopicRepository : ITopicRepository
 {
+    private readonly TechForumDbContext dbContext;
+    private readonly TimeProvider timeProvider;
+
+    public TopicRepository(TechForumDbContext dbContext, TimeProvider timeProvider)
+    {
+        this.dbContext = dbContext;
+        this.timeProvider = timeProvider;
+    }
+
     public Task<TopicPage> GetPublicPageAsync(
         TopicQuery query,
         CancellationToken cancellationToken) =>

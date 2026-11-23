@@ -4,8 +4,15 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data.Repositories;
 
-public sealed class AdminOverviewRepository(TechForumDbContext dbContext) : IAdminOverviewRepository
+public sealed class AdminOverviewRepository : IAdminOverviewRepository
 {
+    private readonly TechForumDbContext dbContext;
+
+    public AdminOverviewRepository(TechForumDbContext dbContext)
+    {
+        this.dbContext = dbContext;
+    }
+
     public async Task<AdminStatisticsData> GetStatisticsAsync(CancellationToken cancellationToken)
     {
         var accountCount = await dbContext.Users.CountAsync(cancellationToken);
