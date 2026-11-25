@@ -2,7 +2,10 @@ import { useState, type FormEvent } from 'react'
 import { useActionFeedback } from '../../../shared/hooks/useActionFeedback'
 import { getErrorMessage } from '../../../shared/query/errorMessage'
 import { isInitialLoading } from '../../../shared/query/status'
+import { normalizeForSearch } from '../../../shared/utils/searchText'
 import type { BannedWord } from '../types/adminBannedWords'
+
+const PAGE_SIZE = 50
 import { useAddBannedWord, useAdminBannedWords, useRemoveBannedWord } from './bannedWordQueries'
 
 // Everything the admin page of banned words does: the list with its search box, adding a word, and removing one
@@ -15,9 +18,19 @@ export const useAdminBannedWordsPage = () => {
   const [newWord, setNewWord] = useState('')
   const [keyword, setKeyword] = useState('')
   const [wordToRemove, setWordToRemove] = useState<BannedWord | null>(null)
+  const [page, setPage] = useState(1)
 
+  // Tìm không cần gõ dấu: "dit" vẫn ra "địt". Danh sách chỉ vài trăm từ nên lọc và chia trang ngay trên trình duyệt.
   const words = wordsQuery.data ?? []
-  const shown = words.filter((item) => item.word.includes(keyword.trim().toLocaleLowerCase('vi')))
+  const needle = normalizeForSearch(keyword)
+  const matched = needle ? words.filter((item) => normalizeForSearch(item.word).includes(needle)) : words
+  const totalPages = Math.max(1, Math.ceil(matched.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const shown = matched.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const search = (value: string) => {
+    setKeyword(value)
+    setPage(1)
+  }
 
   const add = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -53,7 +66,8 @@ export const useAdminBannedWordsPage = () => {
     words,
     shown,
     keyword,
-    setKeyword,
+    setKeyword: search,
+    paging: { page: currentPage, pageSize: PAGE_SIZE, totalItems: matched.length, totalPages, onChange: setPage },
     isLoading: isInitialLoading(wordsQuery),
     error: getErrorMessage(wordsQuery.error, 'Không thể tải danh sách từ cấm.'),
     retry: () => void wordsQuery.refetch(),

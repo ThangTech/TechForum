@@ -1,6 +1,15 @@
 import Button from '@mui/material/Button'
 import Pagination from '@mui/material/Pagination'
 
+// Nhãn cho trình đọc màn hình (mặc định của MUI là tiếng Anh: "Go to next page").
+const pageLabel = (type: string, page: number | null, selected: boolean) => {
+  if (type === 'previous') return 'Trang trước'
+  if (type === 'next') return 'Trang sau'
+  if (type === 'first') return 'Trang đầu'
+  if (type === 'last') return 'Trang cuối'
+  return selected ? `Trang ${page}, đang xem` : `Đến trang ${page}`
+}
+
 export const AdminPagination = ({
   page,
   pageSize,
@@ -29,7 +38,14 @@ export const AdminPagination = ({
         {page > lastPage ? (
           <Button onClick={() => onChange(lastPage)} variant="outlined">Về trang có dữ liệu</Button>
         ) : (
-          <Pagination color="primary" count={lastPage} onChange={(_, value) => onChange(value)} page={page} shape="rounded" />
+          <Pagination
+            color="primary"
+            count={lastPage}
+            getItemAriaLabel={pageLabel}
+            onChange={(_, value) => onChange(value)}
+            page={page}
+            shape="rounded"
+          />
         )}
       </div>
     </nav>

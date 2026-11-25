@@ -10,6 +10,7 @@ import { ConfirmDialog } from '../../../shared/feedback/ConfirmDialog'
 import { AdminEmptyState } from '../components/AdminEmptyState'
 import { AdminFeedback } from '../components/AdminFeedback'
 import { AdminPageHeading } from '../components/AdminPageHeading'
+import { AdminPagination } from '../components/AdminPagination'
 import { useAdminBannedWordsPage } from '../hooks/useAdminBannedWordsPage'
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(value))
@@ -31,7 +32,7 @@ export const AdminBannedWordsPage = () => {
         <form className="admin-toolbar" onSubmit={(event) => void adding.submit(event)}>
           <TextField
             disabled={adding.isBusy}
-            helperText="Có thể nhập cụm từ. Không phân biệt chữ hoa/thường nhưng phân biệt dấu: nếu muốn chặn cả dạng không dấu thì thêm riêng."
+            helperText="Có thể nhập cụm từ. Không phân biệt chữ hoa/thường nhưng phân biệt dấu, để không che nhầm từ thường (ví dụ dạng không dấu của một từ tục có thể là một từ bình thường). Muốn chặn cả dạng không dấu thì thêm riêng."
             label="Từ hoặc cụm từ cần cấm"
             onChange={(event) => adding.setWord(event.target.value)}
             size="small"
@@ -90,6 +91,7 @@ export const AdminBannedWordsPage = () => {
                   </Table>
                 </div>
               )}
+              {view.shown.length > 0 && <AdminPagination {...view.paging} />}
             </>
           )}
         </div>
