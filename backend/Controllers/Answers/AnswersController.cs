@@ -23,6 +23,7 @@ public sealed class AnswersController : ControllerBase
 
     [Authorize]
     [HttpPut("{answerId:guid}/vote")]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<VoteDto>> SetVote(Guid topicId, Guid answerId, [FromBody] SetVoteRequest request, CancellationToken cancellationToken)
     {
         var result = await voteService.SetAnswerVoteAsync(topicId, answerId, User.GetRequiredUserId(), request.Value, cancellationToken);
@@ -58,6 +59,7 @@ public sealed class AnswersController : ControllerBase
 
     [Authorize]
     [HttpPut("{answerId:guid}/helpful")]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<AnswerHelpfulDto>> AddHelpful(Guid topicId, Guid answerId, CancellationToken cancellationToken)
     {
         var result = await answerService.SetHelpfulAsync(topicId, answerId, User.GetRequiredUserId(), true, cancellationToken);
@@ -74,6 +76,7 @@ public sealed class AnswersController : ControllerBase
 
     [Authorize]
     [HttpPost]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<AnswerDto>> Create(Guid topicId, [FromBody] CreateAnswerRequest request, CancellationToken cancellationToken)
     {
         var result = await answerService.CreateAsync(topicId, User.GetRequiredUserId(), request, cancellationToken);
@@ -90,6 +93,7 @@ public sealed class AnswersController : ControllerBase
 
     [Authorize]
     [HttpPut("{answerId:guid}")]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<AnswerDto>> Update(Guid topicId, Guid answerId, [FromBody] CreateAnswerRequest request, CancellationToken cancellationToken)
     {
         var result = await answerService.UpdateAsync(topicId, answerId, User.GetRequiredUserId(), request, cancellationToken);

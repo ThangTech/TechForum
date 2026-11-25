@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Extensions;
+using TechForum.Api.Filters;
 using TechForum.Api.Services;
 using TechForum.Api.Constants;
 
@@ -20,6 +21,7 @@ public sealed class ReportsController : ControllerBase
     }
 
     [HttpPost]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<ReportReceiptDto>> Create([FromBody] CreateReportRequest request, CancellationToken cancellationToken)
     {
         var result = await reportService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken);

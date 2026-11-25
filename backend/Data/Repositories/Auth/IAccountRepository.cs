@@ -29,6 +29,11 @@ public interface IAccountRepository
 
     Task<IdentityResult> AddPasswordAsync(ApplicationUser user, string password);
 
+    Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user);
+
+    // Đánh dấu email đã xác minh khi token đúng và còn hạn.
+    Task<IdentityResult> ConfirmEmailAsync(ApplicationUser user, string token);
+
     Task<SignInResult> CheckPasswordAsync(ApplicationUser user, string password);
 
     Task<bool> IsLockedOutAsync(ApplicationUser user);

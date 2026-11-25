@@ -15,12 +15,12 @@ public static class PasswordRecoveryRegistration
         services.Configure<RecoveryEmailOptions>(configuration.GetSection(RecoveryEmailOptions.SectionName));
         services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromMinutes(30));
         services.AddScoped<IPasswordRecoveryRepository, PasswordRecoveryRepository>();
-        services.AddScoped<IRecoveryEmailSender, RecoveryEmailSender>();
+        services.AddScoped<IEmailSender, EmailSender>();
         services.AddScoped<IPasswordRecoveryService, PasswordRecoveryService>();
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            foreach (var (policyName, limit) in new[] { ("forgot-password", 5), ("reset-password", 20) })
+            foreach (var (policyName, limit) in new[] { ("forgot-password", 5), ("reset-password", 20), ("verify-email", 5) })
             {
                 options.AddPolicy(policyName, context => RateLimitPartition.GetFixedWindowLimiter(
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",

@@ -88,6 +88,16 @@ public sealed class AccountRepository : IAccountRepository
         return await userManager.AddPasswordAsync(user, password);
     }
 
+    public async Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user)
+    {
+        return await userManager.GenerateEmailConfirmationTokenAsync(user);
+    }
+
+    public async Task<IdentityResult> ConfirmEmailAsync(ApplicationUser user, string token)
+    {
+        return await userManager.ConfirmEmailAsync(user, token);
+    }
+
     public async Task<IdentityResult> CreateMemberAsync(
         ApplicationUser user,
         string password)

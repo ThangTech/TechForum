@@ -85,11 +85,30 @@ $env:RecoveryEmail__FromAddress = 'forum@example.com'
 $env:RecoveryEmail__FrontendUrl = 'http://localhost:5173'
 ```
 
-Máy triển khai phải dùng `FrontendUrl` HTTPS. Cổng 587 dùng STARTTLS, cổng 465
-dùng TLS ngay khi kết nối; MailKit xác minh chứng thư mặc định. Chỉ môi trường
-Development mới cho SMTP không TLS trên loopback để kiểm thử bằng máy nhận thư
-local. Kiểm thử hiện đã đi qua SMTP local; gửi tới hộp thư ngoài cần cấu hình
-nhà cung cấp thật.
+`FrontendUrl` phải là HTTPS, trừ `http://localhost` khi chạy trên máy. Cổng 465 dùng TLS ngay khi kết nối, các cổng
+khác (587, 2525) dùng STARTTLS; MailKit xác minh chứng thư mặc định. SMTP không TLS chỉ được phép với máy chủ mail trên
+chính máy (`localhost`) hoặc Mailpit trong Docker (`mailpit`). Cùng một cấu hình `RecoveryEmail` dùng cho email quên mật
+khẩu và email xác minh tài khoản.
+
+**Mailpit khi chạy Docker:** nếu `.env` để trống `SMTP_HOST`, API gửi email vào Mailpit (một máy nhận thư giả, không gửi
+ra ngoài). Mở http://localhost:8025 để đọc email và bấm link trong đó.
+
+## Xác minh email
+
+- Đăng ký xong, tài khoản chưa xác minh và API gửi email có link `{FrontendUrl}/verify-email#userId=...&token=...`,
+  dùng được trong 24 giờ. Token nằm sau dấu `#` nên không đi lên máy chủ web hay vào header Referer.
+- Chưa xác minh vẫn đăng nhập và đọc được, nhưng đăng/sửa bài, trả lời, bình chọn, đánh dấu hữu ích, báo cáo và tải
+  ảnh/video trả 403 "Bạn cần xác minh email" (filter `[RequireVerifiedEmail]`). Trang hiện thanh nhắc có nút "Gửi lại email".
+- Được tính là đã xác minh khi: bấm link trong email, đặt lại mật khẩu thành công (cũng chứng minh giữ hộp thư), hoặc
+  đăng nhập Google với cùng email.
+- Tài khoản chưa xác minh và chưa có hoạt động nào bị tự xóa sau `EmailVerification:UnverifiedAccountDays` ngày (mặc
+  định 7), chạy khi API khởi động và mỗi ngày một lần. Tài khoản có từ trước tính năng này được migration
+  `MarkExistingEmailsConfirmed` coi là đã xác minh.
+
+| Endpoint | Ghi chú |
+| --- | --- |
+| `POST /api/auth/email-verification` | Cần đăng nhập; gửi lại email. 409 nếu đã xác minh, 503 nếu chưa cấu hình email, 429 sau 5 lần/15 phút |
+| `POST /api/auth/email-verification/confirm` | `{ userId, token }`, không cần đăng nhập; 204 khi xong, 400 khi link sai hoặc hết hạn |
 
 ## Đăng nhập bằng Google
 
@@ -99,6 +118,7 @@ và token phải cấp cho đúng Client ID của TechForum), rồi trả phiên
 
 - Tài khoản Google đã liên kết thì đăng nhập; email đã có tài khoản thì liên kết vào tài khoản đó; email mới thì tạo thành
   viên không mật khẩu. Liên kết lưu ở bảng `AspNetUserLogins` có sẵn của Identity.
+- Tài khoản đã xác minh email thì giữ nguyên mật khẩu, Google chỉ thêm một cách đăng nhập.
 - Tài khoản đăng ký bằng mật khẩu nhưng chưa xác minh email có thể do người khác lập trước bằng email này, nên khi chủ email
   đăng nhập Google thì mật khẩu cũ bị bỏ và mọi phiên cũ bị đăng xuất; muốn có mật khẩu lại thì dùng "Quên mật khẩu".
 - 401 khi Google không chấp nhận token hoặc email Google chưa xác minh; 423 khi tài khoản bị khóa; 503 khi chưa cấu hình.

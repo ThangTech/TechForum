@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TechForum.Api.Dtos;
 using TechForum.Api.Extensions;
+using TechForum.Api.Filters;
 using TechForum.Api.Services;
 
 namespace TechForum.Api.Controllers;
@@ -26,6 +27,7 @@ public sealed class TopicVotesController : ControllerBase
 
     [Authorize]
     [HttpPut]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<VoteDto>> Set(
         Guid topicId,
         [FromBody] SetVoteRequest request,

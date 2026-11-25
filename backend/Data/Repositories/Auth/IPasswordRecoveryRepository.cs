@@ -8,4 +8,5 @@ public interface IPasswordRecoveryRepository
     Task<ApplicationUser?> FindByEmailAsync(string email);
     Task<string> GenerateTokenAsync(ApplicationUser user);
     Task<IdentityResult> ResetAsync(ApplicationUser user, string token, string password);
+    Task<IdentityResult> MarkEmailConfirmedAsync(ApplicationUser user);
 }

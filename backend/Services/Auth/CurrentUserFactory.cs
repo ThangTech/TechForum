@@ -22,6 +22,7 @@ public static class CurrentUserFactory
             roles,
             ReputationRules.ForDisplay(user.Reputation),
             await accountRepository.HasPasswordAsync(user),
-            providers.Contains(GoogleProvider));
+            providers.Contains(GoogleProvider),
+            user.EmailConfirmed);
     }
 }

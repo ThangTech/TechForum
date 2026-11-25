@@ -482,6 +482,8 @@ public sealed class VoteServiceTests
     // Mọi tài khoản đều đủ tuổi (30 ngày) trừ khi test đặt thời gian khác.
     private sealed class FakeAccounts : IAccountRepository
     {
+        public Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user) => throw new NotSupportedException();
+        public Task<IdentityResult> ConfirmEmailAsync(ApplicationUser user, string token) => throw new NotSupportedException();
         public Task<bool> HasPasswordAsync(ApplicationUser user) => throw new NotSupportedException();
         public Task<IReadOnlyList<string>> GetLoginProvidersAsync(ApplicationUser user) => throw new NotSupportedException();
         public Task<IdentityResult> AddPasswordAsync(ApplicationUser user, string password) => throw new NotSupportedException();

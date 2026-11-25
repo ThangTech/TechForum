@@ -20,6 +20,7 @@ public sealed class MediaController : ControllerBase
     }
 
     [HttpPost("images")]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<MediaUploadDto>> UploadImage(IFormFile file, CancellationToken cancellationToken)
     {
         var result = await mediaStorageService.StoreImageAsync(User.GetRequiredUserId(), file, cancellationToken);
@@ -28,6 +29,7 @@ public sealed class MediaController : ControllerBase
 
     [HttpPost("videos")]
     [VideoUploadSizeLimit]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<MediaUploadDto>> UploadVideo(IFormFile file, CancellationToken cancellationToken)
     {
         var result = await mediaStorageService.StoreVideoAsync(User.GetRequiredUserId(), file, cancellationToken);

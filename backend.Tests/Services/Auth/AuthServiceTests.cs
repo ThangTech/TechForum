@@ -552,6 +552,21 @@ public sealed class AuthServiceTests
         Assert.Equal(ErrorType.Locked, result.Error);
     }
 
+    private sealed class FakeEmailVerification : IEmailVerificationService
+    {
+        public List<ApplicationUser> Sent { get; } = [];
+
+        public Task SendAsync(ApplicationUser user, CancellationToken cancellationToken)
+        {
+            Sent.Add(user);
+            return Task.CompletedTask;
+        }
+
+        public Task<Result> ResendAsync(string userId, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+
+        public Task<Result> ConfirmAsync(ConfirmEmailRequest request, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+    }
+
     private sealed class FakeGoogleValidator : IGoogleTokenValidator
     {
         public bool Configured { get; init; } = true;
@@ -633,12 +648,53 @@ public sealed class AuthServiceTests
         Assert.False(result.Value.User.IsGoogleLinked);
     }
 
+    [Fact]
+    public async Task RegisterAsync_SendsTheVerificationEmailAndTheAccountStartsUnverified()
+    {
+        var repository = new FakeAccountRepository();
+        var verification = new FakeEmailVerification();
+        var service = CreateService(repository, new FakeRefreshTokenRepository(), verification: verification);
+
+        var result = await service.RegisterAsync(new RegisterRequest
+        {
+            DisplayName = "Thành viên mới", Email = "new.member@example.test", Password = "MatKhau!1"
+        }, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Same(repository.CreatedUser, Assert.Single(verification.Sent));
+        Assert.False(result.Value!.User.EmailVerified);
+    }
+
+    // Tài khoản đã xác minh email thì chủ của nó đã chứng minh email; đăng nhập Google chỉ thêm một cách đăng nhập.
+    [Fact]
+    public async Task LoginWithGoogleAsync_ForAVerifiedAccountWithTheSameEmail_KeepsItsPassword()
+    {
+        var repository = new FakeAccountRepository();
+        var refreshTokens = new FakeRefreshTokenRepository();
+        var user = CreateUser();
+        user.PasswordHash = "owner-password";
+        user.EmailConfirmed = true;
+        repository.UsersByEmail[user.Email!] = user;
+        var service = CreateService(repository, refreshTokens,
+            google: new FakeGoogleValidator { Identity = new GoogleIdentity("g-1", user.Email!, true, "Chủ email") });
+
+        var result = await service.LoginWithGoogleAsync("token", CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("owner-password", user.PasswordHash);
+        Assert.Empty(repository.Claimed);
+        Assert.Equal(0, refreshTokens.RevokeAllCount);
+        Assert.True(result.Value!.User.HasPassword);
+        Assert.True(result.Value.User.IsGoogleLinked);
+    }
+
     private static AuthService CreateService(
         FakeAccountRepository repository,
         FakeRefreshTokenRepository refreshTokens,
         TimeProvider? timeProvider = null,
         ILogger<AuthService>? logger = null,
-        FakeGoogleValidator? google = null)
+        FakeGoogleValidator? google = null,
+        FakeEmailVerification? verification = null)
     {
         var clock = timeProvider ?? new FixedTimeProvider(CurrentTime);
         var optionsAccessor = Microsoft.Extensions.Options.Options.Create(Options);
@@ -649,7 +705,8 @@ public sealed class AuthServiceTests
             optionsAccessor,
             logger ?? NullLogger<AuthService>.Instance,
             clock,
-            google ?? new FakeGoogleValidator());
+            google ?? new FakeGoogleValidator(),
+            verification ?? new FakeEmailVerification());
     }
 
     private static ApplicationUser CreateUser() => new()
@@ -695,6 +752,18 @@ public sealed class AuthServiceTests
         public List<ApplicationUser> Claimed { get; } = [];
 
         public IdentityResult AddPasswordResult { get; init; } = IdentityResult.Success;
+
+        public Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user) => Task.FromResult("confirm-token");
+
+        public Task<IdentityResult> ConfirmEmailAsync(ApplicationUser user, string token)
+        {
+            if (token != "confirm-token")
+            {
+                return Task.FromResult(IdentityResult.Failed(new IdentityError { Code = "InvalidToken" }));
+            }
+            user.EmailConfirmed = true;
+            return Task.FromResult(IdentityResult.Success);
+        }
 
         public Task<bool> HasPasswordAsync(ApplicationUser user) => Task.FromResult(user.PasswordHash is not null);
 

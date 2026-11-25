@@ -106,18 +106,42 @@ public sealed class PasswordRecoveryServiceTests
         Assert.Null(refreshTokens.Tokens.Single(token => token.UserId == "other-member").RevokedAtUtc);
     }
 
+    // Không mã hóa chỉ được phép với máy chủ mail trên chính máy hoặc Mailpit trong Docker.
     [Theory]
-    [InlineData("Production", "smtp.example", false, false)]
-    [InlineData("Development", "smtp.example", false, false)]
-    [InlineData("Development", "127.0.0.1", false, true)]
-    [InlineData("Production", "smtp.example", true, true)]
-    public void MailSender_RequiresTlsExceptForLocalDevelopment(string environment, string host, bool tls, bool expected)
+    [InlineData("smtp.example", false, false)]
+    [InlineData("127.0.0.1", false, true)]
+    [InlineData("mailpit", false, true)]
+    [InlineData("smtp.example", true, true)]
+    public void MailSender_RequiresTlsExceptForALocalMailServer(string host, bool tls, bool expected)
     {
-        var sender = new RecoveryEmailSender(Options.Create(new RecoveryEmailOptions
+        var sender = new EmailSender(Options.Create(new RecoveryEmailOptions
         {
             Host = host, UseTls = tls, FromAddress = "forum@example.com"
-        }), new FakeEnvironment { EnvironmentName = environment });
+        }));
         Assert.Equal(expected, sender.IsConfigured);
+    }
+
+    [Theory]
+    [InlineData("https://forum.example", true)]
+    [InlineData("http://localhost:8088", true)]
+    [InlineData("http://forum.example", false)]
+    public void FrontendUrl_IsHttpsOrLocalhost(string url, bool expected)
+    {
+        Assert.Equal(expected, new RecoveryEmailOptions { FrontendUrl = url }.TryGetFrontendUrl(out _));
+    }
+
+    [Fact]
+    public async Task ResetAsync_MarksTheEmailVerified()
+    {
+        var user = User();
+        var repository = new FakeRepository { User = user };
+
+        await Create(repository, new FakeSender()).ResetAsync(new ResetPasswordRequest
+        {
+            Email = "member@example.com", Token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes("valid-token")), NewPassword = "Valid!2026"
+        }, default);
+
+        Assert.True(user.EmailConfirmed);
     }
 
     private static ApplicationUser User() => new() { Id = "member-1", DisplayName = "Member", Email = "member@example.com" };
@@ -138,7 +162,7 @@ public sealed class PasswordRecoveryServiceTests
         string url = "http://localhost:5173") =>
         new(repository, refreshTokens ?? new FakeRefreshTokenRepository(), sender,
             Options.Create(new RecoveryEmailOptions { FrontendUrl = url }),
-            new FakeEnvironment(), TimeProvider.System, NullLogger<PasswordRecoveryService>.Instance);
+            TimeProvider.System, NullLogger<PasswordRecoveryService>.Instance);
 
     private sealed class FakeRepository : IPasswordRecoveryRepository
     {
@@ -151,26 +175,21 @@ public sealed class PasswordRecoveryServiceTests
         public Task<ApplicationUser?> FindByEmailAsync(string email) { LookupCount++; LastEmail = email; return Task.FromResult(User); }
         public Task<string> GenerateTokenAsync(ApplicationUser user) => Task.FromResult(GeneratedToken);
         public Task<IdentityResult> ResetAsync(ApplicationUser user, string token, string password) { ResetToken = token; return Task.FromResult(ResetResult); }
+        public Task<IdentityResult> MarkEmailConfirmedAsync(ApplicationUser user) { user.EmailConfirmed = true; return Task.FromResult(IdentityResult.Success); }
     }
 
-    private sealed class FakeSender : IRecoveryEmailSender
+    private sealed class FakeSender : IEmailSender
     {
         public bool IsConfigured { get; init; } = true;
         public bool ShouldFail { get; init; }
         public string? Url { get; private set; }
         public string? Email { get; private set; }
-        public Task SendAsync(string email, string resetUrl, CancellationToken cancellationToken)
+        public Task SendAsync(string to, string subject, string text, CancellationToken cancellationToken)
         {
             if (ShouldFail) throw new IOException("SMTP unavailable");
-            Email = email; Url = resetUrl; return Task.CompletedTask;
+            Email = to;
+            Url = text.Split('\n').Single(line => line.StartsWith("http", StringComparison.Ordinal));
+            return Task.CompletedTask;
         }
-    }
-
-    private sealed class FakeEnvironment : IHostEnvironment
-    {
-        public string EnvironmentName { get; set; } = "Development";
-        public string ApplicationName { get; set; } = "Tests";
-        public string ContentRootPath { get; set; } = string.Empty;
-        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }

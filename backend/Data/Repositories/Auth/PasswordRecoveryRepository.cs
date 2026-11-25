@@ -18,4 +18,15 @@ public sealed class PasswordRecoveryRepository : IPasswordRecoveryRepository
     {
         return userManager.ResetPasswordAsync(user, token, password);
     }
+
+    public async Task<IdentityResult> MarkEmailConfirmedAsync(ApplicationUser user)
+    {
+        if (user.EmailConfirmed)
+        {
+            return IdentityResult.Success;
+        }
+
+        user.EmailConfirmed = true;
+        return await userManager.UpdateAsync(user);
+    }
 }

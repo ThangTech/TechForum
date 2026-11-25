@@ -11,18 +11,16 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
 {
     private readonly IPasswordRecoveryRepository repository;
     private readonly IRefreshTokenRepository refreshTokenRepository;
-    private readonly IRecoveryEmailSender emailSender;
+    private readonly IEmailSender emailSender;
     private readonly IOptions<RecoveryEmailOptions> options;
-    private readonly IHostEnvironment environment;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<PasswordRecoveryService> logger;
 
     public PasswordRecoveryService(
         IPasswordRecoveryRepository repository,
         IRefreshTokenRepository refreshTokenRepository,
-        IRecoveryEmailSender emailSender,
+        IEmailSender emailSender,
         IOptions<RecoveryEmailOptions> options,
-        IHostEnvironment environment,
         TimeProvider timeProvider,
         ILogger<PasswordRecoveryService> logger)
     {
@@ -30,7 +28,6 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
         this.refreshTokenRepository = refreshTokenRepository;
         this.emailSender = emailSender;
         this.options = options;
-        this.environment = environment;
         this.timeProvider = timeProvider;
         this.logger = logger;
     }
@@ -38,7 +35,7 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
     public async Task<bool> RequestAsync(string email, CancellationToken cancellationToken)
     {
         // URL lấy từ cấu hình tin cậy, không ghép từ Host header của request.
-        if (!emailSender.IsConfigured || !TryGetFrontendUrl(out var frontendUrl))
+        if (!emailSender.IsConfigured || !options.Value.TryGetFrontendUrl(out var frontendUrl))
         {
             return false;
         }
@@ -55,7 +52,9 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
         var resetUrl = $"{frontendUrl}/reset-password#email={Uri.EscapeDataString(user.Email)}&token={encodedToken}";
         try
         {
-            await emailSender.SendAsync(user.Email, resetUrl, cancellationToken);
+            await emailSender.SendAsync(user.Email, "Đặt lại mật khẩu TechForum",
+                $"Bạn đã yêu cầu đặt lại mật khẩu TechForum.\n\nMở liên kết sau trong vòng 30 phút:\n{resetUrl}\n\n" +
+                "Liên kết chỉ dùng một lần. Nếu không gửi yêu cầu này, bạn có thể bỏ qua email.", cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -91,6 +90,9 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
             return false;
         }
 
+        // Link đặt lại mật khẩu được gửi tới chính email này, nên người mở được nó là chủ email.
+        await repository.MarkEmailConfirmedAsync(user);
+
         // Identity đổi SecurityStamp nên access token cũ hết hiệu lực.
         // Thu hồi refresh token để các thiết bị khác không tự đăng nhập lại.
         await refreshTokenRepository.RevokeAllForUserAsync(
@@ -98,15 +100,5 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
             timeProvider.GetUtcNow(),
             cancellationToken);
         return true;
-    }
-
-    private bool TryGetFrontendUrl(out string frontendUrl)
-    {
-        frontendUrl = options.Value.FrontendUrl.TrimEnd('/');
-        return Uri.TryCreate(frontendUrl, UriKind.Absolute, out var uri) &&
-            string.IsNullOrEmpty(uri.UserInfo) && string.IsNullOrEmpty(uri.Query) &&
-            string.IsNullOrEmpty(uri.Fragment) && uri.AbsolutePath == "/" &&
-            (uri.Scheme == Uri.UriSchemeHttps || environment.IsDevelopment() &&
-                uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback);
     }
 }

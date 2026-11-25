@@ -59,6 +59,7 @@ Biến môi trường (**Environment**):
 | `Cloudinary__ImageModeration` | `aws_rek` nếu đã đăng ký add-on kiểm duyệt ảnh, để trống nếu chưa |
 | `RecoveryEmail__Host` | Máy chủ SMTP, ví dụ `in-v3.mailjet.com` |
 | `RecoveryEmail__Port` | `2525` (Render miễn phí chặn 25, 465 và 587) |
+| `RecoveryEmail__UseTls` | `true` (cổng 2525 dùng STARTTLS) |
 | `RecoveryEmail__Username`, `RecoveryEmail__Password` | Tài khoản SMTP (Mailjet: API Key và Secret Key) |
 | `RecoveryEmail__FromAddress` | Email người gửi đã xác minh với nhà cung cấp |
 | `RecoveryEmail__FrontendUrl` | Địa chỉ trang trên Vercel, ví dụ `https://techforum.vercel.app` |
@@ -99,5 +100,6 @@ Sau khi có địa chỉ Vercel, quay lại Render và sửa `RecoveryEmail__Fro
 - Đăng bài có ảnh và video (tải lên Cloudinary qua Vercel → Render). Vercel không ghi rõ giới hạn dung lượng khi
   chuyển yêu cầu sang máy chủ khác, nên cần thử một video lớn.
 - Mở thẳng một địa chỉ bài viết.
+- Đăng ký tài khoản mới: email xác minh đến được hộp thư (xem cả Spam), bấm link thì thanh nhắc biến mất và đăng bài được.
 - Quên mật khẩu: email đến được hộp thư.
 - Để trang không dùng 20 phút rồi mở lại: lần đầu chậm, sau đó bình thường (Render và Azure SQL thức dậy).

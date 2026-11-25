@@ -8,6 +8,8 @@ namespace TechForum.Api.Middleware;
 // Token hợp lệ vẫn bị từ chối khi tài khoản đã bị khóa hoặc security stamp đã đổi (ví dụ sau khi đổi mật khẩu).
 public sealed class ActiveAccountMiddleware
 {
+    public const string CurrentUserItemKey = "TechForum.CurrentUser";
+
     private readonly RequestDelegate next;
 
     public ActiveAccountMiddleware(RequestDelegate next)
@@ -32,6 +34,8 @@ public sealed class ActiveAccountMiddleware
             string.Equals(user.SecurityStamp, stampClaim, StringComparison.Ordinal);
         if (isCurrentSession && !isLockedOut)
         {
+            // Để [RequireVerifiedEmail] đọc lại mà không phải truy vấn DB thêm lần nữa.
+            context.Items[CurrentUserItemKey] = user;
             await next(context);
             return;
         }

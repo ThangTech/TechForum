@@ -21,6 +21,7 @@ public sealed class AuthService : IAuthService
     private readonly ILogger<AuthService> logger;
     private readonly TimeProvider timeProvider;
     private readonly IGoogleTokenValidator googleTokenValidator;
+    private readonly IEmailVerificationService emailVerification;
 
     public AuthService(
         IAccountRepository accountRepository,
@@ -29,7 +30,8 @@ public sealed class AuthService : IAuthService
         IOptions<JwtOptions> jwtOptions,
         ILogger<AuthService> logger,
         TimeProvider timeProvider,
-        IGoogleTokenValidator googleTokenValidator)
+        IGoogleTokenValidator googleTokenValidator,
+        IEmailVerificationService emailVerification)
     {
         this.accountRepository = accountRepository;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -38,6 +40,7 @@ public sealed class AuthService : IAuthService
         this.logger = logger;
         this.timeProvider = timeProvider;
         this.googleTokenValidator = googleTokenValidator;
+        this.emailVerification = emailVerification;
     }
 
     public async Task<Result<AuthSession>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
@@ -68,7 +71,9 @@ public sealed class AuthService : IAuthService
             return Result<AuthSession>.Invalid("Thông tin đăng ký chưa hợp lệ", MapIdentityErrors(createResult.Errors));
         }
 
-        // Thành viên mới được đăng nhập ngay sau khi đăng ký, với thời hạn refresh token ngắn.
+        await emailVerification.SendAsync(user, cancellationToken);
+
+        // Thành viên mới được đăng nhập ngay sau khi đăng ký (chưa xác minh thì chỉ đọc), với thời hạn refresh token ngắn.
         var shortLifetime = TimeSpan.FromDays(jwtOptions.Value.ShortRefreshTokenDays);
         return await CreateSessionAsync(user, shortLifetime, cancellationToken);
     }

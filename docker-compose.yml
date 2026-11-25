@@ -58,12 +58,14 @@ services:
       Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET:-}
       # Kiểm duyệt ảnh bằng AI khi tải lên (aws_rek), cần đăng ký add-on trên Cloudinary. Để trống thì không kiểm duyệt.
       Cloudinary__ImageModeration: ${CLOUDINARY_IMAGE_MODERATION:-}
-      # Gửi email quên mật khẩu. Để trống thì chức năng này báo chưa sẵn sàng.
-      RecoveryEmail__Host: ${SMTP_HOST:-}
-      RecoveryEmail__Port: ${SMTP_PORT:-587}
+      # Gửi email (xác minh tài khoản, quên mật khẩu). Để trống SMTP_HOST thì mọi email đi vào Mailpit (hộp thư giả,
+      # xem ở http://localhost:8025); điền SMTP thật (ví dụ Mailjet) trong .env để gửi ra ngoài.
+      RecoveryEmail__Host: ${SMTP_HOST:-mailpit}
+      RecoveryEmail__Port: ${SMTP_PORT:-1025}
+      RecoveryEmail__UseTls: ${SMTP_USE_TLS:-false}
       RecoveryEmail__Username: ${SMTP_USERNAME:-}
       RecoveryEmail__Password: ${SMTP_PASSWORD:-}
-      RecoveryEmail__FromAddress: ${SMTP_FROM_ADDRESS:-}
+      RecoveryEmail__FromAddress: ${SMTP_FROM_ADDRESS:-no-reply@techforum.local}
       RecoveryEmail__FrontendUrl: ${PUBLIC_URL:-http://localhost:8088}
       # Đăng nhập bằng Google: cùng Client ID với nút ở trang web. Để trống thì tắt.
       GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
@@ -73,6 +75,13 @@ services:
       # Danh sách từ cấm: mặc định là file mẫu trong repo; đặt BANNED_WORDS_FILE để dùng danh sách thật trên máy.
       - ${BANNED_WORDS_FILE:-./backend/Data/Seed/banned-words.example.txt}:/app/Data/Seed/banned-words.txt:ro
     # Không mở cổng ra ngoài: chỉ nginx (service web) gọi được API, qua mạng nội bộ của Docker.
+    restart: unless-stopped
+
+  # Hộp thư giả cho máy phát triển: giữ lại mọi email API gửi đi, không gửi ra Internet.
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:8025:8025"
     restart: unless-stopped
 
   web:

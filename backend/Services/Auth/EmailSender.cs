@@ -6,38 +6,33 @@ using TechForum.Api.Configuration;
 
 namespace TechForum.Api.Services;
 
-public sealed class RecoveryEmailSender : IRecoveryEmailSender
+public sealed class EmailSender : IEmailSender
 {
-    private readonly IHostEnvironment environment;
     private readonly RecoveryEmailOptions settings;
 
-    public RecoveryEmailSender(IOptions<RecoveryEmailOptions> options, IHostEnvironment environment)
+    public EmailSender(IOptions<RecoveryEmailOptions> options)
     {
-        this.environment = environment;
         settings = options.Value;
     }
 
+    // Không mã hóa chỉ được phép với máy chủ mail trên chính máy này hoặc Mailpit (hộp thư giả trong Docker).
     public bool IsConfigured => !string.IsNullOrWhiteSpace(settings.Host) &&
         settings.Port > 0 && settings.Port <= 65535 &&
         MailboxAddress.TryParse(settings.FromAddress, out _) &&
-        (settings.UseTls || environment.IsDevelopment() &&
-            IsLocalHost(settings.Host));
+        (settings.UseTls || IsLocalMailHost(settings.Host));
 
-    private static bool IsLocalHost(string? host)
+    private static bool IsLocalMailHost(string? host)
     {
-        return host == "localhost" || host == "127.0.0.1" || host == "::1";
+        return host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "mailpit";
     }
 
-    public async Task SendAsync(string email, string resetUrl, CancellationToken cancellationToken)
+    public async Task SendAsync(string to, string subject, string text, CancellationToken cancellationToken)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("TechForum", settings.FromAddress));
-        message.To.Add(MailboxAddress.Parse(email));
-        message.Subject = "Đặt lại mật khẩu TechForum";
-        message.Body = new TextPart("plain")
-        {
-            Text = $"Bạn đã yêu cầu đặt lại mật khẩu TechForum.\n\nMở liên kết sau trong vòng 30 phút:\n{resetUrl}\n\nLiên kết chỉ dùng một lần. Nếu không gửi yêu cầu này, bạn có thể bỏ qua email."
-        };
+        message.To.Add(MailboxAddress.Parse(to));
+        message.Subject = subject;
+        message.Body = new TextPart("plain") { Text = text };
 
         using var client = new SmtpClient { Timeout = 10000 };
         var security = settings.UseTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None;

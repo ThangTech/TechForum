@@ -91,6 +91,7 @@ public sealed class TopicsController : ControllerBase
 
     [Authorize]
     [HttpPost]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<OwnTopicDto>> Create([FromBody] CreateTopicRequest request, CancellationToken cancellationToken)
     {
         var result = await topicService.CreateAsync(User.GetRequiredUserId(), request, cancellationToken);
@@ -99,6 +100,7 @@ public sealed class TopicsController : ControllerBase
 
     [Authorize]
     [HttpPut("{id:guid}")]
+    [RequireVerifiedEmail]
     public async Task<ActionResult<OwnTopicDto>> Update(Guid id, [FromBody] UpdateTopicRequest request, CancellationToken cancellationToken)
     {
         var result = await topicService.UpdateAsync(id, User.GetRequiredUserId(), request, cancellationToken);
