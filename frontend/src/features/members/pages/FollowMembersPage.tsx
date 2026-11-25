@@ -15,7 +15,7 @@ interface FollowMembersPageProps {
 }
 
 export const FollowMembersPage = ({ kind }: FollowMembersPageProps) => {
-  const { userId, title, data, isLoading, error, retry, changePage } = useFollowMembersPage(kind)
+  const { userId, title, data, isLoading, error, notFoundTitle, retry, changePage } = useFollowMembersPage(kind)
 
   return (
     <PageShell compact maxWidth={760}>
@@ -24,7 +24,7 @@ export const FollowMembersPage = ({ kind }: FollowMembersPageProps) => {
         <PageHeading eyebrow="Cộng đồng" title={title} />
       </Box>
       <Box sx={{ mt: 3 }}>
-        <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải thành viên…" onRetry={retry} />
+        <AsyncStatePanel error={error} isLoading={isLoading} loadingText="Đang tải thành viên…" notFoundTitle={notFoundTitle} onRetry={retry} />
       </Box>
       {!isLoading && !error && data && (
         <Stack spacing={2.5} sx={{ mt: 3 }}>

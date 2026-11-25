@@ -17,6 +17,7 @@ export const useFollowMembersPage = (kind: 'followers' | 'following') => {
     title: kind === 'followers' ? 'Người theo dõi' : 'Đang theo dõi',
     data: membersQuery.data ?? null,
     isLoading: isInitialLoading(membersQuery),
+    notFoundTitle: requestError instanceof ApiError && requestError.status === 404 ? 'Không tìm thấy thành viên' : null,
     error: requestError instanceof ApiError && requestError.status === 404
       ? 'Không tìm thấy hồ sơ thành viên này.'
       : getErrorMessage(requestError, 'Không thể tải danh sách theo dõi.'),

@@ -18,8 +18,9 @@ export const usePublicProfilePage = () => {
   const profile = profileQuery.data ?? null
 
   const requestError = profileQuery.error
+  const isNotFound = !isValidId || (requestError instanceof ApiError && requestError.status === 404)
   const loadError = requestError instanceof ApiError && requestError.status === 404
-    ? 'Không tìm thấy hồ sơ thành viên này.'
+    ? 'Tài khoản có thể đã bị xóa hoặc đường dẫn không đúng.'
     : getErrorMessage(requestError)
 
   const toggleFollow = async () => {
@@ -41,6 +42,7 @@ export const usePublicProfilePage = () => {
     isOwnProfile: Boolean(profile && user?.id === profile.id),
     isLoading: isValidId && isInitialLoading(profileQuery),
     error: isValidId ? loadError : 'Đường dẫn hồ sơ không hợp lệ.',
+    notFoundTitle: isNotFound ? 'Không tìm thấy thành viên' : null,
     retry: () => void profileQuery.refetch(),
     follow: { toggle: toggleFollow, isBusy: followMutation.isPending, error: followError },
   }

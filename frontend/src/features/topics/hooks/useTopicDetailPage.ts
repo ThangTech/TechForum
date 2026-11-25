@@ -22,9 +22,10 @@ export const useTopicDetailPage = () => {
   const isLoading = isValidId && isInitialLoading(topicQuery)
   const requestError = topicQuery.error
   const loadError = requestError instanceof ApiError && requestError.status === 404
-    ? 'Nội dung không tồn tại hoặc không còn được công khai.'
+    ? 'Bài viết có thể đã bị tác giả xóa, bị ẩn vì vi phạm hoặc đường dẫn không đúng.'
     : getErrorMessage(requestError)
   const error = isValidId ? loadError : 'Đường dẫn nội dung không hợp lệ.'
+  const isNotFound = !isValidId || (requestError instanceof ApiError && requestError.status === 404)
   const readingContent = useMemo(
     () => topic ? prepareReadingContent(toDisplayMediaHtml(topic.bodyHtml), topic.id) : null,
     [topic],
@@ -46,6 +47,7 @@ export const useTopicDetailPage = () => {
     readingContent,
     isLoading,
     error,
+    notFoundTitle: isNotFound ? 'Không tìm thấy nội dung' : null,
     retry: () => void topicQuery.refetch(),
     isTopicReady: !isLoading && !error && topic?.id === topicId && readingContent !== null,
     isOwnTopic: Boolean(topic && user?.id === topic.author.id),

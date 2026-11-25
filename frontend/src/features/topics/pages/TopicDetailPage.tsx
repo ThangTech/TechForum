@@ -29,7 +29,7 @@ const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 }).format(new Date(value))
 
 export const TopicDetailPage = () => {
-  const { topic, readingContent, isLoading, error, retry, isTopicReady, isOwnTopic, wasUpdatedAfterPublication } =
+  const { topic, readingContent, isLoading, error, notFoundTitle, retry, isTopicReady, isOwnTopic, wasUpdatedAfterPublication } =
     useTopicDetailPage()
   usePageMeta(topic?.title, topic?.summary)
 
@@ -50,6 +50,7 @@ export const TopicDetailPage = () => {
             error={error}
             isLoading={isLoading}
             loadingText="Đang tải nội dung…"
+            notFoundTitle={notFoundTitle}
             onRetry={retry}
           />
         </Box>

@@ -35,6 +35,7 @@ export const PublicProfilePage = () => {
         <AsyncStatePanel
           error={view.error}
           isLoading={view.isLoading}
+          notFoundTitle={view.notFoundTitle}
           loadingText="Đang tải hồ sơ…"
           onRetry={view.retry}
         />

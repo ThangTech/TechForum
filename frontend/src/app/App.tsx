@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { NotFoundPage } from './NotFoundPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { AuthRequiredDialogHost } from '../features/auth/components/AuthRequiredDialogHost'
 import { ScrollManager } from '../shared/layout/ScrollManager'
@@ -13,7 +14,6 @@ import { PublicProfilePage } from '../features/members/pages/PublicProfilePage'
 import { MyTopicsPage } from '../features/topics/pages/MyTopicsPage'
 import { SavedTopicsPage } from '../features/interactions/pages/SavedTopicsPage'
 import { StarredTopicsPage } from '../features/interactions/pages/StarredTopicsPage'
-import { appRoutes } from './appRoutes'
 import { NotificationsPage } from '../features/notifications/pages/NotificationsPage'
 import { ActivityPage } from '../features/members/pages/ActivityPage'
 import { SkillCommunityPage } from '../features/members/pages/SkillCommunityPage'
@@ -120,7 +120,7 @@ const App = () => {
           <Route path="privacy" element={<LegalPage kind="privacy" />} />
           <Route path="terms" element={<LegalPage kind="terms" />} />
           <Route path="skills/:tagId" element={<SkillCommunityPage />} />
-          <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route
           path="admin"

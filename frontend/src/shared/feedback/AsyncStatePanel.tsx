@@ -2,6 +2,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { NotFoundPanel } from '../components/NotFoundPanel'
 
 interface AsyncStatePanelProps {
   error: string | null
@@ -9,6 +10,8 @@ interface AsyncStatePanelProps {
   loadingText: string
   // Without it the panel shows the error but no retry button.
   onRetry?: () => void
+  // Nội dung không tồn tại (404 hoặc đường dẫn sai): hiện khung "không tìm thấy" thay cho lỗi, không có nút thử lại.
+  notFoundTitle?: string | null
 }
 
 const panelSx = {
@@ -24,7 +27,12 @@ export const AsyncStatePanel = ({
   isLoading,
   loadingText,
   onRetry,
+  notFoundTitle = null,
 }: AsyncStatePanelProps) => {
+  if (!isLoading && error && notFoundTitle) {
+    return <NotFoundPanel description={error} title={notFoundTitle} />
+  }
+
   if (isLoading) {
     return (
       <Box role="status" sx={{ ...panelSx, borderColor: 'divider' }}>
