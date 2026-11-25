@@ -6,6 +6,9 @@ export interface FooterLink {
 }
 
 // The links of the "Khám phá" column. They are the same for everybody.
+// Hộp thư liên hệ của trang (hộp thư thật trên tên miền techforum.id.vn).
+export const contactEmail = 'contact@techforum.id.vn'
+
 export const exploreLinks: FooterLink[] = [
   { label: 'Bài viết', to: appRoutes.articles },
   { label: 'Hỏi đáp', to: appRoutes.questions },

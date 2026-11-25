@@ -81,14 +81,15 @@ $env:RecoveryEmail__Port = '587'
 $env:RecoveryEmail__UseTls = 'true'
 $env:RecoveryEmail__Username = '<tai-khoan-SMTP>'
 $env:RecoveryEmail__Password = '<mat-khau-SMTP>'
-$env:RecoveryEmail__FromAddress = 'forum@example.com'
+$env:RecoveryEmail__FromAddress = 'no-reply@example.com'
+$env:RecoveryEmail__ReplyToAddress = 'contact@example.com'
 $env:RecoveryEmail__FrontendUrl = 'http://localhost:5173'
 ```
 
 `FrontendUrl` phải là HTTPS, trừ `http://localhost` khi chạy trên máy. Cổng 465 dùng TLS ngay khi kết nối, các cổng
 khác (587, 2525) dùng STARTTLS; MailKit xác minh chứng thư mặc định. SMTP không TLS chỉ được phép với máy chủ mail trên
 chính máy (`localhost`) hoặc Mailpit trong Docker (`mailpit`). Cùng một cấu hình `RecoveryEmail` dùng cho email quên mật
-khẩu và email xác minh tài khoản.
+khẩu và email xác minh tài khoản. `ReplyToAddress` (tùy chọn) là hộp thư nhận thư khi người dùng bấm "Trả lời".
 
 **Mailpit khi chạy Docker:** nếu `.env` để trống `SMTP_HOST`, API gửi email vào Mailpit (một máy nhận thư giả, không gửi
 ra ngoài). Mở http://localhost:8025 để đọc email và bấm link trong đó.

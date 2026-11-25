@@ -26,13 +26,23 @@ public sealed class EmailSender : IEmailSender
         return host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "mailpit";
     }
 
-    public async Task SendAsync(string to, string subject, string text, CancellationToken cancellationToken)
+    public MimeMessage CreateMessage(string to, string subject, string text)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("TechForum", settings.FromAddress));
+        if (MailboxAddress.TryParse(settings.ReplyToAddress, out var replyTo))
+        {
+            message.ReplyTo.Add(replyTo);
+        }
         message.To.Add(MailboxAddress.Parse(to));
         message.Subject = subject;
         message.Body = new TextPart("plain") { Text = text };
+        return message;
+    }
+
+    public async Task SendAsync(string to, string subject, string text, CancellationToken cancellationToken)
+    {
+        var message = CreateMessage(to, subject, text);
 
         using var client = new SmtpClient { Timeout = 10000 };
         var security = settings.UseTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None;

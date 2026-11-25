@@ -61,7 +61,8 @@ Biến môi trường (**Environment**). Bản có chú thích từng biến và
 | `RecoveryEmail__Port` | `2525` (Render miễn phí chặn 25, 465 và 587) |
 | `RecoveryEmail__UseTls` | `true` (cổng 2525 dùng STARTTLS) |
 | `RecoveryEmail__Username`, `RecoveryEmail__Password` | Tài khoản SMTP (Mailjet: API Key và Secret Key) |
-| `RecoveryEmail__FromAddress` | Email người gửi đã xác minh với nhà cung cấp |
+| `RecoveryEmail__FromAddress` | Email người gửi đã xác minh với nhà cung cấp, ví dụ `no-reply@techforum.id.vn` |
+| `RecoveryEmail__ReplyToAddress` | Hộp thư thật nhận thư trả lời, ví dụ `contact@techforum.id.vn` (để trống thì bỏ qua) |
 | `RecoveryEmail__FrontendUrl` | Địa chỉ trang trên Vercel, ví dụ `https://techforum.vercel.app` |
 | `GoogleAuth__ClientId` | OAuth Client ID của Google (giống `VITE_GOOGLE_CLIENT_ID`); để trống thì tắt đăng nhập Google |
 

@@ -121,6 +121,23 @@ public sealed class PasswordRecoveryServiceTests
         Assert.Equal(expected, sender.IsConfigured);
     }
 
+    // Người dùng bấm "Trả lời" thì thư về hộp thư liên hệ, không về địa chỉ no-reply.
+    [Theory]
+    [InlineData("contact@forum.example", "contact@forum.example")]
+    [InlineData("", null)]
+    public void MailSender_AddsReplyToOnlyWhenConfigured(string replyTo, string? expected)
+    {
+        var sender = new EmailSender(Options.Create(new RecoveryEmailOptions
+        {
+            FromAddress = "no-reply@forum.example", ReplyToAddress = replyTo
+        }));
+
+        var message = sender.CreateMessage("member@example.com", "Tiêu đề", "Nội dung");
+
+        Assert.Equal("no-reply@forum.example", message.From.Mailboxes.Single().Address);
+        Assert.Equal(expected, message.ReplyTo.Mailboxes.SingleOrDefault()?.Address);
+    }
+
     [Theory]
     [InlineData("https://forum.example", true)]
     [InlineData("http://localhost:8088", true)]

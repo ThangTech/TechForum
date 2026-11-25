@@ -11,6 +11,8 @@ public sealed class RecoveryEmailOptions
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string FromAddress { get; set; } = string.Empty;
+    // Hộp thư thật nhận thư khi người dùng bấm "Trả lời" (FromAddress thường là no-reply). Để trống thì không thêm.
+    public string ReplyToAddress { get; set; } = string.Empty;
     public string FrontendUrl { get; set; } = string.Empty;
 
     // Địa chỉ trang web để ghép link trong email. Lấy từ cấu hình tin cậy, không ghép từ Host header của request.

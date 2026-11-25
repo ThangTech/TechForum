@@ -7,7 +7,7 @@ import { useAuth } from '../../features/auth/hooks/authState'
 import { useCategories } from '../../features/catalog/hooks/categories'
 import { useTags } from '../../features/catalog/hooks/tags'
 import { BackToTopButton } from './BackToTopButton'
-import { exploreLinks, getAccountLinks, takeFirst, toTopicList, type FooterLink } from './footerLogic'
+import { contactEmail, exploreLinks, getAccountLinks, takeFirst, toTopicList, type FooterLink } from './footerLogic'
 
 const linkSx = {
   color: 'var(--color-footer-muted)',
@@ -135,6 +135,10 @@ export const SiteFooter = () => {
             }}
           >
             <span>© {new Date().getFullYear()} TechForum · Nơi kiến thức được sẻ chia</span>
+            <span>
+              Liên hệ:{' '}
+              <Box component="a" href={`mailto:${contactEmail}`} sx={{ ...linkSx, fontSize: 'inherit' }}>{contactEmail}</Box>
+            </span>
           </Box>
         </div>
       </Box>
