@@ -63,7 +63,7 @@ Biến môi trường (**Environment**). Bản có chú thích từng biến và
 | `RecoveryEmail__Username`, `RecoveryEmail__Password` | Tài khoản SMTP (Mailjet: API Key và Secret Key) |
 | `RecoveryEmail__FromAddress` | Email người gửi đã xác minh với nhà cung cấp, ví dụ `no-reply@techforum.id.vn` |
 | `RecoveryEmail__ReplyToAddress` | Hộp thư thật nhận thư trả lời, ví dụ `contact@techforum.id.vn` (để trống thì bỏ qua) |
-| `RecoveryEmail__FrontendUrl` | Địa chỉ trang trên Vercel, ví dụ `https://techforum.vercel.app` |
+| `RecoveryEmail__FrontendUrl` | Địa chỉ trang trên Vercel hoặc tên miền riêng, ví dụ `https://www.techforum.id.vn` |
 | `GoogleAuth__ClientId` | OAuth Client ID của Google (giống `VITE_GOOGLE_CLIENT_ID`); để trống thì tắt đăng nhập Google |
 
 Danh sách từ cấm thật không nằm trong Git. Thêm nó ở **Secret Files** với tên `banned-words.txt`, rồi đặt
