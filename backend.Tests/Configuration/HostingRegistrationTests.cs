@@ -16,6 +16,18 @@ namespace TechForum.Api.Tests.Services;
 
 public sealed class HostingRegistrationTests
 {
+    // Azure SQL bản miễn phí ngủ khi không ai dùng (40613); SQL Server trong Docker vừa bật (1801). API phải chờ, không dừng.
+    [Theory]
+    [InlineData(1801, true)]
+    [InlineData(40613, true)]
+    [InlineData(40501, true)]
+    [InlineData(18456, false)]
+    [InlineData(40615, false)]
+    public void IsDatabaseStartingError_RetriesOnlyWhileTheDatabaseIsWakingUp(int errorNumber, bool expected)
+    {
+        Assert.Equal(expected, HostingRegistration.IsDatabaseStartingError(errorNumber));
+    }
+
     // Render xóa ổ đĩa khi dịch vụ ngủ dậy: khóa ký link trong email phải nằm trong DB thì link mới còn dùng được.
     [Fact]
     public void AddHostingSettings_KeepsTheLinkKeysInTheDatabase()

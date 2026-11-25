@@ -73,11 +73,22 @@ public static class HostingRegistration
         }
     }
 
-    // Ngay sau khi SQL Server khởi động, database có thể vẫn đang phục hồi: EF Core không mở được nó, tưởng nó chưa có,
-    // thử CREATE DATABASE và gặp lỗi 1801 ("đã tồn tại"). Lỗi đó nghĩa là database có rồi, nên chờ một chút rồi thử lại.
+    // Database chưa nhận kết nối ngay khi API khởi động, nên chờ rồi thử lại thay vì dừng API:
+    // - 1801: SQL Server trong Docker vừa bật, database còn đang phục hồi; EF Core tưởng nó chưa có, thử CREATE DATABASE
+    //   và gặp lỗi "đã tồn tại".
+    // - 40613: Azure SQL bản miễn phí tự ngủ khi không ai dùng và cần khoảng một phút để thức dậy.
+    // - 40197, 40501: Azure SQL đang bận hoặc đang chuyển máy chủ, Microsoft khuyên thử lại sau vài giây.
+    private static readonly int[] DatabaseStartingErrors = [1801, 40613, 40197, 40501];
+
+    public static bool IsDatabaseStartingError(int errorNumber)
+    {
+        return DatabaseStartingErrors.Contains(errorNumber);
+    }
+
     private static async Task MigrateWhenDatabaseIsReadyAsync(TechForumDbContext dbContext, ILogger logger)
     {
-        const int maxAttempts = 10;
+        // Tối đa khoảng 3 phút, đủ cho Azure SQL thức dậy.
+        const int maxAttempts = 36;
         for (var attempt = 1; ; attempt++)
         {
             try
@@ -85,11 +96,25 @@ public static class HostingRegistration
                 await dbContext.Database.MigrateAsync();
                 return;
             }
-            catch (SqlException exception) when (exception.Number == 1801 && attempt < maxAttempts)
+            catch (Exception exception) when (attempt < maxAttempts && IsDatabaseStarting(exception))
             {
-                logger.LogInformation("Database chưa sẵn sàng (lần {Attempt}), thử lại sau 3 giây.", attempt);
-                await Task.Delay(TimeSpan.FromSeconds(3));
+                logger.LogInformation("Database chưa sẵn sàng (lần {Attempt}), thử lại sau 5 giây.", attempt);
+                await Task.Delay(TimeSpan.FromSeconds(5));
             }
         }
+    }
+
+    // EF Core có thể bọc lỗi SQL trong InvalidOperationException ("transient failure"), nên tìm cả ở lỗi bên trong.
+    private static bool IsDatabaseStarting(Exception exception)
+    {
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is SqlException sqlException && IsDatabaseStartingError(sqlException.Number))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
