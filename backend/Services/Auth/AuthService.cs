@@ -73,9 +73,9 @@ public sealed class AuthService : IAuthService
 
         await emailVerification.SendAsync(user, cancellationToken);
 
-        // Thành viên mới được đăng nhập ngay sau khi đăng ký (chưa xác minh thì chỉ đọc), với thời hạn refresh token ngắn.
+        // Thành viên mới được đăng nhập ngay sau khi đăng ký (chưa xác minh thì chỉ đọc), như khi không chọn "Duy trì đăng nhập".
         var shortLifetime = TimeSpan.FromDays(jwtOptions.Value.ShortRefreshTokenDays);
-        return await CreateSessionAsync(user, shortLifetime, cancellationToken);
+        return await CreateSessionAsync(user, shortLifetime, false, cancellationToken);
     }
 
     public async Task<Result<AuthSession>> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -112,7 +112,7 @@ public sealed class AuthService : IAuthService
         var lifetime = request.RememberMe
             ? TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays)
             : TimeSpan.FromDays(jwtOptions.Value.ShortRefreshTokenDays);
-        return await CreateSessionAsync(user, lifetime, cancellationToken);
+        return await CreateSessionAsync(user, lifetime, request.RememberMe, cancellationToken);
     }
 
     public async Task<Result<AuthSession>> LoginWithGoogleAsync(string credential, CancellationToken cancellationToken)
@@ -144,7 +144,7 @@ public sealed class AuthService : IAuthService
         }
 
         // Đăng nhập bằng Google luôn được ghi nhớ như khi chọn "Duy trì đăng nhập".
-        return await CreateSessionAsync(user, TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays), cancellationToken);
+        return await CreateSessionAsync(user, TimeSpan.FromDays(jwtOptions.Value.RefreshTokenDays), true, cancellationToken);
     }
 
     // Đã liên kết thì dùng luôn. Email đã có tài khoản thì liên kết vào tài khoản đó: Google đã xác minh email,
@@ -267,10 +267,10 @@ public sealed class AuthService : IAuthService
             return Locked();
         }
 
-        // Token mới giữ nguyên thời hạn của token mà nó thay thế.
+        // Token mới giữ nguyên thời hạn và kiểu cookie (ghi nhớ hay không) của token mà nó thay thế.
         var lifetime = storedToken.ExpiresAtUtc - storedToken.CreatedAtUtc;
         var newRefreshToken = tokenService.GenerateRefreshToken();
-        var replacement = CreateRefreshTokenRecord(user.Id, newRefreshToken, now, lifetime);
+        var replacement = CreateRefreshTokenRecord(user.Id, newRefreshToken, now, lifetime, storedToken.IsPersistent);
         var wasRotated = await refreshTokenRepository.RotateAsync(
             storedToken.Id,
             replacement,
@@ -281,7 +281,7 @@ public sealed class AuthService : IAuthService
             return SessionExpired();
         }
 
-        return await BuildSuccessAsync(user, newRefreshToken, replacement.ExpiresAtUtc);
+        return await BuildSuccessAsync(user, newRefreshToken, replacement);
     }
 
     public async Task<CurrentUserDto?> GetCurrentUserAsync(string userId)
@@ -388,34 +388,37 @@ public sealed class AuthService : IAuthService
     private async Task<Result<AuthSession>> CreateSessionAsync(
         ApplicationUser user,
         TimeSpan refreshTokenLifetime,
+        bool isPersistent,
         CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
         var refreshToken = tokenService.GenerateRefreshToken();
-        var record = CreateRefreshTokenRecord(user.Id, refreshToken, now, refreshTokenLifetime);
+        var record = CreateRefreshTokenRecord(user.Id, refreshToken, now, refreshTokenLifetime, isPersistent);
         await refreshTokenRepository.AddAsync(record, cancellationToken);
-        return await BuildSuccessAsync(user, refreshToken, record.ExpiresAtUtc);
+        return await BuildSuccessAsync(user, refreshToken, record);
     }
 
     private RefreshToken CreateRefreshTokenRecord(
         string userId,
         string refreshToken,
         DateTimeOffset now,
-        TimeSpan lifetime)
+        TimeSpan lifetime,
+        bool isPersistent)
     {
         return new()
         {
             UserId = userId,
             TokenHash = tokenService.HashRefreshToken(refreshToken),
             CreatedAtUtc = now,
-            ExpiresAtUtc = now.Add(lifetime)
+            ExpiresAtUtc = now.Add(lifetime),
+            IsPersistent = isPersistent
         };
     }
 
     private async Task<Result<AuthSession>> BuildSuccessAsync(
         ApplicationUser user,
         string refreshToken,
-        DateTimeOffset refreshTokenExpiresAtUtc)
+        RefreshToken record)
     {
         var roles = await accountRepository.GetRolesAsync(user);
         var accessToken = tokenService.CreateAccessToken(user, roles);
@@ -423,7 +426,8 @@ public sealed class AuthService : IAuthService
             accessToken.Token,
             accessToken.ExpiresAtUtc,
             refreshToken,
-            refreshTokenExpiresAtUtc);
+            record.ExpiresAtUtc,
+            record.IsPersistent);
         return Result<AuthSession>.Success(new AuthSession(await MapUserAsync(user), tokens));
     }
 

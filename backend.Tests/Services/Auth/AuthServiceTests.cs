@@ -129,6 +129,20 @@ public sealed class AuthServiceTests
             CancellationToken.None);
 
         Assert.Equal(CurrentTime.AddDays(expectedDays), result.Value!.Tokens.RefreshTokenExpiresAtUtc);
+        // Không ghi nhớ thì cookie chỉ sống tới khi đóng trình duyệt.
+        Assert.Equal(rememberMe, result.Value.Tokens.IsPersistent);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_KeepsASessionThatWasNotRememberedAsASessionCookie()
+    {
+        var (service, _, _, firstTokens) = await LoginAsync(rememberMe: false);
+
+        var result = await service.RefreshAsync(firstTokens.RefreshToken, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.False(result.Value!.Tokens.IsPersistent);
+        Assert.Equal(CurrentTime.AddDays(1), result.Value.Tokens.RefreshTokenExpiresAtUtc);
     }
 
     [Fact]

@@ -18,8 +18,8 @@ public sealed class JwtOptions
 
     public int AccessTokenMinutes { get; init; } = 15;
 
-    // Dùng khi người dùng chọn "ghi nhớ đăng nhập".
-    public int RefreshTokenDays { get; init; } = 7;
+    // Dùng khi người dùng chọn "Duy trì đăng nhập" (và đăng nhập Google). Mỗi lần làm mới phiên lại tính lại từ đầu.
+    public int RefreshTokenDays { get; init; } = 30;
 
     // Dùng khi người dùng không chọn "ghi nhớ đăng nhập".
     public int ShortRefreshTokenDays { get; init; } = 1;

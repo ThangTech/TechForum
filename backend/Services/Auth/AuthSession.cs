@@ -9,4 +9,5 @@ public sealed record AuthTokens(
     string AccessToken,
     DateTimeOffset AccessTokenExpiresAtUtc,
     string RefreshToken,
-    DateTimeOffset RefreshTokenExpiresAtUtc);
+    DateTimeOffset RefreshTokenExpiresAtUtc,
+    bool IsPersistent);

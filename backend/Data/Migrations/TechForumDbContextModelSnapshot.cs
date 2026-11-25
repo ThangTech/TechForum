@@ -740,6 +740,9 @@ namespace TechForum.Api.Data.Migrations
                     b.Property<DateTimeOffset>("ExpiresAtUtc")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<bool>("IsPersistent")
+                        .HasColumnType("bit");
+
                     b.Property<string>("ReplacedByTokenHash")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");

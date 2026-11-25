@@ -155,7 +155,8 @@ public sealed class AuthController : ControllerBase
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = RefreshTokenCookiePath,
-            Expires = session.Tokens.RefreshTokenExpiresAtUtc,
+            // Không ghi nhớ: cookie phiên, trình duyệt xoá khi đóng. Máy chủ vẫn giới hạn thời hạn của token.
+            Expires = session.Tokens.IsPersistent ? session.Tokens.RefreshTokenExpiresAtUtc : null,
             IsEssential = true
         });
 

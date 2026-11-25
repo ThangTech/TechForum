@@ -17,6 +17,9 @@ public sealed class RefreshToken
 
     public DateTimeOffset? RevokedAtUtc { get; set; }
 
+    // False khi đăng nhập không chọn "Duy trì đăng nhập": cookie hết khi đóng trình duyệt.
+    public bool IsPersistent { get; set; }
+
     // Có giá trị khi token đã được xoay vòng, để phát hiện token cũ bị dùng lại.
     public string? ReplacedByTokenHash { get; set; }
 }

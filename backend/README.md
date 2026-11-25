@@ -392,8 +392,11 @@ Xác thực dùng ASP.NET Core Identity để quản lý tài khoản và JWT đ
   stamp của tài khoản).
 - Refresh token là chuỗi ngẫu nhiên nằm trong cookie `TechForum.Refresh`
   (HttpOnly, SameSite=Strict, path `/api/auth`, Secure khi chạy HTTPS). Database
-  chỉ lưu giá trị băm SHA-256 trong bảng `RefreshTokens`. Sống 7 ngày khi chọn
-  "duy trì đăng nhập", 1 ngày nếu không.
+  chỉ lưu giá trị băm SHA-256 trong bảng `RefreshTokens`. Chọn "Duy trì đăng
+  nhập" (hoặc đăng nhập Google): cookie lưu lại 30 ngày, tính lại từ lần làm mới
+  gần nhất, nên ai quay lại trong 30 ngày thì vẫn đăng nhập. Không chọn (hoặc vừa
+  đăng ký): cookie phiên, đóng trình duyệt là đăng xuất, và token vẫn hết hạn sau
+  1 ngày (cột `IsPersistent` giữ lựa chọn này qua các lần làm mới).
 - Mỗi lần làm mới, refresh token được thay mới. Dùng lại token cũ sẽ thu hồi mọi
   token của tài khoản đó. Đổi mật khẩu, đặt lại mật khẩu và khóa tài khoản cũng
   thu hồi mọi refresh token.
