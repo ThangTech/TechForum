@@ -64,7 +64,7 @@ export const ReportPreviewDialog = ({
           Ngữ cảnh: câu trả lời gốc
         </Box>
         <RichHtml
-          className="fr-view reading-content admin-preview"
+          className="reading-content admin-preview"
           html={report.parentAnswerBodyHtml}
           sx={{ mt: 1.5 }}
         />
@@ -72,7 +72,7 @@ export const ReportPreviewDialog = ({
     )}
     <Typography component="h4" sx={{ mt: 2.5, fontSize: '0.875rem', fontWeight: 700 }}>Nội dung bị báo cáo</Typography>
     <RichHtml
-      className="admin-preview fr-view reading-content"
+      className="admin-preview reading-content"
       html={report.targetBodyHtml}
       sx={{ mt: 1.5 }}
     />

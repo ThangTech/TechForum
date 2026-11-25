@@ -128,7 +128,7 @@ export const TopicDetailPage = () => {
                 </Box>
 
                 <RichHtml
-                  className="fr-view reading-content"
+                  className="reading-content"
                   html={readingContent.html}
                   sx={{
                     p: { xs: 3, sm: 4 },

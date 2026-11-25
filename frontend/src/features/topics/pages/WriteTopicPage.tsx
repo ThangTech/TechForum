@@ -144,7 +144,7 @@ const WriteTopicEditor = (options: TopicEditorOptions) => {
                   <h2 className="write-preview__title">{preview.title.trim() || 'Chưa có tiêu đề'}</h2>
                   {preview.summary.trim() && <p className="write-preview__summary">{preview.summary.trim()}</p>}
                   {hasPreviewContent(fields.bodyHtml) ? (
-                    <RichHtml className="fr-view reading-content write-preview" html={toDisplayMediaHtml(preview.bodyHtml)} />
+                    <RichHtml className="reading-content write-preview" html={toDisplayMediaHtml(preview.bodyHtml)} />
                   ) : (
                     <p className="write-note">Chưa có nội dung để xem trước. Hãy quay lại tab Soạn thảo để viết.</p>
                   )}

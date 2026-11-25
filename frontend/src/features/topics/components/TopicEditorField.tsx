@@ -1,22 +1,11 @@
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import FroalaEditorBase from 'froala-editor'
-import FroalaEditorModule from 'react-froala-wysiwyg'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import 'froala-editor/css/froala_editor.pkgd.min.css'
-import 'froala-editor/css/themes/dark.min.css'
-import 'froala-editor/js/plugins.pkgd.min.js'
-import 'froala-editor/js/languages/vi.js'
-import { parseUploadedMedia } from '../../../shared/api/media'
+import { EditorContent } from '@tiptap/react'
 import type { UploadedMedia } from '../../../shared/types/media'
-import { useAuthStore } from '../../auth/store/authStore'
-import { createFroalaConfig, fixVietnameseTranslation } from '../utils/froala'
-import { useThemeMode } from '../../../shared/theme/themeModeState'
-import { resolveModuleDefault } from '../../../shared/utils/moduleInterop'
-
-const FroalaEditorComponent = resolveModuleDefault<typeof FroalaEditorModule>(FroalaEditorModule)
-// The Vietnamese file was loaded above; this corrects its word for the character counter.
-fixVietnameseTranslation(resolveModuleDefault<Parameters<typeof fixVietnameseTranslation>[0]>(FroalaEditorBase))
+import { useRichTextEditor } from '../hooks/useRichTextEditor'
+import { MAX_CONTENT_CHARACTERS } from '../utils/editorMedia'
+import '../styles/richEditor.css'
+import { TopicEditorToolbar } from './TopicEditorToolbar'
 
 interface TopicEditorFieldProps {
   error?: string
@@ -27,87 +16,37 @@ interface TopicEditorFieldProps {
   onUploadStateChange: (isUploading: boolean) => void
 }
 
-export const TopicEditorField = ({
-  error,
-  initialMedia = [],
-  value,
-  onChange,
-  onMediaChange,
-  onUploadStateChange,
-}: TopicEditorFieldProps) => {
-  const [uploadedMedia] = useState(() => new Map(
-    initialMedia.map((media) => [media.link, media]),
-  ))
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const [pendingUploadCount, setPendingUploadCount] = useState(0)
-  const { mode } = useThemeMode()
-
-  useEffect(() => {
-    onUploadStateChange(pendingUploadCount > 0)
-  }, [onUploadStateChange, pendingUploadCount])
-
-  const handleChange = useCallback((html: string) => {
-    const activeMedia: UploadedMedia[] = []
-    uploadedMedia.forEach((media, link) => {
-      if (html.includes(link)) activeMedia.push(media)
-    })
-    onMediaChange(activeMedia)
-    onChange(html)
-  }, [onChange, onMediaChange, uploadedMedia])
-
-  const startUpload = useCallback(() => {
-    setPendingUploadCount((current) => current + 1)
-    setUploadError(null)
-  }, [])
-
-  const finishUpload = useCallback(() => {
-    setPendingUploadCount((current) => Math.max(0, current - 1))
-  }, [])
-
-  const syncInsertedMedia = useCallback((mediaElement: unknown) => {
-    const editorHtml = getEditorHtml(mediaElement)
-    if (editorHtml !== null) handleChange(editorHtml)
-    finishUpload()
-  }, [finishUpload, handleChange])
-
-  const handleUploadError = useCallback((message: string) => {
-    setUploadError(message)
-    finishUpload()
-  }, [finishUpload])
-
-  const config = useMemo(() => createFroalaConfig({
-    getAccessToken: () => useAuthStore.getState().accessToken,
-    onMediaInserted: syncInsertedMedia,
-    onMediaUploaded: (rawMedia) => {
-      try {
-        const media = parseUploadedMedia(rawMedia)
-        uploadedMedia.set(media.link, media)
-        setUploadError(null)
-      } catch (requestError) {
-        setUploadError(requestError instanceof Error ? requestError.message : 'Upload media thất bại.')
-      }
-    },
-    onUploadStarted: startUpload,
-    onUploadError: handleUploadError,
-    theme: mode,
-  }), [handleUploadError, mode, startUpload, syncInsertedMedia, uploadedMedia])
+export const TopicEditorField = ({ error, initialMedia = [], ...options }: TopicEditorFieldProps) => {
+  const editor = useRichTextEditor({ initialMedia, ...options })
 
   return (
     <Stack spacing={1}>
       <Typography component="span" sx={{ color: 'text.primary', fontSize: '0.875rem', fontWeight: 700 }}>Nội dung</Typography>
-      {/* The editor reads its theme only when it starts, so a new mode starts a new editor with the same content. */}
-      <FroalaEditorComponent config={config} key={mode} model={value} onModelChange={handleChange} tag="textarea" />
-      {pendingUploadCount > 0 && (
+      <div className="rich-editor">
+        <TopicEditorToolbar editor={editor} />
+        {/* Ở chế độ HTML, trình soạn thảo chỉ bị ẩn để giữ lịch sử hoàn tác. */}
+        <div hidden={editor.html.isOpen}>
+          <EditorContent editor={editor.editor} />
+        </div>
+        {editor.html.isOpen && (
+          <textarea
+            aria-label="Mã HTML của nội dung"
+            className="rich-editor__html"
+            onChange={(event) => editor.html.setDraft(event.target.value)}
+            spellCheck={false}
+            value={editor.html.draft}
+          />
+        )}
+        <div className="rich-editor__footer">
+          <span>Từ: {editor.state.words}</span>
+          <span>Ký tự: {editor.state.characters}/{MAX_CONTENT_CHARACTERS}</span>
+        </div>
+      </div>
+      {editor.isUploading && (
         <Typography color="primary" role="status" variant="body2">Đang tải media lên, vui lòng chờ hoàn tất…</Typography>
       )}
-      {uploadError && <Typography color="warning" role="status" variant="body2">{uploadError}</Typography>}
+      {editor.uploadError && <Typography color="warning" role="status" variant="body2">{editor.uploadError}</Typography>}
       {error && <Typography color="error" variant="body2">{error}</Typography>}
     </Stack>
   )
-}
-
-const getEditorHtml = (mediaElement: unknown): string | null => {
-  if (typeof mediaElement !== 'object' || mediaElement === null) return null
-  const element = (mediaElement as { 0?: Element })[0]
-  return element?.closest<HTMLElement>('.fr-element')?.innerHTML ?? null
 }

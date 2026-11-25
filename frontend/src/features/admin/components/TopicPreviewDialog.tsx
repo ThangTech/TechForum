@@ -57,7 +57,7 @@ export const TopicPreviewDialog = ({ topicId, onClose }: { topicId: string; onCl
             )}
           </Stack>
           <RichHtml
-            className="admin-preview fr-view reading-content"
+            className="admin-preview reading-content"
             html={data.bodyHtml}
             sx={{ mt: 2.5 }}
           />

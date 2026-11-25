@@ -176,7 +176,7 @@ export const AnswerList = ({
               {answer.replyingTo && <Typography component="span" sx={{ fontSize: '0.75rem' }}>đang trả lời {answer.replyingTo.displayName}</Typography>}
             </Stack>
             <RichHtml
-              className="fr-view reading-content"
+              className="reading-content"
               html={answer.bodyHtml}
               sx={answerBodySx}
             />

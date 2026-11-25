@@ -1,7 +1,3 @@
-# check=skip=SecretsUsedInArgOrEnv
-# (Docker cảnh báo vì tên VITE_FROALA_KEY có chữ KEY. Đây không phải bí mật: key giấy phép Froala vốn nằm trong
-#  JavaScript gửi cho mọi trình duyệt. Bí mật thật như khoá JWT, mật khẩu DB chỉ đưa vào lúc chạy, không đưa lúc build.)
-
 # Image của trang web TechForum: bản build React được nginx phục vụ, và nginx chuyển /api, /media sang API.
 # Build từ thư mục frontend:
 #   docker build -t techforum-web ./frontend
@@ -19,10 +15,8 @@ COPY . ./
 # Biến VITE_* được ghi thẳng vào JavaScript lúc build, nên phải truyền lúc build (không phải lúc chạy).
 # "/" nghĩa là gọi API cùng địa chỉ với trang (nginx bên dưới chuyển /api sang API).
 ARG VITE_API_BASE_URL=/
-ARG VITE_FROALA_KEY=
 ARG VITE_GOOGLE_CLIENT_ID=
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
-    VITE_FROALA_KEY=$VITE_FROALA_KEY \
     VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 RUN npm run build

@@ -88,7 +88,6 @@ Tạo project từ repo GitHub, **Root Directory: `frontend`** (Vercel tự nh�
 | Biến | Giá trị |
 |---|---|
 | `VITE_API_BASE_URL` | `/` (gọi API cùng địa chỉ với trang; Vercel chuyển sang Render) |
-| `VITE_FROALA_KEY` | Key Froala nếu có |
 | `VITE_GOOGLE_CLIENT_ID` | OAuth Client ID của Google; nhớ thêm địa chỉ Vercel vào "Authorized JavaScript origins" |
 
 `frontend/vercel.json` chuyển `/api` và `/media` sang Render, và trả `index.html` cho các đường dẫn khác để React

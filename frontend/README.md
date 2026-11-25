@@ -108,14 +108,12 @@ Quy tắc:
 
 API mặc định được gọi tại `http://localhost:5045`. Có thể đổi địa chỉ bằng cách
 sao chép `.env.example` thành `.env.local` và sửa `VITE_API_BASE_URL`.
-Nếu có license Froala hợp lệ, đặt activation key trong `VITE_FROALA_KEY` của
-`.env.local`; không commit key. Khi để trống, trang soạn chạy chế độ đánh giá và
-giữ nguyên attribution của Froala.
-
-Froala được tích hợp bằng `react-froala-wysiwyg` và package npm cùng phiên bản;
-không thêm CDN `@latest` vào `index.html` vì sẽ nạp trùng runtime/plugin và có
-thể lệch phiên bản. CSS `froala_style.min.css` được tải toàn cục và nội dung đã
-làm sạch được hiển thị trong `.fr-view`.
+Trình soạn thảo bài viết là TipTap mã nguồn mở (giấy phép MIT, không cần key hay
+tài khoản): `features/topics/hooks/useRichTextEditor.ts` cấu hình editor, tải
+ảnh/video qua `/api/media/*`, chế độ sửa HTML và bộ đếm từ/ký tự;
+`utils/editorVideo.ts` thêm khối `<video>`. Nội dung lưu dưới dạng HTML và được
+backend làm sạch như trước; bài viết cũ của Froala vẫn hiển thị trong
+`.reading-content`.
 
 ```powershell
 npm install
@@ -144,8 +142,8 @@ Các route chính:
 - `/topics/:id`, `/members/:userId`: chi tiết, câu trả lời và hồ sơ tác giả công khai.
 - `/members/:userId/followers`, `/members/:userId/following`: danh sách theo dõi
   công khai có phân trang, không hiển thị email.
-- `/write`: route riêng tư dùng Froala để lưu bản nháp hoặc xuất bản, hỗ trợ
-  upload ảnh/video qua TechForum API.
+- `/write`: route riêng tư dùng trình soạn thảo TipTap để lưu bản nháp hoặc xuất bản,
+  hỗ trợ upload ảnh/video (nút chèn, kéo thả, dán) qua TechForum API.
 
 Khu vực thảo luận gọi API thật tại `/api/topics/{topicId}/answers`. Khách đọc
 được câu trả lời và được yêu cầu đăng nhập khi muốn phản hồi; thành viên có thể

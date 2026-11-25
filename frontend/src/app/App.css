@@ -295,33 +295,57 @@
   max-width: 100%;
 }
 
-/* The same limits apply to a published post, the preview and the editor (.fr-element), so a picture or a video
-   never fills the whole screen: they have a fixed largest size and the picture inside is never stretched. */
-.reading-content img,
-.fr-element img {
+/* The same limits apply to a published post, the preview and the editor, so a picture or a video never fills the
+   whole screen: they have a fixed largest size and the picture inside is never stretched. */
+.reading-content img {
   height: auto;
   max-height: 480px;
   object-fit: contain;
 }
 
-/* Froala has its own rule for the size of a video (.fr-view .fr-video > video), so the limits use !important. */
-.reading-content video,
-.fr-element video,
-.fr-element .fr-video > video {
+.reading-content video {
   display: block;
   width: 100%;
-  max-width: 640px !important;
+  max-width: 640px;
   height: auto;
-  max-height: 360px !important;
+  max-height: 360px;
   aspect-ratio: 16 / 9;
   object-fit: contain;
   background: #000;
 }
 
-/* The box that Froala puts around a video must not be wider than the video. */
-.reading-content .fr-video,
-.fr-element .fr-video {
+/* Bài viết bằng trình soạn thảo cũ (Froala) còn các class căn ảnh/video này. */
+.reading-content .fr-video {
+  display: block;
   max-width: 100%;
+}
+
+.reading-content img.fr-dib {
+  display: block;
+  margin-inline: auto;
+}
+
+.reading-content img.fr-fil {
+  float: left;
+  margin: 4px 16px 8px 0;
+}
+
+.reading-content img.fr-fir {
+  float: right;
+  margin: 4px 0 8px 16px;
+}
+
+.reading-content blockquote {
+  margin-inline: 0;
+  padding-left: 16px;
+  border-left: 3px solid var(--color-primary);
+  color: var(--color-muted);
+}
+
+.reading-content hr {
+  margin-block: 24px;
+  border: 0;
+  border-top: 1px solid var(--color-border-strong);
 }
 
 .page-content {

@@ -1,0 +1,130 @@
+/* Trình soạn thảo bài viết (TipTap). Dùng màu của trang nên tự đúng ở chế độ sáng và tối. */
+.rich-editor {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.rich-editor:focus-within {
+  border-color: var(--color-primary);
+}
+
+.rich-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-subtle);
+}
+
+.rich-editor__tool {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.rich-editor__tool:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.rich-editor__tool[aria-pressed='true'] {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.rich-editor__tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.rich-editor__tool:focus-visible,
+.rich-editor__format:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.rich-editor__format {
+  height: 34px;
+  margin-right: 4px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.rich-editor__divider {
+  width: 1px;
+  height: 20px;
+  margin-inline: 4px;
+  background: var(--color-border-strong);
+}
+
+.rich-editor__content {
+  min-height: 280px;
+  padding: 16px 20px;
+  color: var(--color-text);
+  line-height: 1.7;
+  outline: none;
+}
+
+.rich-editor__content > :first-child {
+  margin-top: 0;
+}
+
+.rich-editor__content blockquote {
+  margin-inline: 0;
+  padding-left: 16px;
+  border-left: 3px solid var(--color-primary);
+  color: var(--color-muted);
+}
+
+/* Chữ gợi ý khi bài còn trống (Placeholder của TipTap). */
+.rich-editor__content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--color-quiet);
+  pointer-events: none;
+}
+
+.rich-editor__content img.ProseMirror-selectednode,
+.rich-editor__content video.ProseMirror-selectednode {
+  outline: 2px solid var(--color-primary);
+}
+
+.rich-editor__html {
+  display: block;
+  width: 100%;
+  min-height: 280px;
+  padding: 16px 20px;
+  border: 0;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  resize: vertical;
+  outline: none;
+}
+
+.rich-editor__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
