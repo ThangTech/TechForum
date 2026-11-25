@@ -8,8 +8,6 @@ namespace TechForum.Api.Configuration;
 
 // Các cấu hình thay đổi theo nơi chạy API (máy lập trình, Docker, Render), để cùng một bản build chạy được mọi nơi:
 // - Database:MigrateOnStartup, Database:SeedDemoData: cập nhật DB và thêm dữ liệu mẫu khi khởi động.
-// - DataProtection:KeysPath: thư mục khóa ký link đặt lại mật khẩu; trong container phải là volume,
-//   nếu không link hết hiệu lực mỗi lần tạo lại container.
 // - ReverseProxy:Enabled: đọc IP thật của người dùng từ X-Forwarded-For, nếu không mọi người dùng chung
 //   một giới hạn gửi email khôi phục.
 // - ReverseProxy:ForwardLimit: số proxy đứng trước API (Docker: 1 là nginx; Render sau Vercel: 2).
@@ -17,13 +15,11 @@ public static class HostingRegistration
 {
     public static IServiceCollection AddHostingSettings(this IServiceCollection services, IConfiguration configuration)
     {
-        var keysPath = configuration["DataProtection:KeysPath"];
-        if (!string.IsNullOrWhiteSpace(keysPath))
-        {
-            services.AddDataProtection()
-                .SetApplicationName("TechForum")
-                .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
-        }
+        // Khóa ký link trong email (xác minh 24 giờ, đặt lại mật khẩu 30 phút) lưu trong DB, không lưu trên ổ đĩa:
+        // Render miễn phí xóa ổ đĩa mỗi lần dịch vụ ngủ dậy, khi đó mọi link đã gửi sẽ không mở được nữa.
+        services.AddDataProtection()
+            .SetApplicationName("TechForum")
+            .PersistKeysToDbContext<TechForumDbContext>();
 
         if (IsBehindProxy(configuration))
         {

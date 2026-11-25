@@ -49,7 +49,6 @@ services:
       # Các cờ ở bước 2: tự migrate và thêm dữ liệu mẫu, giữ khoá trong volume, đọc IP thật từ nginx.
       Database__MigrateOnStartup: "true"
       Database__SeedDemoData: ${SEED_DEMO_DATA:-true}
-      DataProtection__KeysPath: /app/App_Data/keys
       ReverseProxy__Enabled: "true"
       BannedWords__SeedFile: /app/Data/Seed/banned-words.txt
       # Tải ảnh/video lên Cloudinary. Để trống thì trang vẫn chạy nhưng không tải được tệp.
@@ -71,7 +70,6 @@ services:
       GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
     volumes:
       - uploads:/app/App_Data/uploads
-      - keys:/app/App_Data/keys
       # Danh sách từ cấm: mặc định là file mẫu trong repo; đặt BANNED_WORDS_FILE để dùng danh sách thật trên máy.
       - ${BANNED_WORDS_FILE:-./backend/Data/Seed/banned-words.example.txt}:/app/Data/Seed/banned-words.txt:ro
     # Không mở cổng ra ngoài: chỉ nginx (service web) gọi được API, qua mạng nội bộ của Docker.
@@ -101,4 +99,3 @@ services:
 volumes:
   db-data:
   uploads:
-  keys:

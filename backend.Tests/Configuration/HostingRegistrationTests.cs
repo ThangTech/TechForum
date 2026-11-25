@@ -1,4 +1,6 @@
 using System.Net;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -7,12 +9,26 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using TechForum.Api.Configuration;
+using TechForum.Api.Data;
 using Xunit;
 
 namespace TechForum.Api.Tests.Services;
 
 public sealed class HostingRegistrationTests
 {
+    // Render xóa ổ đĩa khi dịch vụ ngủ dậy: khóa ký link trong email phải nằm trong DB thì link mới còn dùng được.
+    [Fact]
+    public void AddHostingSettings_KeepsTheLinkKeysInTheDatabase()
+    {
+        var services = new ServiceCollection().AddLogging();
+        services.AddHostingSettings(Configuration());
+
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<KeyManagementOptions>>().Value;
+
+        Assert.IsType<EntityFrameworkCoreXmlRepository<TechForumDbContext>>(options.XmlRepository);
+    }
+
     [Fact]
     public void GetForwardLimit_IsOneWhenItIsNotSet()
     {

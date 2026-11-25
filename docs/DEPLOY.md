@@ -76,8 +76,9 @@ một giới hạn gửi email khôi phục mật khẩu. Với 2, API lùi thê
 **Giới hạn của gói miễn phí:**
 
 - Dịch vụ ngủ sau 15 phút không có ai truy cập; lần mở đầu tiên sau đó mất khoảng một phút.
-- Ổ đĩa bị xoá mỗi lần khởi động lại. Ảnh, video nằm trên Cloudinary nên không mất. Khoá Data Protection cũng mất,
-  nên link đặt lại mật khẩu đang chờ (sống 30 phút) hết hiệu lực khi dịch vụ khởi động lại.
+- Ổ đĩa bị xoá mỗi lần khởi động lại. Ảnh, video nằm trên Cloudinary nên không mất. Khoá ký link trong email
+  (Data Protection) nằm trong bảng `DataProtectionKeys` của database, nên link xác minh email và đặt lại mật khẩu đã
+  gửi vẫn mở được sau khi dịch vụ ngủ dậy. Ai đọc được database thì cũng đọc được khoá này, nên giữ kín chuỗi kết nối.
 
 ## 3. Vercel (trang web)
 

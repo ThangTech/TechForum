@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,7 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Data;
 
-public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>
+public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
 {
     public TechForumDbContext(DbContextOptions<TechForumDbContext> options)
         : base(options)
@@ -14,6 +15,9 @@ public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Category> Categories => Set<Category>();
+
+    // Khóa ký link xác minh email và đặt lại mật khẩu. Nằm trong DB để link còn dùng được khi máy chủ khởi động lại với ổ đĩa trống (Render).
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<Banner> Banners => Set<Banner>();
