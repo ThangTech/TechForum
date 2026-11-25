@@ -1,0 +1,17 @@
+# Cho Google và các công cụ tìm kiếm đọc trang công khai, bỏ qua trang riêng của thành viên và quản trị.
+User-agent: *
+Disallow: /admin
+Disallow: /write
+Disallow: /my-topics
+Disallow: /saved
+Disallow: /starred
+Disallow: /account
+Disallow: /notifications
+Disallow: /activity
+Disallow: /reports
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /topics/*/edit
+Allow: /
+
+Sitemap: https://www.techforum.id.vn/sitemap.xml

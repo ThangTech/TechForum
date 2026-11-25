@@ -3,6 +3,7 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://techforum-api.onrender.com/api/:path*" },
     { "source": "/media/:path*", "destination": "https://techforum-api.onrender.com/media/:path*" },
+    { "source": "/sitemap.xml", "destination": "https://techforum-api.onrender.com/sitemap.xml" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

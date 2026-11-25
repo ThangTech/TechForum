@@ -19,6 +19,7 @@ import { ReportAction } from '../../reports/components/ReportAction'
 import { TopicEngagementBar } from '../../interactions/components/TopicEngagementBar'
 import { ReadingTableOfContents } from '../components/ReadingTableOfContents'
 import { RelatedTopics } from '../components/RelatedTopics'
+import { usePageMeta } from '../../../shared/hooks/usePageMeta'
 import { useTopicDetailPage } from '../hooks/useTopicDetailPage'
 import '../styles/topicReading.css'
 
@@ -30,6 +31,7 @@ const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
 export const TopicDetailPage = () => {
   const { topic, readingContent, isLoading, error, retry, isTopicReady, isOwnTopic, wasUpdatedAfterPublication } =
     useTopicDetailPage()
+  usePageMeta(topic?.title, topic?.summary)
 
   return (
     <main className="main-area" id="main-content">
