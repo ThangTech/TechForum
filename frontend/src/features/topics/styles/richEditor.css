@@ -128,3 +128,52 @@
   color: var(--color-muted);
   font-size: 0.8125rem;
 }
+
+/* Ô xem trước khi ảnh/video đang tải lên: tệp trên máy hiện mờ, vòng xoay cho biết còn đang chờ. */
+.rich-editor__uploading {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: min(100%, 400px);
+  margin-block: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-subtle);
+}
+
+.rich-editor__uploading :is(img, video) {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  opacity: 0.45;
+}
+
+.rich-editor__uploading-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-heading);
+  background: color-mix(in srgb, var(--color-surface) 55%, transparent);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.rich-editor__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border-strong);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: rich-editor-spin 0.8s linear infinite;
+}
+
+@keyframes rich-editor-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rich-editor__spinner { animation-duration: 2.4s; }
+}

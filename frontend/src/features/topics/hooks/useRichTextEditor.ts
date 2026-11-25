@@ -8,6 +8,7 @@ import type { UploadedMedia } from '../../../shared/types/media'
 import { uploadEditorMedia } from '../api/editorMedia'
 import { checkMediaFile, getMediaKind, MAX_CONTENT_CHARACTERS, normalizeLinkUrl, type EditorMediaKind } from '../utils/editorMedia'
 import { Video } from '../utils/editorVideo'
+import { addPlaceholderMeta, findPlaceholder, UploadPlaceholder } from '../utils/uploadPlaceholder'
 
 export type BlockFormat = 'paragraph' | 'h2' | 'h3' | 'h4' | 'codeBlock'
 
@@ -67,6 +68,7 @@ export const useRichTextEditor = ({ initialMedia, value, onChange, onMediaChange
       }),
       Image,
       Video,
+      UploadPlaceholder,
       CharacterCount.configure({ limit: MAX_CONTENT_CHARACTERS }),
       Placeholder.configure({ placeholder: 'Viết điều gì đó...' }),
     ],
@@ -110,15 +112,21 @@ export const useRichTextEditor = ({ initialMedia, value, onChange, onMediaChange
     }
     setUploadError(null)
     setPendingUploadCount((current) => current + 1)
+    // Hiện ngay ô xem trước kèm vòng xoay ở chỗ sẽ chèn (sau vùng đang chọn, để không thay mất ảnh vừa chèn).
+    const id = crypto.randomUUID()
+    const previewUrl = URL.createObjectURL(file)
+    editor.view.dispatch(editor.state.tr.setMeta(...addPlaceholderMeta({ add: { id, pos: editor.state.selection.to, previewUrl, kind } })))
     try {
       const media = await uploadEditorMedia(kind, file)
       uploadedMedia.set(media.link, media)
-      // Chèn sau vùng đang chọn: nếu đang chọn ảnh/video vừa chèn thì không bị thay mất.
+      const pos = findPlaceholder(editor.state, id) ?? editor.state.selection.to
       const node = kind === 'image' ? { type: 'image', attrs: { src: media.link, alt: '' } } : { type: 'video', attrs: { src: media.link } }
-      editor.chain().focus().insertContentAt(editor.state.selection.to, node).run()
+      editor.chain().insertContentAt(pos, node).run()
     } catch (requestError) {
       setUploadError(getActionError(requestError, uploadFallback[kind]))
     } finally {
+      if (!editor.isDestroyed) editor.view.dispatch(editor.state.tr.setMeta(...addPlaceholderMeta({ remove: { id } })))
+      URL.revokeObjectURL(previewUrl)
       setPendingUploadCount((current) => Math.max(0, current - 1))
     }
   }, [editor, uploadedMedia])
