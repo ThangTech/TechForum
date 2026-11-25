@@ -81,6 +81,10 @@ một giới hạn gửi email khôi phục mật khẩu. Với 2, API lùi thê
   (Data Protection) nằm trong bảng `DataProtectionKeys` của database, nên link xác minh email và đặt lại mật khẩu đã
   gửi vẫn mở được sau khi dịch vụ ngủ dậy. Ai đọc được database thì cũng đọc được khoá này, nên giữ kín chuỗi kết nối.
 
+**Giữ API không ngủ (tùy chọn):** đặt một dịch vụ ping miễn phí (cron-job.org, UptimeRobot) gọi
+`https://techforum-api.onrender.com/api/health` mỗi 10 phút. Đường dẫn này không đọc database, nên Azure SQL vẫn
+được ngủ và không tốn hạn mức vCore. Không ping trang khác của API: mỗi lần như vậy sẽ đánh thức database.
+
 ## 3. Vercel (trang web)
 
 Tạo project từ repo GitHub, **Root Directory: `frontend`** (Vercel tự nhận ra Vite).
@@ -104,3 +108,10 @@ Sau khi có địa chỉ Vercel, quay lại Render và sửa `RecoveryEmail__Fro
 - Đăng ký tài khoản mới: email xác minh đến được hộp thư (xem cả Spam), bấm link thì thanh nhắc biến mất và đăng bài được.
 - Quên mật khẩu: email đến được hộp thư.
 - Để trang không dùng 20 phút rồi mở lại: lần đầu chậm, sau đó bình thường (Render và Azure SQL thức dậy).
+
+## 5. Hiện trên Google
+
+- `https://www.techforum.id.vn/robots.txt` (file tĩnh trong `frontend/public`) và `https://www.techforum.id.vn/sitemap.xml`
+  (API tạo từ các bài công khai, Vercel chuyển sang Render).
+- Đăng ký trang ở Google Search Console (loại **Domain**, xác minh bằng bản ghi TXT trong DNS của iNET), rồi gửi
+  `sitemap.xml` trong mục **Sitemaps**. Google thường cần vài ngày để bắt đầu hiện trang.
