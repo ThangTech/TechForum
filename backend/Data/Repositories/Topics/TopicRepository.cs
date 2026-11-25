@@ -18,6 +18,22 @@ public sealed class TopicRepository : ITopicRepository
         this.timeProvider = timeProvider;
     }
 
+    // Mỗi từ của từ khóa phải có trong bài (tiêu đề, tóm tắt, nội dung, không phân biệt dấu), trong một thẻ của bài
+    // (slug đã bỏ dấu, hoặc tên thẻ), trong slug chuyên mục hoặc trong tên tác giả.
+    private static IQueryable<Topic> MatchKeyword(IQueryable<Topic> topics, string? keyword)
+    {
+        var raw = keyword?.Trim() ?? string.Empty;
+        foreach (var word in TopicSearchText.Words(raw))
+        {
+            topics = topics.Where(topic =>
+                topic.SearchText.Contains(word) ||
+                topic.TopicTags.Any(item => item.Tag.Slug.Contains(word) || item.Tag.Name.Contains(word)) ||
+                topic.Category.Slug.Contains(word) ||
+                topic.Author.DisplayName.Contains(raw));
+        }
+        return topics;
+    }
+
     public Task<TopicPage> GetPublicPageAsync(
         TopicQuery query,
         CancellationToken cancellationToken)
@@ -47,11 +63,7 @@ public sealed class TopicRepository : ITopicRepository
                 follow.FollowerId == followerId && follow.FollowingId == topic.AuthorId));
         }
 
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            topics = topics.Where(topic =>
-                topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
-        }
+        topics = MatchKeyword(topics, keyword);
 
         if (query.Type.HasValue)
         {
@@ -202,11 +214,7 @@ public sealed class TopicRepository : ITopicRepository
             .Where(topic => topic.AuthorId == authorId && !topic.IsDeleted), query.QuestionStatus);
         var keyword = query.Keyword?.Trim();
 
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            topics = topics.Where(topic =>
-                topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
-        }
+        topics = MatchKeyword(topics, keyword);
 
         if (query.Type.HasValue)
         {

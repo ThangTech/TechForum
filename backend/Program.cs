@@ -151,6 +151,8 @@ builder.Services.AddScoped<ISkillCommunityRepository, SkillCommunityRepository>(
 builder.Services.AddScoped<ISkillCommunityService, SkillCommunityService>();
 builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<ITopicService, TopicService>();
+builder.Services.AddScoped<ITopicSearchBackfillRepository, TopicSearchBackfillRepository>();
+builder.Services.AddHostedService<TopicSearchBackfillService>();
 builder.Services.AddScoped<IRelatedTopicRepository, RelatedTopicRepository>();
 builder.Services.AddScoped<IRelatedTopicService, RelatedTopicService>();
 builder.Services.AddScoped<ITopicEngagementRepository, TopicEngagementRepository>();

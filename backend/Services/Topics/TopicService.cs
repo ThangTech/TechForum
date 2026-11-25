@@ -145,6 +145,7 @@ public sealed partial class TopicService : ITopicService
             Slug = slug,
             Summary = values.Summary,
             BodyHtml = values.SanitizedBody,
+            SearchText = TopicSearchText.Build(values.Title, values.Summary, values.SanitizedBody),
             CoverImageUrl = mediaUrlRules.FindFirstImageUrl(values.SanitizedBody),
             Type = values.Type,
             Status = request.Publish ? TopicStatus.Published : TopicStatus.Draft,
@@ -214,6 +215,7 @@ public sealed partial class TopicService : ITopicService
         topic.Title = values.Title;
         topic.Summary = values.Summary;
         topic.BodyHtml = values.SanitizedBody;
+        topic.SearchText = TopicSearchText.Build(values.Title, values.Summary, values.SanitizedBody);
         topic.CoverImageUrl = mediaUrlRules.FindFirstImageUrl(values.SanitizedBody);
         topic.Type = values.Type;
         if (values.Type == TopicType.Article)

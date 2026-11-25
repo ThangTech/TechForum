@@ -850,6 +850,10 @@ namespace TechForum.Api.Data.Migrations
                     b.Property<int>("Score")
                         .HasColumnType("int");
 
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("ShareCount")
                         .HasColumnType("int");
 

@@ -85,6 +85,7 @@ public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>, IDa
         topic.Property(item => item.Slug).HasMaxLength(220).IsRequired();
         topic.Property(item => item.Summary).HasMaxLength(500).IsRequired();
         topic.Property(item => item.BodyHtml).IsRequired();
+        topic.Property(item => item.SearchText).IsRequired();
         topic.Property(item => item.CoverImageUrl).HasMaxLength(300);
         topic.Property(item => item.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
         topic.Property(item => item.Status).HasConversion<string>().HasMaxLength(20).IsRequired();

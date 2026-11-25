@@ -9,6 +9,8 @@ public sealed class Topic
     public required string Slug { get; set; }
     public required string Summary { get; set; }
     public required string BodyHtml { get; set; }
+    // Tiêu đề, tóm tắt và nội dung đã bỏ dấu, viết thường (TopicSearchText) để tìm kiếm không dấu.
+    public string SearchText { get; set; } = string.Empty;
     // Ảnh đầu tiên trong nội dung, dùng làm ảnh bìa ở danh sách.
     public string? CoverImageUrl { get; set; }
     public TopicType Type { get; set; }
