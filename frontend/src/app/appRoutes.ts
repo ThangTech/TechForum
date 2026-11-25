@@ -29,6 +29,8 @@ export const appRoutes = {
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   verifyEmail: '/verify-email',
+  privacy: '/privacy',
+  terms: '/terms',
   register: '/register',
   topic: (id: string | string) => `/topics/${encodeURIComponent(String(id))}`,
   editTopic: (id: string | string) => `/topics/${encodeURIComponent(String(id))}/edit`,

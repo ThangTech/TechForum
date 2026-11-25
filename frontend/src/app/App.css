@@ -744,6 +744,20 @@
   text-decoration: none;
 }
 
+/* Dòng nhắc điều khoản dưới nút đăng ký. */
+.auth-form__legal {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.auth-form__legal a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 .form-alert {
   padding: 12px 14px;
   border: 1px solid var(--color-danger-border);

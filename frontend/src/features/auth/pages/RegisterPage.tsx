@@ -74,6 +74,11 @@ export const RegisterPage = () => {
         <Button loading={view.isSubmitting} type="submit" variant="contained" fullWidth>Tạo tài khoản</Button>
         <GoogleSignInButton text="signup_with" onCredential={view.signInWithGoogle} />
 
+        <p className="auth-form__legal">
+          Khi đăng ký, bạn đồng ý với <Link to={appRoutes.terms}>Điều khoản sử dụng</Link> và{' '}
+          <Link to={appRoutes.privacy}>Chính sách bảo mật</Link> của TechForum.
+        </p>
+
         <p className="auth-form__switch">
           Đã có tài khoản?{' '}
           <Link to={createAuthUrl(appRoutes.login, view.returnUrl)}>Đăng nhập</Link>

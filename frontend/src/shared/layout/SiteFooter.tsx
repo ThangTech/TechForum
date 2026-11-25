@@ -139,6 +139,8 @@ export const SiteFooter = () => {
               Liên hệ:{' '}
               <Box component="a" href={`mailto:${contactEmail}`} sx={{ ...linkSx, fontSize: 'inherit' }}>{contactEmail}</Box>
             </span>
+            <Box component={Link} sx={{ ...linkSx, fontSize: 'inherit' }} to={appRoutes.privacy}>Chính sách bảo mật</Box>
+            <Box component={Link} sx={{ ...linkSx, fontSize: 'inherit' }} to={appRoutes.terms}>Điều khoản sử dụng</Box>
           </Box>
         </div>
       </Box>

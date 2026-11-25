@@ -24,6 +24,8 @@ import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
 import { VerifyEmailPage } from '../features/auth/pages/VerifyEmailPage'
 
+// Trang chính sách ít người mở, nên chỉ tải khi cần.
+const LegalPage = lazy(() => import('../features/legal/pages/LegalPage').then((module) => ({ default: module.LegalPage })))
 const WriteTopicPage = lazy(() => import('../features/topics/pages/WriteTopicPage').then((module) => ({
   default: module.WriteTopicPage,
 })))
@@ -115,6 +117,8 @@ const App = () => {
           <Route path="activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
           <Route path="reports" element={<ProtectedRoute><MyReportsPage /></ProtectedRoute>} />
           <Route path="communities" element={<CommunitiesPage />} />
+          <Route path="privacy" element={<LegalPage kind="privacy" />} />
+          <Route path="terms" element={<LegalPage kind="terms" />} />
           <Route path="skills/:tagId" element={<SkillCommunityPage />} />
           <Route path="*" element={<Navigate to={appRoutes.home} replace />} />
         </Route>

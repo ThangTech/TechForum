@@ -21,6 +21,7 @@ public sealed class SitemapServiceTests
         Assert.StartsWith("<?xml version=\"1.0\" encoding=\"utf-8\"?>", result.Value);
         Assert.Contains("<loc>https://www.forum.example/</loc>", result.Value);
         Assert.Contains("<loc>https://www.forum.example/questions</loc>", result.Value);
+        Assert.Contains("<loc>https://www.forum.example/privacy</loc>", result.Value);
         Assert.Contains($"<loc>https://www.forum.example/topics/{topicId}</loc>", result.Value);
         // Ngày sửa tính theo giờ UTC.
         Assert.Contains("<lastmod>2026-11-21</lastmod>", result.Value);

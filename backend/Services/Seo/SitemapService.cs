@@ -10,7 +10,7 @@ public sealed class SitemapService : ISitemapService
 {
     // Giới hạn của một file sitemap là 50.000 địa chỉ; diễn đàn nhỏ nên lấy 5.000 bài mới nhất là đủ.
     private const int MaxTopics = 5000;
-    private static readonly string[] MainPages = ["/", "/articles", "/questions", "/discussions"];
+    private static readonly string[] MainPages = ["/", "/articles", "/questions", "/discussions", "/privacy", "/terms"];
     private static readonly XNamespace SitemapNamespace = "http://www.sitemaps.org/schemas/sitemap/0.9";
 
     private readonly ISitemapRepository repository;
