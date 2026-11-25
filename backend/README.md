@@ -488,10 +488,10 @@ phiếu luôn hoàn lại chính xác: ví dụ bài mới bị downvote có đi
 
 Giới hạn chống bình chọn gian lận (cấu hình `VoteLimits` trong `appsettings.json`, đọc bằng `VoteLimitOptions`):
 
-- **Tài khoản phải tồn tại ít nhất 3 ngày** (`MinAccountAgeDays`) mới được bình chọn, để một tài khoản tạo ra
-  chỉ nhằm đẩy hoặc dìm điểm không bình chọn được ngay. Dưới 3 ngày, `PUT` với `1` hoặc `-1` trả `403` kèm số ngày
-  còn lại. Rút phiếu (`0`) luôn được phép.
-- **Downvote khắt khe hơn upvote** vì đây là phiếu dễ bị dùng để gây hại: ngoài 3 ngày tuổi, tài khoản phải tồn tại **ít nhất
+- **Bình chọn tốt được ngay** khi tài khoản đã xác minh email. Tài khoản lập ra chỉ để đẩy điểm bị chặn bởi xác minh
+  email và giới hạn mỗi phút/mỗi ngày. `MinAccountAgeDays` (mặc định 0) đặt số ngày chờ cho mọi phiếu nếu cần; khi đó
+  `PUT` với `1` hoặc `-1` trả `403` kèm số ngày còn lại. Rút phiếu (`0`) luôn được phép.
+- **Downvote khắt khe hơn upvote** vì đây là phiếu dễ bị dùng để gây hại: tài khoản phải tồn tại **ít nhất
   7 ngày hoặc có từ 50 điểm danh tiếng** (`DownvoteMinAccountAgeDays`, `DownvoteMinReputation`) mới được bình chọn
   ▼ (kể cả đổi từ ▲ sang ▼). Không đủ thì `403` kèm số ngày còn lại hoặc số điểm còn thiếu. Điểm thật được so với 50
   (điểm hiển thị không bao giờ dưới 0 nhưng điểm thật có thể âm). Rút phiếu luôn được phép.

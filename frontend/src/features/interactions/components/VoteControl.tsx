@@ -79,7 +79,7 @@ export const VoteControl = ({ subject, score, scoreHidden = false, myVote, onVot
         sx={{ minWidth: 34, textAlign: 'center', fontSize: '0.875rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: myVote === 1 ? 'success.main' : myVote === -1 ? 'error.main' : 'text.primary' }}
         title={scoreHidden ? 'Điểm được ẩn trong 2 giờ đầu sau khi đăng để mọi người đánh giá khách quan' : `Điểm: ${score}`}
       >
-        {scoreHidden ? '•' : formatScore(score)}
+        {scoreHidden ? 'Mới' : formatScore(score)}
       </Box>
       {arrow(-1)}
     </Box>

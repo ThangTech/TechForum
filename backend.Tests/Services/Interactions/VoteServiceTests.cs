@@ -106,6 +106,21 @@ public sealed class VoteServiceTests
         Assert.Empty(votes.Commands);
     }
 
+    // Cấu hình mặc định: tài khoản vừa lập (đã xác minh email) bình chọn tốt được ngay, bình chọn chưa tốt thì chưa.
+    [Fact]
+    public async Task SetTopicVoteAsync_WithDefaultLimits_ANewAccountMayUpvoteButNotDownvote()
+    {
+        accounts.CreatedAt["voter"] = Now.AddHours(-1);
+        var service = new VoteService(new FakeTopics(topic), new FakeAnswers([]), votes, accounts, limiter,
+            Options.Create(new VoteLimitOptions()), new FixedTime(Now));
+
+        var upvote = await service.SetTopicVoteAsync(TestIds.Id(1), "voter", 1, default);
+        var downvote = await service.SetTopicVoteAsync(TestIds.Id(1), "voter", -1, default);
+
+        Assert.True(upvote.Succeeded);
+        Assert.Equal(ErrorType.Forbidden, downvote.Error);
+    }
+
     [Fact]
     public async Task SetTopicVoteAsync_AnAccountOfFiveDaysMayUpvote()
     {

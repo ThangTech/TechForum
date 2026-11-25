@@ -4,8 +4,9 @@ public sealed class VoteLimitOptions
 {
     public const string SectionName = "VoteLimits";
 
-    // Tài khoản mới lập không bình chọn được ngay, để không lập tài khoản chỉ để đẩy hoặc dìm điểm.
-    public int MinAccountAgeDays { get; init; } = 3;
+    // Số ngày tối thiểu trước khi được bình chọn (cả tốt lẫn chưa tốt). Mặc định 0: tài khoản đã xác minh email bình
+    // chọn tốt được ngay, vì giới hạn mỗi phút/mỗi ngày đã chống tài khoản lập ra chỉ để đẩy điểm. Tăng lên nếu bị lạm dụng.
+    public int MinAccountAgeDays { get; init; }
 
     // Bình chọn chưa tốt khó hơn vì đó là lá phiếu dùng để hại người khác: cần tài khoản đủ ngày HOẶC đủ
     // danh tiếng (người đã được tin tưởng thì được sớm hơn). Áp dụng thêm sau MinAccountAgeDays.
