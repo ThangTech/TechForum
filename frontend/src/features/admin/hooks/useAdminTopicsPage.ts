@@ -17,14 +17,15 @@ export const useAdminTopicsPage = () => {
   const list = useListParams()
   const keyword = list.read('keyword')
   const type = readChoice(list.params.get('type'), ['article', 'question'] as const)
-  const visibility = readChoice(list.params.get('visibility'), ['visible', 'draft', 'hidden', 'deleted'] as const)
+  const visibility = readChoice(list.params.get('visibility'), ['visible', 'draft', 'hidden', 'deleted', 'reported', 'autohidden'] as const)
+  const sort = readChoice(list.params.get('sort'), ['reports'] as const)
   const categoryValue = list.params.get('categoryId')
   const categoryId = isGuid(categoryValue) ? categoryValue.toLowerCase() : undefined
   const feedback = useActionFeedback()
   const [previewId, setPreviewId] = useState<string | null>(null)
   const [selected, setSelected] = useState<{ topic: AdminTopic; action: ModerationAction } | null>(null)
 
-  const topicsQuery = useAdminTopics({ keyword, type, visibility, categoryId, page: list.page, pageSize: PAGE_SIZE })
+  const topicsQuery = useAdminTopics({ keyword, type, visibility, categoryId, sort, page: list.page, pageSize: PAGE_SIZE })
   const categoriesQuery = useCategories()
   const moderateMutation = useModerateTopic()
   const categories = categoriesQuery.data ?? []
@@ -37,6 +38,7 @@ export const useAdminTopicsPage = () => {
       type: String(fields.get('type') ?? ''),
       visibility: String(fields.get('visibility') ?? ''),
       categoryId: String(fields.get('categoryId') ?? ''),
+      sort: String(fields.get('sort') ?? ''),
     })
   }
 
@@ -66,7 +68,7 @@ export const useAdminTopicsPage = () => {
   }
 
   return {
-    filters: { keyword, type, visibility, categoryId },
+    filters: { keyword, type, visibility, categoryId, sort },
     categories,
     submitFilters,
     clearFilters: list.clear,

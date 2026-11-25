@@ -23,7 +23,9 @@ public sealed class AdminTopicRepository : IAdminTopicRepository
         var keyword = query.Keyword?.Trim();
         if (!string.IsNullOrWhiteSpace(keyword))
         {
-            topics = topics.Where(topic => topic.Title.Contains(keyword) || topic.Summary.Contains(keyword));
+            // Tìm cả theo tác giả (tên hoặc email), vì quản trị viên thường cần xem mọi bài của một người.
+            topics = topics.Where(topic => topic.Title.Contains(keyword) || topic.Summary.Contains(keyword) ||
+                topic.Author.DisplayName.Contains(keyword) || (topic.Author.Email != null && topic.Author.Email.Contains(keyword)));
         }
         if (type.HasValue)
         {
@@ -50,17 +52,35 @@ public sealed class AdminTopicRepository : IAdminTopicRepository
         {
             topics = topics.Where(topic => topic.IsDeleted);
         }
+        else if (visibility == "reported")
+        {
+            topics = topics.Where(topic => dbContext.ContentReports.Any(report =>
+                report.TopicId == topic.Id && report.Status == ReportStatus.Pending));
+        }
+        else if (visibility == "autohidden")
+        {
+            topics = topics.Where(topic => topic.AutoHiddenAtUtc != null);
+        }
 
         var totalItems = await topics.CountAsync(cancellationToken);
-        var items = await topics
-            .OrderByDescending(topic => topic.CreatedAtUtc)
+        var ordered = query.Sort?.Trim().ToLowerInvariant() == "reports"
+            ? topics.OrderByDescending(topic => dbContext.ContentReports.Count(report =>
+                report.TopicId == topic.Id && report.Status == ReportStatus.Pending)).ThenByDescending(topic => topic.CreatedAtUtc)
+            : topics.OrderByDescending(topic => topic.CreatedAtUtc);
+        var items = await ordered
             .ThenByDescending(topic => topic.Id)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .Include(topic => topic.Category)
             .Include(topic => topic.Author)
             .ToListAsync(cancellationToken);
-        return new AdminTopicPage(items, totalItems);
+        var ids = items.Select(topic => topic.Id).ToList();
+        var pending = await dbContext.ContentReports.AsNoTracking()
+            .Where(report => report.TopicId != null && ids.Contains(report.TopicId.Value) && report.Status == ReportStatus.Pending)
+            .GroupBy(report => report.TopicId!.Value)
+            .Select(group => new { group.Key, Count = group.Count() })
+            .ToDictionaryAsync(item => item.Key, item => item.Count, cancellationToken);
+        return new AdminTopicPage(items, totalItems, pending);
     }
 
     public Task<Topic?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken)

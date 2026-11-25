@@ -1,7 +1,7 @@
 import { ApiError, apiRequest } from '../../../shared/api/client'
 import type { TopicType } from '../../topics/types/topics'
 import { hasPaging, isRecord } from '../../../shared/api/guards'
-import type { AdminTopic, AdminTopicPage, ModerationAction, TopicVisibility } from '../types/adminTopics'
+import type { AdminTopic, AdminTopicPage, ModerationAction, TopicVisibility, AdminTopicSort } from '../types/adminTopics'
 
 const isAdminTopic = (value: unknown): value is AdminTopic =>
   isRecord(value) &&
@@ -21,7 +21,9 @@ const isAdminTopic = (value: unknown): value is AdminTopic =>
   typeof value.isDeleted === 'boolean' &&
   typeof value.isHiddenByModerator === 'boolean' &&
   typeof value.isDiscussionLocked === 'boolean' &&
-  typeof value.isPinned === 'boolean'
+  typeof value.isPinned === 'boolean' &&
+  typeof value.isAutoHidden === 'boolean' &&
+  typeof value.pendingReportCount === 'number'
 
 const parseTopic = (data: unknown): AdminTopic => {
   if (!isAdminTopic(data)) throw new ApiError(500, 'Dữ liệu kiểm duyệt từ API không đúng định dạng.')
@@ -34,6 +36,7 @@ export const getAdminTopics = async (
     type: '' | TopicType
     visibility: TopicVisibility
     categoryId?: string
+    sort: AdminTopicSort
     page: number
     pageSize: number
   },
@@ -44,6 +47,7 @@ export const getAdminTopics = async (
   if (filters.type) params.set('type', filters.type)
   if (filters.visibility) params.set('visibility', filters.visibility)
   if (filters.categoryId) params.set('categoryId', String(filters.categoryId))
+  if (filters.sort) params.set('sort', filters.sort)
   const data: unknown = await apiRequest(`/api/admin/topics?${params.toString()}`, { signal })
   if (
     !isRecord(data) ||

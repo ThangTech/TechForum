@@ -51,7 +51,7 @@ public sealed class AdminTopicService : IAdminTopicService
 
         var page = await topicRepository.GetPageAsync(query, type, cancellationToken);
         return new PagedResultDto<AdminTopicDto>(
-            page.Items.Select(Map).ToList(), query.Page, query.PageSize, page.TotalItems,
+            page.Items.Select(topic => Map(topic, page.PendingReports?.GetValueOrDefault(topic.Id) ?? 0)).ToList(), query.Page, query.PageSize, page.TotalItems,
             (int)Math.Ceiling(page.TotalItems / (double)query.PageSize));
     }
 
@@ -147,7 +147,9 @@ public sealed class AdminTopicService : IAdminTopicService
         return $"hidden={topic.IsHiddenByModerator};locked={topic.IsDiscussionLocked};pinned={topic.IsPinned};categoryId={topic.CategoryId};deleted={topic.IsDeleted}";
     }
 
-    private static AdminTopicDto Map(Topic topic)
+    private static AdminTopicDto Map(Topic topic) => Map(topic, 0);
+
+    private static AdminTopicDto Map(Topic topic, int pendingReports)
     {
         return new(
             topic.Id, topic.Title, topic.Type == TopicType.Article ? "article" : "question",
@@ -155,6 +157,6 @@ public sealed class AdminTopicService : IAdminTopicService
             new TopicAuthorDto(topic.Author.Id, topic.Author.DisplayName),
             topic.Status == TopicStatus.Published ? "published" : "draft",
             topic.CreatedAtUtc, topic.PublishedAtUtc, topic.IsDeleted, topic.IsHiddenByModerator,
-            topic.IsDiscussionLocked, topic.IsPinned);
+            topic.IsDiscussionLocked, topic.IsPinned, topic.AutoHiddenAtUtc is not null, pendingReports);
     }
 }

@@ -18,7 +18,7 @@ import { useAdminTopicsPage } from '../hooks/useAdminTopicsPage'
 export const AdminTopicsPage = () => {
   const view = useAdminTopicsPage()
   const { categories, data, filters, moderation, preview } = view
-  const { keyword, type, visibility, categoryId } = filters
+  const { keyword, type, visibility, categoryId, sort } = filters
   const isReady = !view.isLoading && !view.error
 
   return (
@@ -31,10 +31,10 @@ export const AdminTopicsPage = () => {
         />
         <form
           className="admin-toolbar"
-          key={`${keyword}-${type}-${visibility}-${categoryId ?? ''}`}
+          key={`${keyword}-${type}-${visibility}-${categoryId ?? ''}-${sort}`}
           onSubmit={view.submitFilters}
         >
-          <TextField size="small" label="Tìm nội dung" defaultValue={keyword} name="keyword" placeholder="Tìm theo tiêu đề" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
+          <TextField size="small" label="Tìm nội dung" defaultValue={keyword} name="keyword" placeholder="Tiêu đề, tóm tắt, tên hoặc email tác giả" slotProps={{ htmlInput: { maxLength: 100 } }} sx={{ flex: 1, minWidth: 180, maxWidth: 430 }} />
           <TextField size="small" label="Loại nội dung" defaultValue={type} name="type" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
               <option value="">Tất cả loại</option>
               <option value="article">Bài viết</option>
@@ -46,6 +46,8 @@ export const AdminTopicsPage = () => {
               <option value="draft">Bản nháp</option>
               <option value="hidden">Bị kiểm duyệt ẩn</option>
               <option value="deleted">Tác giả đã xóa</option>
+              <option value="reported">Có báo cáo đang chờ</option>
+              <option value="autohidden">Tự ẩn vì nhiều báo cáo</option>
             </TextField>
           <TextField size="small" label="Chuyên mục" defaultValue={categoryId ?? ''} name="categoryId" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
               <option value="">Tất cả chuyên mục</option>
@@ -57,6 +59,10 @@ export const AdminTopicsPage = () => {
                   {category.name}
                 </option>
               ))}
+            </TextField>
+          <TextField size="small" label="Sắp xếp" defaultValue={sort} name="sort" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
+              <option value="">Mới nhất</option>
+              <option value="reports">Nhiều báo cáo nhất</option>
             </TextField>
           <Button type="submit" variant="contained">Lọc nội dung</Button>
           <Button onClick={view.clearFilters} variant="text">Xóa lọc</Button>

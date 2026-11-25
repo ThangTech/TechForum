@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { AuditFilters } from '../types/adminOverview'
 import type { AdminReportFilters } from '../../reports/types/reports'
-import type { TopicVisibility } from '../types/adminTopics'
+import type { TopicVisibility, AdminTopicSort } from '../types/adminTopics'
 import type { TopicType } from '../../topics/types/topics'
 import { useUserScope, userKey } from '../../auth/hooks/userScope'
 
@@ -18,6 +18,7 @@ export interface AdminTopicParams {
   type: '' | TopicType
   visibility: TopicVisibility
   categoryId?: string
+  sort: AdminTopicSort
   page: number
   pageSize: number
 }
