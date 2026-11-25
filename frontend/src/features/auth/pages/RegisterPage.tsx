@@ -55,7 +55,19 @@ export const RegisterPage = () => {
           label="Mật khẩu"
           name="password"
           required
-          rules={{ required: 'Vui lòng nhập mật khẩu.' }}
+          hint="Ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+          rules={{
+            required: 'Vui lòng nhập mật khẩu.',
+            // Cùng quy tắc với API, để báo lỗi ngay thay vì phải gửi rồi mới biết.
+            validate: (value: string) => {
+              if (value.length < 8 || value.length > 128) return 'Mật khẩu phải từ 8 đến 128 ký tự.'
+              if (!/[A-Z]/.test(value)) return 'Mật khẩu cần ít nhất một chữ hoa.'
+              if (!/[a-z]/.test(value)) return 'Mật khẩu cần ít nhất một chữ thường.'
+              if (!/\d/.test(value)) return 'Mật khẩu cần ít nhất một chữ số.'
+              if (!/[^A-Za-z0-9]/.test(value)) return 'Mật khẩu cần ít nhất một ký tự đặc biệt.'
+              return true
+            },
+          }}
           serverError={view.fieldError('password')}
           type="password"
         />

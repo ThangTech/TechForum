@@ -22,7 +22,8 @@ export const HomeTour = () => {
     if (isLoading) return undefined
 
     const storageKey = getTourStorageKey(userId)
-    const wasSeen = localStorage.getItem(storageKey) === 'true'
+    // Đã xem lúc còn là khách thì không bật lại ngay sau khi đăng ký.
+    const wasSeen = localStorage.getItem(storageKey) === 'true' || localStorage.getItem(getTourStorageKey(null)) === 'true'
     if (!shouldStartTour({ isRequested, isRunning: isRunning.current, wasSeen })) return undefined
 
     // The effect runs again when the account or the address changes. The guide that was about to start is then dropped

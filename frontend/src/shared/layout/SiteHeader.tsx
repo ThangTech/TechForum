@@ -38,7 +38,10 @@ export const SiteHeader = () => {
         <HeaderSearch />
 
         <div className="account-actions" data-tour="account">
-          <Suspense fallback={<span className="account-loading">…</span>}><WriteMenu /></Suspense>
+          {/* Khách chưa dùng được nút Viết: trên điện thoại ẩn nó để có chỗ cho nút Đăng ký. */}
+          <span className={user ? 'header-write' : 'header-write header-write--guest'}>
+            <Suspense fallback={<span className="account-loading">…</span>}><WriteMenu /></Suspense>
+          </span>
           {isLoading ? (
             <span className="account-loading" role="status">Đang kiểm tra phiên…</span>
           ) : user ? (

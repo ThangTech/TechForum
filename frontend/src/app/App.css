@@ -872,8 +872,12 @@
     gap: 4px;
   }
 
-  .header-register {
+  .header-write--guest {
     display: none;
+  }
+
+  .header-register {
+    padding: 7px 10px;
   }
 
   .auth-dialog__actions {
