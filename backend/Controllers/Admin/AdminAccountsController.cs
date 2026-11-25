@@ -31,4 +31,11 @@ public sealed class AdminAccountsController : ControllerBase
         var result = await accountService.SetLockedAsync(userId, User.GetRequiredUserId(), request, cancellationToken);
         return this.ToActionResult(result);
     }
+
+    [HttpPut("{userId}/role")]
+    public async Task<ActionResult<AdminAccountDto>> SetRole(string userId, [FromBody] SetAccountRoleRequest request, CancellationToken cancellationToken)
+    {
+        var result = await accountService.SetRoleAsync(userId, User.GetRequiredUserId(), request, cancellationToken);
+        return this.ToActionResult(result);
+    }
 }

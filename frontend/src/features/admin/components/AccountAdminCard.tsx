@@ -9,11 +9,15 @@ import TableRow from '@mui/material/TableRow'
 export const AccountAdminCard = ({
   account,
   busyId,
+  currentUserId,
   onToggleLock,
+  onChangeRole,
 }: {
   account: AdminAccount
   busyId: string | null
+  currentUserId: string | null
   onToggleLock: (account: AdminAccount) => void
+  onChangeRole: (account: AdminAccount) => void
 }) => (
   <TableRow>
     <TableCell>
@@ -21,6 +25,15 @@ export const AccountAdminCard = ({
         {account.displayName}
       </Link>
       <span className="admin-table-secondary">{account.email}</span>
+      {!account.emailConfirmed && <StatusBadge tone="amber">Chưa xác minh email</StatusBadge>}
+    </TableCell>
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+      {account.topicCount} bài · {account.answerCount} trả lời
+      {account.violationCount > 0 && (
+        <span className="admin-table-secondary" style={{ color: 'var(--color-danger, #b91c1c)' }}>
+          {account.violationCount} lần vi phạm
+        </span>
+      )}
     </TableCell>
     <TableCell>
       <StatusBadge tone={account.isAdministrator ? 'blue' : 'neutral'}>
@@ -45,15 +58,18 @@ export const AccountAdminCard = ({
     <TableCell sx={{ whiteSpace: 'nowrap' }}>{new Date(account.createdAtUtc).toLocaleDateString('vi-VN')}</TableCell>
     <TableCell>
       <div className="admin-table-actions">
-        <button
-          disabled={busyId !== null || account.isAdministrator}
-          onClick={() => onToggleLock(account)}
-          type="button"
-        >
-          {busyId === account.id ? 'Đang xử lý…' : account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}
-        </button>
+        {!account.isAdministrator && (
+          <button disabled={busyId !== null} onClick={() => onToggleLock(account)} type="button">
+            {busyId === account.id ? 'Đang xử lý…' : account.isLocked ? 'Mở khóa' : 'Khóa tài khoản'}
+          </button>
+        )}
+        {account.id !== currentUserId && (account.isAdministrator || (account.emailConfirmed && !account.isLocked)) && (
+          <button disabled={busyId !== null} onClick={() => onChangeRole(account)} type="button">
+            {account.isAdministrator ? 'Thu quyền quản trị' : 'Cấp quyền quản trị'}
+          </button>
+        )}
       </div>
-      {account.isAdministrator && <span className="admin-table-secondary">Bảo vệ tài khoản quản trị</span>}
+      {account.id === currentUserId && <span className="admin-table-secondary">Tài khoản của bạn</span>}
     </TableCell>
   </TableRow>
 )

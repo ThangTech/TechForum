@@ -44,10 +44,11 @@ public sealed class AdminAccountService : IAdminAccountService
         pageSize = Math.Clamp(pageSize, 1, 50);
         bool? isLocked = ParseFilter(status, "locked", "unlocked");
         bool? isAdministrator = ParseFilter(role, "administrator", "member");
-        var result = await accountRepository.GetPageAsync(keyword, isLocked, isAdministrator,
-            timeProvider.GetUtcNow(), page, pageSize, cancellationToken);
+        var unverifiedOnly = string.Equals(status?.Trim(), "unverified", StringComparison.OrdinalIgnoreCase);
+        var filter = new AdminAccountFilter(keyword, isLocked, isAdministrator, unverifiedOnly);
+        var result = await accountRepository.GetPageAsync(filter, timeProvider.GetUtcNow(), page, pageSize, cancellationToken);
         return new PagedResultDto<AdminAccountDto>(
-            result.Items.Select(item => Map(item.User, item.IsAdministrator)).ToList(),
+            result.Items.Select(Map).ToList(),
             page,
             pageSize,
             result.TotalItems,
@@ -103,20 +104,103 @@ public sealed class AdminAccountService : IAdminAccountService
         {
             return Result<AdminAccountDto>.Fail(ErrorType.ServerError, "Không thể cập nhật tài khoản", "Không thể cập nhật trạng thái khóa tài khoản.");
         }
-        return Result<AdminAccountDto>.Success(Map(user, isAdministrator));
+        return await LoadAsync(user.Id, cancellationToken);
     }
 
-    private AdminAccountDto Map(ApplicationUser user, bool isAdministrator)
+    // Cấp hoặc thu quyền quản trị. Không tự đổi quyền của mình, và luôn còn ít nhất một quản trị viên.
+    public async Task<Result<AdminAccountDto>> SetRoleAsync(
+        string targetUserId,
+        string administratorId,
+        SetAccountRoleRequest request,
+        CancellationToken cancellationToken)
     {
+        var reason = request.Reason?.Trim();
+        if (string.IsNullOrWhiteSpace(reason) || reason.Length > 1000)
+        {
+            return Result<AdminAccountDto>.Fail(ErrorType.Validation, null, "Lý do phải có từ 1 đến 1.000 ký tự.", "reason");
+        }
+        if (targetUserId == administratorId)
+        {
+            return Result<AdminAccountDto>.Fail(ErrorType.Conflict, "Không thể đổi quyền", "Quản trị viên không thể tự đổi quyền của mình.");
+        }
+        var user = await accountRepository.GetByIdAsync(targetUserId);
+        if (user is null)
+        {
+            return Result<AdminAccountDto>.Fail(ErrorType.NotFound, "Không tìm thấy tài khoản", "Không tìm thấy tài khoản.");
+        }
+
+        var isAdministrator = await accountRepository.IsAdministratorAsync(user);
+        if (isAdministrator == request.IsAdministrator)
+        {
+            return await LoadAsync(user.Id, cancellationToken);
+        }
+        if (request.IsAdministrator && (!user.EmailConfirmed || (user.LockoutEnd.HasValue && user.LockoutEnd > timeProvider.GetUtcNow())))
+        {
+            return Result<AdminAccountDto>.Fail(ErrorType.Conflict, "Không thể cấp quyền",
+                "Chỉ cấp quyền quản trị cho tài khoản đã xác minh email và không bị khóa.");
+        }
+        if (!request.IsAdministrator && await accountRepository.CountAdministratorsAsync(cancellationToken) <= 1)
+        {
+            return Result<AdminAccountDto>.Fail(ErrorType.Conflict, "Không thể thu quyền", "Diễn đàn cần ít nhất một quản trị viên.");
+        }
+
+        var now = timeProvider.GetUtcNow();
+        var result = await accountRepository.SetAdministratorAsync(user, request.IsAdministrator,
+            new AdminAuditLog
+            {
+                AdministratorId = administratorId,
+                Action = request.IsAdministrator ? "account-role-granted" : "account-role-revoked",
+                TargetType = "Account",
+                TargetId = user.Id,
+                PreviousValue = isAdministrator ? "administrator" : "member",
+                NewValue = request.IsAdministrator ? "administrator" : "member",
+                Reason = reason,
+                CreatedAtUtc = now
+            },
+            new Notification
+            {
+                UserId = user.Id,
+                Type = "account-role-changed",
+                Title = request.IsAdministrator ? "Bạn đã được cấp quyền quản trị" : "Quyền quản trị của bạn đã được thu lại",
+                Message = request.IsAdministrator
+                    ? $"Bạn có thể vào khu quản trị để kiểm duyệt nội dung. Lý do: {reason}"
+                    : $"Tài khoản của bạn trở lại quyền thành viên. Lý do: {reason}",
+                Link = request.IsAdministrator ? "/admin" : "/",
+                SourceKey = $"account-role-changed:{user.Id}:{now.ToUnixTimeSeconds()}",
+                CreatedAtUtc = now
+            },
+            cancellationToken);
+        if (!result.Succeeded)
+        {
+            return Result<AdminAccountDto>.Fail(ErrorType.ServerError, "Không thể cập nhật tài khoản", "Không thể đổi quyền tài khoản.");
+        }
+        return await LoadAsync(user.Id, cancellationToken);
+    }
+
+    private async Task<Result<AdminAccountDto>> LoadAsync(string userId, CancellationToken cancellationToken)
+    {
+        var data = await accountRepository.GetDataAsync(userId, cancellationToken);
+        return data is null
+            ? Result<AdminAccountDto>.Fail(ErrorType.NotFound, "Không tìm thấy tài khoản", "Không tìm thấy tài khoản.")
+            : Result<AdminAccountDto>.Success(Map(data));
+    }
+
+    private AdminAccountDto Map(AdminAccountData data)
+    {
+        var user = data.User;
         return new(
             user.Id,
             user.DisplayName,
             user.Email ?? string.Empty,
             user.CreatedAtUtc,
             user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow(),
-            isAdministrator,
+            data.IsAdministrator,
             user.LockoutEnd.HasValue && user.LockoutEnd.Value > timeProvider.GetUtcNow() ? user.LockReason : null,
             !user.LockoutEnd.HasValue || user.LockoutEnd <= timeProvider.GetUtcNow() || user.LockoutEnd == DateTimeOffset.MaxValue
-                ? null : user.LockoutEnd);
+                ? null : user.LockoutEnd,
+            user.EmailConfirmed,
+            data.TopicCount,
+            data.AnswerCount,
+            data.ViolationCount);
     }
 }

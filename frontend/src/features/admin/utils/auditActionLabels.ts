@@ -9,6 +9,8 @@ export const auditActionLabels: Record<string, string> = {
   'answer.hide': 'Ẩn câu trả lời',
   'account-locked': 'Khóa tài khoản',
   'account-unlocked': 'Mở khóa tài khoản',
+  'account-role-granted': 'Cấp quyền quản trị',
+  'account-role-revoked': 'Thu quyền quản trị',
   'report.resolved': 'Xử lý báo cáo',
   'category-created': 'Tạo chuyên mục',
   'category-updated': 'Sửa chuyên mục',

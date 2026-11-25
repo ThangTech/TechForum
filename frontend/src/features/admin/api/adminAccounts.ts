@@ -11,7 +11,11 @@ const isAdminAccount = (value: unknown): value is AdminAccount =>
   typeof value.isLocked === 'boolean' &&
   typeof value.isAdministrator === 'boolean' &&
   (value.lockReason === null || typeof value.lockReason === 'string') &&
-  (value.lockoutEndUtc === null || typeof value.lockoutEndUtc === 'string')
+  (value.lockoutEndUtc === null || typeof value.lockoutEndUtc === 'string') &&
+  typeof value.emailConfirmed === 'boolean' &&
+  typeof value.topicCount === 'number' &&
+  typeof value.answerCount === 'number' &&
+  typeof value.violationCount === 'number'
 
 const parseAccount = (data: unknown): AdminAccount => {
   if (!isAdminAccount(data)) throw new ApiError(500, 'Dữ liệu tài khoản từ API không đúng định dạng.')
@@ -52,5 +56,13 @@ export const setAccountLocked = async (
     await apiRequest(`/api/admin/accounts/${encodeURIComponent(userId)}/lock`, {
       method: 'PUT',
       body: JSON.stringify({ isLocked, reason, lockoutEndUtc }),
+    }),
+  )
+
+export const setAccountRole = async (userId: string, isAdministrator: boolean, reason: string): Promise<AdminAccount> =>
+  parseAccount(
+    await apiRequest(`/api/admin/accounts/${encodeURIComponent(userId)}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ isAdministrator, reason }),
     }),
   )

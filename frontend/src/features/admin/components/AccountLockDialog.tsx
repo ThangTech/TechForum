@@ -7,6 +7,21 @@ import type { AdminAccount } from '../types/adminAccounts'
 import { DialogFrame } from '../../../shared/feedback/DialogFrame'
 import { useDiscardGuard } from '../../../shared/feedback/useDiscardGuard'
 
+// Các mức khoá hay dùng; vẫn chọn được ngày giờ cụ thể ở ô bên dưới.
+const lockPresets = [
+  { label: '1 ngày', days: 1 },
+  { label: '7 ngày', days: 7 },
+  { label: '30 ngày', days: 30 },
+  { label: 'Vô thời hạn', days: 0 },
+]
+
+// Giá trị cho ô datetime-local theo giờ trên máy (không có múi giờ).
+const toLocalInput = (days: number) => {
+  const date = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 export const AccountLockDialog = ({
   account,
   isBusy,
@@ -87,6 +102,13 @@ export const AccountLockDialog = ({
                 slotProps={{ htmlInput: { maxLength: 1000 } }}
                 value={reason}
               />
+              <Stack aria-label="Chọn nhanh thời hạn" direction="row" role="group" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                {lockPresets.map((preset) => (
+                  <Button disabled={isBusy} key={preset.label} onClick={() => setUntil(preset.days ? toLocalInput(preset.days) : '')} size="small" variant="outlined">
+                    {preset.label}
+                  </Button>
+                ))}
+              </Stack>
               <TextField
                 disabled={isBusy}
                 id="account-lock-until"

@@ -7,6 +7,7 @@ import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
 import { AccountAdminCard } from '../components/AccountAdminCard'
+import { AccountRoleDialog } from '../components/AccountRoleDialog'
 import { AccountLockDialog } from '../components/AccountLockDialog'
 import { AdminEmptyState } from '../components/AdminEmptyState'
 import { AdminFeedback } from '../components/AdminFeedback'
@@ -21,7 +22,7 @@ export const AdminAccountsPage = () => {
   return (
     <section className="admin-page">
       <AdminPageHeading
-        description="Tra cứu thành viên, vai trò và trạng thái truy cập. Tài khoản quản trị được bảo vệ khỏi thao tác khóa."
+        description="Tra cứu thành viên, mức hoạt động và vi phạm; khóa tài khoản hoặc cấp quyền quản trị. Tài khoản quản trị được bảo vệ khỏi thao tác khóa."
         eyebrow="Quản trị thành viên"
         title="Tài khoản"
       />
@@ -31,6 +32,7 @@ export const AdminAccountsPage = () => {
             <option value="">Tất cả trạng thái</option>
             <option value="unlocked">Đang hoạt động</option>
             <option value="locked">Đang bị khóa</option>
+            <option value="unverified">Chưa xác minh email</option>
           </TextField>
         <TextField size="small" label="Vai trò" defaultValue={filters.role} name="role" select slotProps={{ select: { native: true }, inputLabel: { shrink: true } }} sx={{ minWidth: 150 }}>
             <option value="">Tất cả vai trò</option>
@@ -51,6 +53,7 @@ export const AdminAccountsPage = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Thành viên</TableCell>
+                    <TableCell>Hoạt động</TableCell>
                     <TableCell>Vai trò</TableCell>
                     <TableCell>Trạng thái</TableCell>
                     <TableCell>Ngày tham gia</TableCell>
@@ -62,7 +65,9 @@ export const AdminAccountsPage = () => {
                     <AccountAdminCard
                       account={account}
                       busyId={view.busyId}
+                      currentUserId={view.currentUserId}
                       key={account.id}
+                      onChangeRole={view.roleChange.open}
                       onToggleLock={lock.open}
                     />
                   ))}
@@ -74,6 +79,16 @@ export const AdminAccountsPage = () => {
           )}
           <AdminPagination {...data} onChange={view.changePage} />
         </>
+      )}
+      {view.roleChange.account && (
+        <AccountRoleDialog
+          account={view.roleChange.account}
+          isBusy={view.roleChange.isBusy}
+          key={`role-${view.roleChange.account.id}`}
+          onClose={view.roleChange.close}
+          onConfirm={(reason) => void view.roleChange.confirm(reason)}
+          requestError={view.roleChange.error}
+        />
       )}
       {lock.account && (
         <AccountLockDialog

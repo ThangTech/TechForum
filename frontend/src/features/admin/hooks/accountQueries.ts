@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getAdminAccounts, setAccountLocked } from '../api/adminAccounts'
+import { getAdminAccounts, setAccountLocked, setAccountRole } from '../api/adminAccounts'
 import type { AdminAccount } from '../types/adminAccounts'
 import { adminKeys, useInvalidateAdminData, type AdminAccountParams, useAdminQueryState } from './adminKeys'
 
@@ -43,6 +43,16 @@ export const useSetAccountLocked = () => {
       reason: string | null
       lockoutEndUtc: string | null
     }) => setAccountLocked(input.account.id, !input.account.isLocked, input.reason, input.lockoutEndUtc),
+    onSuccess: () => invalidateAdminData(),
+  })
+}
+
+export const useSetAccountRole = () => {
+  const invalidateAdminData = useInvalidateAdminData()
+
+  return useMutation({
+    mutationFn: (input: { account: AdminAccount; reason: string }) =>
+      setAccountRole(input.account.id, !input.account.isAdministrator, input.reason),
     onSuccess: () => invalidateAdminData(),
   })
 }

@@ -16,4 +16,9 @@ public interface IAdminAccountService
         string administratorId,
         SetAccountLockRequest request,
         CancellationToken cancellationToken);
+    Task<Result<AdminAccountDto>> SetRoleAsync(
+        string targetUserId,
+        string administratorId,
+        SetAccountRoleRequest request,
+        CancellationToken cancellationToken);
 }
