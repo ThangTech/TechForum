@@ -42,7 +42,7 @@ Tạo **Web Service** từ repo GitHub, **Language: Docker**, **Root Directory: 
 Đặt tên dịch vụ là `techforum-api` để địa chỉ là `https://techforum-api.onrender.com`. Nếu tên đã có người dùng,
 sửa địa chỉ trong `frontend/vercel.json` cho khớp.
 
-Biến môi trường (**Environment**):
+Biến môi trường (**Environment**). Bản có chú thích từng biến và nơi lấy giá trị: [render.env.example](render.env.example).
 
 | Biến | Giá trị |
 |---|---|
