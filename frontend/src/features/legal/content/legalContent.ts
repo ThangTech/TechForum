@@ -13,146 +13,159 @@ export interface LegalDocument {
   sections: LegalSection[]
 }
 
-// Nội dung viết theo đúng những gì code đang làm. Đổi cách lưu dữ liệu hay thêm dịch vụ bên ngoài thì sửa cả ở đây.
+// Viết theo nhóm mục đích, không nêu tên công nghệ hay chi tiết cài đặt. Nội dung vẫn phải đúng với những gì
+// trang thật sự làm: thêm loại dữ liệu mới hoặc thêm nhóm dịch vụ bên ngoài thì sửa cả ở đây.
 export const privacyPolicy: LegalDocument = {
   title: 'Chính sách bảo mật',
-  description: 'TechForum thu thập dữ liệu gì, dùng vào việc gì, lưu ở đâu và bạn có quyền gì với dữ liệu của mình.',
+  description: 'Cách TechForum thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn.',
   updatedOn: '25/11/2026',
   sections: [
     {
-      heading: '1. Dữ liệu chúng tôi thu thập',
-      items: [
-        'Tài khoản: email, tên hiển thị, mật khẩu (chỉ lưu dạng đã băm, không ai đọc lại được), ảnh đại diện, giới thiệu ngắn và kỹ năng nếu bạn tự điền.',
-        'Đăng nhập bằng Google: Google gửi cho chúng tôi email, tên và mã định danh tài khoản Google của bạn. Chúng tôi không nhận mật khẩu Google.',
-        'Nội dung bạn tạo: bài viết, câu hỏi, câu trả lời, bản nháp tự lưu, ảnh và video tải lên, bình chọn, lượt đánh dấu sao, bài đã lưu, người theo dõi và báo cáo vi phạm.',
-        'Dữ liệu kỹ thuật: lượt xem bài được đếm bằng một mã ngẫu nhiên đã băm (không gắn với tên hay email của khách). Địa chỉ IP chỉ được dùng tạm trong bộ nhớ để giới hạn số lần gửi email đặt lại mật khẩu và xác minh, không lưu vào cơ sở dữ liệu.',
-      ],
-    },
-    {
-      heading: '2. Mục đích sử dụng',
-      items: [
-        'Tạo và duy trì tài khoản, giữ bạn đăng nhập.',
-        'Hiển thị nội dung bạn đăng cho cộng đồng, gửi thông báo trong trang (có người trả lời, theo dõi...).',
-        'Gửi email cần thiết: xác minh email khi đăng ký và đặt lại mật khẩu. Chúng tôi không gửi email quảng cáo.',
-        'Kiểm duyệt: thay từ ngữ bị cấm bằng ký tự che, kiểm tra ảnh tải lên bằng công cụ tự động, xử lý báo cáo vi phạm và ghi lại thao tác của quản trị viên.',
-        'Bảo vệ trang khỏi lạm dụng: giới hạn tần suất đăng bài, trả lời, báo cáo của mỗi tài khoản và khoá tài khoản vi phạm.',
-      ],
-    },
-    {
-      heading: '3. Cookie và bộ nhớ trình duyệt',
-      items: [
-        'TechForum.Refresh: giữ phiên đăng nhập. Không chọn "Duy trì đăng nhập" thì cookie mất khi bạn thoát trình duyệt (và hết hạn sau tối đa 1 ngày); có chọn thì giữ 30 ngày kể từ lần bạn quay lại gần nhất.',
-        'TechForum.Visitor: mã ngẫu nhiên giúp một khách chưa đăng nhập không bị đếm nhiều lần khi xem cùng một bài, giữ 1 năm.',
-        'Bộ nhớ trình duyệt (localStorage): nhớ chế độ sáng/tối và việc bạn đã xem phần hướng dẫn sử dụng.',
-        'Chúng tôi không dùng cookie quảng cáo hay công cụ theo dõi của bên thứ ba.',
-      ],
-    },
-    {
-      heading: '4. Dịch vụ bên ngoài chúng tôi sử dụng',
-      paragraphs: ['Để vận hành trang, một phần dữ liệu được xử lý bởi các nhà cung cấp sau, mỗi bên chỉ nhận phần cần cho việc của mình:'],
-      items: [
-        'Vercel: phục vụ giao diện trang web.',
-        'Render: chạy máy chủ API.',
-        'Microsoft Azure SQL Database: lưu cơ sở dữ liệu (tài khoản, bài viết, tương tác).',
-        'Cloudinary: lưu và phát ảnh, video bạn tải lên; ảnh có thể được dịch vụ kiểm duyệt tự động của Cloudinary (Amazon Rekognition) phân tích để phát hiện nội dung không phù hợp.',
-        'Mailjet: gửi email xác minh và đặt lại mật khẩu.',
-        'Google: đăng nhập bằng Google (nếu bạn chọn) và phông chữ của trang (Google Fonts).',
-      ],
-    },
-    {
-      heading: '5. Thời gian lưu trữ',
-      items: [
-        'Tài khoản chưa xác minh email và chưa có hoạt động nào sẽ tự bị xoá sau 7 ngày.',
-        'Tài khoản đã xác minh và nội dung được lưu cho tới khi bạn yêu cầu xoá hoặc tài khoản bị xoá do vi phạm.',
-        'Ảnh, video tải lên nhưng không nằm trong bài nào sẽ được dọn định kỳ.',
-        'Phiên đăng nhập đã hết hạn hoặc đã đăng xuất được dọn định kỳ.',
-      ],
-    },
-    {
-      heading: '6. Quyền của bạn',
-      items: [
-        'Xem và sửa thông tin hồ sơ, ảnh đại diện, mật khẩu trong trang Tài khoản.',
-        'Sửa hoặc xoá bài viết, câu trả lời của mình.',
-        `Yêu cầu xuất dữ liệu hoặc xoá hẳn tài khoản: gửi email từ chính địa chỉ đã đăng ký tới ${contactEmail}. Chúng tôi xử lý trong vòng 30 ngày.`,
-        'Rút lại việc liên kết Google bằng cách gỡ quyền của TechForum trong phần Bảo mật của tài khoản Google.',
-      ],
-    },
-    {
-      heading: '7. Bảo mật',
+      heading: '1. Phạm vi áp dụng',
       paragraphs: [
-        'Kết nối luôn dùng HTTPS. Mật khẩu được băm, phiên đăng nhập dùng cookie HttpOnly mà mã trên trang không đọc được, và token trong cookie chỉ được lưu dưới dạng mã băm ở máy chủ. Không hệ thống nào an toàn tuyệt đối; nếu phát hiện sự cố ảnh hưởng tới dữ liệu của bạn, chúng tôi sẽ thông báo qua email.',
+        'Chính sách này áp dụng khi bạn truy cập, đăng ký tài khoản hoặc đăng nội dung trên TechForum. Bằng việc sử dụng trang, bạn đồng ý với cách chúng tôi xử lý thông tin được mô tả dưới đây.',
       ],
     },
     {
-      heading: '8. Trẻ em',
-      paragraphs: ['Nếu bạn dưới 16 tuổi, hãy dùng TechForum khi có sự đồng ý của cha mẹ hoặc người giám hộ.'],
+      heading: '2. Thông tin chúng tôi thu thập',
+      items: [
+        'Thông tin bạn cung cấp: email, tên hiển thị, mật khẩu, ảnh đại diện và các thông tin hồ sơ bạn tự điền.',
+        'Thông tin từ tài khoản liên kết: khi bạn đăng nhập bằng Google, chúng tôi nhận email và tên của bạn từ Google. Chúng tôi không nhận mật khẩu Google.',
+        'Nội dung bạn tạo: bài viết, câu hỏi, câu trả lời, bản nháp, hình ảnh, video và các tương tác như bình chọn, lưu bài, theo dõi, báo cáo.',
+        'Thông tin kỹ thuật cần cho việc vận hành: dữ liệu phiên đăng nhập, lượt xem bài và thông tin kết nối dùng để chống lạm dụng.',
+      ],
     },
     {
-      heading: '9. Thay đổi và liên hệ',
+      heading: '3. Mục đích sử dụng',
+      items: [
+        'Cung cấp và duy trì tài khoản, giữ bạn đăng nhập.',
+        'Hiển thị nội dung bạn đăng cho cộng đồng và gửi thông báo liên quan tới hoạt động của bạn.',
+        'Gửi email cần thiết như xác minh tài khoản và đặt lại mật khẩu. Chúng tôi không gửi email quảng cáo.',
+        'Kiểm duyệt nội dung, xử lý báo cáo vi phạm và giữ an toàn cho cộng đồng.',
+        'Phát hiện, ngăn chặn gian lận, thư rác và các hành vi lạm dụng.',
+        'Cải thiện chất lượng và trải nghiệm của trang.',
+      ],
+    },
+    {
+      heading: '4. Cookie',
       paragraphs: [
-        'Khi chính sách thay đổi, ngày cập nhật ở đầu trang sẽ thay đổi theo; thay đổi quan trọng sẽ được báo trên trang.',
-        `Mọi câu hỏi về dữ liệu cá nhân, gửi về ${contactEmail}.`,
+        'Chúng tôi chỉ dùng cookie và bộ nhớ trình duyệt cần thiết cho việc vận hành: giữ phiên đăng nhập, ghi nhớ lựa chọn của bạn (như giao diện sáng/tối) và thống kê lượt xem bài. Chúng tôi không dùng cookie quảng cáo hay theo dõi bạn trên trang web khác.',
+        'Bạn có thể xoá hoặc chặn cookie trong cài đặt trình duyệt, nhưng khi đó một số chức năng như đăng nhập sẽ không hoạt động.',
       ],
+    },
+    {
+      heading: '5. Chia sẻ thông tin',
+      paragraphs: [
+        'Chúng tôi không bán hay cho thuê thông tin cá nhân của bạn. Thông tin chỉ được chia sẻ trong các trường hợp sau:',
+      ],
+      items: [
+        'Nội dung công khai: bài viết, câu trả lời, tên hiển thị, ảnh đại diện và hồ sơ công khai được mọi người xem. Email của bạn không bao giờ được hiển thị công khai.',
+        'Nhà cung cấp dịch vụ: các đối tác giúp chúng tôi lưu trữ dữ liệu, lưu trữ hình ảnh và video, gửi email, xác thực đăng nhập và kiểm duyệt nội dung tự động. Họ chỉ được xử lý thông tin theo yêu cầu của chúng tôi và cho đúng mục đích đó.',
+        'Yêu cầu pháp lý: khi cơ quan nhà nước có thẩm quyền yêu cầu theo quy định của pháp luật.',
+      ],
+    },
+    {
+      heading: '6. Thời gian lưu trữ',
+      items: [
+        'Thông tin tài khoản và nội dung được lưu trong thời gian tài khoản còn hoạt động, hoặc cho tới khi bạn yêu cầu xoá.',
+        'Tài khoản đăng ký nhưng không xác minh email sẽ tự động bị xoá sau 7 ngày.',
+        'Dữ liệu không còn cần thiết, như tệp tải lên nhưng không dùng hay phiên đăng nhập đã hết hạn, được dọn định kỳ.',
+      ],
+    },
+    {
+      heading: '7. Quyền của bạn',
+      paragraphs: ['Theo quy định pháp luật về bảo vệ dữ liệu cá nhân, bạn có quyền:'],
+      items: [
+        'Xem, chỉnh sửa thông tin hồ sơ và nội dung của mình ngay trên trang.',
+        'Yêu cầu cung cấp bản sao dữ liệu cá nhân của bạn.',
+        'Yêu cầu xoá tài khoản và dữ liệu cá nhân.',
+        'Rút lại sự đồng ý, ví dụ ngừng liên kết tài khoản Google.',
+        `Gửi yêu cầu hoặc khiếu nại về ${contactEmail} từ chính email đã đăng ký. Chúng tôi phản hồi trong vòng 30 ngày.`,
+      ],
+    },
+    {
+      heading: '8. Bảo mật thông tin',
+      paragraphs: [
+        'Chúng tôi áp dụng các biện pháp kỹ thuật và quản lý phù hợp để bảo vệ thông tin, như mã hoá kết nối, không lưu mật khẩu ở dạng đọc được và giới hạn quyền truy cập dữ liệu. Tuy vậy, không có hệ thống nào an toàn tuyệt đối. Hãy giữ bí mật mật khẩu và báo cho chúng tôi ngay nếu nghi ngờ tài khoản bị truy cập trái phép. Nếu xảy ra sự cố ảnh hưởng tới dữ liệu của bạn, chúng tôi sẽ thông báo qua email.',
+      ],
+    },
+    {
+      heading: '9. Người dùng chưa thành niên',
+      paragraphs: ['Nếu bạn dưới 16 tuổi, vui lòng sử dụng TechForum khi có sự đồng ý của cha mẹ hoặc người giám hộ.'],
+    },
+    {
+      heading: '10. Thay đổi chính sách',
+      paragraphs: [
+        'Chính sách có thể được cập nhật theo thời gian. Ngày cập nhật ở đầu trang sẽ thay đổi theo, và những thay đổi quan trọng sẽ được thông báo trên trang.',
+      ],
+    },
+    {
+      heading: '11. Liên hệ',
+      paragraphs: [`Mọi câu hỏi về chính sách này, vui lòng gửi về ${contactEmail}.`],
     },
   ],
 }
 
 export const termsOfUse: LegalDocument = {
   title: 'Điều khoản sử dụng',
-  description: 'Những điều bạn đồng ý khi tạo tài khoản và đăng nội dung trên TechForum.',
+  description: 'Các quy định khi bạn sử dụng TechForum và đóng góp nội dung cho cộng đồng.',
   updatedOn: '25/11/2026',
   sections: [
     {
       heading: '1. Chấp nhận điều khoản',
       paragraphs: [
-        'Khi tạo tài khoản hoặc đăng nội dung, bạn đồng ý với điều khoản này và Chính sách bảo mật. Khách chỉ đọc nội dung công khai cũng nên tuân theo các quy định chung dưới đây.',
+        'Khi truy cập hoặc tạo tài khoản trên TechForum, bạn đồng ý tuân thủ Điều khoản sử dụng này và Chính sách bảo mật. Nếu không đồng ý, vui lòng không sử dụng trang.',
       ],
     },
     {
       heading: '2. Tài khoản',
       items: [
-        'Dùng email thật mà bạn có quyền truy cập; tài khoản phải xác minh email mới được đăng bài, trả lời, bình chọn và báo cáo.',
-        'Mỗi người tự giữ bí mật mật khẩu và chịu trách nhiệm cho hoạt động trên tài khoản của mình.',
-        'Không mạo danh người khác, không tạo nhiều tài khoản để lách giới hạn hay thao túng bình chọn.',
+        'Bạn cần cung cấp email hợp lệ và xác minh email để đăng nội dung và tương tác với cộng đồng.',
+        'Bạn chịu trách nhiệm giữ bí mật mật khẩu và mọi hoạt động diễn ra trên tài khoản của mình.',
+        'Không mạo danh người khác, không mua bán hay chuyển nhượng tài khoản, không tạo nhiều tài khoản để thao túng bình chọn hoặc né tránh xử lý vi phạm.',
       ],
     },
     {
-      heading: '3. Nội dung được phép',
-      paragraphs: ['TechForum là nơi chia sẻ kiến thức công nghệ. Không đăng:'],
+      heading: '3. Quy tắc nội dung',
+      paragraphs: ['TechForum là nơi chia sẻ kiến thức công nghệ. Bạn không được đăng hoặc chia sẻ:'],
       items: [
-        'Nội dung vi phạm pháp luật Việt Nam, kích động bạo lực, thù ghét, phân biệt đối xử.',
-        'Nội dung khiêu dâm, máu me, hoặc ảnh, video không phù hợp.',
-        'Thư rác, quảng cáo không liên quan, lừa đảo, mã độc hay đường dẫn nguy hiểm.',
-        'Thông tin cá nhân của người khác khi chưa được họ cho phép.',
-        'Nội dung sao chép vi phạm bản quyền; trích dẫn thì ghi rõ nguồn.',
+        'Nội dung vi phạm pháp luật Việt Nam, xúc phạm, kích động bạo lực, thù ghét hoặc phân biệt đối xử.',
+        'Nội dung khiêu dâm, bạo lực, gây sốc hoặc không phù hợp với cộng đồng.',
+        'Thư rác, quảng cáo trái phép, lừa đảo, phần mềm độc hại hoặc đường dẫn nguy hiểm.',
+        'Thông tin cá nhân của người khác khi chưa được cho phép.',
+        'Nội dung vi phạm quyền sở hữu trí tuệ. Khi trích dẫn, hãy ghi rõ nguồn.',
       ],
     },
     {
-      heading: '4. Quyền với nội dung bạn đăng',
+      heading: '4. Quyền sở hữu nội dung',
       paragraphs: [
-        'Bạn vẫn là chủ sở hữu nội dung của mình. Khi đăng, bạn cho phép TechForum lưu trữ, hiển thị công khai và phân phối nội dung đó trên trang để cộng đồng đọc. Bạn có thể sửa hoặc xoá nội dung của mình bất cứ lúc nào; bản đã được người khác trích dẫn trong câu trả lời của họ có thể vẫn còn.',
+        'Bạn giữ quyền sở hữu với nội dung mình đăng. Khi đăng, bạn cho phép TechForum lưu trữ, hiển thị và phân phối nội dung đó trên trang để phục vụ cộng đồng. Bạn có thể chỉnh sửa hoặc xoá nội dung của mình bất cứ lúc nào.',
       ],
     },
     {
-      heading: '5. Kiểm duyệt',
+      heading: '5. Kiểm duyệt và xử lý vi phạm',
       items: [
-        'Từ ngữ bị cấm trong tiêu đề, tóm tắt và nội dung được báo trước khi đăng và tự thay bằng ký tự che khi lưu; ảnh tải lên có thể bị từ chối nếu công cụ kiểm duyệt tự động đánh giá là không phù hợp.',
-        'Thành viên có thể báo cáo nội dung vi phạm. Nội dung bị nhiều người báo cáo có thể tự ẩn trong lúc chờ quản trị viên xem xét.',
-        'Quản trị viên có quyền ẩn, xoá nội dung, khoá thảo luận hoặc khoá tài khoản vi phạm. Mọi thao tác quản trị đều được ghi lại.',
+        'Nội dung có thể được kiểm tra tự động trước khi đăng; từ ngữ không phù hợp có thể bị che và tệp không phù hợp có thể bị từ chối.',
+        'Thành viên có thể báo cáo nội dung vi phạm. Nội dung bị báo cáo có thể tạm thời bị ẩn trong lúc chờ xem xét.',
+        'Tuỳ mức độ, quản trị viên có quyền ẩn hoặc xoá nội dung, khoá thảo luận, tạm khoá hoặc khoá vĩnh viễn tài khoản vi phạm.',
+        `Nếu cho rằng nội dung của mình bị xử lý nhầm, bạn có thể khiếu nại qua ${contactEmail}.`,
       ],
     },
     {
       heading: '6. Giới hạn trách nhiệm',
       paragraphs: [
-        'Nội dung trên TechForum do thành viên đóng góp và chỉ mang tính tham khảo; hãy tự kiểm tra trước khi áp dụng vào hệ thống thật. Trang được cung cấp "như hiện có", có thể tạm gián đoạn để bảo trì hoặc do nhà cung cấp hạ tầng.',
+        'Nội dung trên TechForum do thành viên đóng góp và chỉ mang tính tham khảo. Hãy tự kiểm tra trước khi áp dụng vào công việc hay hệ thống thực tế. Chúng tôi cung cấp dịch vụ theo hiện trạng và không bảo đảm trang luôn hoạt động liên tục, không gián đoạn.',
       ],
     },
     {
-      heading: '7. Thay đổi và liên hệ',
+      heading: '7. Thay đổi điều khoản',
       paragraphs: [
-        'Điều khoản có thể được cập nhật; ngày cập nhật ở đầu trang sẽ thay đổi theo. Tiếp tục sử dụng sau khi cập nhật nghĩa là bạn đồng ý với bản mới.',
-        `Góp ý, khiếu nại về kiểm duyệt hoặc báo vi phạm bản quyền, gửi về ${contactEmail}.`,
+        'Điều khoản có thể được cập nhật theo thời gian. Ngày cập nhật ở đầu trang sẽ thay đổi theo. Việc bạn tiếp tục sử dụng trang sau khi cập nhật đồng nghĩa với việc bạn chấp nhận điều khoản mới.',
       ],
+    },
+    {
+      heading: '8. Liên hệ',
+      paragraphs: [`Góp ý, khiếu nại hoặc báo cáo vi phạm bản quyền, vui lòng gửi về ${contactEmail}.`],
     },
   ],
 }
