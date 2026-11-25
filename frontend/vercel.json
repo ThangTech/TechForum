@@ -1,9 +1,32 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://techforum-api.onrender.com/api/:path*" },
-    { "source": "/media/:path*", "destination": "https://techforum-api.onrender.com/media/:path*" },
-    { "source": "/sitemap.xml", "destination": "https://techforum-api.onrender.com/sitemap.xml" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/topics/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Zalo|zalo|Twitterbot|Slackbot|LinkedInBot|Discordbot|TelegramBot|WhatsApp|SkypeUriPreview|Pinterest|redditbot|Embedly).*"
+        }
+      ],
+      "destination": "https://techforum-api.onrender.com/share/topics/:id"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://techforum-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/media/:path*",
+      "destination": "https://techforum-api.onrender.com/media/:path*"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://techforum-api.onrender.com/sitemap.xml"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

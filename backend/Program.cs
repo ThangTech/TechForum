@@ -159,6 +159,7 @@ builder.Services.AddScoped<ITopicEngagementRepository, TopicEngagementRepository
 builder.Services.AddScoped<ITopicEngagementService, TopicEngagementService>();
 builder.Services.AddScoped<ISitemapRepository, SitemapRepository>();
 builder.Services.AddScoped<ISitemapService, SitemapService>();
+builder.Services.AddScoped<IShareCardService, ShareCardService>();
 builder.Services.AddScoped<IAnswerRepository, AnswerRepository>();
 builder.Services.AddScoped<IAnswerService, AnswerService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
