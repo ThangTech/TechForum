@@ -21,8 +21,7 @@ import { VoteControl } from '../../interactions/components/VoteControl'
 import { getNextVote, type VoteDirection } from '../../interactions/utils/voteLogic'
 import { ReportAction } from '../../reports/components/ReportAction'
 import { ConfirmDialog } from '../../../shared/feedback/ConfirmDialog'
-import { AnswerEditDialog } from './AnswerEditDialog'
-import { AnswerForm } from './AnswerForm'
+import { AnswerEditDialog, AnswerForm } from './LazyAnswerForms'
 
 interface AnswerListProps {
   acceptingAnswerId: string | null

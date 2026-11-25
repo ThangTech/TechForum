@@ -177,3 +177,15 @@
 @media (prefers-reduced-motion: reduce) {
   .rich-editor__spinner { animation-duration: 2.4s; }
 }
+
+/* Ô soạn câu trả lời: thấp hơn ô viết bài, chữ gợi ý ở chân nhỏ lại. */
+.rich-editor--compact .rich-editor__content {
+  min-height: 150px;
+  padding: 12px 16px;
+}
+
+.rich-editor--compact .rich-editor__footer {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}

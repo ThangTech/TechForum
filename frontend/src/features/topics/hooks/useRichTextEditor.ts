@@ -13,12 +13,19 @@ import { addPlaceholderMeta, findPlaceholder, UploadPlaceholder } from '../utils
 export type BlockFormat = 'paragraph' | 'h2' | 'h3' | 'h4' | 'codeBlock'
 
 interface RichTextEditorOptions {
-  initialMedia: UploadedMedia[]
   value: string
   onChange: (value: string) => void
-  onMediaChange: (media: UploadedMedia[]) => void
-  onUploadStateChange: (isUploading: boolean) => void
+  // Bài viết có ảnh/video; câu trả lời thì không (allowMedia = false).
+  allowMedia?: boolean
+  initialMedia?: UploadedMedia[]
+  onMediaChange?: (media: UploadedMedia[]) => void
+  onUploadStateChange?: (isUploading: boolean) => void
+  characterLimit?: number
+  placeholder?: string
+  label?: string
 }
+
+const noMedia: UploadedMedia[] = []
 
 const uploadFallback = {
   image: 'Không thể tải ảnh lên. Hãy kiểm tra định dạng và dung lượng tệp.',
@@ -33,15 +40,63 @@ const getBlockFormat = (editor: Editor): BlockFormat => {
   return 'paragraph'
 }
 
+const emptyState = {
+  blockFormat: 'paragraph' as BlockFormat,
+  isBold: false,
+  isItalic: false,
+  isUnderline: false,
+  isStrike: false,
+  isOrderedList: false,
+  isBulletList: false,
+  isQuote: false,
+  isLink: false,
+  isCode: false,
+  isCodeBlock: false,
+  characters: 0,
+  words: 0,
+}
+
+// Trạng thái cho thanh công cụ và bộ đếm. Hộp thoại MUI có thể dựng nội dung hai lần, nên editor đầu tiên bị huỷ
+// (chưa có schema) mà vẫn được đọc: khi đó trả trạng thái rỗng thay vì làm sập trang.
+const readEditorState = (current: Editor | null) => {
+  if (!current || current.isDestroyed || !current.schema) return emptyState
+  const counter = current.storage.characterCount
+  return {
+    blockFormat: getBlockFormat(current),
+    isBold: current.isActive('bold'),
+    isItalic: current.isActive('italic'),
+    isUnderline: current.isActive('underline'),
+    isStrike: current.isActive('strike'),
+    isOrderedList: current.isActive('orderedList'),
+    isBulletList: current.isActive('bulletList'),
+    isQuote: current.isActive('blockquote'),
+    isLink: current.isActive('link'),
+    isCode: current.isActive('code'),
+    isCodeBlock: current.isActive('codeBlock'),
+    characters: counter ? counter.characters() : current.state.doc.textContent.length,
+    words: counter ? counter.words() : 0,
+  }
+}
+
 // Trình soạn thảo bài viết (TipTap): nội dung HTML, tải ảnh/video, link, chế độ sửa HTML và bộ đếm.
-export const useRichTextEditor = ({ initialMedia, value, onChange, onMediaChange, onUploadStateChange }: RichTextEditorOptions) => {
+export const useRichTextEditor = ({
+  value,
+  onChange,
+  allowMedia = true,
+  initialMedia = noMedia,
+  onMediaChange,
+  onUploadStateChange,
+  characterLimit = MAX_CONTENT_CHARACTERS,
+  placeholder = 'Viết điều gì đó...',
+  label = 'Nội dung',
+}: RichTextEditorOptions) => {
   const [uploadedMedia] = useState(() => new Map(initialMedia.map((media) => [media.link, media])))
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [pendingUploadCount, setPendingUploadCount] = useState(0)
   const [htmlDraft, setHtmlDraft] = useState<string | null>(null)
 
   useEffect(() => {
-    onUploadStateChange(pendingUploadCount > 0)
+    onUploadStateChange?.(pendingUploadCount > 0)
   }, [onUploadStateChange, pendingUploadCount])
 
   // Báo nội dung mới lên form, kèm danh sách media còn nằm trong bài (media đã xoá khỏi bài thì bỏ).
@@ -50,7 +105,7 @@ export const useRichTextEditor = ({ initialMedia, value, onChange, onMediaChange
     uploadedMedia.forEach((media, link) => {
       if (html.includes(link)) activeMedia.push(media)
     })
-    onMediaChange(activeMedia)
+    onMediaChange?.(activeMedia)
     onChange(html)
   }, [onChange, onMediaChange, uploadedMedia])
   // TipTap giữ hàm onUpdate của lần tạo đầu tiên, nên đọc hàm mới nhất qua ref.
@@ -66,43 +121,33 @@ export const useRichTextEditor = ({ initialMedia, value, onChange, onMediaChange
         heading: { levels: [2, 3, 4] },
         link: { openOnClick: false, autolink: true, defaultProtocol: 'https' },
       }),
-      Image,
-      Video,
-      UploadPlaceholder,
-      CharacterCount.configure({ limit: MAX_CONTENT_CHARACTERS }),
-      Placeholder.configure({ placeholder: 'Viết điều gì đó...' }),
+      ...(allowMedia ? [Image, Video, UploadPlaceholder] : []),
+      CharacterCount.configure({ limit: characterLimit }),
+      Placeholder.configure({ placeholder }),
     ],
     content: value,
     editorProps: {
       attributes: {
         class: 'rich-editor__content reading-content',
         role: 'textbox',
-        'aria-label': 'Nội dung',
+        'aria-label': label,
         'aria-multiline': 'true',
       },
       // Kéo thả hoặc dán ảnh/video vào bài thì tải lên luôn, như bấm nút chèn.
-      handleDrop: (_view, event) => uploadDroppedFiles(event.dataTransfer?.files, uploadFileRef.current),
-      handlePaste: (_view, event) => uploadDroppedFiles(event.clipboardData?.files, uploadFileRef.current),
+      handleDrop: (_view, event) => allowMedia && uploadDroppedFiles(event.dataTransfer?.files, uploadFileRef.current),
+      handlePaste: (_view, event) => allowMedia && uploadDroppedFiles(event.clipboardData?.files, uploadFileRef.current),
     },
     onUpdate: ({ editor: current }) => reportChangeRef.current(current.isEmpty ? '' : current.getHTML()),
   })
 
-  const state = useEditorState({
+  const editorState = useEditorState({
     editor,
-    selector: ({ editor: current }) => ({
-      blockFormat: current ? getBlockFormat(current) : 'paragraph',
-      isBold: current?.isActive('bold') ?? false,
-      isItalic: current?.isActive('italic') ?? false,
-      isUnderline: current?.isActive('underline') ?? false,
-      isStrike: current?.isActive('strike') ?? false,
-      isOrderedList: current?.isActive('orderedList') ?? false,
-      isBulletList: current?.isActive('bulletList') ?? false,
-      isQuote: current?.isActive('blockquote') ?? false,
-      isLink: current?.isActive('link') ?? false,
-      characters: current?.storage.characterCount.characters() ?? 0,
-      words: current?.storage.characterCount.words() ?? 0,
-    }),
+    selector: ({ editor: current }) => readEditorState(current),
   })
+  // Trước giao dịch đầu tiên, trạng thái có thể còn là của editor vừa bị huỷ: đọc lại từ editor hiện tại.
+  const state = editorState.characters === 0 && editor && !editor.isDestroyed && editor.schema
+    ? readEditorState(editor)
+    : editorState
 
   const uploadFile = useCallback(async (kind: EditorMediaKind, file: File) => {
     const problem = checkMediaFile(kind, file)
@@ -189,11 +234,16 @@ export const useRichTextEditor = ({ initialMedia, value, onChange, onMediaChange
       toggleBulletList: () => editor.chain().focus().toggleBulletList().run(),
       toggleQuote: () => editor.chain().focus().toggleBlockquote().run(),
       insertRule: () => editor.chain().focus().setHorizontalRule().run(),
+      toggleCode: () => editor.chain().focus().toggleCode().run(),
+      toggleCodeBlock: () => editor.chain().focus().toggleCodeBlock().run(),
+      // Gửi xong thì làm trống ô để viết câu tiếp theo.
+      clear: () => editor.commands.clearContent(true),
       setBlockFormat,
       editLink,
       uploadFile: (kind: EditorMediaKind, file: File) => void uploadFile(kind, file),
     },
     html: { isOpen: htmlDraft !== null, draft: htmlDraft ?? '', setDraft: setHtmlDraft, toggle: toggleHtmlMode },
+    characterLimit,
     isUploading: pendingUploadCount > 0,
     uploadError,
   }

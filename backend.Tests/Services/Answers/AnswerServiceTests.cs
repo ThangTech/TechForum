@@ -266,6 +266,26 @@ public sealed class AnswerServiceTests
         Assert.Equal(0, limiter.Calls);
     }
 
+    // Giới hạn 20.000 ký tự tính trên chữ, không tính thẻ định dạng (đậm, code, danh sách).
+    [Theory]
+    [InlineData(20_000, true)]
+    [InlineData(20_001, false)]
+    public async Task CreateAsync_CountsTheLimitOnTextNotOnFormattingTags(int letters, bool accepted)
+    {
+        var service = new AnswerService(
+            new FakeAnswerRepository(),
+            new FakeTopicRepository(CreateTopic()),
+            new FakeNotificationService(),
+            new PlainTextSanitizer(),
+            TimeProvider.System, new UnlimitedPostingRateLimiter());
+        var formatted = "<p><strong>" + new string('a', letters / 2) + "</strong><code>" + new string('b', letters - letters / 2) + "</code></p>";
+
+        var result = await service.CreateAsync(
+            TestIds.Id(1), "member", new CreateAnswerRequest(formatted, null), CancellationToken.None);
+
+        Assert.Equal(accepted, result.Succeeded);
+    }
+
     [Fact]
     public async Task CreateAsync_WhenReplyingToReply_NormalizesToRootAnswer()
     {

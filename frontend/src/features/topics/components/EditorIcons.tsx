@@ -18,4 +18,5 @@ export const LinkIcon = () => <Icon><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 
 export const ImageIcon = () => <Icon><rect height="16" rx="2" width="18" x="3" y="4" /><path d="m3 16 5-5 4 4 3-3 6 6M15.5 8.5h.01" /></Icon>
 export const VideoIcon = () => <Icon><rect height="12" rx="2" width="13" x="3" y="6" /><path d="m16 10 5-3v10l-5-3z" /></Icon>
 export const RuleIcon = () => <Icon><path d="M4 12h16" /></Icon>
+export const InlineCodeIcon = () => <Icon><path d="M9 7 5 12l4 5M15 7l4 5-4 5M13 6l-2 12" /></Icon>
 export const CodeIcon = () => <Icon><path d="m8 7-5 5 5 5M16 7l5 5-5 5" /></Icon>

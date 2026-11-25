@@ -335,6 +335,24 @@
   margin: 4px 0 8px 16px;
 }
 
+/* Danh sách trong câu trả lời, xem trước và trang chính sách (bài viết có kiểu riêng trong topicReading.css). */
+.reading-content :is(ul, ol) {
+  margin-block: 12px;
+  padding-left: 1.5em;
+}
+
+.reading-content ul {
+  list-style: disc;
+}
+
+.reading-content ol {
+  list-style: decimal;
+}
+
+.reading-content li + li {
+  margin-top: 4px;
+}
+
 .reading-content blockquote {
   margin-inline: 0;
   padding-left: 16px;

@@ -131,7 +131,7 @@ public sealed partial class AnswerService : IAnswerService
             return Result<AnswerDto>.Fail(ErrorType.Conflict, "Thảo luận đã bị khóa", "Chủ đề đã khóa thảo luận.");
         }
 
-        if (request.BodyHtml is null || request.BodyHtml.Length > 20_000)
+        if (request.BodyHtml is null || request.BodyHtml.Length > MaxBodyHtmlLength || TextLength(request.BodyHtml) > MaxTextLength)
         {
             return Result<AnswerDto>.Fail(ErrorType.Validation, "Câu trả lời gửi lên chưa hợp lệ", "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.",
                 "bodyHtml");
@@ -263,7 +263,7 @@ public sealed partial class AnswerService : IAnswerService
             return Result<AnswerDto>.Fail(ErrorType.NotFound, "Không tìm thấy câu trả lời", "Không tìm thấy câu trả lời thuộc tài khoản của bạn.");
         }
 
-        if (request.BodyHtml is null || request.BodyHtml.Length > 20_000)
+        if (request.BodyHtml is null || request.BodyHtml.Length > MaxBodyHtmlLength || TextLength(request.BodyHtml) > MaxTextLength)
         {
             return Result<AnswerDto>.Fail(ErrorType.Validation, null, "Câu trả lời không được để trống hoặc vượt quá 20.000 ký tự.", "bodyHtml");
         }
@@ -371,6 +371,15 @@ public sealed partial class AnswerService : IAnswerService
             ReputationRules.ShownScore(helpfulState?.Score ?? answer.Score, ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow())),
             helpfulState?.MyVote ?? 0,
             ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow()));
+    }
+
+    // Giới hạn 20.000 ký tự tính trên chữ người dùng gõ; thẻ HTML của định dạng (đậm, code, danh sách) được thêm chỗ.
+    private const int MaxTextLength = 20_000;
+    private const int MaxBodyHtmlLength = 50_000;
+
+    private static int TextLength(string html)
+    {
+        return WebUtility.HtmlDecode(HtmlTag().Replace(html, string.Empty)).Length;
     }
 
     private static bool HasMeaningfulContent(string html)
