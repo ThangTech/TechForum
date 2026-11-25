@@ -32,7 +32,7 @@ public sealed class ReportsController : ControllerBase
     [Authorize(Roles = RoleNames.Administrator)]
     public async Task<ActionResult<PagedResultDto<AdminReportDto>>> GetAdminPage([FromQuery] AdminReportQuery query, CancellationToken cancellationToken)
     {
-        return Ok(await reportService.GetAdminPageAsync(query.Status, query.Page, query.PageSize, cancellationToken));
+        return Ok(await reportService.GetAdminPageAsync(query, cancellationToken));
     }
 
     [HttpGet("mine")]

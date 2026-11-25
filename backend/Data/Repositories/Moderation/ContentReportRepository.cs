@@ -134,30 +134,35 @@ public sealed class ContentReportRepository : IContentReportRepository
         return true;
     }
 
-    public async Task KeepHiddenByModeratorAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken)
-    {
-        if (topicId.HasValue)
-        {
-            await dbContext.Topics.Where(topic => topic.Id == topicId && topic.AutoHiddenAtUtc != null)
-                .ExecuteUpdateAsync(set => set.SetProperty(topic => topic.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken);
-        }
-        else
-        {
-            await dbContext.Answers.Where(answer => answer.Id == answerId && answer.AutoHiddenAtUtc != null)
-                .ExecuteUpdateAsync(set => set.SetProperty(answer => answer.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken);
-        }
-    }
-
     public async Task<ContentReportPage> GetPageAsync(
-        ReportStatus? status,
+        ReportFilter filter,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
     {
         var query = DetailedQuery().AsNoTracking();
-        if (status.HasValue)
+        if (filter.Status.HasValue)
         {
-            query = query.Where(item => item.Status == status.Value);
+            query = query.Where(item => item.Status == filter.Status.Value);
+        }
+        if (filter.IsAnswer == true)
+        {
+            query = query.Where(item => item.AnswerId != null);
+        }
+        else if (filter.IsAnswer == false)
+        {
+            query = query.Where(item => item.TopicId != null);
+        }
+        if (!string.IsNullOrEmpty(filter.Reason))
+        {
+            query = query.Where(item => item.Reason == filter.Reason);
+        }
+        if (filter.Status == ReportStatus.Pending)
+        {
+            // Mỗi nội dung một dòng: bỏ các báo cáo đang chờ đến sau báo cáo đầu tiên về cùng nội dung.
+            query = query.Where(item => !dbContext.ContentReports.Any(other =>
+                other.Status == ReportStatus.Pending && other.TopicId == item.TopicId && other.AnswerId == item.AnswerId &&
+                other.CreatedAtUtc < item.CreatedAtUtc));
         }
 
         var totalItems = await query.CountAsync(cancellationToken);
@@ -168,7 +173,38 @@ public sealed class ContentReportRepository : IContentReportRepository
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
-        return new ContentReportPage(items, totalItems);
+        return new ContentReportPage(items, totalItems, await SummarizeAsync(items, cancellationToken));
+    }
+
+    // Số báo cáo đang chờ và lý do cho từng nội dung có trong trang.
+    private async Task<IReadOnlyDictionary<Guid, ReportTargetSummary>> SummarizeAsync(
+        IReadOnlyList<ContentReport> items, CancellationToken cancellationToken)
+    {
+        var topicIds = items.Where(item => item.TopicId.HasValue).Select(item => item.TopicId!.Value).ToList();
+        var answerIds = items.Where(item => item.AnswerId.HasValue).Select(item => item.AnswerId!.Value).ToList();
+        var pending = await dbContext.ContentReports.AsNoTracking()
+            .Where(item => item.Status == ReportStatus.Pending &&
+                ((item.TopicId != null && topicIds.Contains(item.TopicId.Value)) ||
+                 (item.AnswerId != null && answerIds.Contains(item.AnswerId.Value))))
+            .Select(item => new { item.TopicId, item.AnswerId, item.Reason })
+            .ToListAsync(cancellationToken);
+
+        var summaries = new Dictionary<Guid, ReportTargetSummary>();
+        foreach (var item in items)
+        {
+            var same = pending.Where(other => other.TopicId == item.TopicId && other.AnswerId == item.AnswerId).ToList();
+            summaries[item.Id] = new ReportTargetSummary(same.Count, same.Select(other => other.Reason).Distinct().ToList());
+        }
+        return summaries;
+    }
+
+    public async Task<IReadOnlyList<PendingReport>> GetPendingForTargetAsync(
+        Guid? topicId, Guid? answerId, CancellationToken cancellationToken)
+    {
+        return await dbContext.ContentReports.AsNoTracking()
+            .Where(item => item.TopicId == topicId && item.AnswerId == answerId && item.Status == ReportStatus.Pending)
+            .Select(item => new PendingReport(item.Id, item.ReporterId))
+            .ToListAsync(cancellationToken);
     }
 
     public Task<ContentReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -195,30 +231,50 @@ public sealed class ContentReportRepository : IContentReportRepository
     }
 
     public async Task<bool> ResolvePendingAsync(
-        Guid id,
+        IReadOnlyCollection<Guid> ids,
         ReportStatus status,
         string administratorId,
         DateTimeOffset resolvedAtUtc,
         string resolutionNote,
-        Notification notification,
-        AdminAuditLog auditLog,
+        Guid? topicId,
+        Guid? answerId,
+        bool hideTarget,
+        IReadOnlyList<Notification> notifications,
+        IReadOnlyList<AdminAuditLog> auditLogs,
         CancellationToken cancellationToken)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var affectedRows = await dbContext.ContentReports
-            .Where(item => item.Id == id && item.Status == ReportStatus.Pending)
+            .Where(item => ids.Contains(item.Id) && item.Status == ReportStatus.Pending)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(item => item.Status, status)
                 .SetProperty(item => item.ResolvedById, administratorId)
                 .SetProperty(item => item.ResolvedAtUtc, resolvedAtUtc)
                 .SetProperty(item => item.ResolutionNote, resolutionNote),
                 cancellationToken);
-        if (affectedRows != 1)
+        // Có báo cáo vừa được quản trị viên khác xử lý: huỷ cả giao dịch để không thông báo hai lần.
+        if (affectedRows != ids.Count)
         {
             return false;
         }
-        dbContext.Notifications.Add(notification);
-        dbContext.AdminAuditLogs.Add(auditLog);
+
+        if (hideTarget && topicId.HasValue)
+        {
+            await dbContext.Topics.Where(topic => topic.Id == topicId && !topic.IsDeleted)
+                .ExecuteUpdateAsync(set => set
+                    .SetProperty(topic => topic.IsHiddenByModerator, true)
+                    .SetProperty(topic => topic.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken);
+        }
+        else if (hideTarget && answerId.HasValue)
+        {
+            await dbContext.Answers.Where(answer => answer.Id == answerId && !answer.IsDeleted)
+                .ExecuteUpdateAsync(set => set
+                    .SetProperty(answer => answer.IsHiddenByModerator, true)
+                    .SetProperty(answer => answer.AutoHiddenAtUtc, (DateTimeOffset?)null), cancellationToken);
+        }
+
+        dbContext.Notifications.AddRange(notifications);
+        dbContext.AdminAuditLogs.AddRange(auditLogs);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return true;

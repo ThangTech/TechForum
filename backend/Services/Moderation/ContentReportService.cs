@@ -104,17 +104,26 @@ public sealed class ContentReportService : IContentReportService
     }
 
     public async Task<PagedResultDto<AdminReportDto>> GetAdminPageAsync(
-        string? status,
-        int page,
-        int pageSize,
+        AdminReportQuery query,
         CancellationToken cancellationToken)
     {
-        var parsedStatus = ParseStatus(status);
-        page = Math.Max(page, 1);
-        pageSize = Math.Clamp(pageSize, 1, 50);
-        var result = await reportRepository.GetPageAsync(parsedStatus, page, pageSize, cancellationToken);
+        var page = Math.Max(query.Page, 1);
+        var pageSize = Math.Clamp(query.PageSize, 1, 50);
+        var targetType = query.TargetType?.Trim().ToLowerInvariant();
+        bool? isAnswer = null;
+        if (targetType == "answer")
+        {
+            isAnswer = true;
+        }
+        else if (targetType == "topic")
+        {
+            isAnswer = false;
+        }
+        var reason = string.IsNullOrWhiteSpace(query.Reason) ? null : query.Reason.Trim().ToLowerInvariant();
+        var filter = new ReportFilter(ParseStatus(query.Status), isAnswer, reason);
+        var result = await reportRepository.GetPageAsync(filter, page, pageSize, cancellationToken);
         return new PagedResultDto<AdminReportDto>(
-            result.Items.Select(MapAdminReport).ToList(),
+            result.Items.Select(report => MapAdminReport(report, result.Summaries?.GetValueOrDefault(report.Id))).ToList(),
             page,
             pageSize,
             result.TotalItems,
@@ -162,24 +171,35 @@ public sealed class ContentReportService : IContentReportService
             return Result<AdminReportDto>.Fail(ErrorType.Conflict, "Báo cáo đã được xử lý", "Báo cáo này đã được xử lý trước đó.");
         }
 
+        // Mọi báo cáo đang chờ về cùng nội dung được xử lý một lần, như các diễn đàn lớn gộp cờ báo cáo theo bài.
+        var pending = await reportRepository.GetPendingForTargetAsync(existing.TopicId, existing.AnswerId, cancellationToken);
+        if (pending.All(item => item.Id != existing.Id))
+        {
+            pending = [.. pending, new PendingReport(existing.Id, existing.ReporterId)];
+        }
+
         var now = timeProvider.GetUtcNow();
-        var resolved = await reportRepository.ResolvePendingAsync(
-            reportId,
-            status.Value,
-            administratorId,
-            now,
-            note,
-            new Notification
+        var accepted = status == ReportStatus.Accepted;
+        // Chấp nhận nghĩa là nội dung vi phạm: ẩn khỏi trang công khai (nếu chưa bị xoá) và báo cho tác giả.
+        var hideTarget = accepted && !IsTargetDeleted(existing);
+        var (authorId, title, kind) = DescribeTarget(existing.Topic, existing.Answer);
+        var notifications = pending
+            .Select(item => new Notification
             {
-                UserId = existing.ReporterId,
+                UserId = item.ReporterId,
                 Type = "report-resolved",
                 Title = "Báo cáo đã được xử lý",
-                Message = $"Báo cáo #{existing.Id}: {(status == ReportStatus.Accepted ? "Được chấp nhận" : "Không chấp nhận")}. Lý do: {note}",
+                Message = accepted
+                    ? $"Báo cáo của bạn về “{title}” được chấp nhận, nội dung đã bị ẩn. Lý do: {note}"
+                    : $"Báo cáo của bạn về “{title}” không được chấp nhận. Lý do: {note}",
                 Link = "/reports",
-                SourceKey = $"report-resolved:{existing.Id}",
+                SourceKey = $"report-resolved:{item.Id}",
                 CreatedAtUtc = now
-            },
-            new AdminAuditLog
+            })
+            .ToList();
+        var auditLogs = new List<AdminAuditLog>
+        {
+            new()
             {
                 AdministratorId = administratorId,
                 Action = "report.resolved",
@@ -187,20 +207,70 @@ public sealed class ContentReportService : IContentReportService
                 TargetId = existing.Id.ToString(),
                 PreviousValue = "pending",
                 NewValue = status.Value.ToString().ToLowerInvariant(),
+                Reason = pending.Count > 1 ? $"{note} (xử lý cùng {pending.Count} báo cáo)" : note,
+                CreatedAtUtc = now
+            }
+        };
+        if (hideTarget)
+        {
+            notifications.Add(new Notification
+            {
+                UserId = authorId,
+                Type = "content-moderated",
+                Title = $"{kind} của bạn đã bị ẩn",
+                Message = $"{kind} trong “{title}” bị ẩn sau khi quản trị viên xem xét báo cáo. Lý do: {note}",
+                Link = existing.TopicId.HasValue ? "/my-topics" : $"/topics/{existing.Answer!.TopicId}",
+                SourceKey = $"content-moderated:{existing.TopicId ?? existing.AnswerId}:{now.ToUnixTimeSeconds()}",
+                CreatedAtUtc = now
+            });
+            auditLogs.Add(new AdminAuditLog
+            {
+                AdministratorId = administratorId,
+                Action = existing.TopicId.HasValue ? "topic.hide" : "answer.hide",
+                TargetType = existing.TopicId.HasValue ? "topic" : "answer",
+                TargetId = (existing.TopicId ?? existing.AnswerId!.Value).ToString(),
+                PreviousValue = IsTargetHidden(existing) ? "hidden" : "visible",
+                NewValue = "hidden",
                 Reason = note,
                 CreatedAtUtc = now
-            },
+            });
+        }
+
+        var resolved = await reportRepository.ResolvePendingAsync(
+            pending.Select(item => item.Id).ToList(),
+            status.Value,
+            administratorId,
+            now,
+            note,
+            existing.TopicId,
+            existing.AnswerId,
+            hideTarget,
+            notifications,
+            auditLogs,
             cancellationToken);
         if (!resolved)
         {
             return Result<AdminReportDto>.Fail(ErrorType.Conflict, "Báo cáo đã được xử lý", "Báo cáo này vừa được quản trị viên khác xử lý.");
         }
 
-        await AfterResolveAsync(existing, status.Value, cancellationToken);
+        if (!accepted)
+        {
+            await ShowAgainWhenRejectedAsync(existing, cancellationToken);
+        }
 
         var updated = await reportRepository.GetByIdAsync(reportId, cancellationToken)
             ?? throw new InvalidOperationException("Báo cáo vừa xử lý không còn tồn tại.");
-        return Result<AdminReportDto>.Success(MapAdminReport(updated));
+        return Result<AdminReportDto>.Success(MapAdminReport(updated, null));
+    }
+
+    private static bool IsTargetDeleted(ContentReport report)
+    {
+        return report.Answer is not null ? report.Answer.IsDeleted : report.Topic?.IsDeleted == true;
+    }
+
+    private static bool IsTargetHidden(ContentReport report)
+    {
+        return report.Answer is not null ? report.Answer.IsHiddenByModerator : report.Topic?.IsHiddenByModerator == true;
     }
 
     // Đủ số người khác nhau (tài khoản đủ tuổi) có báo cáo đang chờ thì nội dung tự ẩn tới khi quản trị viên xem,
@@ -230,19 +300,12 @@ public sealed class ContentReportService : IContentReportService
         }, cancellationToken);
     }
 
-    // Chấp nhận báo cáo thì nội dung tiếp tục ẩn theo quyết định của quản trị viên. Từ chối báo cáo cuối cùng đang chờ
-    // thì nội dung tự ẩn được hiện lại (trừ khi đã có báo cáo khác được chấp nhận).
-    private async Task AfterResolveAsync(ContentReport report, ReportStatus status, CancellationToken cancellationToken)
+    // Từ chối các báo cáo của nội dung đang tự ẩn thì hiện lại nội dung (trừ khi đã có báo cáo khác được chấp nhận).
+    private async Task ShowAgainWhenRejectedAsync(ContentReport report, CancellationToken cancellationToken)
     {
         var target = (Hidden: report.Topic?.AutoHiddenAtUtc ?? report.Answer?.AutoHiddenAtUtc, report.TopicId, report.AnswerId);
         if (target.Hidden is null)
         {
-            return;
-        }
-
-        if (status == ReportStatus.Accepted)
-        {
-            await reportRepository.KeepHiddenByModeratorAsync(target.TopicId, target.AnswerId, cancellationToken);
             return;
         }
 
@@ -317,7 +380,7 @@ public sealed class ContentReportService : IContentReportService
             (int)Math.Ceiling(result.TotalItems / (double)pageSize));
     }
 
-    private AdminReportDto MapAdminReport(ContentReport report)
+    private AdminReportDto MapAdminReport(ContentReport report, ReportTargetSummary? summary)
     {
         var topic = report.Topic ?? report.Answer?.Topic
             ?? throw new InvalidOperationException("Báo cáo thiếu nội dung đích.");
@@ -346,6 +409,8 @@ public sealed class ContentReportService : IContentReportService
             topic.IsHiddenByModerator || report.Answer?.IsHiddenByModerator == true,
             (report.Answer is null ? topic.AutoHiddenAtUtc : report.Answer.AutoHiddenAtUtc) is not null,
             topic.IsDeleted || report.Answer?.IsDeleted == true,
-            report.Answer?.ParentAnswer is null ? null : contentSanitizer.Sanitize(report.Answer.ParentAnswer.BodyHtml));
+            report.Answer?.ParentAnswer is null ? null : contentSanitizer.Sanitize(report.Answer.ParentAnswer.BodyHtml),
+            summary?.PendingCount ?? 0,
+            summary?.Reasons ?? []);
     }
 }

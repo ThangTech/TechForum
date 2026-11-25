@@ -30,11 +30,15 @@ export const ReportReviewCard = ({
         {report.targetTitle}
       </button>
       <span className="admin-table-secondary">
-        Báo cáo #{report.id} · {report.targetType === 'topic' ? 'Chủ đề' : 'Câu trả lời'}
+        {report.targetType === 'topic' ? 'Bài viết / câu hỏi' : 'Câu trả lời'} · {report.targetAuthor.displayName}
+        {report.isTargetHidden && ' · đang ẩn'}
       </span>
     </TableCell>
     <TableCell>
-      {reportReasonLabels[report.reason]}
+      {report.pendingCount > 1 && <StatusBadge tone="amber">{report.pendingCount} báo cáo</StatusBadge>}
+      {report.pendingReasons.length > 1
+        ? report.pendingReasons.map((reason) => reportReasonLabels[reason]).join(', ')
+        : reportReasonLabels[report.reason]}
       {report.details && (
         <Typography
           className="admin-table-secondary"

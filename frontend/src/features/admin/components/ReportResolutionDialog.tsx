@@ -4,9 +4,11 @@ import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import { DialogFrame } from '../../../shared/feedback/DialogFrame'
 import { useDiscardGuard } from '../../../shared/feedback/useDiscardGuard'
+import type { AdminReport } from '../../reports/types/reports'
 
 interface ReportResolutionDialogProps {
   decision: 'accepted' | 'rejected' | null
+  report: AdminReport | null
   requestError: string | null
   isBusy: boolean
   onClose: () => void
@@ -15,6 +17,7 @@ interface ReportResolutionDialogProps {
 
 export const ReportResolutionDialog = ({
   decision,
+  report,
   isBusy,
   onClose,
   onConfirm,
@@ -45,6 +48,14 @@ export const ReportResolutionDialog = ({
   }
 
   const isAccepted = decision === 'accepted'
+  const count = Math.max(1, report?.pendingCount ?? 1)
+  const kind = report?.targetType === 'answer' ? 'Câu trả lời' : 'Nội dung'
+  // Nói rõ hệ quả trước khi bấm, để không ai tưởng đã xử lý mà nội dung vẫn còn hiện.
+  const consequence = isAccepted
+    ? `${kind} "${report?.targetTitle ?? ''}" sẽ bị ẩn khỏi trang công khai, tác giả nhận thông báo kèm lý do.`
+    : report?.isTargetAutoHidden
+      ? `${kind} đang tạm ẩn vì nhiều báo cáo sẽ được hiện lại.`
+      : `${kind} được giữ nguyên.`
   return (
     <>
     <DialogFrame
@@ -59,8 +70,12 @@ export const ReportResolutionDialog = ({
       open={decision !== null}
       title={isAccepted ? 'Chấp nhận báo cáo' : 'Bác bỏ báo cáo'}
     >
-      <Typography color="text.secondary" sx={{ lineHeight: '1.5rem' }} variant="body2">
-        Quyết định được lưu cùng tài khoản và thời điểm xử lý để phục vụ nhật ký quản trị.
+      <Typography sx={{ lineHeight: '1.5rem' }} variant="body2">{consequence}</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1, lineHeight: '1.5rem' }} variant="body2">
+        {count > 1
+          ? `Cả ${count} báo cáo về nội dung này được xử lý cùng lúc; mỗi người báo cáo nhận kết quả và lý do.`
+          : 'Người báo cáo nhận kết quả và lý do.'}{' '}
+        Quyết định được ghi vào nhật ký quản trị.
       </Typography>
       <TextField
         disabled={isBusy}

@@ -57,12 +57,21 @@ public sealed record AdminReportDto(
     // Tự ẩn vì nhiều báo cáo; từ chối hết các báo cáo thì hiện lại.
     bool IsTargetAutoHidden,
     bool IsTargetDeleted,
-    string? ParentAnswerBodyHtml);
+    string? ParentAnswerBodyHtml,
+    // Số báo cáo đang chờ về cùng nội dung này và các lý do của chúng (0 khi báo cáo đã được xử lý).
+    int PendingCount,
+    IReadOnlyList<string> PendingReasons);
 
 public sealed class AdminReportQuery : PageQuery
 {
     [RegularExpression("(?i)^(pending|accepted|rejected)?$", ErrorMessage = "Trạng thái phải là pending, accepted hoặc rejected.")]
     public string? Status { get; init; } = "pending";
+
+    [RegularExpression("(?i)^(topic|answer)?$", ErrorMessage = "Loại nội dung phải là topic hoặc answer.")]
+    public string? TargetType { get; init; }
+
+    [RegularExpression("(?i)^(spam|harassment|misinformation|copyright|other)?$", ErrorMessage = "Lý do báo cáo không hợp lệ.")]
+    public string? Reason { get; init; }
 }
 
 public sealed class MyReportQuery : PageQuery

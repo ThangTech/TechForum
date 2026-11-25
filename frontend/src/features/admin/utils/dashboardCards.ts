@@ -1,3 +1,4 @@
+import { appRoutes } from '../../../app/appRoutes'
 import type { AdminDashboard } from '../types/adminOverview'
 
 // Màu biểu đồ khớp với palette trong DESIGN.md: bài viết xanh dương, câu hỏi hổ phách, trả lời xanh lá.
@@ -16,6 +17,8 @@ export interface StatCard {
   suffix: string
   color: string
   trend: number[] | null
+  // Trang để xử lý ngay số liệu này (ví dụ báo cáo đang chờ).
+  link?: string
 }
 
 // The five number cards at the top of the dashboard, with the small trend line of the chosen range.
@@ -58,9 +61,10 @@ export const getStatCards = (dashboard: AdminDashboard | null): StatCard[] =>
           label: 'Báo cáo chờ xử lý',
           value: dashboard.totals.pendingReportCount,
           period: null,
-          suffix: 'Cần quản trị viên xem xét',
+          suffix: 'Bấm để xem và xử lý',
           color: chartColors.warning,
           trend: null,
+          link: appRoutes.adminReports,
         },
       ]
     : []

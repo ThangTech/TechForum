@@ -1,6 +1,6 @@
 import { ApiError, apiRequest } from '../../../shared/api/client'
 import { hasPaging, isRecord } from '../../../shared/api/guards'
-import type { AdminReport, AdminReportPage, CreateReportInput, MyReport, MyReportPage, ReportReason, ReportReceipt, ReportStatus, ReportUser } from '../types/reports'
+import type { AdminReport, AdminReportFilters, AdminReportPage, CreateReportInput, MyReport, MyReportPage, ReportReason, ReportReceipt, ReportStatus, ReportUser } from '../types/reports'
 
 const reportReasons: ReportReason[] = [
   'spam',
@@ -33,7 +33,9 @@ const isAdminReport = (value: unknown): value is AdminReport =>
   (value.resolutionNote === null || typeof value.resolutionNote === 'string') &&
   typeof value.topicId === 'string' && isReportUser(value.targetAuthor) &&
   typeof value.isTargetHidden === 'boolean' && typeof value.isTargetAutoHidden === 'boolean' && typeof value.isTargetDeleted === 'boolean' &&
-  (value.parentAnswerBodyHtml === null || typeof value.parentAnswerBodyHtml === 'string')
+  (value.parentAnswerBodyHtml === null || typeof value.parentAnswerBodyHtml === 'string') &&
+  typeof value.pendingCount === 'number' &&
+  Array.isArray(value.pendingReasons) && value.pendingReasons.every(isReportReason)
 
 const isMyReport = (value: unknown): value is MyReport =>
   isRecord(value) && typeof value.id === 'string' &&
@@ -72,12 +74,14 @@ export const createReport = async (input: CreateReportInput): Promise<ReportRece
   }))
 
 export const getAdminReports = async (
-  status: ReportStatus,
+  filters: AdminReportFilters,
   page: number,
   pageSize: number,
   signal?: AbortSignal,
 ): Promise<AdminReportPage> => {
-  const params = new URLSearchParams({ status, page: String(page), pageSize: String(pageSize) })
+  const params = new URLSearchParams({ status: filters.status, page: String(page), pageSize: String(pageSize) })
+  if (filters.targetType) params.set('targetType', filters.targetType)
+  if (filters.reason) params.set('reason', filters.reason)
   const data: unknown = await apiRequest(`/api/reports/admin?${params.toString()}`, { signal })
   if (
     !isRecord(data) ||

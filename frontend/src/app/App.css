@@ -1014,3 +1014,29 @@
     position: static;
   }
 }
+
+/* Ô số liệu có việc cần làm: cả ô bấm được (link phủ toàn ô qua ::after). */
+.admin-stat-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-stat-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.admin-stat:has(.admin-stat-link):hover {
+  border-color: var(--color-primary);
+}
+
+.admin-stat-link:focus-visible {
+  outline: none;
+}
+
+.admin-stat:has(.admin-stat-link:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

@@ -46,6 +46,15 @@ export interface AdminReport {
   isTargetAutoHidden: boolean
   isTargetDeleted: boolean
   parentAnswerBodyHtml: string | null
+  // Số báo cáo đang chờ về cùng nội dung (xử lý một lần cho tất cả) và các lý do của chúng.
+  pendingCount: number
+  pendingReasons: ReportReason[]
+}
+
+export interface AdminReportFilters {
+  status: ReportStatus
+  targetType: ReportTargetType | ''
+  reason: ReportReason | ''
 }
 
 export interface MyReport {

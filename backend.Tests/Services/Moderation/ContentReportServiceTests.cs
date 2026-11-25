@@ -133,12 +133,54 @@ public sealed class ContentReportServiceTests
 
         Assert.True(first.Succeeded);
         Assert.Equal(ErrorType.Conflict, second.Error);
-        var notification = Assert.Single(repository.Notifications);
-        Assert.Equal("reporter", notification.UserId);
+        var notification = Assert.Single(repository.Notifications, item => item.UserId == "reporter");
         Assert.Equal($"report-resolved:{TestIds.Id(1)}", notification.SourceKey);
         Assert.Equal("/reports", notification.Link);
         Assert.Contains("Đã xử lý spam", notification.Message);
-        Assert.Equal("accepted", Assert.Single(repository.Audits).NewValue);
+        Assert.DoesNotContain(TestIds.Id(1).ToString(), notification.Message);
+        Assert.Equal("accepted", Assert.Single(repository.Audits, item => item.Action == "report.resolved").NewValue);
+    }
+
+    [Fact]
+    public async Task Resolve_Accepting_HidesVisibleContentAndTellsTheAuthor()
+    {
+        var repository = new FakeReports { Report = CreateReport() };
+
+        var result = await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("accepted", "Quảng cáo"), default);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(TestIds.Id(5), repository.HiddenTopicId);
+        var author = Assert.Single(repository.Notifications, item => item.UserId == "author");
+        Assert.Equal("content-moderated", author.Type);
+        Assert.Contains("Quảng cáo", author.Message);
+        Assert.Contains(repository.Audits, item => item.Action == "topic.hide" && item.NewValue == "hidden");
+    }
+
+    [Fact]
+    public async Task Resolve_Rejecting_LeavesTheContentAsItIs()
+    {
+        var repository = new FakeReports { Report = CreateReport() };
+
+        await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("rejected", "Không vi phạm"), default);
+
+        Assert.Null(repository.HiddenTopicId);
+        Assert.DoesNotContain(repository.Notifications, item => item.UserId == "author");
+    }
+
+    [Fact]
+    public async Task Resolve_HandlesEveryPendingReportOfTheSameContentAtOnce()
+    {
+        var repository = new FakeReports
+        {
+            Report = CreateReport(),
+            OtherPending = [new PendingReport(TestIds.Id(2), "second-reporter"), new PendingReport(TestIds.Id(3), "third-reporter")]
+        };
+
+        await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("accepted", "Spam"), default);
+
+        Assert.Equal([TestIds.Id(1), TestIds.Id(2), TestIds.Id(3)], repository.ResolvedIds.Order());
+        Assert.Equal(["reporter", "second-reporter", "third-reporter"],
+            repository.Notifications.Where(item => item.Type == "report-resolved").Select(item => item.UserId).Order());
     }
 
     [Fact]
@@ -169,7 +211,7 @@ public sealed class ContentReportServiceTests
         var repository = new FakeReports { Report = CreateReport() };
         Assert.NotNull(repository.Report.Topic);
         repository.Report.Topic.BodyHtml = "<p onclick=\"alert(1)\">Nội dung<script>alert(1)</script></p>";
-        var result = await Service(repository).GetAdminPageAsync(null, 1, 10, default);
+        var result = await Service(repository).GetAdminPageAsync(new AdminReportQuery { Status = null }, default);
         Assert.NotNull(result);
         var item = Assert.Single(result.Items);
         Assert.DoesNotContain("<script", item.TargetBodyHtml);
@@ -257,7 +299,7 @@ public sealed class ContentReportServiceTests
 
         await Service(repository).ResolveAsync(TestIds.Id(1), "admin", new("accepted", "Vi phạm"), default);
 
-        Assert.Equal(TestIds.Id(5), repository.KeptHiddenTopicId);
+        Assert.Equal(TestIds.Id(5), repository.HiddenTopicId);
         Assert.Null(repository.ShownAgainTopicId);
     }
 
@@ -291,7 +333,9 @@ public sealed class ContentReportServiceTests
         public DateTimeOffset? CountedAccountsBefore { get; private set; }
         public Guid? AutoHiddenTopicId { get; private set; }
         public Guid? ShownAgainTopicId { get; private set; }
-        public Guid? KeptHiddenTopicId { get; private set; }
+        public Guid? HiddenTopicId { get; private set; }
+        public IReadOnlyList<PendingReport> OtherPending { get; init; } = [];
+        public List<Guid> ResolvedIds { get; } = [];
         public Task<int> CountPendingReportersAsync(Guid? topicId, Guid? answerId, DateTimeOffset accountsCreatedBefore, CancellationToken cancellationToken)
         {
             CountedAccountsBefore = accountsCreatedBefore;
@@ -310,31 +354,32 @@ public sealed class ContentReportServiceTests
             Notifications.Add(notification);
             return Task.FromResult(true);
         }
-        public Task KeepHiddenByModeratorAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken)
-        {
-            KeptHiddenTopicId = topicId;
-            return Task.CompletedTask;
-        }
         public Task<Answer?> GetPublicAnswerAsync(Guid answerId, CancellationToken cancellationToken) => Task.FromResult<Answer?>(null);
         public Task<bool> PendingExistsAsync(string reporterId, Guid? topicId, Guid? answerId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task<bool> AddAsync(ContentReport report, CancellationToken cancellationToken) => Task.FromResult(true);
-        public Task<ContentReportPage> GetPageAsync(ReportStatus? status, int page, int pageSize, CancellationToken cancellationToken) => Task.FromResult(new ContentReportPage([Report], 1));
+        public Task<ContentReportPage> GetPageAsync(ReportFilter filter, int page, int pageSize, CancellationToken cancellationToken) => Task.FromResult(new ContentReportPage([Report], 1));
+        public Task<IReadOnlyList<PendingReport>> GetPendingForTargetAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<PendingReport>>(Report.Status == ReportStatus.Pending
+                ? [new PendingReport(Report.Id, Report.ReporterId), .. OtherPending]
+                : []);
         public Task<ContentReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<ContentReport?>(Report);
         public Task<ContentReportPage> GetMineAsync(string reporterId, ReportStatus? status, int page, int pageSize, CancellationToken cancellationToken)
         {
             RequestedReporterId = reporterId;
             return Task.FromResult(new ContentReportPage([Report], 1));
         }
-        public Task<bool> ResolvePendingAsync(Guid id, ReportStatus status, string administratorId,
-            DateTimeOffset resolvedAtUtc, string resolutionNote, Notification notification, AdminAuditLog auditLog,
-            CancellationToken cancellationToken)
+        public Task<bool> ResolvePendingAsync(IReadOnlyCollection<Guid> ids, ReportStatus status, string administratorId,
+            DateTimeOffset resolvedAtUtc, string resolutionNote, Guid? topicId, Guid? answerId, bool hideTarget,
+            IReadOnlyList<Notification> notifications, IReadOnlyList<AdminAuditLog> auditLogs, CancellationToken cancellationToken)
         {
-            if (!ShouldResolve) return Task.FromResult(false);
+            if (!ShouldResolve || Report.Status != ReportStatus.Pending) return Task.FromResult(false);
             Report.Status = status;
             Report.ResolutionNote = resolutionNote;
             Report.ResolvedAtUtc = resolvedAtUtc;
-            Notifications.Add(notification);
-            Audits.Add(auditLog);
+            ResolvedIds.AddRange(ids);
+            if (hideTarget) HiddenTopicId = topicId;
+            Notifications.AddRange(notifications);
+            Audits.AddRange(auditLogs);
             return Task.FromResult(true);
         }
     }

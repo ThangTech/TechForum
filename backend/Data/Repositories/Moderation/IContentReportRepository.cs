@@ -15,23 +15,28 @@ public interface IContentReportRepository
     Task<bool> AutoHideAsync(Guid? topicId, Guid? answerId, DateTimeOffset now, Notification notification, CancellationToken cancellationToken);
     // Hiện lại nội dung đã tự ẩn và lưu thông báo cho tác giả; false khi nó không ở trạng thái tự ẩn.
     Task<bool> ShowAutoHiddenAsync(Guid? topicId, Guid? answerId, Notification notification, CancellationToken cancellationToken);
-    // Quản trị viên chấp nhận báo cáo: nội dung vẫn ẩn, nhưng không còn là "tự ẩn vì báo cáo".
-    Task KeepHiddenByModeratorAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken);
+    // Danh sách chờ xử lý chỉ hiện một dòng cho mỗi nội dung (báo cáo sớm nhất), kèm số báo cáo và lý do.
     Task<ContentReportPage> GetPageAsync(
-        ReportStatus? status,
+        ReportFilter filter,
         int page,
         int pageSize,
         CancellationToken cancellationToken);
     Task<ContentReport?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<ContentReportPage> GetMineAsync(string reporterId, ReportStatus? status,
         int page, int pageSize, CancellationToken cancellationToken);
+    Task<IReadOnlyList<PendingReport>> GetPendingForTargetAsync(Guid? topicId, Guid? answerId, CancellationToken cancellationToken);
+    // Xử lý cùng lúc mọi báo cáo trong danh sách; hideTarget thì ẩn luôn nội dung (quyết định của quản trị viên).
+    // false khi có báo cáo vừa được người khác xử lý: không ghi gì.
     Task<bool> ResolvePendingAsync(
-        Guid id,
+        IReadOnlyCollection<Guid> ids,
         ReportStatus status,
         string administratorId,
         DateTimeOffset resolvedAtUtc,
         string resolutionNote,
-        Notification notification,
-        AdminAuditLog auditLog,
+        Guid? topicId,
+        Guid? answerId,
+        bool hideTarget,
+        IReadOnlyList<Notification> notifications,
+        IReadOnlyList<AdminAuditLog> auditLogs,
         CancellationToken cancellationToken);
 }

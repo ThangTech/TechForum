@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { AuditFilters } from '../types/adminOverview'
-import type { ReportStatus } from '../../reports/types/reports'
+import type { AdminReportFilters } from '../../reports/types/reports'
 import type { TopicVisibility } from '../types/adminTopics'
 import type { TopicType } from '../../topics/types/topics'
 import { useUserScope, userKey } from '../../auth/hooks/userScope'
@@ -32,8 +32,8 @@ export const adminKeys = {
   accounts: (scope: string, params: AdminAccountParams) =>
     [...adminKeys.all(scope), 'accounts', params] as const,
   administrators: (scope: string) => [...adminKeys.all(scope), 'administrators'] as const,
-  reports: (scope: string, status: ReportStatus, page: number, pageSize: number) =>
-    [...adminKeys.all(scope), 'reports', { status, page, pageSize }] as const,
+  reports: (scope: string, filters: AdminReportFilters, page: number, pageSize: number) =>
+    [...adminKeys.all(scope), 'reports', { ...filters, page, pageSize }] as const,
   topics: (scope: string, params: AdminTopicParams) =>
     [...adminKeys.all(scope), 'topics', params] as const,
   topicDetail: (scope: string, topicId: string) =>

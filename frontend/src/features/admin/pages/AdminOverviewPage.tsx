@@ -84,8 +84,12 @@ export const AdminOverviewPage = () => {
         <>
           <section aria-label="Số liệu diễn đàn" className="admin-stats-grid">
             {stats.map((item) => (
-              <article className="admin-stat" key={item.label}>
-                <p className="admin-stat-label">{item.label}</p>
+              <article className="admin-stat" key={item.label} style={item.link ? { position: 'relative' } : undefined}>
+                <p className="admin-stat-label">
+                  {item.link
+                    ? <Link className="admin-stat-link" to={item.link}>{item.label}</Link>
+                    : item.label}
+                </p>
                 <strong className="admin-stat-value">{numberFormat.format(item.value)}</strong>
                 <p className="admin-stat-period">
                   {item.period !== null && <strong>+{numberFormat.format(item.period)} </strong>}
@@ -206,8 +210,7 @@ export const AdminOverviewPage = () => {
                               {report.targetTitle}
                             </Link>
                             <span className="admin-table-secondary">
-                              Báo cáo #{report.id} ·{' '}
-                              {report.targetType === 'topic' ? 'Chủ đề' : 'Câu trả lời'}
+                              {report.targetType === 'topic' ? 'Bài viết / câu hỏi' : 'Câu trả lời'}
                             </span>
                           </TableCell>
                           <TableCell>{report.reporter.displayName}</TableCell>

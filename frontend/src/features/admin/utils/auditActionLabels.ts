@@ -6,6 +6,7 @@ export const auditActionLabels: Record<string, string> = {
   'topic.pin': 'Ghim nội dung',
   'topic.unpin': 'Bỏ ghim',
   'topic.move': 'Chuyển chuyên mục',
+  'answer.hide': 'Ẩn câu trả lời',
   'account-locked': 'Khóa tài khoản',
   'account-unlocked': 'Mở khóa tài khoản',
   'report.resolved': 'Xử lý báo cáo',

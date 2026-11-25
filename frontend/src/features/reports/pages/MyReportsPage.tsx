@@ -93,7 +93,7 @@ export const MyReportsPage = () => {
                   <Box component="li" key={item.id} sx={{ p: { xs: 2.5, sm: 3 } }}>
                     <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
                       <Typography component="h2" sx={{ color: 'text.primary', fontWeight: 700 }}>
-                        Báo cáo #{item.id} · {item.targetType === 'topic' ? 'Chủ đề' : 'Câu trả lời'}
+                        Báo cáo {item.targetType === 'topic' ? 'bài viết / câu hỏi' : 'câu trả lời'}
                       </Typography>
                       <StatusBadge tone={statusTones[item.status]}>{statusLabels[item.status]}</StatusBadge>
                     </Stack>
