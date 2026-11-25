@@ -12,6 +12,7 @@ const createSession = (accessToken: string, expiresAt: number): AuthSession => (
     roles: ['Member'],
     hasPassword: true,
     isGoogleLinked: false,
+    emailVerified: true,
   },
   accessToken,
   accessTokenExpiresAtUtc: new Date(expiresAt).toISOString(),

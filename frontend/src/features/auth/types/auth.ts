@@ -8,6 +8,8 @@ export interface CurrentUser {
   // False khi tài khoản chỉ đăng nhập bằng Google: trang cá nhân cho đặt mật khẩu thay vì đổi mật khẩu.
   hasPassword: boolean
   isGoogleLinked: boolean
+  // False khi chưa bấm link trong email xác minh: được đọc nhưng chưa được đăng bài, trả lời, bình chọn, báo cáo.
+  emailVerified: boolean
 }
 
 // Returned by login, register and refresh. The refresh token is only in an HttpOnly cookie.

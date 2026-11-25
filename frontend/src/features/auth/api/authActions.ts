@@ -1,5 +1,6 @@
 import {
   changePassword as changePasswordRequest,
+  getCurrentUser,
   deleteAvatar as deleteAvatarRequest,
   login as loginRequest,
   loginWithGoogle as loginWithGoogleRequest,
@@ -62,6 +63,13 @@ export const setPassword = async (newPassword: string): Promise<CurrentUser> => 
   const user = await setPasswordRequest(newPassword)
   // Giống đổi mật khẩu: server đăng xuất tài khoản trên mọi thiết bị.
   useAuthStore.getState().clearSession()
+  return user
+}
+
+// Đọc lại thông tin tài khoản từ API, ví dụ sau khi email vừa được xác minh.
+export const reloadCurrentUser = async (): Promise<CurrentUser> => {
+  const user = await getCurrentUser()
+  useAuthStore.getState().setUser(user)
   return user
 }
 

@@ -15,6 +15,7 @@ const createSession = (userId: string): AuthSession => ({
     roles: ['Member'],
     hasPassword: true,
     isGoogleLinked: false,
+    emailVerified: true,
   },
   accessToken: 'access-token',
   accessTokenExpiresAtUtc: new Date(Date.now() + 900_000).toISOString(),

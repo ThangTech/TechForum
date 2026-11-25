@@ -24,7 +24,8 @@ const isCurrentUser = (value: unknown): value is CurrentUser => {
     Array.isArray(user.roles) &&
     user.roles.every((role) => typeof role === 'string') &&
     typeof user.hasPassword === 'boolean' &&
-    typeof user.isGoogleLinked === 'boolean'
+    typeof user.isGoogleLinked === 'boolean' &&
+    typeof user.emailVerified === 'boolean'
   )
 }
 
@@ -128,6 +129,14 @@ export const updateAvatar = (file: File) => {
 }
 
 export const deleteAvatar = () => requestUser('/api/auth/avatar', { method: 'DELETE' })
+
+// Gửi lại email xác minh cho tài khoản đang đăng nhập.
+export const resendEmailVerification = () => apiRequest<void>('/api/auth/email-verification', { method: 'POST' })
+
+// userId và token lấy từ link trong email; không cần đăng nhập để mở link trên thiết bị khác.
+export const confirmEmail = (userId: string, token: string) => apiRequest<void>('/api/auth/email-verification/confirm', {
+  method: 'POST', body: JSON.stringify({ userId, token }),
+})
 
 export const requestPasswordReset = (email: string) => apiRequest<{ message: string }>('/api/auth/forgot-password', {
   method: 'POST', body: JSON.stringify({ email }),
