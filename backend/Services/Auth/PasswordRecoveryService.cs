@@ -54,7 +54,13 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
         {
             await emailSender.SendAsync(user.Email, "Đặt lại mật khẩu TechForum",
                 $"Bạn đã yêu cầu đặt lại mật khẩu TechForum.\n\nMở liên kết sau trong vòng 30 phút:\n{resetUrl}\n\n" +
-                "Liên kết chỉ dùng một lần. Nếu không gửi yêu cầu này, bạn có thể bỏ qua email.", cancellationToken);
+                "Liên kết chỉ dùng một lần. Nếu không gửi yêu cầu này, bạn có thể bỏ qua email.",
+                EmailTemplate.Action(user.DisplayName,
+                    "Bạn vừa yêu cầu đặt lại mật khẩu TechForum. Bấm nút bên dưới trong vòng 30 phút để chọn mật khẩu mới.",
+                    "Đặt lại mật khẩu", resetUrl,
+                    "Liên kết chỉ dùng một lần. Nếu bạn không gửi yêu cầu này, hãy bỏ qua email; mật khẩu của bạn không đổi.",
+                    options.Value.ReplyToAddress),
+                cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

@@ -50,6 +50,11 @@ public sealed class EmailVerificationService : IEmailVerificationService
             await emailSender.SendAsync(user.Email, "Xác minh email tài khoản TechForum",
                 $"Chào {user.DisplayName},\n\nMở liên kết sau trong vòng 24 giờ để xác minh email và bắt đầu đăng bài trên TechForum:\n" +
                 $"{link}\n\nNếu bạn không tạo tài khoản này, hãy bỏ qua email; tài khoản chưa xác minh sẽ tự bị xóa sau vài ngày.",
+                EmailTemplate.Action(user.DisplayName,
+                    "Cảm ơn bạn đã tham gia TechForum. Xác minh email trong vòng 24 giờ để bắt đầu đăng bài, trả lời và bình chọn.",
+                    "Xác minh email", link,
+                    "Nếu bạn không tạo tài khoản này, hãy bỏ qua email; tài khoản chưa xác minh sẽ tự bị xóa sau vài ngày.",
+                    emailOptions.Value.ReplyToAddress),
                 cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

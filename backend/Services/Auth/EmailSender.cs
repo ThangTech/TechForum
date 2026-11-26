@@ -26,7 +26,7 @@ public sealed class EmailSender : IEmailSender
         return host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "mailpit";
     }
 
-    public MimeMessage CreateMessage(string to, string subject, string text)
+    public MimeMessage CreateMessage(string to, string subject, string text, string? html = null)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("TechForum", settings.FromAddress));
@@ -36,13 +36,15 @@ public sealed class EmailSender : IEmailSender
         }
         message.To.Add(MailboxAddress.Parse(to));
         message.Subject = subject;
-        message.Body = new TextPart("plain") { Text = text };
+        message.Body = html is null
+            ? new TextPart("plain") { Text = text }
+            : new BodyBuilder { TextBody = text, HtmlBody = html }.ToMessageBody();
         return message;
     }
 
-    public async Task SendAsync(string to, string subject, string text, CancellationToken cancellationToken)
+    public async Task SendAsync(string to, string subject, string text, string? html, CancellationToken cancellationToken)
     {
-        var message = CreateMessage(to, subject, text);
+        var message = CreateMessage(to, subject, text, html);
 
         using var client = new SmtpClient { Timeout = 10000 };
         var security = settings.UseTls ? SecureSocketOptions.StartTls : SecureSocketOptions.None;

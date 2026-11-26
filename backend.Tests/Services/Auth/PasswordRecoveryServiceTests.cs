@@ -201,7 +201,7 @@ public sealed class PasswordRecoveryServiceTests
         public bool ShouldFail { get; init; }
         public string? Url { get; private set; }
         public string? Email { get; private set; }
-        public Task SendAsync(string to, string subject, string text, CancellationToken cancellationToken)
+        public Task SendAsync(string to, string subject, string text, string? html, CancellationToken cancellationToken)
         {
             if (ShouldFail) throw new IOException("SMTP unavailable");
             Email = to;

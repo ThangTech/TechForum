@@ -152,7 +152,7 @@ public sealed class EmailVerificationServiceTests
         public string? Text { get; private set; }
         public bool IsConfigured => Configured;
 
-        public Task SendAsync(string to, string subject, string text, CancellationToken cancellationToken)
+        public Task SendAsync(string to, string subject, string text, string? html, CancellationToken cancellationToken)
         {
             if (ShouldFail) throw new IOException("SMTP không phản hồi");
             To = to;
