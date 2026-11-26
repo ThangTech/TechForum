@@ -1,15 +1,15 @@
 import { getErrorMessage } from '../../../shared/query/errorMessage'
 import { isInitialLoading } from '../../../shared/query/status'
-import { useTags } from '../../catalog/hooks/tags'
+import { useCommunities } from './skills'
 
-// The page of communities: one community for each tag.
+// Trang Cộng đồng: mỗi thẻ là một cộng đồng, sôi nổi nhất (nhiều bài nhất) đứng trước.
 export const useCommunitiesPage = () => {
-  const tagsQuery = useTags()
+  const communitiesQuery = useCommunities()
 
   return {
-    tags: tagsQuery.data ?? [],
-    isLoading: isInitialLoading(tagsQuery),
-    error: getErrorMessage(tagsQuery.error),
-    retry: () => void tagsQuery.refetch(),
+    communities: communitiesQuery.data ?? [],
+    isLoading: isInitialLoading(communitiesQuery),
+    error: getErrorMessage(communitiesQuery.error),
+    retry: () => void communitiesQuery.refetch(),
   }
 }

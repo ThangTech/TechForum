@@ -11,3 +11,10 @@ export interface SkillCommunity {
   pageSize: number
   totalPages: number
 }
+
+// Một ô ở trang Cộng đồng: số bài công khai có thẻ này và số thành viên đã đăng chúng.
+export interface CommunitySummary {
+  tag: { id: string; name: string; slug: string; description: string | null }
+  topicCount: number
+  memberCount: number
+}

@@ -6,7 +6,7 @@ import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
 import { useCommunitiesPage } from '../hooks/useCommunitiesPage'
 
 export const CommunitiesPage = () => {
-  const { tags, isLoading, error, retry } = useCommunitiesPage()
+  const { communities, isLoading, error, retry } = useCommunitiesPage()
 
   return (
     <main className="main-area" id="main-content">
@@ -28,21 +28,22 @@ export const CommunitiesPage = () => {
           onRetry={retry}
         />
 
-        {!isLoading && !error && tags.length === 0 && (
+        {!isLoading && !error && communities.length === 0 && (
           <Box className="surface-card" sx={{ p: 4, textAlign: 'center' }}>
             <Typography color="text.secondary" variant="body2">Chưa có cộng đồng nào đang hoạt động.</Typography>
           </Box>
         )}
 
-        {!isLoading && !error && tags.length > 0 && (
+        {!isLoading && !error && communities.length > 0 && (
           <ul className="community-grid">
-            {tags.map((tag) => (
+            {communities.map(({ tag, topicCount, memberCount }) => (
               <li key={tag.id}>
                 <Link className="community-card surface-card" to={appRoutes.skill(tag.id)}>
                   <span className="community-card__tag">#{tag.name}</span>
-                  <span className="community-card__description">
-                    {tag.description || 'Thảo luận và chia sẻ kinh nghiệm về chủ đề này.'}
+                  <span className="community-card__stats">
+                    {topicCount > 0 ? `${topicCount} bài · ${memberCount} thành viên` : 'Chưa có bài nào, hãy là người mở đầu'}
                   </span>
+                  {tag.description && <span className="community-card__description">{tag.description}</span>}
                   <span className="community-card__action">Xem cộng đồng →</span>
                 </Link>
               </li>

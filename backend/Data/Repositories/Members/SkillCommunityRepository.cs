@@ -12,6 +12,29 @@ public sealed class SkillCommunityRepository : ISkillCommunityRepository
         this.dbContext = dbContext;
     }
 
+    // Cùng cách đếm với trang một cộng đồng: chỉ bài công khai, thành viên là tác giả của các bài đó.
+    public async Task<IReadOnlyList<CommunitySummaryData>> GetSummariesAsync(CancellationToken cancellationToken)
+    {
+        var tags = await dbContext.Tags.AsNoTracking().Where(tag => tag.IsActive).ToListAsync(cancellationToken);
+        var counts = await dbContext.TopicTags.AsNoTracking()
+            .WhereTopicIsPublic(item => item.Topic)
+            .GroupBy(item => item.TagId)
+            .Select(group => new
+            {
+                group.Key,
+                Topics = group.Count(),
+                Members = group.Select(item => item.Topic.AuthorId).Distinct().Count()
+            })
+            .ToDictionaryAsync(item => item.Key, cancellationToken);
+        return tags
+            .Select(tag => counts.TryGetValue(tag.Id, out var count)
+                ? new CommunitySummaryData(tag, count.Topics, count.Members)
+                : new CommunitySummaryData(tag, 0, 0))
+            .OrderByDescending(item => item.TopicCount)
+            .ThenBy(item => item.Tag.Name)
+            .ToList();
+    }
+
     public async Task<SkillCommunityData?> GetAsync(
         Guid tagId,
         int page,

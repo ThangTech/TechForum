@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { getSkillCommunity } from '../api/skills'
+import { getCommunities, getSkillCommunity } from '../api/skills'
 
 export const skillKeys = {
   community: (tagId: string, page: number) => ['skills', 'community', tagId, page] as const,
+  all: () => ['skills', 'communities'] as const,
 }
 
 // isValidId is false when the tag id in the URL is not a positive number; no request is sent then.
@@ -12,3 +13,6 @@ export const useSkillCommunity = (tagId: string, page: number, isValidId: boolea
     queryFn: ({ signal }) => getSkillCommunity(tagId, page, signal),
     enabled: isValidId,
   })
+
+export const useCommunities = () =>
+  useQuery({ queryKey: skillKeys.all(), queryFn: ({ signal }) => getCommunities(signal) })

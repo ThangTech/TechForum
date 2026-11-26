@@ -12,6 +12,17 @@ public sealed class SkillCommunityService : ISkillCommunityService
         this.repository = repository;
     }
 
+    public async Task<IReadOnlyList<CommunitySummaryDto>> GetSummariesAsync(CancellationToken cancellationToken)
+    {
+        var items = await repository.GetSummariesAsync(cancellationToken);
+        return items
+            .Select(item => new CommunitySummaryDto(
+                new TagDto(item.Tag.Id, item.Tag.Name, item.Tag.Slug, item.Tag.Description),
+                item.TopicCount,
+                item.MemberCount))
+            .ToList();
+    }
+
     public async Task<SkillCommunityDto?> GetAsync(
         Guid tagId,
         int page,

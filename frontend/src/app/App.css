@@ -532,6 +532,12 @@
   font-weight: 500;
 }
 
+.community-card__stats {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
 .community-card__description {
   flex: 1;
   color: var(--color-muted);
