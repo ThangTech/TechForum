@@ -25,6 +25,9 @@ public interface INotificationService
         string topicTitle,
         CancellationToken cancellationToken);
 
+    // Mỗi người theo dõi chỉ báo một lần, kể cả khi bỏ theo dõi rồi theo dõi lại.
+    Task AddNewFollowerAsync(string recipientId, string followerId, string followerName, CancellationToken cancellationToken);
+
     Task<bool> MarkReadAsync(
         Guid id,
         string userId,

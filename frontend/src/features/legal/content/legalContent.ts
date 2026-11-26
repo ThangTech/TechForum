@@ -78,7 +78,8 @@ export const privacyPolicy: LegalDocument = {
       items: [
         'Xem, chỉnh sửa thông tin hồ sơ và nội dung của mình ngay trên trang.',
         'Yêu cầu cung cấp bản sao dữ liệu cá nhân của bạn.',
-        'Yêu cầu xoá tài khoản và dữ liệu cá nhân.',
+        'Tự xoá tài khoản trong trang Tài khoản: dữ liệu cá nhân bị xoá, bài đã đăng được giữ dưới tên "Người dùng đã xóa".',
+        'Đăng xuất khỏi mọi thiết bị khi nghi tài khoản bị truy cập trái phép.',
         'Rút lại sự đồng ý, ví dụ ngừng liên kết tài khoản Google.',
         `Gửi yêu cầu hoặc khiếu nại về ${contactEmail} từ chính email đã đăng ký. Chúng tôi phản hồi trong vòng 30 ngày.`,
       ],

@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/hooks/authState'
 
 // The account page: the signed-in member, the saves of the forms (avatar, profile, password) and the logout.
 export const useAccountPage = () => {
-  const { user, updateProfile, changePassword, setPassword, updateAvatar, deleteAvatar, logout } = useAuth()
+  const { user, updateProfile, changePassword, setPassword, updateAvatar, deleteAvatar, logout, logoutEverywhere, closeAccount } = useAuth()
   const navigate = useNavigate()
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -23,6 +23,27 @@ export const useAccountPage = () => {
     } finally {
       setIsLoggingOut(false)
     }
+  }
+
+  const [isEverywhereBusy, setIsEverywhereBusy] = useState(false)
+  const signOutEverywhere = async () => {
+    if (isEverywhereBusy) return
+    setLogoutError(null)
+    setIsEverywhereBusy(true)
+    try {
+      await logoutEverywhere()
+      navigate(appRoutes.login, { replace: true, state: { notice: 'Đã đăng xuất khỏi mọi thiết bị. Vui lòng đăng nhập lại.' } })
+    } catch (requestError) {
+      setLogoutError(getActionError(requestError, 'Không thể đăng xuất khỏi mọi thiết bị lúc này.'))
+    } finally {
+      setIsEverywhereBusy(false)
+    }
+  }
+
+  // Lỗi (sai mật khẩu, chưa gõ XÓA...) được hộp thoại hiện ra, nên ở đây chỉ chuyển trang khi xong.
+  const deleteAccount = async (password: string | null, confirmation: string) => {
+    await closeAccount(password, confirmation)
+    navigate('/', { replace: true })
   }
 
   const saveProfile = async (displayName: string, bio: string | null) => {
@@ -62,5 +83,8 @@ export const useAccountPage = () => {
     uploadAvatar: updateAvatar,
     deleteAvatar,
     logout: { run: logOut, isBusy: isLoggingOut, error: logoutError },
+    logoutEverywhere: { run: signOutEverywhere, isBusy: isEverywhereBusy },
+    deleteAccount,
+    isAdministrator: user?.roles.includes('Administrator') ?? false,
   }
 }

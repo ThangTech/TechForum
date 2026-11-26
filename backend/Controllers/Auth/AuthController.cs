@@ -129,6 +129,36 @@ public sealed class AuthController : ControllerBase
         return this.ToActionResult(result);
     }
 
+    // Đăng xuất mọi thiết bị (kể cả thiết bị này) khi nghi bị lộ phiên hoặc quên đăng xuất ở máy lạ.
+    [Authorize]
+    [HttpPost("logout-all")]
+    public async Task<IActionResult> LogoutEverywhere([FromServices] IAccountClosureService closureService, CancellationToken cancellationToken)
+    {
+        var result = await closureService.SignOutEverywhereAsync(User.GetRequiredUserId(), cancellationToken);
+        if (!result.Succeeded)
+        {
+            return this.ToActionResult(result);
+        }
+        DeleteRefreshTokenCookie();
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpDelete("account")]
+    public async Task<IActionResult> CloseAccount(
+        [FromServices] IAccountClosureService closureService,
+        [FromBody] CloseAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await closureService.CloseAsync(User.GetRequiredUserId(), request, cancellationToken);
+        if (!result.Succeeded)
+        {
+            return this.ToActionResult(result);
+        }
+        DeleteRefreshTokenCookie();
+        return NoContent();
+    }
+
     // Cho phép ẩn danh vì access token có thể đã hết hạn lúc người dùng đăng xuất.
     [AllowAnonymous]
     [HttpPost("logout")]

@@ -604,5 +604,6 @@ public sealed class AnswerServiceTests
         public Task AddAcceptedAnswerAsync(string recipientId, Guid topicId, Guid answerId, string topicTitle, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task<NotificationPageDto> GetPageAsync(string userId, int page, int pageSize, CancellationToken cancellationToken) => Task.FromResult(new NotificationPageDto([], page, pageSize, 0, 0, 0));
         public Task<bool> MarkReadAsync(Guid id, string userId, CancellationToken cancellationToken) => Task.FromResult(false);
+        public Task AddNewFollowerAsync(string recipientId, string followerId, string followerName, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

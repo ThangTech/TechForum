@@ -20,6 +20,11 @@ public sealed class UserFollowRepository : IUserFollowRepository
         return dbContext.Users.AsNoTracking().AnyAsync(user => user.Id == userId, cancellationToken);
     }
 
+    public Task<string?> GetDisplayNameAsync(string userId, CancellationToken cancellationToken)
+    {
+        return dbContext.Users.Where(user => user.Id == userId).Select(user => user.DisplayName).SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<bool> AddIfMissingAsync(UserFollow follow, CancellationToken cancellationToken)
     {
         if (await dbContext.UserFollows.AnyAsync(item =>

@@ -78,6 +78,29 @@ public sealed class NotificationService : INotificationService
         }
     }
 
+    public async Task AddNewFollowerAsync(
+        string recipientId,
+        string followerId,
+        string followerName,
+        CancellationToken cancellationToken)
+    {
+        var added = await notificationRepository.AddIfMissingAsync(new Notification
+        {
+            UserId = recipientId,
+            Type = "new-follower",
+            Title = "Người theo dõi mới",
+            Message = $"{followerName} đã theo dõi bạn.",
+            Link = $"/members/{followerId}",
+            SourceKey = $"new-follower:{followerId}",
+            CreatedAtUtc = timeProvider.GetUtcNow()
+        }, cancellationToken);
+
+        if (added)
+        {
+            await notificationRepository.SaveChangesAsync(cancellationToken);
+        }
+    }
+
     public async Task<bool> MarkReadAsync(
         Guid id,
         string userId,

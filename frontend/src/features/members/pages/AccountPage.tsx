@@ -10,6 +10,8 @@ import { PasswordForm } from '../components/PasswordForm'
 import { ProfileForm } from '../components/ProfileForm'
 import { AvatarForm } from '../components/AvatarForm'
 import { SkillsForm } from '../components/SkillsForm'
+import { DeleteAccountDialog } from '../components/DeleteAccountDialog'
+import { useState } from 'react'
 
 const detailLabelSx = { color: 'text.secondary', fontWeight: 700 } as const
 const detailValueSx = { mt: 0.5, ml: 0, color: 'var(--color-heading)' } as const
@@ -17,6 +19,7 @@ const detailValueSx = { mt: 0.5, ml: 0, color: 'var(--color-heading)' } as const
 export const AccountPage = () => {
   const view = useAccountPage()
   const { user, logout } = view
+  const [isDeleting, setIsDeleting] = useState(false)
 
   if (!user) return null
 
@@ -55,8 +58,26 @@ export const AccountPage = () => {
               </Box>
               <Button loading={logout.isBusy} onClick={() => void logout.run()} variant="outlined">Đăng xuất</Button>
             </Stack>
+            <Stack direction="row" sx={{ mt: 2.5, pt: 2.5, borderTop: 1, borderColor: 'divider', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+              <Typography color="text.secondary" sx={{ minWidth: 0, flex: 1 }} variant="body2">
+                Quên đăng xuất ở máy lạ hoặc nghi bị lộ tài khoản? Đăng xuất khỏi mọi thiết bị, kể cả máy này.
+              </Typography>
+              <Button loading={view.logoutEverywhere.isBusy} onClick={() => void view.logoutEverywhere.run()} variant="outlined">Đăng xuất mọi thiết bị</Button>
+            </Stack>
             {logout.error && <Alert role="alert" severity="error" sx={{ mt: 2 }}>{logout.error}</Alert>}
           </Panel>
+          <Panel component="section" sx={{ p: 3 }} tone="error">
+            <Typography component="h2" sx={{ color: 'var(--color-heading)', fontSize: '1.25rem', fontWeight: 800 }}>Xóa tài khoản</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+              {view.isAdministrator
+                ? 'Tài khoản quản trị viên cần được một quản trị viên khác thu quyền trước khi xóa.'
+                : 'Xóa dữ liệu cá nhân và đóng tài khoản vĩnh viễn. Bài đã đăng được giữ dưới tên "Người dùng đã xóa".'}
+            </Typography>
+            <Button color="error" disabled={view.isAdministrator} onClick={() => setIsDeleting(true)} sx={{ mt: 2 }} variant="outlined">Xóa tài khoản</Button>
+          </Panel>
+          {isDeleting && (
+            <DeleteAccountDialog hasPassword={view.hasPassword} onClose={() => setIsDeleting(false)} onConfirm={view.deleteAccount} />
+          )}
         </Stack>
       </Box>
     </PageShell>

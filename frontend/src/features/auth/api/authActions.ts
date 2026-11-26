@@ -1,5 +1,7 @@
 import {
   changePassword as changePasswordRequest,
+  closeAccount as closeAccountRequest,
+  logoutEverywhere as logoutEverywhereRequest,
   getCurrentUser,
   deleteAvatar as deleteAvatarRequest,
   login as loginRequest,
@@ -44,6 +46,17 @@ export const logout = async (): Promise<void> => {
     // The local session is cleared even if the server cannot be reached.
     useAuthStore.getState().clearSession()
   }
+}
+
+// Cả hai thao tác đều kết thúc phiên trên máy này, nên xoá phiên trong bộ nhớ khi API đã làm xong.
+export const logoutEverywhere = async (): Promise<void> => {
+  await logoutEverywhereRequest()
+  useAuthStore.getState().clearSession()
+}
+
+export const closeAccount = async (password: string | null, confirmation: string): Promise<void> => {
+  await closeAccountRequest(password, confirmation)
+  useAuthStore.getState().clearSession()
 }
 
 export const updateProfile = async (input: UpdateProfileInput): Promise<CurrentUser> => {

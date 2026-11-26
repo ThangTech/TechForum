@@ -7,11 +7,13 @@ namespace TechForum.Api.Services;
 public sealed class UserFollowService : IUserFollowService
 {
     private readonly IUserFollowRepository repository;
+    private readonly INotificationService notificationService;
     private readonly TimeProvider timeProvider;
 
-    public UserFollowService(IUserFollowRepository repository, TimeProvider timeProvider)
+    public UserFollowService(IUserFollowRepository repository, INotificationService notificationService, TimeProvider timeProvider)
     {
         this.repository = repository;
+        this.notificationService = notificationService;
         this.timeProvider = timeProvider;
     }
 
@@ -28,12 +30,17 @@ public sealed class UserFollowService : IUserFollowService
         {
             return Result<FollowStatusDto>.Fail(ErrorType.NotFound, "Không tìm thấy thành viên");
         }
-        await repository.AddIfMissingAsync(new UserFollow
+        var added = await repository.AddIfMissingAsync(new UserFollow
         {
             FollowerId = followerId,
             FollowingId = followingId,
             CreatedAtUtc = timeProvider.GetUtcNow()
         }, cancellationToken);
+        if (added)
+        {
+            var followerName = await repository.GetDisplayNameAsync(followerId, cancellationToken) ?? "Một thành viên";
+            await notificationService.AddNewFollowerAsync(followingId, followerId, followerName, cancellationToken);
+        }
         return Result<FollowStatusDto>.Success(new FollowStatusDto(
             true,
             await repository.GetFollowerCountAsync(followingId, cancellationToken)));

@@ -100,6 +100,15 @@ export const logout = () => {
   return apiRequest<void>('/api/auth/logout', { method: 'POST', skipAuth: true })
 }
 
+// Thu hồi mọi phiên đăng nhập của tài khoản, trên mọi thiết bị.
+export const logoutEverywhere = () => apiRequest<void>('/api/auth/logout-all', { method: 'POST' })
+
+// Xoá tài khoản: cần gõ "XÓA" và mật khẩu (nếu tài khoản có mật khẩu).
+export const closeAccount = (password: string | null, confirmation: string) => apiRequest<void>('/api/auth/account', {
+  method: 'DELETE',
+  body: JSON.stringify({ password, confirmation }),
+})
+
 export const updateProfile = (input: UpdateProfileInput) => {
   return requestUser('/api/auth/profile', {
     method: 'PUT',

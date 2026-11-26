@@ -5,6 +5,8 @@ import {
   login,
   loginWithGoogle,
   logout,
+  logoutEverywhere,
+  closeAccount,
   register,
   reloadCurrentUser,
   setPassword,
@@ -32,5 +34,7 @@ export const useAuth = () => {
     updateAvatar,
     deleteAvatar,
     logout,
+    logoutEverywhere,
+    closeAccount,
   }
 }
