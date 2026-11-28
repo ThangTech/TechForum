@@ -18,9 +18,11 @@ public sealed class MediaCleanupBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Mặc định mỗi ngày một lần, cùng nhịp với các tác vụ dọn dẹp khác: Azure SQL gói miễn phí chỉ tự ngủ khi không
+        // có truy vấn trong khoảng một giờ, chạy mỗi giờ sẽ giữ database thức suốt ngày và tiêu hết hạn mức vCore.
         var intervalMinutes = Math.Max(
             1,
-            configuration.GetValue<int?>("Media:CleanupIntervalMinutes") ?? 60);
+            configuration.GetValue<int?>("Media:CleanupIntervalMinutes") ?? 1440);
 
         using var timer = new PeriodicTimer(TimeSpan.FromMinutes(intervalMinutes));
         do

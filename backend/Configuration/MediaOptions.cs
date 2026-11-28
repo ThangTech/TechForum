@@ -10,6 +10,6 @@ public sealed class MediaOptions
     public long MaxAvatarBytes { get; init; } = 2 * 1024 * 1024;
     public long MaxVideoBytes { get; init; } = 50 * 1024 * 1024;
     public int OrphanRetentionHours { get; init; } = 24;
-    public int CleanupIntervalMinutes { get; init; } = 60;
+    public int CleanupIntervalMinutes { get; init; } = 1440;
     public int CleanupBatchSize { get; init; } = 100;
 }

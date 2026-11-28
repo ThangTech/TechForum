@@ -266,7 +266,7 @@ add-on trong Cloudinary Console → Add-ons (gói miễn phí có hạn mức nh
 
 ### Dọn tệp không còn dùng
 
-`MediaCleanupBackgroundService` chạy mỗi `Media:CleanupIntervalMinutes` phút và xóa trên Cloudinary
+`MediaCleanupBackgroundService` chạy mỗi `Media:CleanupIntervalMinutes` phút (mặc định 1.440, tức mỗi ngày một lần, để Azure SQL gói miễn phí được ngủ) và xóa trên Cloudinary
 (`DestroyAsync`) các tệp không thuộc bài nào quá `Media:OrphanRetentionHours` giờ: ảnh tải lên rồi
 bỏ, ảnh bị gỡ khỏi bài khi sửa, và ảnh của bài mà tác giả đã xóa. Bài bị quản trị viên ẩn giữ
 nguyên tệp vì còn khôi phục được.

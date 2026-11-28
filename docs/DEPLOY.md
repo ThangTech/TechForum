@@ -81,6 +81,19 @@ một giới hạn gửi email khôi phục mật khẩu. Với 2, API lùi thê
   (Data Protection) nằm trong bảng `DataProtectionKeys` của database, nên link xác minh email và đặt lại mật khẩu đã
   gửi vẫn mở được sau khi dịch vụ ngủ dậy. Ai đọc được database thì cũng đọc được khoá này, nên giữ kín chuỗi kết nối.
 
+**Hạn mức vCore của Azure SQL miễn phí (100.000 vCore-giây/tháng):** database chỉ tự ngủ khi không có truy vấn
+khoảng một giờ. Một tác vụ chạm database đều đặn (ví dụ mỗi giờ) sẽ giữ nó thức suốt ngày, tốn khoảng 43.000
+vCore-giây/ngày và hết hạn mức sau 2–3 ngày. Các tác vụ dọn dẹp của API (media thừa, phiên hết hạn, tài khoản chưa xác
+minh) vì vậy chạy mỗi ngày một lần, cùng lúc. Khi hết hạn mức, database tạm dừng tới đầu tháng sau (dữ liệu vẫn còn);
+muốn chạy tiếp thì đổi "Behavior when free limit is reached" sang trả phí phần vượt và đặt cảnh báo ngân sách.
+
+**Sao lưu:** Azure tự sao lưu và cho khôi phục về một thời điểm trong 7 ngày gần nhất (Restore trên trang database).
+Muốn giữ một bản ở máy, khi database đang chạy:
+
+```
+sqlpackage /Action:Export /SourceConnectionString:"<chuỗi kết nối Azure>" /TargetFile:techforum.bacpac
+```
+
 **Giữ API không ngủ (tùy chọn):** đặt một dịch vụ ping miễn phí (cron-job.org, UptimeRobot) gọi
 `https://techforum-api.onrender.com/api/health` mỗi 10 phút. Đường dẫn này không đọc database, nên Azure SQL vẫn
 được ngủ và không tốn hạn mức vCore. Không ping trang khác của API: mỗi lần như vậy sẽ đánh thức database.
