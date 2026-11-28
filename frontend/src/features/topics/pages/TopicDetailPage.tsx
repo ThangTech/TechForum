@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Link } from 'react-router-dom'
 import { RichHtml } from '../../../shared/components/RichHtml'
+import { PageBreadcrumbs, type BreadcrumbItem } from '../../../shared/components/PageBreadcrumbs'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
 import { TopicTypeBadge } from '../components/TopicTypeBadge'
 import { topicTagChipSx } from '../utils/topicTagChipSx'
@@ -32,18 +33,21 @@ export const TopicDetailPage = () => {
     useTopicDetailPage()
   usePageMeta(topic?.title, topic?.summary)
   const [answerCount, setAnswerCount] = useState<number | null>(null)
+  // Trang chủ › Bài viết (hoặc Hỏi đáp) › chuyên mục › tên bài; khi bài chưa tải xong chỉ có Trang chủ.
+  const listRoute = topic?.type === 'question' ? appRoutes.questions : appRoutes.articles
+  const breadcrumbs: BreadcrumbItem[] = topic
+    ? [
+        { label: 'Trang chủ', to: appRoutes.home },
+        { label: topic.type === 'question' ? 'Hỏi đáp' : 'Bài viết', to: listRoute },
+        { label: topic.category.name, to: `${listRoute}?categoryId=${topic.category.id}` },
+        { label: topic.title },
+      ]
+    : [{ label: 'Trang chủ', to: appRoutes.home }]
 
   return (
     <main className="main-area" id="main-content">
       <div className={`topic-reading-page${readingContent?.headings.length ? '' : ' topic-reading-page--without-toc'}`}>
-        <MuiLink
-          component={Link}
-          sx={{ fontSize: '0.875rem', fontWeight: 600 }}
-          to={topic?.type === 'question' ? appRoutes.questions : appRoutes.articles}
-          underline="hover"
-        >
-          ← Quay lại danh sách
-        </MuiLink>
+        <PageBreadcrumbs items={breadcrumbs} />
 
         <Box sx={{ mt: 3 }}>
           <AsyncStatePanel

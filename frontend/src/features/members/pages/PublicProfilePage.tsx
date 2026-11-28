@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 import { AsyncStatePanel } from '../../../shared/feedback/AsyncStatePanel'
 import { TopicSummaryItem } from '../../topics/components/TopicSummaryItem'
 import { UserAvatar } from '../components/UserAvatar'
-import { BackLink } from '../../../shared/components/BackLink'
+import { PageBreadcrumbs } from '../../../shared/components/PageBreadcrumbs'
 import { PageShell } from '../../../shared/components/PageShell'
 import { Panel } from '../../../shared/components/Panel'
 import { PanelList } from '../../../shared/components/PanelList'
@@ -29,7 +29,7 @@ export const PublicProfilePage = () => {
 
   return (
     <PageShell>
-      <BackLink to="/">← Về danh sách bài viết</BackLink>
+      <PageBreadcrumbs items={[{ label: 'Trang chủ', to: appRoutes.home }, { label: profile?.displayName ?? 'Hồ sơ thành viên' }]} />
 
       <Box sx={{ mt: 3 }}>
         <AsyncStatePanel

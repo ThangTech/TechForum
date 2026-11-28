@@ -193,6 +193,9 @@ này, Mọi thời đại; `?range=`, mặc định Tuần này). Thẻ bài ở
 đầu**: nút ▲▼, thẻ bài và câu trả lời hiện dấu `•` thay cho số (rê chuột để đọc lý do); phiếu của chính bạn vẫn hiện.
 Trang `/starred` cũ chuyển thẳng sang `/saved` ("Đã lưu").
 
+Đầu trang bài, hồ sơ và danh sách theo dõi có đường dẫn `PageBreadcrumbs` (Trang chủ › Bài viết › chuyên mục › tên
+bài) thay cho link "← Quay lại"; mục cuối là trang đang xem, tên dài bị cắt bằng "…" để luôn nằm trên một dòng.
+
 Khi đang viết bài (`/write`), trả lời hoặc sửa câu trả lời, trang gửi nội dung tới
 `POST /api/moderation/check` sau khi ngừng gõ khoảng 1 giây (`useContentCheck`) và hiện cảnh báo
 vàng `ProfanityNotice` nếu có từ sẽ bị thay bằng `***` ("Phần tiêu đề và nội dung có từ ngữ không

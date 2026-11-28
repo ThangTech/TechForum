@@ -2,7 +2,7 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { appRoutes } from '../../../app/appRoutes'
-import { BackLink } from '../../../shared/components/BackLink'
+import { PageBreadcrumbs } from '../../../shared/components/PageBreadcrumbs'
 import { PageHeading } from '../../../shared/components/PageHeading'
 import { PageShell } from '../../../shared/components/PageShell'
 import { Pager } from '../../../shared/components/Pager'
@@ -15,11 +15,17 @@ interface FollowMembersPageProps {
 }
 
 export const FollowMembersPage = ({ kind }: FollowMembersPageProps) => {
-  const { userId, title, data, isLoading, error, notFoundTitle, retry, changePage } = useFollowMembersPage(kind)
+  const { userId, title, memberName, data, isLoading, error, notFoundTitle, retry, changePage } = useFollowMembersPage(kind)
 
   return (
     <PageShell compact maxWidth={760}>
-      <BackLink to={appRoutes.member(userId)}>← Về hồ sơ</BackLink>
+      <PageBreadcrumbs
+        items={[
+          { label: 'Trang chủ', to: appRoutes.home },
+          { label: memberName, to: appRoutes.member(userId) },
+          { label: title },
+        ]}
+      />
       <Box sx={{ mt: 3 }}>
         <PageHeading eyebrow="Cộng đồng" title={title} />
       </Box>
