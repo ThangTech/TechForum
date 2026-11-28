@@ -5,6 +5,16 @@ Cập nhật: 2026-10-21
 Tài liệu này chỉ đánh dấu một mục **đạt** khi đã có bằng chứng build, kiểm thử tự
 động hoặc kiểm thử tích hợp phù hợp. Số phần trăm không được suy ra từ số màn hình.
 
+## Gộp đánh giá vào bình chọn, thanh hành động dọc — 2026-11-28
+
+- [x] Bỏ "Sao hữu ích" của bài và "hữu ích" của câu trả lời; chỉ còn bình chọn ▲▼ (giữ ▼ cho hỏi đáp).
+- [x] Migration `MoveStarsIntoVotes` chuyển sao và "hữu ích" cũ thành bình chọn tốt (trừ khi người đó đã
+      bình chọn), cộng điểm bài/câu trả lời và danh tiếng tác giả.
+- [x] Nổi bật tuần tính bình chọn tốt trong 7 ngày thay cho sao; hồ sơ hiện số bình chọn tốt nhận được,
+      danh hiệu "Nội dung hữu ích" từ 10 bình chọn tốt.
+- [x] Thanh hành động dọc, dính khi cuộn (▲ điểm ▼, thảo luận, lưu bài hình ngôi sao, chia sẻ, báo cáo);
+      trên điện thoại là thanh ngang dính đáy màn hình. `/starred` chuyển sang `/saved`.
+
 ## Bảng tin, trải nghiệm đọc và câu trả lời hữu ích — 2026-10-21
 
 - [x] Ba tab bảng tin: mới nhất, tác giả đang theo dõi và nổi bật tuần.

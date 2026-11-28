@@ -6,7 +6,7 @@ public sealed record PublicProfileData(
     ApplicationUser User,
     int PublishedTopicCount,
     int PublicAnswerCount,
-    int ReceivedStarCount,
+    int ReceivedUpvoteCount,
     int FollowerCount,
     int FollowingCount,
     bool IsFollowedByViewer,

@@ -18,7 +18,7 @@ interface PersonalTopicListProps {
   query: UseQueryResult<SavedTopicPage>
   page: number
   onPageChange: (page: number) => void
-  // The words of the list: "Lưu" or "Thả sao" before the date, and the texts for loading, error, empty and the pager.
+  // The words of the list: "Lưu" before the date, and the texts for loading, error, empty and the pager.
   dateLabel: string
   loadingText: string
   errorText: string
@@ -29,7 +29,7 @@ interface PersonalTopicListProps {
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(value))
 
-// The list of posts that belong to one member and are read again later (saved posts, starred posts): a card for each
+// The list of posts that belong to one member and are read again later (saved posts): a card for each
 // post, a pager, and the loading, error and empty states. Both pages of the member use it.
 export const PersonalTopicList = ({
   query,

@@ -19,7 +19,6 @@ export interface TopicDiscussion {
   answerCount: number
   hasAcceptedAnswer: boolean
   lastActivityAtUtc: string | null
-  starCount: number
   bookmarkCount: number
 }
 

@@ -30,9 +30,7 @@ public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>, IDa
 
     public DbSet<Answer> Answers => Set<Answer>();
 
-    public DbSet<AnswerHelpfulVote> AnswerHelpfulVotes => Set<AnswerHelpfulVote>();
 
-    public DbSet<TopicStar> TopicStars => Set<TopicStar>();
 
     public DbSet<Draft> Drafts => Set<Draft>();
 
@@ -194,37 +192,10 @@ public sealed class TechForumDbContext : IdentityDbContext<ApplicationUser>, IDa
             .HasForeignKey(item => item.ParentAnswerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        var helpfulVote = modelBuilder.Entity<AnswerHelpfulVote>();
-        helpfulVote.ToTable("AnswerHelpfulVotes");
-        helpfulVote.HasKey(item => new { item.AnswerId, item.UserId });
-        helpfulVote.Property(item => item.UserId).HasMaxLength(450).IsRequired();
-        helpfulVote.HasOne(item => item.Answer)
-            .WithMany(item => item.HelpfulVotes)
-            .HasForeignKey(item => item.AnswerId)
-            .OnDelete(DeleteBehavior.Restrict);
-        helpfulVote.HasOne(item => item.User)
-            .WithMany()
-            .HasForeignKey(item => item.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         topic.HasIndex(item => item.AcceptedAnswerId).IsUnique();
         topic.HasOne(item => item.AcceptedAnswer)
             .WithMany()
             .HasForeignKey(item => item.AcceptedAnswerId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        var topicStar = modelBuilder.Entity<TopicStar>();
-        topicStar.ToTable("TopicStars");
-        topicStar.HasKey(item => new { item.TopicId, item.UserId });
-        topicStar.Property(item => item.UserId).HasMaxLength(450).IsRequired();
-        topicStar.HasIndex(item => new { item.TopicId, item.CreatedAtUtc });
-        topicStar.HasOne(item => item.Topic)
-            .WithMany(item => item.Stars)
-            .HasForeignKey(item => item.TopicId)
-            .OnDelete(DeleteBehavior.Restrict);
-        topicStar.HasOne(item => item.User)
-            .WithMany()
-            .HasForeignKey(item => item.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         var bookmark = modelBuilder.Entity<TopicBookmark>();

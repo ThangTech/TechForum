@@ -46,6 +46,10 @@ export const ThumbUpIcon = (props: IconProps) => (
   <Icon {...props}><path d="M7 10v11H3V10h4Zm0 0 5-7c1.8 0 2.5 1.2 2 3l-1 4h5a3 3 0 0 1 3 3l-1 6a2 2 0 0 1-2 2H7" /></Icon>
 )
 
+export const CommentActionIcon = (props: IconProps) => (
+  <Icon {...props}><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-5.4A8 8 0 1 1 21 12z" /></Icon>
+)
+
 export const ShareIcon = (props: IconProps) => (
   <Icon {...props}><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13" /></Icon>
 )

@@ -6,7 +6,7 @@
   chỉ lấy nội dung công khai của tác giả đang được tài khoản hiện tại theo dõi.
   Danh tính lấy từ JWT; khách nhận 401.
 - `GET /api/topics?sort=weekly`: xếp hoạt động trong 7 ngày gần nhất, kể cả bài
-  đăng từ trước. Điểm = sao × 2 + lượt lưu × 2 + trả lời cấp một công khai × 3.
+  đăng từ trước. Điểm = bình chọn tốt × 2 + lượt lưu × 2 + trả lời cấp một công khai × 3.
   Không tính hoạt động của tác giả chủ đề, bản ghi tương lai hoặc phản hồi ẩn/xóa;
   chỉ trả chủ đề có điểm. Thứ tự: điểm, ngày đăng, ID giảm dần; bài ghim không
   thay đổi thứ hạng tuần. Bộ lọc chuyên mục/thẻ/loại/trạng thái vẫn áp dụng.
@@ -158,7 +158,7 @@ trường khác không tự migrate và không seed.
 ## Cấu trúc thư mục
 
 Vẫn ba tầng Controller → Service → Repository → DbContext, nhưng **bên trong mỗi tầng** file được chia theo cùng một bộ nhóm chức năng:
-`Auth`, `Topics`, `Answers`, `Interactions` (bình chọn, sao, lưu bài, danh tiếng), `Members` (hồ sơ, theo dõi, kỹ năng, hoạt động, avatar),
+`Auth`, `Topics`, `Answers`, `Interactions` (bình chọn, lưu bài, danh tiếng), `Members` (hồ sơ, theo dõi, kỹ năng, hoạt động, avatar),
 `Catalog` (chuyên mục, thẻ), `Media`, `Moderation` (lọc từ cấm, kiểm tra nội dung, báo cáo vi phạm), `Notifications`, `Banners`, `Admin`,
 `Statistics`. Ví dụ bình chọn nằm ở `Controllers/Interactions/`, `Services/Interactions/`, `Data/Repositories/Interactions/`, `DTOs/Interactions/`.
 
@@ -349,18 +349,6 @@ lời cho biết lựa chọn hiện tại; chỉ câu hỏi công khai và câu
 thuộc đúng chủ đề mới được chấp nhận. DTO trả `parentAnswerId` và `replyingTo`
 để frontend trình bày quan hệ hội thoại mà không trả entity EF trực tiếp.
 
-## Sao hữu ích P5
-
-- `GET /api/topics/{topicId}/star`: công khai, trả số sao và trạng thái của tài
-  khoản hiện tại dưới dạng `{ "count": 3, "hasStar": true }`.
-- `PUT /api/topics/{topicId}/star`: thêm sao của tài khoản đang đăng nhập.
-- `DELETE /api/topics/{topicId}/star`: bỏ sao của tài khoản đang đăng nhập.
-
-Khóa chính kép `(TopicId, UserId)` bảo đảm mỗi tài khoản chỉ có tối đa một sao
-hiện hành trên mỗi chủ đề. Thêm hoặc bỏ lặp lại là thao tác idempotent; chủ đề
-không còn công khai trả 404. Sao hữu ích không phải thang điểm và không dùng làm
-bookmark.
-
 ## Lưu bài P5
 
 - `GET /api/topics/{topicId}/bookmark`: số lượt lưu công khai và trạng thái của
@@ -369,8 +357,8 @@ bookmark.
 - `GET /api/bookmarks?page=1&pageSize=10`: danh sách nội dung đã lưu của tài
   khoản, mới lưu trước và chỉ gồm chủ đề còn công khai.
 
-Bookmark dùng khóa chính kép `(TopicId, UserId)`, độc lập với Sao hữu ích và các
-thao tác thêm/bỏ được xử lý idempotent.
+Bookmark dùng khóa chính kép `(TopicId, UserId)`; thêm/bỏ được xử lý idempotent. Giao diện vẽ nút
+lưu bằng hình ngôi sao, nhưng đây chỉ là lưu bài, không đổi điểm hay danh tiếng.
 
 ## Báo cáo nội dung P6
 
@@ -461,8 +449,9 @@ của thành viên (`isChosen: false`) cho đủ 12 chỗ, nên người chưa c
 
 ## Bình chọn và điểm danh tiếng
 
-Bài viết và câu trả lời có **bình chọn** ▲ (+1) và ▼ (−1), tách riêng với sao "hữu ích" (giữ nguyên, là
-lời cảm ơn/yêu thích và không đổi điểm danh tiếng):
+Bài viết và câu trả lời có **bình chọn** ▲ (+1) và ▼ (−1). Đây là cách đánh giá duy nhất: "Sao hữu ích" của
+bài và "hữu ích" của câu trả lời đã bỏ (migration `MoveStarsIntoVotes` chuyển chúng thành bình chọn tốt, trừ khi
+người đó đã bình chọn, rồi cộng điểm và danh tiếng như khi bấm ▲):
 
 - `GET /api/topics/{topicId}/vote`: `{ score, myVote }` (khách thấy `myVote: 0`).
 - `PUT /api/topics/{topicId}/vote` và `PUT /api/topics/{topicId}/answers/{answerId}/vote`
@@ -519,14 +508,14 @@ Hai kiểu xếp hạng cho bảng tin `GET /api/topics` (và `/following`):
 - `sort=top&range=day|week|month|all` (mặc định `all`): điểm cao nhất, chỉ trong các bài đăng trong khoảng thời gian đã chọn
   (1, 7, 30 ngày hoặc mọi thời đại); bằng điểm thì mới nhất trước. `range` khác các giá trị trên trả `400`.
 
-`GET /api/stars` (cần đăng nhập, `page`, `pageSize` 1-50) liệt kê các bài người dùng đã thả sao ⭐, sao mới nhất
-trước, chỉ gồm bài còn công khai (cùng dạng với `GET /api/bookmarks`).
+Hồ sơ công khai trả `receivedUpvoteCount`: số bình chọn tốt nhận được trên bài và câu trả lời còn công khai;
+từ 10 trở lên thì có danh hiệu "Nội dung hữu ích".
 
 ## Câu trả lời được chấp nhận
 
 Tác giả của một Câu hỏi chọn (hoặc đổi) câu trả lời đúng bằng `PUT /api/topics/{id}/answers/{answerId}/accepted`
 (người khác nhận `404`; chỉ chọn được câu trả lời gốc). Câu được chọn luôn đứng **đầu danh sách**
-ở cả hai kiểu sắp xếp (cũ nhất, hữu ích nhất); các câu còn lại giữ nguyên thứ tự. Việc ghim nằm trong
+ở cả hai kiểu sắp xếp (cũ nhất, điểm cao nhất); các câu còn lại giữ nguyên thứ tự. Việc ghim nằm trong
 `AnswerRepository`, và tham số `aroundAnswerId` vẫn tìm đúng trang khi có câu được ghim. Câu bị xóa hoặc bị
 ẩn thì không được ghim; Bài viết (không phải Câu hỏi) không có câu được chọn.
 

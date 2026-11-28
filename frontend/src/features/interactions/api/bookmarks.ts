@@ -35,7 +35,7 @@ export const addBookmark = async (topicId: string) =>
 export const removeBookmark = async (topicId: string) =>
   parseStatus(await apiRequest(`/api/topics/${topicId}/bookmark`, { method: 'DELETE' }))
 
-// A page of the posts that belong to the member (the saved posts and the starred posts have the same card).
+// A page of the posts that belong to the member (the saved posts).
 export const getPersonalTopicPage = async (path: string, errorText: string, signal?: AbortSignal): Promise<SavedTopicPage> => {
   const data: unknown = await apiRequest(path, { signal })
   if (!isRecord(data) || !Array.isArray(data.items) || !data.items.every(isSavedTopic) ||

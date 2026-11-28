@@ -58,23 +58,6 @@ public sealed class AnswersController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{answerId:guid}/helpful")]
-    [RequireVerifiedEmail]
-    public async Task<ActionResult<AnswerHelpfulDto>> AddHelpful(Guid topicId, Guid answerId, CancellationToken cancellationToken)
-    {
-        var result = await answerService.SetHelpfulAsync(topicId, answerId, User.GetRequiredUserId(), true, cancellationToken);
-        return this.ToActionResult(result);
-    }
-
-    [Authorize]
-    [HttpDelete("{answerId:guid}/helpful")]
-    public async Task<ActionResult<AnswerHelpfulDto>> RemoveHelpful(Guid topicId, Guid answerId, CancellationToken cancellationToken)
-    {
-        var result = await answerService.SetHelpfulAsync(topicId, answerId, User.GetRequiredUserId(), false, cancellationToken);
-        return this.ToActionResult(result);
-    }
-
-    [Authorize]
     [HttpPost]
     [RequireVerifiedEmail]
     public async Task<ActionResult<AnswerDto>> Create(Guid topicId, [FromBody] CreateAnswerRequest request, CancellationToken cancellationToken)

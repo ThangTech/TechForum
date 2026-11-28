@@ -33,13 +33,18 @@ public sealed class PublicProfileRepository : IPublicProfileRepository
             .Where(TopicVisibility.IsPublic);
 
         var publishedTopicCount = await topics.CountAsync(cancellationToken);
-        var publicAnswerCount = await dbContext.Answers.AsNoTracking()
+        var answers = dbContext.Answers.AsNoTracking()
             .Where(AnswerVisibility.IsPublic)
             .WhereTopicIsPublic(answer => answer.Topic)
-            .CountAsync(answer => answer.AuthorId == userId, cancellationToken);
-        var receivedStarCount = await dbContext.TopicStars.AsNoTracking()
-            .WhereTopicIsPublic(star => star.Topic)
-            .CountAsync(star => star.Topic.AuthorId == userId, cancellationToken);
+            .Where(answer => answer.AuthorId == userId);
+        var publicAnswerCount = await answers.CountAsync(cancellationToken);
+        // Bình chọn tốt nhận được trên bài và câu trả lời còn công khai.
+        var receivedUpvoteCount = await dbContext.UserVotes.AsNoTracking()
+            .Where(vote => vote.Value > 0)
+            .CountAsync(vote =>
+                (vote.TargetType == VoteTargetType.Topic && topics.Any(topic => topic.Id == vote.TargetId)) ||
+                (vote.TargetType == VoteTargetType.Answer && answers.Any(answer => answer.Id == vote.TargetId)),
+                cancellationToken);
         var followerCount = await dbContext.UserFollows.AsNoTracking()
             .CountAsync(follow => follow.FollowingId == userId, cancellationToken);
         var followingCount = await dbContext.UserFollows.AsNoTracking()
@@ -62,7 +67,7 @@ public sealed class PublicProfileRepository : IPublicProfileRepository
             user,
             publishedTopicCount,
             publicAnswerCount,
-            receivedStarCount,
+            receivedUpvoteCount,
             followerCount,
             followingCount,
             isFollowedByViewer,

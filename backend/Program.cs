@@ -166,8 +166,6 @@ builder.Services.AddScoped<IAnswerRepository, AnswerRepository>();
 builder.Services.AddScoped<IAnswerService, AnswerService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<ITopicStarRepository, TopicStarRepository>();
-builder.Services.AddScoped<ITopicStarService, TopicStarService>();
 builder.Services.AddScoped<ITopicBookmarkRepository, TopicBookmarkRepository>();
 builder.Services.AddScoped<ITopicBookmarkService, TopicBookmarkService>();
 builder.Services.AddScoped<IContentReportRepository, ContentReportRepository>();

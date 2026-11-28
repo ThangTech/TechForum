@@ -10,13 +10,6 @@ public interface IAnswerService
         CancellationToken cancellationToken,
         string? viewerId = null);
 
-    Task<Result<AnswerHelpfulDto>> SetHelpfulAsync(
-        Guid topicId,
-        Guid answerId,
-        string userId,
-        bool isHelpful,
-        CancellationToken cancellationToken);
-
     Task<Result<AnswerDto>> CreateAsync(
         Guid topicId,
         string authorId,

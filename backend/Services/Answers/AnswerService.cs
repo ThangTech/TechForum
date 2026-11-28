@@ -55,9 +55,9 @@ public sealed partial class AnswerService : IAnswerService
         {
             return null;
         }
-        var helpfulStates = page.Items.Count == 0
-            ? new Dictionary<Guid, AnswerHelpfulState>()
-            : (await answerRepository.GetHelpfulStatesAsync(
+        var voteStates = page.Items.Count == 0
+            ? new Dictionary<Guid, AnswerVoteState>()
+            : (await answerRepository.GetVoteStatesAsync(
                 page.Items.Select(answer => answer.Id).ToArray(), viewerId, cancellationToken))
                 .ToDictionary(state => state.AnswerId);
         var totalPages = page.TotalItems == 0
@@ -66,52 +66,11 @@ public sealed partial class AnswerService : IAnswerService
 
         return new PagedResultDto<AnswerDto>(
             page.Items.Select(answer => MapAnswer(
-                answer, AcceptedAnswerIdFor(topic), helpfulState: helpfulStates.GetValueOrDefault(answer.Id))).ToList(),
+                answer, AcceptedAnswerIdFor(topic), voteState: voteStates.GetValueOrDefault(answer.Id))).ToList(),
             page.Page,
             query.PageSize,
             page.TotalItems,
             totalPages);
-    }
-
-    public async Task<Result<AnswerHelpfulDto>> SetHelpfulAsync(
-        Guid topicId,
-        Guid answerId,
-        string userId,
-        bool isHelpful,
-        CancellationToken cancellationToken)
-    {
-        var topic = await topicRepository.GetPublicByIdAsync(topicId, cancellationToken);
-        if (topic is null)
-        {
-            return Result<AnswerHelpfulDto>.Fail(ErrorType.NotFound, "Không tìm thấy câu trả lời", "Chủ đề hoặc câu trả lời không tồn tại hoặc không còn công khai.");
-        }
-
-        var answer = await answerRepository.GetVisibleByIdAsync(topicId, answerId, cancellationToken);
-        if (answer is null)
-        {
-            return Result<AnswerHelpfulDto>.Fail(ErrorType.NotFound, "Không tìm thấy câu trả lời", "Chủ đề hoặc câu trả lời không tồn tại hoặc không còn công khai.");
-        }
-        if (isHelpful && answer.AuthorId == userId)
-        {
-            return Result<AnswerHelpfulDto>.Fail(ErrorType.Conflict, "Không thể tự bình chọn", "Bạn không thể đánh dấu hữu ích cho câu trả lời của chính mình.");
-        }
-
-        if (isHelpful)
-        {
-            await answerRepository.AddHelpfulIfMissingAsync(new AnswerHelpfulVote
-            {
-                AnswerId = answer.Id,
-                UserId = userId,
-                CreatedAtUtc = timeProvider.GetUtcNow()
-            }, cancellationToken);
-        }
-        else
-        {
-            await answerRepository.RemoveHelpfulAsync(answer.Id, userId, cancellationToken);
-        }
-
-        var state = await GetHelpfulStateAsync(answer.Id, userId, cancellationToken);
-        return Result<AnswerHelpfulDto>.Success(new AnswerHelpfulDto(state.HelpfulCount, state.IsHelpful));
     }
 
     public async Task<Result<AnswerDto>> CreateAsync(
@@ -245,8 +204,8 @@ public sealed partial class AnswerService : IAnswerService
         await topicRepository.SaveChangesAsync(cancellationToken);
         await MoveAcceptedBonusAsync(topicId, previousAcceptedId, answer, authorId, cancellationToken);
 
-        var helpfulState = await GetHelpfulStateAsync(answer.Id, authorId, cancellationToken);
-        return Result<AnswerDto>.Success(MapAnswer(answer, answer.Id, helpfulState: helpfulState));
+        var voteState = await GetVoteStateAsync(answer.Id, authorId, cancellationToken);
+        return Result<AnswerDto>.Success(MapAnswer(answer, answer.Id, voteState: voteState));
     }
 
     public async Task<Result<AnswerDto>> UpdateAsync(
@@ -276,9 +235,9 @@ public sealed partial class AnswerService : IAnswerService
         answer.BodyHtml = sanitizedBody;
         answer.UpdatedAtUtc = timeProvider.GetUtcNow();
         await answerRepository.SaveChangesAsync(cancellationToken);
-        var helpfulState = await GetHelpfulStateAsync(answer.Id, authorId, cancellationToken);
+        var voteState = await GetVoteStateAsync(answer.Id, authorId, cancellationToken);
         return Result<AnswerDto>.Success(MapAnswer(
-            answer, AcceptedAnswerIdFor(answer.Topic), helpfulState: helpfulState));
+            answer, AcceptedAnswerIdFor(answer.Topic), voteState: voteState));
     }
 
     public async Task<Result> DeleteAsync(
@@ -339,20 +298,20 @@ public sealed partial class AnswerService : IAnswerService
         return topic.Type == TopicType.Question ? topic.AcceptedAnswerId : null;
     }
 
-    private async Task<AnswerHelpfulState> GetHelpfulStateAsync(
+    private async Task<AnswerVoteState?> GetVoteStateAsync(
         Guid answerId,
         string viewerId,
         CancellationToken cancellationToken)
     {
-        var states = await answerRepository.GetHelpfulStatesAsync([answerId], viewerId, cancellationToken);
-        return states.FirstOrDefault() ?? new AnswerHelpfulState(answerId, 0, false);
+        var states = await answerRepository.GetVoteStatesAsync([answerId], viewerId, cancellationToken);
+        return states.FirstOrDefault();
     }
 
     private AnswerDto MapAnswer(
         Answer answer,
         Guid? acceptedAnswerId,
         TopicAuthorDto? replyingTo = null,
-        AnswerHelpfulState? helpfulState = null)
+        AnswerVoteState? voteState = null)
     {
         return new(
             answer.Id,
@@ -366,10 +325,8 @@ public sealed partial class AnswerService : IAnswerService
             answer.CreatedAtUtc,
             answer.UpdatedAtUtc,
             answer.Id == acceptedAnswerId,
-            helpfulState?.HelpfulCount ?? 0,
-            helpfulState?.IsHelpful ?? false,
-            ReputationRules.ShownScore(helpfulState?.Score ?? answer.Score, ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow())),
-            helpfulState?.MyVote ?? 0,
+            ReputationRules.ShownScore(voteState?.Score ?? answer.Score, ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow())),
+            voteState?.MyVote ?? 0,
             ReputationRules.IsScoreHidden(answer.CreatedAtUtc, timeProvider.GetUtcNow()));
     }
 

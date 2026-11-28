@@ -18,6 +18,11 @@
   min-width: 0;
 }
 
+/* Thanh hành động (topicActionRail.css) bám vào cột này: dính đáy trên màn hẹp, cột dọc bên trái trên màn rộng. */
+.topic-reading-column {
+  position: relative;
+}
+
 .topic-reading-article {
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -229,8 +234,19 @@
 }
 
 @media (min-width: 1100px) {
+  /* Chừa 68px bên trái cho thanh hành động dọc. */
   .topic-reading-page {
+    width: min(1168px, calc(100% - 40px));
     padding-top: 56px;
+  }
+
+  .topic-reading-page--without-toc {
+    max-width: 888px;
+  }
+
+  .topic-reading-layout {
+    max-width: 888px;
+    padding-left: 68px;
   }
 
   .topic-reading-layout--with-toc {

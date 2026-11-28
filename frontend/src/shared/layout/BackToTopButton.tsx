@@ -23,6 +23,7 @@ export const BackToTopButton = () => {
     <Tooltip arrow placement="left" title="Lên đầu trang">
       <IconButton
         aria-label="Lên đầu trang"
+        className="back-to-top"
         onClick={() => window.scrollTo({ top: 0 })}
         sx={{
           position: 'fixed',

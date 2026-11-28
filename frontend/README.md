@@ -15,10 +15,10 @@ Giao diện React + TypeScript + Vite cho TechForum.
   Hiện thời gian đọc ước tính (220 từ/phút, thêm 12 giây/ảnh) và ngày cập nhật.
 - Cuối trang có **Đọc tiếp** từ API công khai; có trạng thái tải/rỗng/lỗi/thử lại.
   Khung vuông/bo nhẹ, tiêu đề và danh sách trong bài có định dạng đọc rõ ràng.
-- Câu trả lời có **Hữu ích**, trạng thái đã bình chọn, nhãn đã chỉnh sửa và
-  lựa chọn **Cũ nhất trước / Hữu ích nhất**. Không tự bình chọn; khách dùng
-  hộp thoại đăng nhập chung. `answerSort=helpful` giữ trên URL; đổi thứ tự
-  bắt đầu từ trang đầu, liên kết câu trả lời vẫn tìm đúng trang.
+- Câu trả lời có bình chọn ▲▼, nhãn đã chỉnh sửa và lựa chọn **Cũ nhất trước /
+  Điểm cao nhất**. Không tự bình chọn; khách dùng hộp thoại đăng nhập chung.
+  `answerSort=score` giữ trên URL (link cũ `answerSort=helpful` được hiểu là
+  `score`); đổi thứ tự bắt đầu từ trang đầu, liên kết câu trả lời vẫn tìm đúng trang.
 
 Kiểm thử thủ công: theo dõi tác giả rồi mở bảng tin; mở bài có H2/H3 và bấm
 mục lục; bình chọn câu trả lời của người khác rồi tải lại; đổi cách sắp xếp
@@ -152,10 +152,11 @@ gửi văn bản, còn chủ đề bị khóa không hiển thị form gửi. Ph
 gốc để tránh cây hội thoại quá sâu trên thiết bị di động.
 Tác giả của Câu hỏi có thể chọn hoặc thay đổi câu trả lời được chấp nhận ngay
 trong danh sách; Bài viết và phản hồi cấp hai không hiển thị thao tác này.
-Chi tiết nội dung hiển thị số Sao hữu ích từ API. Thành viên có thể thêm/bỏ một
-sao; khách bấm thao tác này sẽ nhận modal yêu cầu đăng nhập dùng chung.
-Lưu bài dùng trạng thái riêng với Sao hữu ích; số lượt lưu hiển thị trên chi tiết
-và danh sách cá nhân chỉ chứa nội dung còn công khai.
+Trang đọc bài có **thanh hành động** (`TopicActionRail`): ▲ điểm ▼, số thảo luận (bấm để cuộn tới phần trả
+lời), **Lưu bài** (hình ngôi sao, kèm số lượt lưu), Chia sẻ và Báo cáo. Trên màn hình từ 1100px, thanh là cột
+nút tròn dọc bên trái bài và dính trên cùng khi cuộn suốt bài lẫn phần thảo luận; trên màn hẹp, thanh nằm ngang
+ngay sau bài và dính đáy màn hình khi còn đang đọc bài. Khách bấm thì hiện hộp đăng nhập; lỗi và xác nhận hiện
+bằng thông báo nhỏ ở góc. Danh sách "Đã lưu" chỉ chứa nội dung còn công khai.
 
 Trang chủ dùng Intro.js 8.6.0 cho tour tìm kiếm, loại nội dung, viết bài và tài
 khoản. Trạng thái hoàn tất được lưu riêng theo khách/tài khoản trong trình duyệt;
@@ -171,7 +172,7 @@ từ backend; mở một thông báo chưa đọc sẽ đánh dấu đã đọc 
 Cột phải trang duyệt gọi `/api/question-highlights` để hiển thị câu hỏi mới và
 câu hỏi nhiều phản hồi trong 30 ngày; không dùng số liệu tĩnh.
 
-Hồ sơ công khai hiển thị người theo dõi, Sao hữu ích nhận được, kỹ năng và danh
+Hồ sơ công khai hiển thị người theo dõi, số bình chọn tốt nhận được, kỹ năng và danh
 hiệu theo ngưỡng dữ liệu thật. Kỹ năng gồm các thẻ thành viên tự chọn (sửa/xóa
 tại `/account`, ô **Kỹ năng**, chọn từ thẻ có sẵn, tối đa 12) và các thẻ dùng nhiều
 nhất trong nội dung công khai. Thành viên có thể theo dõi/bỏ theo dõi người khác;
@@ -181,8 +182,8 @@ Trang quản trị `/admin/banned-words` (mục **Từ cấm**) cho quản trị
 và xóa từ cấm (xóa có hộp xác nhận). Danh sách được API dùng để thay từ cấm bằng `***`
 trong bài viết và câu trả lời mới; thêm/xóa có hiệu lực ngay.
 
-Bài viết và câu trả lời có nút bình chọn **▲ điểm ▼** (`VoteControl`), tách riêng với sao ⭐ "hữu ích"
-(lời cảm ơn/yêu thích, không đổi điểm danh tiếng). Bấm ▲ hoặc ▼ đang sáng thì rút phiếu, bấm mũi tên còn lại thì
+Bài viết và câu trả lời có nút bình chọn **▲ điểm ▼** (thanh hành động của bài, `VoteControl` ở câu trả lời);
+đây là cách đánh giá duy nhất. Bấm ▲ hoặc ▼ đang sáng thì rút phiếu, bấm mũi tên còn lại thì
 đổi phiếu; khách bấm thì hiện hộp đăng nhập, tác giả không tự bình chọn được (nút mờ kèm lý do). Rê chuột vào ▼ báo trước: tốn 1 điểm danh tiếng (hoàn lại khi bỏ
 phiếu) và cần tài khoản từ 7 ngày hoặc 50 điểm danh tiếng; không đủ điều kiện thì hiện lý do cụ thể. Câu trả lời
 sắp xếp thêm được theo **Điểm cao nhất** (`?answerSort=score`; câu được chọn vẫn đứng đầu). Hồ sơ công khai hiện
@@ -190,8 +191,7 @@ sắp xếp thêm được theo **Điểm cao nhất** (`?answerSort=score`; câ
 trong thời gian ngắn lên đầu rồi hạ dần; **Top** xếp theo điểm cao nhất và có ô chọn khoảng thời gian (Hôm nay, Tuần này, Tháng
 này, Mọi thời đại; `?range=`, mặc định Tuần này). Thẻ bài ở hai tab này hiện `▲ điểm`. Điểm của bài mới được **ẩn trong 2 giờ
 đầu**: nút ▲▼, thẻ bài và câu trả lời hiện dấu `•` thay cho số (rê chuột để đọc lý do); phiếu của chính bạn vẫn hiện.
-Trang `/starred` ("Bài đã thả sao", cũng có ở menu tài khoản và thanh điều hướng) liệt kê các
-bài đã thả sao ⭐ để đọc lại; nó dùng chung danh sách `PersonalTopicList` với trang "Đã lưu".
+Trang `/starred` cũ chuyển thẳng sang `/saved` ("Đã lưu").
 
 Khi đang viết bài (`/write`), trả lời hoặc sửa câu trả lời, trang gửi nội dung tới
 `POST /api/moderation/check` sau khi ngừng gõ khoảng 1 giây (`useContentCheck`) và hiện cảnh báo
@@ -237,8 +237,8 @@ Dữ liệu từ API được tải bằng TanStack React Query (các file `feat
   Hàm API đã nhận `signal`, nên React Query tự hủy request cũ khi đổi trang hoặc bộ lọc.
 - Dữ liệu được coi là mới trong 30 giây và không tải lại khi chuyển cửa sổ. Lỗi đọc được
   thử lại một lần, trừ lỗi 4xx. Thao tác ghi không bao giờ tự thử lại, nên không tạo bản ghi trùng.
-- Dữ liệu phụ thuộc người đăng nhập (thông báo, nội dung của tôi, trạng thái sao/lưu, câu trả
-  lời hữu ích, trang quản trị) có khóa bắt đầu bằng `['user', userId, ...]` và chỉ chạy sau khi
+- Dữ liệu phụ thuộc người đăng nhập (thông báo, nội dung của tôi, trạng thái lưu, phiếu bình
+  chọn, trang quản trị) có khóa bắt đầu bằng `['user', userId, ...]` và chỉ chạy sau khi
   phiên được khôi phục. Khi đăng xuất hoặc đổi người dùng, dữ liệu của người cũ bị xóa khỏi cache.
   Dữ liệu công khai (chuyên mục, thẻ, danh sách chủ đề) được giữ.
 - Thao tác ghi dùng `useMutation`. Sau khi ghi, hook cập nhật cache hoặc đánh dấu dữ liệu liên quan

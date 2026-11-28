@@ -12,16 +12,15 @@ import { UserAvatar } from '../../members/components/UserAvatar'
 import { ViewIcon } from '../../../shared/components/StatIcons'
 import { appRoutes } from '../../../app/appRoutes'
 import { DiscussionSection } from '../../answers/components/DiscussionSection'
-import { UsefulStarButton } from '../../interactions/components/UsefulStarButton'
-import { TopicVoteButtons } from '../../interactions/components/TopicVoteButtons'
-import { BookmarkButton } from '../../interactions/components/BookmarkButton'
-import { ReportAction } from '../../reports/components/ReportAction'
-import { TopicEngagementBar } from '../../interactions/components/TopicEngagementBar'
+import { TopicActionRail } from '../../interactions/components/TopicActionRail'
 import { ReadingTableOfContents } from '../components/ReadingTableOfContents'
 import { RelatedTopics } from '../components/RelatedTopics'
 import { usePageMeta } from '../../../shared/hooks/usePageMeta'
 import { useTopicDetailPage } from '../hooks/useTopicDetailPage'
+import { useState } from 'react'
 import '../styles/topicReading.css'
+
+const discussionId = 'discussion'
 
 const formatDateTime = (value: string) => new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'long',
@@ -32,6 +31,7 @@ export const TopicDetailPage = () => {
   const { topic, readingContent, isLoading, error, notFoundTitle, retry, isTopicReady, isOwnTopic, wasUpdatedAfterPublication } =
     useTopicDetailPage()
   usePageMeta(topic?.title, topic?.summary)
+  const [answerCount, setAnswerCount] = useState<number | null>(null)
 
   return (
     <main className="main-area" id="main-content">
@@ -141,21 +141,20 @@ export const TopicDetailPage = () => {
                     '& p': { mb: 2.5 },
                   }}
                 />
-                <Box component="footer" sx={{ px: { xs: 3, sm: 4 }, py: 2.5, borderTop: 1, borderColor: 'divider', bgcolor: 'var(--color-subtle)' }}>
-                  <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1.5 }}>
-                    <TopicVoteButtons authorId={topic.author.id} topicId={topic.id} />
-                    <UsefulStarButton topicId={topic.id} />
-                    <BookmarkButton topicId={topic.id} />
-                    <ReportAction targetId={topic.id} targetType="topic" />
-                  </Stack>
-                  <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                    <TopicEngagementBar title={topic.title} topicId={topic.id} />
-                  </Box>
-                </Box>
               </article>
+              <TopicActionRail
+                answerCount={answerCount}
+                authorId={topic.author.id}
+                discussionId={discussionId}
+                key={`rail-${topic.id}`}
+                title={topic.title}
+                topicId={topic.id}
+              />
               <DiscussionSection
                 isLocked={topic.isDiscussionLocked}
                 key={topic.id}
+                onTotalChange={setAnswerCount}
+                sectionId={discussionId}
                 topicAuthorId={topic.author.id}
                 topicId={topic.id}
                 topicType={topic.type}

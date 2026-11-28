@@ -35,7 +35,6 @@ export const AccountMenu = () => {
     { id: 'account', label: 'Tài khoản', onClick: () => navigate(appRoutes.account) },
     { id: 'content', label: 'Nội dung của tôi', onClick: () => navigate(appRoutes.myTopics) },
     { id: 'saved', label: 'Nội dung đã lưu', onClick: () => navigate(appRoutes.saved) },
-    { id: 'starred', label: 'Bài đã thả sao', onClick: () => navigate(appRoutes.starred) },
     { id: 'activity', label: 'Lịch sử hoạt động', onClick: () => navigate(appRoutes.activity) },
     { id: 'reports', label: 'Báo cáo của tôi', onClick: () => navigate(appRoutes.myReports) },
     { id: 'write', label: 'Viết nội dung', onClick: () => navigate(appRoutes.write) },

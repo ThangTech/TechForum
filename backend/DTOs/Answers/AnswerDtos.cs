@@ -13,14 +13,10 @@ public sealed record AnswerDto(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? UpdatedAtUtc,
     bool IsAccepted,
-    int HelpfulCount = 0,
-    bool IsHelpful = false,
     int Score = 0,
     int MyVote = 0,
     // Điểm của câu trả lời mới bị ẩn (bằng 0) trong vài giờ đầu.
     bool ScoreHidden = false);
-
-public sealed record AnswerHelpfulDto(int HelpfulCount, bool IsHelpful);
 
 public sealed record CreateAnswerRequest([property: FilterProfanity(IsHtml = true)] string? BodyHtml, Guid? ParentAnswerId = null);
 
@@ -28,7 +24,7 @@ public sealed class AnswerQuery : PageQuery, IValidatableObject
 {
     public Guid? AroundAnswerId { get; init; }
 
-    [RegularExpression("^(oldest|helpful|score)$", ErrorMessage = "Cách sắp xếp phải là oldest, helpful hoặc score.")]
+    [RegularExpression("^(oldest|score)$", ErrorMessage = "Cách sắp xếp phải là oldest hoặc score.")]
     public string Sort { get; init; } = "oldest";
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

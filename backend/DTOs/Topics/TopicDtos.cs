@@ -7,7 +7,6 @@ public sealed record TopicDiscussionDto(
     int AnswerCount,
     bool HasAcceptedAnswer,
     DateTimeOffset? LastActivityAtUtc,
-    int StarCount,
     int BookmarkCount);
 
 public sealed record TopicSummaryDto(

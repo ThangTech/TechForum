@@ -8,7 +8,8 @@ export interface PublicProfile {
   joinedAtUtc: string
   publishedTopicCount: number
   publicAnswerCount: number
-  receivedStarCount: number
+  // Bình chọn tốt nhận được trên bài và câu trả lời công khai.
+  receivedUpvoteCount: number
   followerCount: number
   followingCount: number
   isFollowedByViewer: boolean

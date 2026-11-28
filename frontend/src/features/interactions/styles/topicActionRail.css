@@ -1,0 +1,173 @@
+/* Thanh hành động của bài.
+   Điện thoại, máy tính bảng: thanh ngang nằm ngay sau bài, dính đáy màn hình khi còn đang đọc bài.
+   Màn hình rộng: cột dọc bên trái bài, dính trên cùng khi cuộn suốt bài và phần thảo luận. */
+.topic-rail {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: 12px;
+}
+
+.topic-rail__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.08);
+}
+
+.topic-rail__vote {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.topic-rail__score {
+  min-width: 32px;
+  color: var(--color-heading);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.topic-rail__score[data-vote='up'] {
+  color: var(--color-solved);
+}
+
+.topic-rail__score[data-vote='down'] {
+  color: var(--color-danger);
+}
+
+.topic-rail__divider {
+  align-self: stretch;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.topic-rail__slot {
+  position: relative;
+  display: inline-flex;
+}
+
+.topic-rail__button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+}
+
+.topic-rail__button:hover:not(:disabled) {
+  border-color: var(--color-primary-border);
+  color: var(--color-primary);
+}
+
+.topic-rail__button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.topic-rail__button[data-pressed] {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.topic-rail__button[data-tone='up'][data-pressed],
+.topic-rail__button[data-tone='up']:hover:not(:disabled) {
+  border-color: var(--color-solved-border);
+  background: var(--color-solved-soft);
+  color: var(--color-solved);
+}
+
+.topic-rail__button[data-tone='down'][data-pressed],
+.topic-rail__button[data-tone='down']:hover:not(:disabled) {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.topic-rail__button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Đang lưu thì giữ nguyên hình, chỉ nhạt đi một chút để nút không nhảy. */
+.topic-rail__button[aria-busy='true'] {
+  opacity: 0.7;
+}
+
+.topic-rail__count {
+  position: absolute;
+  top: -6px;
+  left: calc(100% - 16px);
+  min-width: 18px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--color-hover);
+  color: var(--color-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Nút lên đầu trang ở góc dưới bên phải không được che thanh ngang. */
+@media (max-width: 1099.98px) {
+  body:has(.topic-rail) .back-to-top {
+    bottom: 84px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .topic-rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -68px;
+    width: 44px;
+    margin-top: 0;
+  }
+
+  .topic-rail__inner {
+    position: sticky;
+    top: 24px;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .topic-rail__vote {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .topic-rail__score {
+    min-width: 0;
+    padding: 2px 0;
+  }
+
+  .topic-rail__divider {
+    align-self: center;
+    width: 24px;
+    height: 1px;
+  }
+
+  .topic-rail__button {
+    width: 44px;
+    height: 44px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+  }
+}

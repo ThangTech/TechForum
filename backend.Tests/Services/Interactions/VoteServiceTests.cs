@@ -567,10 +567,8 @@ public sealed class VoteServiceTests
                 !answer.IsDeleted && !answer.IsHiddenByModerator));
 
         public Task<AnswerPage?> GetPublicPageAsync(Guid topicId, int page, int pageSize, Guid? aroundAnswerId, string sort, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(IReadOnlyCollection<Guid> answerIds, string? viewerId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<AnswerVoteState>> GetVoteStatesAsync(IReadOnlyCollection<Guid> answerIds, string? viewerId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken) => throw new NotSupportedException();
-        public Task RemoveHelpfulAsync(Guid answerId, string userId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task AddAsync(Answer answer, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<Answer?> GetOwnedByIdAsync(Guid topicId, Guid answerId, string authorId, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task SaveChangesAsync(CancellationToken cancellationToken) => throw new NotSupportedException();

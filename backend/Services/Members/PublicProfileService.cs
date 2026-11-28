@@ -33,7 +33,7 @@ public sealed class PublicProfileService : IPublicProfileService
             profile.User.CreatedAtUtc,
             profile.PublishedTopicCount,
             profile.PublicAnswerCount,
-            profile.ReceivedStarCount,
+            profile.ReceivedUpvoteCount,
             profile.FollowerCount,
             profile.FollowingCount,
             profile.IsFollowedByViewer,
@@ -55,9 +55,9 @@ public sealed class PublicProfileService : IPublicProfileService
         {
             badges.Add(new("discussant", "Người thảo luận", "Đã đóng góp ít nhất 5 câu trả lời công khai."));
         }
-        if (profile.ReceivedStarCount >= 5)
+        if (profile.ReceivedUpvoteCount >= 10)
         {
-            badges.Add(new("helpful", "Nội dung hữu ích", "Nội dung đã nhận ít nhất 5 Sao hữu ích."));
+            badges.Add(new("helpful", "Nội dung hữu ích", "Bài viết và câu trả lời đã nhận ít nhất 10 bình chọn tốt."));
         }
         return badges;
     }

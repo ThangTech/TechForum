@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 import type { TopicSummary } from '../types/topics'
 import { appRoutes } from '../../../app/appRoutes'
 import { UserAvatar } from '../../members/components/UserAvatar'
-import { BookmarkIcon, CommentIcon, StarIcon, ViewIcon } from '../../../shared/components/StatIcons'
+import { CommentIcon, StarIcon, ViewIcon } from '../../../shared/components/StatIcons'
 
 interface TopicSummaryItemProps {
   topic: TopicSummary
@@ -201,8 +201,7 @@ export const TopicSummaryItem = ({
                 <CommentIcon />{topic.discussion.answerCount}
                 <span className="sr-only"> {isQuestion ? 'câu trả lời và phản hồi' : 'phản hồi'}</span>
               </MuiLink>
-              <span className="topic-stat" title="Sao hữu ích"><StarIcon />{topic.discussion.starCount}<span className="sr-only"> sao hữu ích</span></span>
-              <span className="topic-stat" title="Lượt lưu"><BookmarkIcon />{topic.discussion.bookmarkCount}<span className="sr-only"> lượt lưu</span></span>
+              <span className="topic-stat" title="Lượt lưu"><StarIcon />{topic.discussion.bookmarkCount}<span className="sr-only"> lượt lưu</span></span>
             </>}
           </Stack>
         </Stack>

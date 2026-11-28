@@ -39,7 +39,7 @@ public sealed class AnswerRepository : IAnswerRepository
         {
             var target = await answers
                 .Where(answer => answer.Id == aroundAnswerId.Value)
-                .Select(answer => new { answer.Id, answer.CreatedAtUtc, HelpfulCount = answer.HelpfulVotes.Count, Score = answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0 })
+                .Select(answer => new { answer.Id, answer.CreatedAtUtc, Score = answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0 })
                 .SingleOrDefaultAsync(cancellationToken);
             if (target is null)
             {
@@ -52,13 +52,6 @@ public sealed class AnswerRepository : IAnswerRepository
                 ? await unpinned.CountAsync(answer =>
                     (answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0) > target.Score ||
                     ((answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0) == target.Score &&
-                        (answer.CreatedAtUtc < target.CreatedAtUtc ||
-                        (answer.CreatedAtUtc == target.CreatedAtUtc && answer.Id < target.Id))),
-                    cancellationToken)
-                : sort == "helpful"
-                ? await unpinned.CountAsync(answer =>
-                    answer.HelpfulVotes.Count > target.HelpfulCount ||
-                    (answer.HelpfulVotes.Count == target.HelpfulCount &&
                         (answer.CreatedAtUtc < target.CreatedAtUtc ||
                         (answer.CreatedAtUtc == target.CreatedAtUtc && answer.Id < target.Id))),
                     cancellationToken)
@@ -76,10 +69,6 @@ public sealed class AnswerRepository : IAnswerRepository
         {
             // Điểm của câu trả lời còn mới bị ẩn, nên chưa được tính khi sắp xếp.
             orderedAnswers = pinnedFirst.ThenByDescending(answer => answer.CreatedAtUtc <= hiddenSince ? answer.Score : 0);
-        }
-        else if (sort == "helpful")
-        {
-            orderedAnswers = pinnedFirst.ThenByDescending(answer => answer.HelpfulVotes.Count);
         }
         else
         {
@@ -118,17 +107,15 @@ public sealed class AnswerRepository : IAnswerRepository
             .ExecuteUpdateAsync(set => set.SetProperty(user => user.Reputation, user => user.Reputation + delta), cancellationToken);
     }
 
-    public async Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
+    public async Task<IReadOnlyList<AnswerVoteState>> GetVoteStatesAsync(
         IReadOnlyCollection<Guid> answerIds,
         string? viewerId,
         CancellationToken cancellationToken)
     {
         return await dbContext.Answers.AsNoTracking()
             .Where(answer => answerIds.Contains(answer.Id))
-            .Select(answer => new AnswerHelpfulState(
+            .Select(answer => new AnswerVoteState(
                 answer.Id,
-                answer.HelpfulVotes.Count,
-                viewerId != null && answer.HelpfulVotes.Any(vote => vote.UserId == viewerId),
                 answer.Score,
                 viewerId == null
                     ? 0
@@ -137,31 +124,6 @@ public sealed class AnswerRepository : IAnswerRepository
                         .Select(vote => vote.Value)
                         .FirstOrDefault()))
             .ToListAsync(cancellationToken);
-    }
-
-    public async Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken)
-    {
-        if (await dbContext.AnswerHelpfulVotes.AnyAsync(item =>
-            item.AnswerId == vote.AnswerId && item.UserId == vote.UserId, cancellationToken)) return;
-
-        dbContext.AnswerHelpfulVotes.Add(vote);
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException exception)
-            when (SqlErrors.IsDuplicateKey(exception))
-        {
-            // Hai lần bấm đồng thời vẫn chỉ tạo một lượt bình chọn.
-            dbContext.Entry(vote).State = EntityState.Detached;
-        }
-    }
-
-    public async Task RemoveHelpfulAsync(Guid answerId, string userId, CancellationToken cancellationToken)
-    {
-        await dbContext.AnswerHelpfulVotes
-            .Where(vote => vote.AnswerId == answerId && vote.UserId == userId)
-            .ExecuteDeleteAsync(cancellationToken);
     }
 
     private IQueryable<Answer> PublicAnswers(Guid topicId)

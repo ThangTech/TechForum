@@ -8,7 +8,7 @@ public sealed record PublicProfileDto(
     DateTimeOffset JoinedAtUtc,
     int PublishedTopicCount,
     int PublicAnswerCount,
-    int ReceivedStarCount,
+    int ReceivedUpvoteCount,
     int FollowerCount,
     int FollowingCount,
     bool IsFollowedByViewer,

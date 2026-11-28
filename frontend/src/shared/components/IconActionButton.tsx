@@ -6,7 +6,7 @@ interface IconActionButtonProps {
   // What the button does. It is the tooltip and the name read by screen readers.
   label: string
   icon: ReactNode
-  // A number shown next to the icon (stars, saves, shares). The screen reader hears it after the label.
+  // A number shown next to the icon (saves, shares). The screen reader hears it after the label.
   count?: number
   // For a toggle: true while it is switched on (the button gets the blue selected look).
   pressed?: boolean

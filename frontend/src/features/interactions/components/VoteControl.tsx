@@ -23,9 +23,9 @@ const Arrow = ({ direction }: { direction: VoteDirection }) => (
   </svg>
 )
 
-// ▲ score ▼: the vote of a member for a post or an answer. It is separate from the star "hữu ích" (a thank you),
-// the votes decide the score and the reputation of the author. A pressed arrow is coloured; pressing it again takes the
-// vote back.
+// ▲ score ▼: the vote of a member for an answer (a post uses the round buttons of its action rail). It is the only
+// rating: the votes decide the score and the reputation of the author. A pressed arrow is coloured; pressing it again
+// takes the vote back.
 export const VoteControl = ({ subject, score, scoreHidden = false, myVote, onVote, isBusy = false, disabledReason }: VoteControlProps) => {
   const isDisabled = isBusy || Boolean(disabledReason)
 

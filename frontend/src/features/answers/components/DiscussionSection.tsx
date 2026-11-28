@@ -28,18 +28,25 @@ interface DiscussionSectionProps {
   topicAuthorId: string
   topicId: string
   topicType: 'article' | 'question'
+  // id của phần thảo luận, để nơi khác (thanh hành động) cuộn tới.
+  sectionId?: string
+  // Báo số câu trả lời và phản hồi mỗi khi nó đổi (thanh hành động hiện số này).
+  onTotalChange?: (total: number) => void
 }
 
 const PAGE_SIZE = 20
 
-// The order of the answers is in the address (?answerSort=). Anything unknown gives the default order.
-const readSort = (value: string | null): AnswerSort => (value === 'helpful' || value === 'score' ? value : 'oldest')
+// The order of the answers is in the address (?answerSort=). Anything unknown gives the default order; the old
+// "helpful" order of shared links is now the score order.
+const readSort = (value: string | null): AnswerSort => (value === 'helpful' || value === 'score' ? 'score' : 'oldest')
 
 export const DiscussionSection = ({
   isLocked,
   topicAuthorId,
   topicId,
   topicType,
+  sectionId,
+  onTotalChange,
 }: DiscussionSectionProps) => {
   const writes = useAnswerWrites()
   const { user } = useAuth()
@@ -65,6 +72,10 @@ export const DiscussionSection = ({
   const error = requestError === null
     ? null
     : requestError instanceof ApiError ? requestError.message : 'Không thể tải câu trả lời lúc này.'
+  const totalItems = data?.totalItems
+  useEffect(() => {
+    if (totalItems !== undefined) onTotalChange?.(totalItems)
+  }, [onTotalChange, totalItems])
 
   // Change the answers on the page that is shown, without asking the server again.
   const patchAnswers = (update: (current: AnswerPage) => AnswerPage) => {
@@ -161,7 +172,7 @@ export const DiscussionSection = ({
   }
 
   return (
-    <Box aria-labelledby="discussion-title" component="section" sx={{ mt: 4, scrollMarginTop: '24px' }}>
+    <Box aria-labelledby="discussion-title" component="section" id={sectionId} sx={{ mt: 4, scrollMarginTop: '24px' }}>
       <Stack direction="row" sx={{ mb: 2.5, flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 1.5 }}>
         <Box>
           <Typography sx={{ color: 'primary.main', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Thảo luận</Typography>
@@ -179,7 +190,6 @@ export const DiscussionSection = ({
           value={sort}
         >
           <MenuItem value="oldest">Cũ nhất trước</MenuItem>
-          <MenuItem value="helpful">Hữu ích nhất</MenuItem>
           <MenuItem value="score">Điểm cao nhất</MenuItem>
         </TextField>
         {isLocked && (
@@ -230,15 +240,6 @@ export const DiscussionSection = ({
               setSuccessMessage('Đã xóa câu trả lời.')
             }}
             onLoginRequired={() => openAuthDialog()}
-            onHelpfulChanged={(answerId, helpful) => {
-              patchAnswers((current) => ({
-                ...current,
-                items: current.items.map((answer) => answer.id === answerId ? { ...answer, ...helpful } : answer),
-              }))
-              setSuccessMessage(helpful.isHelpful ? 'Đã đánh giá câu trả lời hữu ích.' : 'Đã bỏ đánh giá hữu ích.')
-              // With the "most helpful" order, the new count can move the answer to another place.
-              if (sort === 'helpful') refreshAnswers()
-            }}
             onVoteChanged={(answerId, vote) => {
               patchAnswers((current) => ({
                 ...current,

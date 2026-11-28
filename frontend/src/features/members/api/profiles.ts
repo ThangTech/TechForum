@@ -17,7 +17,7 @@ export const getPublicProfile = async (
     typeof data.joinedAtUtc !== 'string' ||
     typeof data.publishedTopicCount !== 'number' ||
     typeof data.publicAnswerCount !== 'number' ||
-    typeof data.receivedStarCount !== 'number' ||
+    typeof data.receivedUpvoteCount !== 'number' ||
     typeof data.followerCount !== 'number' ||
     typeof data.followingCount !== 'number' ||
     typeof data.isFollowedByViewer !== 'boolean' ||

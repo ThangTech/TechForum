@@ -9,7 +9,6 @@ export const appRoutes = {
   write: '/write',
   myTopics: '/my-topics',
   saved: '/saved',
-  starred: '/starred',
   account: '/account',
   notifications: '/notifications',
   activity: '/activity',

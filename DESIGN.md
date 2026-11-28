@@ -73,7 +73,7 @@ Quy tắc: chữ trên `*-soft` dùng màu đậm tương ứng để đạt tư
 - Các font được tải từ Google Fonts trong `frontend/index.html`.
 - Code và thẻ `#tag`: font mono, cỡ 12–13px.
 - Thang cỡ: tên trang 1.5–2rem; tên bài trong danh sách 1.125rem/700; tóm tắt 0.875rem/1.6; meta 0.75rem.
-- Số liệu (lượt xem, sao, lượt lưu) dùng `tabular-nums`.
+- Số liệu (lượt xem, điểm, lượt lưu) dùng `tabular-nums`.
 - Nhãn nhỏ viết hoa (`eyebrow`) chỉ dùng một lần trên mỗi khối, `letter-spacing` 0.1em.
 
 ## 4. Bố cục và khoảng cách
@@ -102,7 +102,7 @@ Quy tắc: chữ trên `*-soft` dùng màu đậm tương ứng để đạt tư
 - Hover cả thẻ: viền đậm hơn, bóng `card-hover` và vạch nhấn 3px bên trái theo loại (xanh cho Bài viết, hổ phách cho Câu hỏi).
 - Meta: avatar tác giả 24px (chữ cái đầu khi chưa có ảnh) cạnh tên đậm hơn; ngày và chuyên mục mờ.
 - Câu hỏi có thêm ô số trả lời bên trái (từ màn hình `sm` trở lên, học từ SegmentFault): viền xám khi chưa có trả lời, viền xanh lá khi đã có, nền xanh lá và chữ "đã giải" khi đã có lời giải. Màu chữ đặt trên thẻ `span`, không đặt trên `Link`, vì màu đặt trên `Link` có thể bị luật của thẻ `a` ghi đè.
-- Số liệu (lượt xem, phản hồi, sao hữu ích, lượt lưu): icon 14px (`StatIcons`) + số, màu `muted`; phản hồi là liên kết màu `primary`. Mỗi số có `title` và chữ ẩn `sr-only` cho trình đọc màn hình.
+- Số liệu (lượt xem, phản hồi, lượt lưu với hình ngôi sao): icon 14px (`StatIcons`) + số, màu `muted`; phản hồi là liên kết màu `primary`. Mỗi số có `title` và chữ ẩn `sr-only` cho trình đọc màn hình.
 - Thẻ `#tag`: viên thuốc nền `subtle`, viền `border`, font mono; hover nền `primary-soft`.
 
 **Nhãn loại (`TopicTypeBadge`).** Viên thuốc 12px/700. Bài viết: nền `primary-soft`, chữ `primary-dark`. Câu hỏi: nền `question-soft`, chữ `question`.

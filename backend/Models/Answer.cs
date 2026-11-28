@@ -18,5 +18,4 @@ public sealed class Answer
     public DateTimeOffset? AutoHiddenAtUtc { get; set; }
     // Tổng phiếu, cập nhật cùng một giao dịch với bảng phiếu.
     public int Score { get; set; }
-    public ICollection<AnswerHelpfulVote> HelpfulVotes { get; set; } = new List<AnswerHelpfulVote>();
 }

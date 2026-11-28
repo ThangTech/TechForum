@@ -21,7 +21,7 @@ public sealed class TopicServiceTests
         {
             Page = new TopicPage([CreateTopic()], 11, new Dictionary<Guid, TopicDiscussionDto>
             {
-                [TestIds.Id(10)] = new(3, true, DateTimeOffset.Parse("2026-10-01T10:00:00Z"), 2, 1)
+                [TestIds.Id(10)] = new(3, true, DateTimeOffset.Parse("2026-10-01T10:00:00Z"), 2)
             })
         };
         var service = CreateService(repository);
@@ -40,7 +40,7 @@ public sealed class TopicServiceTests
         Assert.Same(query, repository.LastQuery);
         Assert.Equal(3, item.Discussion?.AnswerCount);
         Assert.True(item.Discussion?.HasAcceptedAnswer);
-        Assert.Equal(2, item.Discussion?.StarCount);
+        Assert.Equal(2, item.Discussion?.BookmarkCount);
     }
 
     [Theory]
@@ -98,7 +98,7 @@ public sealed class TopicServiceTests
         {
             Page = new TopicPage([CreateTopic()], 12, new Dictionary<Guid, TopicDiscussionDto>
             {
-                [TestIds.Id(10)] = new(3, true, null, 2, 1)
+                [TestIds.Id(10)] = new(3, true, null, 2)
             })
         };
         var query = new TopicQuery { Page = 2, PageSize = 5, CategoryId = TestIds.Id(1), TagId = TestIds.Id(2), Keyword = "kiểm thử", Sort = "weekly" };
@@ -109,7 +109,7 @@ public sealed class TopicServiceTests
         Assert.Same(query, repository.LastQuery);
         Assert.Equal(3, result.TotalPages);
         Assert.Equal(2, result.Page);
-        Assert.Equal(2, Assert.Single(result.Items).Discussion?.StarCount);
+        Assert.Equal(2, Assert.Single(result.Items).Discussion?.BookmarkCount);
     }
 
     [Theory]

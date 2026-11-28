@@ -81,7 +81,7 @@ export const PublicProfilePage = () => {
                 { value: profile.publishedTopicCount, label: 'nội dung' },
                 { value: profile.followerCount, label: 'người theo dõi', to: appRoutes.followers(profile.id) },
                 { value: profile.followingCount, label: 'đang theo dõi', to: appRoutes.following(profile.id) },
-                { value: profile.receivedStarCount, label: 'Sao hữu ích' },
+                { value: profile.receivedUpvoteCount, label: 'bình chọn tốt' },
                 { value: profile.reputation, label: 'điểm danh tiếng' },
               ]}
               label="Thống kê hồ sơ"

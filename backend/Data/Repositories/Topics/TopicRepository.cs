@@ -90,12 +90,13 @@ public sealed class TopicRepository : ITopicRepository
         {
             var now = timeProvider.GetUtcNow();
             var since = now.AddDays(-7);
-            // Chỉ chấm hoạt động mới của người khác; sửa trả lời không làm tăng điểm tuần.
+            // Chỉ chấm hoạt động mới của người khác (tác giả không tự bình chọn được); sửa trả lời không làm tăng điểm tuần.
             var ranked = topics.Select(topic => new
             {
                 Topic = topic,
-                Score = topic.Stars.Count(star => star.UserId != topic.AuthorId &&
-                    star.CreatedAtUtc >= since && star.CreatedAtUtc <= now) * 2 +
+                Score = dbContext.UserVotes.Count(vote => vote.TargetType == VoteTargetType.Topic &&
+                    vote.TargetId == topic.Id && vote.Value > 0 &&
+                    vote.CreatedAtUtc >= since && vote.CreatedAtUtc <= now) * 2 +
                     topic.Bookmarks.Count(bookmark => bookmark.UserId != topic.AuthorId &&
                         bookmark.CreatedAtUtc >= since && bookmark.CreatedAtUtc <= now) * 2 +
                     topic.Answers.Count(answer => answer.AuthorId != topic.AuthorId &&
@@ -177,7 +178,6 @@ public sealed class TopicRepository : ITopicRepository
                         .AsQueryable()
                         .Where(AnswerVisibility.IsPublic)
                         .Max(answer => (DateTimeOffset?)(answer.UpdatedAtUtc ?? answer.CreatedAtUtc)),
-                    topic.Stars.Count,
                     topic.Bookmarks.Count)
             })
             .ToDictionaryAsync(item => item.Id, item => item.Summary, cancellationToken);

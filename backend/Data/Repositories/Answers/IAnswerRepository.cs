@@ -12,16 +12,12 @@ public interface IAnswerRepository
         string sort,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<AnswerHelpfulState>> GetHelpfulStatesAsync(
+    Task<IReadOnlyList<AnswerVoteState>> GetVoteStatesAsync(
         IReadOnlyCollection<Guid> answerIds,
         string? viewerId,
         CancellationToken cancellationToken);
 
     Task AdjustReputationAsync(string userId, int delta, CancellationToken cancellationToken);
-
-    Task AddHelpfulIfMissingAsync(AnswerHelpfulVote vote, CancellationToken cancellationToken);
-
-    Task RemoveHelpfulAsync(Guid answerId, string userId, CancellationToken cancellationToken);
 
     Task AddAsync(Answer answer, CancellationToken cancellationToken);
 

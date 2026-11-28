@@ -4,7 +4,7 @@ using TechForum.Api.Models;
 
 namespace TechForum.Api.Services;
 
-// The topic of a list that belongs to one member ("Đã lưu", "Đã thả sao"): the same short card for both lists.
+// The topic of a list that belongs to one member ("Đã lưu"): a short card.
 // savedAtUtc is the time the member saved it or gave it a star.
 public static class SavedTopicMapper
 {

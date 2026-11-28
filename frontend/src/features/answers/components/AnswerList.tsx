@@ -9,13 +9,13 @@ import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { RichHtml } from '../../../shared/components/RichHtml'
 import { useAnswerWrites } from '../hooks/answers'
-import type { Answer, AnswerHelpfulState, AnswerPage } from '../types/answers'
+import type { Answer, AnswerPage } from '../types/answers'
 import { setAnswerVote } from '../../interactions/api/votes'
 import type { VoteState } from '../../interactions/types/votes'
 import { ApiError } from '../../../shared/api/client'
 import { useAuth } from '../../auth/hooks/authState'
 import { appRoutes } from '../../../app/appRoutes'
-import { CheckCircleIcon, PencilIcon, ReplyIcon, ThumbUpIcon, TrashIcon } from '../../../shared/components/ActionIcons'
+import { CheckCircleIcon, PencilIcon, ReplyIcon, TrashIcon } from '../../../shared/components/ActionIcons'
 import { IconActionButton } from '../../../shared/components/IconActionButton'
 import { VoteControl } from '../../interactions/components/VoteControl'
 import { getNextVote, type VoteDirection } from '../../interactions/utils/voteLogic'
@@ -31,7 +31,6 @@ interface AnswerListProps {
   onAccept: (answerId: string) => void
   onDeleted: (answerId: string) => void
   onLoginRequired: () => void
-  onHelpfulChanged: (answerId: string, helpful: AnswerHelpfulState) => void
   onVoteChanged: (answerId: string, vote: VoteState) => void
   onPageChange: (page: number) => void
   onReplyCreated: (answer: Answer) => void
@@ -69,7 +68,6 @@ export const AnswerList = ({
   onAccept,
   onDeleted,
   onLoginRequired,
-  onHelpfulChanged,
   onVoteChanged,
   onPageChange,
   onReplyCreated,
@@ -82,7 +80,6 @@ export const AnswerList = ({
   const [isDeleting, setIsDeleting] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<Answer | null>(null)
-  const [votingAnswerId, setVotingAnswerId] = useState<string | null>(null)
   const [scoringAnswerId, setScoringAnswerId] = useState<string | null>(null)
 
   // The vote ▲ ▼ for the answer (it counts for the score and the reputation of its author).
@@ -98,22 +95,6 @@ export const AnswerList = ({
       setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể bình chọn lúc này.')
     } finally {
       setScoringAnswerId(null)
-    }
-  }
-
-  const toggleHelpful = async (answer: Answer) => {
-    if (!user) { onLoginRequired(); return }
-    if (votingAnswerId !== null || user.id === answer.author.id) return
-    setVotingAnswerId(answer.id)
-    setActionError(null)
-    try {
-      const helpful = await writes.setHelpful(answer.topicId, answer.id, !answer.isHelpful)
-      onHelpfulChanged(answer.id, helpful)
-    } catch (requestError) {
-      if (requestError instanceof ApiError && requestError.status === 401) onLoginRequired()
-      setActionError(requestError instanceof ApiError ? requestError.message : 'Không thể cập nhật đánh giá hữu ích.')
-    } finally {
-      setVotingAnswerId(null)
     }
   }
 
@@ -188,17 +169,6 @@ export const AnswerList = ({
                 score={answer.score}
                 scoreHidden={answer.scoreHidden}
                 subject="câu trả lời"
-              />
-              <IconActionButton
-                count={answer.helpfulCount}
-                disabled={votingAnswerId !== null || user?.id === answer.author.id}
-                icon={<ThumbUpIcon filled={answer.isHelpful} />}
-                label={user?.id === answer.author.id
-                  ? 'Bạn không thể tự đánh giá câu trả lời của mình'
-                  : answer.isHelpful ? 'Bỏ đánh giá hữu ích' : 'Đánh giá hữu ích'}
-                loading={votingAnswerId === answer.id}
-                onClick={() => void toggleHelpful(answer)}
-                pressed={answer.isHelpful}
               />
               {canAcceptAnswers && answer.parentAnswerId === null && !answer.isAccepted && (
                 <IconActionButton disabled={acceptingAnswerId !== null} icon={<CheckCircleIcon />} label="Chấp nhận câu trả lời" loading={acceptingAnswerId === answer.id} onClick={() => onAccept(answer.id)} />

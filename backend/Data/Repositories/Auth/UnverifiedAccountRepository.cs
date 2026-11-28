@@ -20,7 +20,6 @@ public sealed class UnverifiedAccountRepository : IUnverifiedAccountRepository
                 !dbContext.Answers.Any(answer => answer.AuthorId == user.Id) &&
                 !dbContext.ContentReports.Any(report => report.ReporterId == user.Id || report.ResolvedById == user.Id) &&
                 !dbContext.UserVotes.Any(vote => vote.UserId == user.Id) &&
-                !dbContext.AnswerHelpfulVotes.Any(vote => vote.UserId == user.Id) &&
                 !dbContext.MediaAssets.Any(media => media.UploaderId == user.Id) &&
                 !dbContext.AdminAuditLogs.Any(log => log.AdministratorId == user.Id))
             .OrderBy(user => user.CreatedAtUtc)
@@ -34,7 +33,6 @@ public sealed class UnverifiedAccountRepository : IUnverifiedAccountRepository
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         await dbContext.RefreshTokens.Where(item => item.UserId == userId).ExecuteDeleteAsync(cancellationToken);
         await dbContext.Drafts.Where(item => item.UserId == userId).ExecuteDeleteAsync(cancellationToken);
-        await dbContext.TopicStars.Where(item => item.UserId == userId).ExecuteDeleteAsync(cancellationToken);
         await dbContext.TopicBookmarks.Where(item => item.UserId == userId).ExecuteDeleteAsync(cancellationToken);
         await dbContext.UserFollows.Where(item => item.FollowerId == userId || item.FollowingId == userId).ExecuteDeleteAsync(cancellationToken);
         await dbContext.UserSkills.Where(item => item.UserId == userId).ExecuteDeleteAsync(cancellationToken);

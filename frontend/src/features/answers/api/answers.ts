@@ -1,7 +1,7 @@
 import { ApiError, apiRequest } from '../../../shared/api/client'
 
 import { hasPaging, isRecord } from '../../../shared/api/guards'
-import type { Answer, AnswerHelpfulState, AnswerPage, AnswerSort } from '../types/answers'
+import type { Answer, AnswerPage, AnswerSort } from '../types/answers'
 
 const isAnswer = (value: unknown): value is Answer =>
   isRecord(value) &&
@@ -17,8 +17,6 @@ const isAnswer = (value: unknown): value is Answer =>
   typeof value.createdAtUtc === 'string' &&
   (value.updatedAtUtc === null || typeof value.updatedAtUtc === 'string') &&
   typeof value.isAccepted === 'boolean' &&
-  typeof value.helpfulCount === 'number' &&
-  typeof value.isHelpful === 'boolean' &&
   typeof value.score === 'number' &&
   typeof value.myVote === 'number' &&
   typeof value.scoreHidden === 'boolean'
@@ -77,17 +75,3 @@ export const updateAnswer = async (topicId: string, answerId: string, bodyHtml: 
 
 export const deleteAnswer = async (topicId: string, answerId: string): Promise<void> =>
   apiRequest(`/api/topics/${topicId}/answers/${answerId}`, { method: 'DELETE' })
-
-export const setAnswerHelpful = async (
-  topicId: string,
-  answerId: string,
-  isHelpful: boolean,
-): Promise<AnswerHelpfulState> => {
-  const data: unknown = await apiRequest(`/api/topics/${topicId}/answers/${answerId}/helpful`, {
-    method: isHelpful ? 'PUT' : 'DELETE',
-  })
-  if (!isRecord(data) || typeof data.helpfulCount !== 'number' || typeof data.isHelpful !== 'boolean') {
-    throw new ApiError(500, 'Dữ liệu đánh giá hữu ích từ API không đúng định dạng.')
-  }
-  return { helpfulCount: data.helpfulCount, isHelpful: data.isHelpful }
-}

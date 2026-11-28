@@ -32,7 +32,7 @@ public sealed class PublicProfileServiceTests
         var user = CreateUser();
         var repository = new FakePublicProfileRepository
         {
-            Profile = new PublicProfileData(user, 3, 5, 7, 2, 1, true,
+            Profile = new PublicProfileData(user, 3, 5, 12, 2, 1, true,
                 [new ProfileSkillData(TestIds.Id(1), "React", "react", 3, true), new ProfileSkillData(TestIds.Id(2), "SQL Server", "sql-server", 1)],
                 [CreateTopic(user)])
         };

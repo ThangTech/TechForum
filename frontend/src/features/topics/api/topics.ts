@@ -36,7 +36,6 @@ export const isTopicSummary = (value: unknown): value is TopicSummary => {
       Number.isInteger(value.discussion.answerCount) && Number(value.discussion.answerCount) >= 0 &&
       typeof value.discussion.hasAcceptedAnswer === 'boolean' &&
       (value.discussion.lastActivityAtUtc === null || typeof value.discussion.lastActivityAtUtc === 'string') &&
-      Number.isInteger(value.discussion.starCount) && Number(value.discussion.starCount) >= 0 &&
       Number.isInteger(value.discussion.bookmarkCount) && Number(value.discussion.bookmarkCount) >= 0
     ))
   )

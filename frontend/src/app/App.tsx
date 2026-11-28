@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { NotFoundPage } from './NotFoundPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { AuthRequiredDialogHost } from '../features/auth/components/AuthRequiredDialogHost'
@@ -13,7 +13,6 @@ import { TopicDetailPage } from '../features/topics/pages/TopicDetailPage'
 import { PublicProfilePage } from '../features/members/pages/PublicProfilePage'
 import { MyTopicsPage } from '../features/topics/pages/MyTopicsPage'
 import { SavedTopicsPage } from '../features/interactions/pages/SavedTopicsPage'
-import { StarredTopicsPage } from '../features/interactions/pages/StarredTopicsPage'
 import { NotificationsPage } from '../features/notifications/pages/NotificationsPage'
 import { ActivityPage } from '../features/members/pages/ActivityPage'
 import { SkillCommunityPage } from '../features/members/pages/SkillCommunityPage'
@@ -23,6 +22,7 @@ import { MyReportsPage } from '../features/reports/pages/MyReportsPage'
 import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
 import { VerifyEmailPage } from '../features/auth/pages/VerifyEmailPage'
+import { appRoutes } from './appRoutes'
 
 // Trang chính sách ít người mở, nên chỉ tải khi cần.
 const LegalPage = lazy(() => import('../features/legal/pages/LegalPage').then((module) => ({ default: module.LegalPage })))
@@ -103,7 +103,7 @@ const App = () => {
           />
           <Route
             path="starred"
-            element={<ProtectedRoute><StarredTopicsPage /></ProtectedRoute>}
+            element={<Navigate replace to={appRoutes.saved} />}
           />
           <Route
             path="account"
